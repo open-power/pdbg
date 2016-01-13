@@ -20,7 +20,7 @@
 #define SLAVE_ID	0x0
 
 /* backend initialisation */
-struct scom_backend *fsi_init(int slave_id);
+struct scom_backend *fsi_init(void);
 void fsi_destroy(struct scom_backend *backend);
 
 #endif

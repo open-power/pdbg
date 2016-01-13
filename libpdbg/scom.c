@@ -16,18 +16,33 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "bitutils.h"
 #include "bmcfsi.h"
 #include "operations.h"
 
 struct scom_backend *backend = NULL;
 
-int backend_init(int slave_id)
+#define FSI_SET_PIB_RESET_REG 0x1007
+#define  FSI_SET_PIB_RESET PPC_BIT32(0)
+
+int backend_init(int processor_id)
 {
-	backend = fsi_init(slave_id);
+	backend = fsi_init();
 	if (!backend)
 		return -1;
 
+	backend->processor_id = processor_id;
+
+	/* Make sure the FSI2PIB engine is in a good state */
+	if (putcfam(FSI_SET_PIB_RESET, FSI_SET_PIB_RESET_REG))
+		return -1;
+
 	return 0;
+}
+
+void backend_set_processor(int processor_id)
+{
+	backend->processor_id = processor_id;
 }
 
 void backend_destroy(void)
@@ -43,7 +58,7 @@ int getscom(uint64_t *value, uint32_t addr)
 		return -1;
 	}
 
-	return backend->getscom(backend, value, addr);
+	return backend->getscom(backend, backend->processor_id, value, addr);
 }
 
 int putscom(uint64_t value, uint32_t addr)
@@ -53,7 +68,7 @@ int putscom(uint64_t value, uint32_t addr)
 		return -1;
 	}
 
-	return backend->putscom(backend, value, addr);
+	return backend->putscom(backend, backend->processor_id, value, addr);
 }
 
 int getcfam(uint32_t *value, uint32_t addr)
@@ -63,7 +78,7 @@ int getcfam(uint32_t *value, uint32_t addr)
 		return -1;
 	}
 
-	return backend->getcfam(backend, value, addr);
+	return backend->getcfam(backend, backend->processor_id, value, addr);
 }
 
 int putcfam(uint32_t value, uint32_t addr)
@@ -73,5 +88,5 @@ int putcfam(uint32_t value, uint32_t addr)
 		return -1;
 	}
 
-	return backend->putcfam(backend, value, addr);
+	return backend->putcfam(backend, backend->processor_id, value, addr);
 }

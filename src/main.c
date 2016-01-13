@@ -25,9 +25,13 @@
 #include <bmcfsi.h>
 #include <operations.h>
 
+/* EX/Chiplet GP0 SCOM address */
+#define SCOM_EX_GP0	0x10000000
+
 enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
 	       GETMEM, PUTMEM, GETGPR, GETNIA, GETSPR,	\
-	       STOPCHIP, STARTCHIP, THREADSTATUS };
+	       STOPCHIP, STARTCHIP, THREADSTATUS,	\
+	       PROBE };
 
 #define MAX_CMD_ARGS 2
 enum command cmd = 0;
@@ -36,6 +40,7 @@ static int cmd_arg_count = 0;
 /* At the moment all commands only take some kind of number */
 static uint64_t cmd_args[MAX_CMD_ARGS];
 
+static int processor = 0;
 static int chip = 0;
 static int thread = 0;
 
@@ -43,7 +48,8 @@ static void print_usage(char *pname)
 {
 	printf("Usage: %s [options] command ...\n\n", pname);
 	printf(" Options:\n");
-	printf("\t-c, --chip=chip\n");
+	printf("\t-p, --processor=processor-id\n");
+	printf("\t-c, --chip=chiplet-id\n");
 	printf("\t-t, --thread=thread\n");
 	printf("\t-h, --help\n");
 	printf("\n");
@@ -59,6 +65,7 @@ static void print_usage(char *pname)
 	printf("\tstopchip\n");
 	printf("\tstartchip <threads>\n");
 	printf("\tthreadstatus\n");
+	printf("\tprobe\n");
 }
 
 enum command parse_cmd(char *optarg)
@@ -96,6 +103,9 @@ enum command parse_cmd(char *optarg)
 	} else if (strcmp(optarg, "threadstatus") == 0) {
 		cmd = THREADSTATUS;
 		cmd_arg_count = 0;
+	} else if (strcmp(optarg, "probe") == 0) {
+		cmd = PROBE;
+		cmd_arg_count = 0;
 	}
 
 	return cmd;
@@ -106,13 +116,14 @@ static bool parse_options(int argc, char *argv[])
 	int c, oidx = 0, cmd_arg_idx = 0;
 	bool opt_error = true;
 	struct option long_opts[] = {
+		{"processor",	required_argument,	NULL,	'p'},
 		{"chip",	required_argument,	NULL,	'c'},
 		{"thread",	required_argument,	NULL,	't'},
 		{"help",	no_argument,		NULL,	'h'},
 	};
 
 	do {
-		c = getopt_long(argc, argv, "-c:t:h", long_opts, &oidx);
+		c = getopt_long(argc, argv, "-p:c:t:h", long_opts, &oidx);
 		switch(c) {
 		case 1:
 			/* Positional argument */
@@ -128,6 +139,11 @@ static bool parse_options(int argc, char *argv[])
 			}
 			break;
 
+		case 'p':
+			errno = 0;
+			processor = strtoull(optarg, NULL, 0);
+			opt_error = errno;
+			break;
 		case 't':
 			errno = 0;
 			thread = strtoull(optarg, NULL, 0);
@@ -151,6 +167,27 @@ static bool parse_options(int argc, char *argv[])
 		print_usage(argv[0]);
 
 	return opt_error;
+}
+
+static uint64_t probe(void)
+{
+	int i, j;
+	uint64_t addr, value;
+
+	/* Probe for processors by trying to read all possible
+	 * 0xf000f device-id registers. */
+	printf("Probing for valid processors...\n");
+	for (i = 0; i < 8; i++) {
+		backend_set_processor(i);
+		if (!getscom(&value, 0xf000f) && value) {
+			printf("\tProcessor-ID %d: 0x%llx\n", i, value);
+			for (j = 0; j < 0xf; j++) {
+				addr = SCOM_EX_GP0 | (j << 24);
+				if (!getscom(&value, addr) && value)
+					printf("\t\tChiplet-ID %d present\n", j);
+			}
+		}
+	}
 }
 
 static uint64_t active_threads;
@@ -208,7 +245,7 @@ int main(int argc, char *argv[])
 	if (parse_options(argc, argv))
 		return 1;
 
-	if (backend_init(SLAVE_ID)) {
+	if (backend_init(processor)) {
 		PR_ERROR("Unable to initialise backend\n");
 		return 1;
 	}
@@ -292,6 +329,9 @@ int main(int argc, char *argv[])
 		break;
 	case THREADSTATUS:
 		print_thread_status();
+		break;
+	case PROBE:
+		probe();
 		break;
 	}
 

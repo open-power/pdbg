@@ -38,10 +38,11 @@
 /* Structure to allow alternative backend implentations */
 struct scom_backend {
 	void (*destroy)(struct scom_backend *backend);
-	int (*getscom)(struct scom_backend *backend, uint64_t *value, uint32_t addr);
-	int (*putscom)(struct scom_backend *backend, uint64_t value, uint32_t addr);
-	int (*getcfam)(struct scom_backend *backend, uint32_t *value, uint32_t addr);
-	int (*putcfam)(struct scom_backend *backend, uint32_t value, uint32_t addr);
+	int (*getscom)(struct scom_backend *backend, int processor_id, uint64_t *value, uint32_t addr);
+	int (*putscom)(struct scom_backend *backend, int processor_id, uint64_t value, uint32_t addr);
+	int (*getcfam)(struct scom_backend *backend, int processor_id, uint32_t *value, uint32_t addr);
+	int (*putcfam)(struct scom_backend *backend, int processor_id, uint32_t value, uint32_t addr);
+	int processor_id;
 	void *priv;
 };
 
@@ -60,8 +61,9 @@ int ram_start_chip(uint64_t chip, uint64_t thread_active);
 int gdbserver_start(uint16_t port);
 
 /* scom backend functions. Most other operations use these. */
-int backend_init(int slave_id);
+int backend_init(int processor_id);
 void backend_destroy(void);
+void backend_set_processor(int processor_id);
 int getscom(uint64_t *value, uint32_t addr);
 int putscom(uint64_t value, uint32_t addr);
 int getcfam(uint32_t *value, uint32_t addr);

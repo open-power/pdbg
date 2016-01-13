@@ -213,14 +213,16 @@ static inline void fsi_send_bit(uint64_t bit)
 }
 
 /* Format a CFAM address into an FSI slaveId, command and address. */
-static uint64_t fsi_abs_ar(uint8_t chip_id, uint32_t addr, int read)
+static uint64_t fsi_abs_ar(uint8_t slave_id, int processor_id, uint32_t addr, int read)
 {
+	addr |= 0x80000 * processor_id;
+
 	/* Reformat the address. I'm not sure I fully understand this
 	 * yet but we basically shift the bottom byte and add 0b01
 	 * (for the write word?) */
-       	addr = ((addr & 0xff00) | ((addr & 0xff) << 2)) << 1;
+       	addr = ((addr & 0x3fff00) | ((addr & 0xff) << 2)) << 1;
 	addr |= 0x3;
-	addr |= chip_id << 26;
+	addr |= slave_id << 26;
 	addr |= (0x8ULL | !!(read)) << 22;
 
 	return addr;
@@ -298,7 +300,7 @@ static enum fsi_result fsi_read_resp(uint64_t *result, int len)
 	}
 
 	if (i == 512) {
-		printf("Timeout waiting for start bit\n");
+		PR_DEBUG("Timeout waiting for start bit\n");
 		return FSI_MERR_TIMEOUT;
 	}
 
@@ -331,10 +333,10 @@ static enum fsi_result fsi_read_resp(uint64_t *result, int len)
 	/* Strip the CRC off */
 	*result = resp >> 4;
 
-	return ack;
+	return ack & 0x3;
 }
 
-static enum fsi_result fsi_d_poll_wait(uint8_t chip_id, uint64_t *resp, int len)
+static enum fsi_result fsi_d_poll_wait(uint8_t slave_id, uint64_t *resp, int len)
 {
 	int i;
 	uint64_t seq;
@@ -342,7 +344,7 @@ static enum fsi_result fsi_d_poll_wait(uint8_t chip_id, uint64_t *resp, int len)
 
 	/* Poll for response if busy */
 	for (i = 0; i < 512; i++) {
-		seq = fsi_d_poll(chip_id) << 59;
+		seq = fsi_d_poll(slave_id) << 59;
 		fsi_send_seq(seq, 5);
 
 		if ((rc = fsi_read_resp(resp, len)) != FSI_BUSY)
@@ -352,11 +354,11 @@ static enum fsi_result fsi_d_poll_wait(uint8_t chip_id, uint64_t *resp, int len)
 	return rc;
 }
 
-static int fsi_getcfam(struct scom_backend *backend, uint32_t *value, uint32_t addr)
+static int fsi_getcfam(struct scom_backend *backend, int processor_id,
+		       uint32_t *value, uint32_t addr)
 {
 	uint64_t seq;
 	uint64_t resp;
-	uint8_t chip_id = slave;
 	enum fsi_result rc;
 
 	/* Format of the read sequence is:
@@ -375,11 +377,11 @@ static int fsi_getcfam(struct scom_backend *backend, uint32_t *value, uint32_t a
 	 * When applying the sequence it should be inverted (active
 	 * low)
 	 */
-	seq = fsi_abs_ar(chip_id, addr, 1) << 36;
+	seq = fsi_abs_ar(slave, processor_id, addr, 1) << 36;
 	fsi_send_seq(seq, 28);
 
 	if ((rc = fsi_read_resp(&resp, 36)) == FSI_BUSY)
-		rc = fsi_d_poll_wait(chip_id, &resp, 36);
+		rc = fsi_d_poll_wait(slave, &resp, 36);
 
 	if (rc != FSI_ACK) {
 		PR_ERROR("getcfam error. Response: 0x%01x\n", rc);
@@ -390,11 +392,11 @@ static int fsi_getcfam(struct scom_backend *backend, uint32_t *value, uint32_t a
 	return rc;
 }
 
-static int fsi_putcfam(struct scom_backend *backend, uint32_t data, uint32_t addr)
+static int fsi_putcfam(struct scom_backend *backend, int processor_id,
+		       uint32_t data, uint32_t addr)
 {
 	uint64_t seq;
 	uint64_t resp;
-	uint8_t chip_id = slave;
 	enum fsi_result rc;
 
 	/* Format of the sequence is:
@@ -413,22 +415,23 @@ static int fsi_putcfam(struct scom_backend *backend, uint32_t data, uint32_t add
 	 * When applying the sequence it should be inverted (active
 	 * low)
 	 */
-	seq = fsi_abs_ar(chip_id, addr, 0) << 36;
+	seq = fsi_abs_ar(slave, processor_id, addr, 0) << 36;
 	seq |= ((uint64_t) data & 0xffffffff) << (4);
 
 	fsi_send_seq(seq, 60);
-	if ((rc =fsi_read_resp(&resp, 4)) == FSI_BUSY)
-		rc = fsi_d_poll_wait(chip_id, &resp, 4);
+	if ((rc = fsi_read_resp(&resp, 4)) == FSI_BUSY)
+		rc = fsi_d_poll_wait(slave, &resp, 4);
 
 	if (rc != FSI_ACK) {
-		PR_ERROR("putcfam error. Response: 0x%01x\n", rc);
+		PR_DEBUG("putcfam error. Response: 0x%01x\n", rc);
 	} else
 		rc = 0;
 
 	return rc;
 }
 
-static int fsi_getscom(struct scom_backend *backend, uint64_t *value, uint32_t addr)
+static int fsi_getscom(struct scom_backend *backend, int processor_id,
+		       uint64_t *value, uint32_t addr)
 {
 	uint32_t result;
 
@@ -436,28 +439,32 @@ static int fsi_getscom(struct scom_backend *backend, uint64_t *value, uint32_t a
 
 	/* Get scom works by putting the address in FSI_CMD_REG and
 	 * reading the result from FST_DATA[01]_REG. */
-	CHECK_ERR(fsi_putcfam(backend, addr, FSI_CMD_REG));
-	CHECK_ERR(fsi_getcfam(backend, &result, FSI_DATA0_REG));
+	CHECK_ERR(fsi_putcfam(backend, processor_id, addr, FSI_CMD_REG));
+	CHECK_ERR(fsi_getcfam(backend, processor_id, &result, FSI_DATA0_REG));
 	*value = (uint64_t) result << 32;
-	CHECK_ERR(fsi_getcfam(backend, &result, FSI_DATA1_REG));
+	CHECK_ERR(fsi_getcfam(backend, processor_id, &result, FSI_DATA1_REG));
 	*value |= result;
 	return 0;
 }
 
-static int fsi_putscom(struct scom_backend *backend, uint64_t value, uint32_t addr)
+static int fsi_putscom(struct scom_backend *backend, int processor_id,
+		       uint64_t value, uint32_t addr)
 {
 	usleep(FSI2PIB_RELAX);
 
-	CHECK_ERR(fsi_putcfam(backend, FSI_RESET_CMD, FSI_RESET_REG));
-	CHECK_ERR(fsi_putcfam(backend, (value >> 32) & 0xffffffff, FSI_DATA0_REG));
-	CHECK_ERR(fsi_putcfam(backend, value & 0xffffffff, FSI_DATA1_REG));
-	CHECK_ERR(fsi_putcfam(backend, FSI_CMD_REG_WRITE | addr, FSI_CMD_REG));
+	CHECK_ERR(fsi_putcfam(backend, processor_id, FSI_RESET_CMD, FSI_RESET_REG));
+	CHECK_ERR(fsi_putcfam(backend, processor_id, (value >> 32) & 0xffffffff, FSI_DATA0_REG));
+	CHECK_ERR(fsi_putcfam(backend, processor_id, value & 0xffffffff, FSI_DATA1_REG));
+	CHECK_ERR(fsi_putcfam(backend, processor_id, FSI_CMD_REG_WRITE | addr, FSI_CMD_REG));
 
 	return 0;
 }
 
-struct scom_backend *fsi_init(int slave_id)
+struct scom_backend *fsi_init(void)
 {
+	int i;
+	uint32_t val;
+	uint64_t val64;
 	struct scom_backend *backend;
 
 	if (gpio_reg) {
@@ -490,7 +497,7 @@ struct scom_backend *fsi_init(int slave_id)
 	write_gpio(FSI_ENABLE, 1);
 	write_gpio(CRONUS_SEL, 1);  //Set Cronus control to BMC
 
-	slave = slave_id;
+	slave = 0;
 	backend->getscom = fsi_getscom;
 	backend->putscom = fsi_putscom;
 	backend->getcfam = fsi_getcfam;
@@ -500,8 +507,11 @@ struct scom_backend *fsi_init(int slave_id)
 
 	fsi_break();
 
-	/* Make sure the FSI2PIB engine is in a good state */
-	if (fsi_putcfam(backend, FSI_SET_PIB_RESET, FSI_SET_PIB_RESET_REG))
+	/* Clear own id on the master CFAM to access hMFSI ports */
+	if (fsi_getcfam(backend, 0, &val, 0x800))
+		return NULL;
+	val &= ~(PPC_BIT32(6) | PPC_BIT32(7));
+	if (fsi_putcfam(backend, 0, val, 0x800))
 		return NULL;
 
 	return backend;
