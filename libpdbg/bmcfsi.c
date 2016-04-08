@@ -518,9 +518,17 @@ struct scom_backend *fsi_init(void)
 
 void fsi_destroy(struct scom_backend *backend)
 {
-	/* Clean up in case we busted the bus */
-	fsi_break();
+	set_direction_out(FSI_CLK);
+	set_direction_out(FSI_DAT);
+	write_gpio(FSI_DAT_EN, 1);
 
-	write_gpio(FSI_ENABLE, 1);
+	/* Crank things - this is needed to use this tool for kicking off system boot  */
+	write_gpio(FSI_CLK, 1);
+	write_gpio(FSI_DAT, 1); /* Data standby state */
+	clock_cycle(FSI_CLK, 5000);
+	write_gpio(FSI_DAT_EN, 0);
+	
+	write_gpio(FSI_CLK, 0);
+	write_gpio(FSI_ENABLE, 0);
 	write_gpio(CRONUS_SEL, 0);  //Set Cronus control to FSP2
 }
