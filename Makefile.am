@@ -11,5 +11,6 @@ pdbg_CFLAGS = -I$(top_srcdir)/libpdbg
 libpdbg_a_SOURCES = \
 	libpdbg/adu.c \
 	libpdbg/bmcfsi.c \
+	libpdbg/i2c.c \
 	libpdbg/ram.c \
 	libpdbg/scom.c

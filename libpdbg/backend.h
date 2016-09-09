@@ -22,4 +22,7 @@
 /* backend initialisation */
 struct scom_backend *fsi_init(void);
 
+/* i2c backend initialisation */
+struct scom_backend *i2c_init(char *bus, int addr);
+
 #endif

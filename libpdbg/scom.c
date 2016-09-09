@@ -25,7 +25,18 @@ struct scom_backend *backend = NULL;
 #define FSI_SET_PIB_RESET_REG 0x1007
 #define  FSI_SET_PIB_RESET PPC_BIT32(0)
 
-int backend_init(int processor_id)
+int backend_i2c_init(char *bus, int addr)
+{
+	backend = i2c_init(bus, addr);
+	if (!backend)
+		return -1;
+
+	backend->processor_id = 0;
+
+	return 0;
+}
+
+int backend_fsi_init(int processor_id)
 {
 	backend = fsi_init();
 	if (!backend)

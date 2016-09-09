@@ -44,6 +44,12 @@ static int processor = 0;
 static int chip = 0;
 static int thread = 0;
 
+enum backend { FSI, I2C };
+static enum backend backend = I2C;
+
+static char const *device_node = "/dev/i2c4";
+static int i2c_addr = 0x50;
+
 static void print_usage(char *pname)
 {
 	printf("Usage: %s [options] command ...\n\n", pname);
@@ -51,6 +57,18 @@ static void print_usage(char *pname)
 	printf("\t-p, --processor=processor-id\n");
 	printf("\t-c, --chip=chiplet-id\n");
 	printf("\t-t, --thread=thread\n");
+	printf("\t-b, --backend=backend\n");
+	printf("\t\tfsi:\tAn experimental backend that uses\n");
+	printf("\t\t\tbit-banging to access the host processor\n");
+	printf("\t\t\tvia the FSI bus.\n");
+	printf("\t\ti2c:\tThe default backend which goes via I2C.\n");
+	printf("\t-d, --device=backend device node\n");
+	printf("\t\tDevice node used by the backend to access the bus.\n");
+	printf("\t\tNot used by the FSI backend and defaults to /dev/i2c4\n");
+	printf("\t\tfor the I2C backend.\n");
+	printf("\t-a, --address=backend device address\n");
+	printf("\t\tDevice address to use for the backend. Not used by FSI\n");
+	printf("\t\tand defaults to 0x50 for I2C\n");
 	printf("\t-h, --help\n");
 	printf("\n");
 	printf(" Commands:\n");
@@ -119,11 +137,14 @@ static bool parse_options(int argc, char *argv[])
 		{"processor",	required_argument,	NULL,	'p'},
 		{"chip",	required_argument,	NULL,	'c'},
 		{"thread",	required_argument,	NULL,	't'},
+		{"backend",	required_argument,	NULL,	'b'},
+		{"device",	required_argument,	NULL,	'd'},
+		{"address",	required_argument,	NULL,	'a'},
 		{"help",	no_argument,		NULL,	'h'},
 	};
 
 	do {
-		c = getopt_long(argc, argv, "-p:c:t:h", long_opts, &oidx);
+		c = getopt_long(argc, argv, "-p:c:t:b:d:a:h", long_opts, &oidx);
 		switch(c) {
 		case 1:
 			/* Positional argument */
@@ -153,6 +174,27 @@ static bool parse_options(int argc, char *argv[])
 		case 'c':
 			errno = 0;
 			chip = strtoull(optarg, NULL, 0);
+			opt_error = errno;
+			break;
+
+		case 'b':
+			opt_error = false;
+			if (strcmp(optarg, "fsi") == 0)
+				backend = FSI;
+			else if (strcmp(optarg, "i2c") == 0)
+				backend = I2C;
+			else
+				opt_error = true;
+			break;
+
+		case 'd':
+			opt_error = false;
+			device_node = optarg;
+			break;
+
+		case 'a':
+			errno = 0;
+			i2c_addr = strtoull(optarg, NULL, 0);
 			opt_error = errno;
 			break;
 
@@ -245,9 +287,20 @@ int main(int argc, char *argv[])
 	if (parse_options(argc, argv))
 		return 1;
 
-	if (backend_init(processor)) {
-		PR_ERROR("Unable to initialise backend\n");
-		return 1;
+	switch (backend) {
+	case I2C:
+		if (backend_i2c_init(device_node, i2c_addr)) {
+			PR_ERROR("Unable to I2C initialise backend\n");
+			return 1;
+		}
+		break;
+
+	case FSI:
+		if (backend_fsi_init(processor)) {
+			PR_ERROR("Unable to FSI initialise backend\n");
+			return 1;
+		}
+		break;
 	}
 
 	switch(cmd) {
