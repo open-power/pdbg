@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 #include "bitutils.h"
-#include "bmcfsi.h"
+#include "backend.h"
 #include "operations.h"
 
 struct scom_backend *backend = NULL;

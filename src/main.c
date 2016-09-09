@@ -22,7 +22,7 @@
 #include <getopt.h>
 #include <errno.h>
 
-#include <bmcfsi.h>
+#include <backend.h>
 #include <operations.h>
 
 /* EX/Chiplet GP0 SCOM address */

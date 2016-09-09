@@ -24,7 +24,6 @@
 #include <time.h>
 
 #include "bitutils.h"
-#include "bmcfsi.h"
 #include "operations.h"
 
 #define FSI_CLK		4	//GPIOA4
@@ -459,6 +458,23 @@ static int fsi_putscom(struct scom_backend *backend, int processor_id,
 	return 0;
 }
 
+static void fsi_destroy(struct scom_backend *backend)
+{
+	set_direction_out(FSI_CLK);
+	set_direction_out(FSI_DAT);
+	write_gpio(FSI_DAT_EN, 1);
+
+	/* Crank things - this is needed to use this tool for kicking off system boot  */
+	write_gpio(FSI_CLK, 1);
+	write_gpio(FSI_DAT, 1); /* Data standby state */
+	clock_cycle(FSI_CLK, 5000);
+	write_gpio(FSI_DAT_EN, 0);
+
+	write_gpio(FSI_CLK, 0);
+	write_gpio(FSI_ENABLE, 0);
+	write_gpio(CRONUS_SEL, 0);  //Set Cronus control to FSP2
+}
+
 struct scom_backend *fsi_init(void)
 {
 	int i;
@@ -514,21 +530,4 @@ struct scom_backend *fsi_init(void)
 		return NULL;
 
 	return backend;
-}
-
-void fsi_destroy(struct scom_backend *backend)
-{
-	set_direction_out(FSI_CLK);
-	set_direction_out(FSI_DAT);
-	write_gpio(FSI_DAT_EN, 1);
-
-	/* Crank things - this is needed to use this tool for kicking off system boot  */
-	write_gpio(FSI_CLK, 1);
-	write_gpio(FSI_DAT, 1); /* Data standby state */
-	clock_cycle(FSI_CLK, 5000);
-	write_gpio(FSI_DAT_EN, 0);
-	
-	write_gpio(FSI_CLK, 0);
-	write_gpio(FSI_ENABLE, 0);
-	write_gpio(CRONUS_SEL, 0);  //Set Cronus control to FSP2
 }

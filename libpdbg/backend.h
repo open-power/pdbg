@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __BMCFSI_H
-#define __BMCFSI_H
+#ifndef __BACKEND_H
+#define __BACKEND_H
 
 /* We only support slave 0 at the moment */
 #define SLAVE_ID	0x0
 
 /* backend initialisation */
 struct scom_backend *fsi_init(void);
-void fsi_destroy(struct scom_backend *backend);
 
 #endif
