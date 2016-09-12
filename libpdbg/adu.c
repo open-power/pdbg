@@ -106,67 +106,25 @@ static int adu_reset(void)
 }
 
 /* Return size bytes of memory in *output. *output must point to an
- * array large enough to hold size bytes. block_size specifies whether
- * to read 1, 2, 4, or 8 bytes at a time. A value of 0 selects the
- * best size to use based on the number of bytes to read. addr must be
- * block_size aligned. */
-int adu_getmem(uint64_t addr, uint8_t *output, uint64_t size, int block_size)
+ * array large enough to hold size bytes. */
+int adu_getmem(uint64_t start_addr, uint8_t *output, uint64_t size)
 {
 	int rc = 0;
-	uint64_t i, cmd_reg, ctrl_reg, val;
+	uint64_t addr, cmd_reg, ctrl_reg, val;
 
 	CHECK_ERR(adu_lock());
 
-	if (!block_size) {
-		/* TODO: We could optimise this better, but this will
-		 * do the moment. */
-		switch(size % 8) {
-		case 0:
-			block_size = 8;
-			break;
-
-		case 1:
-		case 3:
-		case 5:
-		case 7:
-			block_size = 1;
-			break;
-
-		case 2:
-			block_size = 2;
-			break;
-
-		case 4:
-			block_size = 4;
-			break;
-		}
-
-		/* Fall back to byte at a time if the selected block
-		 * size is not aligned to the address. */
-		if (addr % block_size)
-			block_size = 1;
-	}
-
-	if (addr % block_size) {
-		PR_INFO("Unaligned address\n");
-		return -1;
-	}
-
-	if (size % block_size) {
-		PR_INFO("Invalid size\n");
-		return -1;
-	}
-
 	ctrl_reg = TTYPE_TREAD;
 	ctrl_reg = SETFIELD(FBC_ALTD_TTYPE, ctrl_reg, TTYPE_DMA_PARTIAL_READ);
-	ctrl_reg = SETFIELD(FBC_ALTD_TSIZE, ctrl_reg, block_size);
+	ctrl_reg = SETFIELD(FBC_ALTD_TSIZE, ctrl_reg, 8);
 
 	CHECK_ERR(getscom(&cmd_reg, ALTD_CMD_REG));
 	cmd_reg |= FBC_ALTD_START_OP;
 	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
 	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
 
-	for (i = addr; i < addr + size; i += block_size) {
+	/* We read data in 8-byte aligned chunks */
+	for (addr = 8*(start_addr / 8); addr < start_addr + size; addr += 8) {
 		uint64_t data;
 
 	retry:
@@ -174,7 +132,7 @@ int adu_getmem(uint64_t addr, uint8_t *output, uint64_t size, int block_size)
 		CHECK_ERR(adu_reset());
 
 		/* Set the address */
-		ctrl_reg = SETFIELD(FBC_ALTD_ADDRESS, ctrl_reg, i);
+		ctrl_reg = SETFIELD(FBC_ALTD_ADDRESS, ctrl_reg, addr);
 		CHECK_ERR(putscom(ctrl_reg, ALTD_CONTROL_REG));
 
 		/* Start the command */
@@ -204,10 +162,16 @@ int adu_getmem(uint64_t addr, uint8_t *output, uint64_t size, int block_size)
 		/* ADU returns data in big-endian form in the register */
 		data = __builtin_bswap64(data);
 
-		/* TODO: Not sure where the data for a read < 8 bytes
-		 * ends up */
-		memcpy(output, &data, block_size);
-		output += block_size;
+		if (addr < start_addr) {
+			memcpy(output, ((uint8_t *) &data) + (start_addr - addr), 8 - (start_addr - addr));
+			output += 8 - (start_addr - addr);
+		} else if (addr + 8 > start_addr + size) {
+			memcpy(output, &data, start_addr + size - addr);
+		} else {
+			memcpy(output, &data, 8);
+			output += 8;
+		}
+
 	}
 
 	adu_unlock();

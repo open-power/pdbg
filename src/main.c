@@ -330,7 +330,7 @@ int main(int argc, char *argv[])
 		break;
 	case GETMEM:
 		buf = malloc(cmd_args[1]);
-		if (!adu_getmem(cmd_args[0], buf, cmd_args[1], 8))
+		if (!adu_getmem(cmd_args[0], buf, cmd_args[1]))
 			write(STDOUT_FILENO, buf, cmd_args[1]);
 		else
 			PR_ERROR("Unable to read memory.\n");

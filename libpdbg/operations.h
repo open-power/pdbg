@@ -47,7 +47,7 @@ struct scom_backend {
 };
 
 /* Alter display unit functions */
-int adu_getmem(uint64_t addr, uint8_t *output, uint64_t size, int block_size);
+int adu_getmem(uint64_t addr, uint8_t *output, uint64_t size);
 
 /* Functions to ram instructions */
 int ram_getgpr(int chip, int thread, int gpr, uint64_t *value);
