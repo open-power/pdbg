@@ -62,26 +62,26 @@
 #define FBC_ALTD_DATA_DONE	PPC_BIT(3)
 #define FBC_ALTD_PBINIT_MISSING PPC_BIT(18)
 
-static int adu_lock(void)
+static int adu_lock(struct target *target)
 {
 	uint64_t val;
 
-	CHECK_ERR(getscom(&val, ALTD_CMD_REG));
+	CHECK_ERR(read_target(target, ALTD_CMD_REG, &val));
 
 	if (val & FBC_LOCKED)
 		PR_INFO("ADU already locked! Ignoring.\n");
 
 	val |= FBC_LOCKED;
-	CHECK_ERR(putscom(val, ALTD_CMD_REG));
+	CHECK_ERR(write_target(target, ALTD_CMD_REG, val));
 
 	return 0;
 }
 
-static int adu_unlock(void)
+static int adu_unlock(struct target *target)
 {
 	uint64_t val;
 
-	CHECK_ERR(getscom(&val, ALTD_CMD_REG));
+	CHECK_ERR(read_target(target, ALTD_CMD_REG, &val));
 
 	if (!(val & FBC_LOCKED)) {
 		PR_INFO("ADU already unlocked!\n");
@@ -89,36 +89,36 @@ static int adu_unlock(void)
 	}
 
 	val &= ~FBC_LOCKED;
-	CHECK_ERR(putscom(val, ALTD_CMD_REG));
+	CHECK_ERR(write_target(target, ALTD_CMD_REG, val));
 
 	return 0;
 }
 
-static int adu_reset(void)
+static int adu_reset(struct target *target)
 {
 	uint64_t val;
 
-	CHECK_ERR(getscom(&val, ALTD_CMD_REG));
+	CHECK_ERR(read_target(target, ALTD_CMD_REG, &val));
 	val |= FBC_ALTD_CLEAR_STATUS | FBC_ALTD_RESET_AD_PCB;
-	CHECK_ERR(putscom(val, ALTD_CMD_REG));
+	CHECK_ERR(write_target(target, ALTD_CMD_REG, val));
 
 	return 0;
 }
 
 /* Return size bytes of memory in *output. *output must point to an
  * array large enough to hold size bytes. */
-int adu_getmem(uint64_t start_addr, uint8_t *output, uint64_t size)
+int adu_getmem(struct target *target, uint64_t start_addr, uint8_t *output, uint64_t size)
 {
 	int rc = 0;
 	uint64_t addr, cmd_reg, ctrl_reg, val;
 
-	CHECK_ERR(adu_lock());
+	CHECK_ERR(adu_lock(target));
 
 	ctrl_reg = TTYPE_TREAD;
 	ctrl_reg = SETFIELD(FBC_ALTD_TTYPE, ctrl_reg, TTYPE_DMA_PARTIAL_READ);
 	ctrl_reg = SETFIELD(FBC_ALTD_TSIZE, ctrl_reg, 8);
 
-	CHECK_ERR(getscom(&cmd_reg, ALTD_CMD_REG));
+	CHECK_ERR(read_target(target, ALTD_CMD_REG, &cmd_reg));
 	cmd_reg |= FBC_ALTD_START_OP;
 	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
 	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
@@ -129,18 +129,18 @@ int adu_getmem(uint64_t start_addr, uint8_t *output, uint64_t size)
 
 	retry:
 		/* Clear status bits */
-		CHECK_ERR(adu_reset());
+		CHECK_ERR(adu_reset(target));
 
 		/* Set the address */
 		ctrl_reg = SETFIELD(FBC_ALTD_ADDRESS, ctrl_reg, addr);
-		CHECK_ERR(putscom(ctrl_reg, ALTD_CONTROL_REG));
+		CHECK_ERR(write_target(target, ALTD_CONTROL_REG, ctrl_reg));
 
 		/* Start the command */
-		CHECK_ERR(putscom(cmd_reg, ALTD_CMD_REG));
+		CHECK_ERR(write_target(target, ALTD_CMD_REG, cmd_reg));
 
 		/* Wait for completion */
 		do {
-			CHECK_ERR(getscom(&val, ALTD_STATUS_REG));
+			CHECK_ERR(read_target(target, ALTD_STATUS_REG, &val));
 		} while (!val);
 
 		if( !(val & FBC_ALTD_ADDR_DONE) ||
@@ -157,7 +157,7 @@ int adu_getmem(uint64_t start_addr, uint8_t *output, uint64_t size)
 		}
 
 		/* Read data */
-		CHECK_ERR(getscom(&data, ALTD_DATA_REG));
+		CHECK_ERR(read_target(target, ALTD_DATA_REG, &data));
 
 		/* ADU returns data in big-endian form in the register */
 		data = __builtin_bswap64(data);
@@ -174,7 +174,7 @@ int adu_getmem(uint64_t start_addr, uint8_t *output, uint64_t size)
 
 	}
 
-	adu_unlock();
+	adu_unlock(target);
 
 	return rc;
 }

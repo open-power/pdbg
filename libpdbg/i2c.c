@@ -19,6 +19,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <endian.h>
+#include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 
 #include "bitutils.h"
@@ -39,22 +41,6 @@ static int i2c_set_addr(int fd, int addr)
 	return 0;
 }
 
-static int i2c_getcfam(struct scom_backend *backend, int processor_id,
-		       uint32_t *value, uint32_t addr)
-{
-	PR_ERROR("TODO: cfam access not supported with i2c backend\n");
-
-	return -1;
-}
-
-static int i2c_putcfam(struct scom_backend *backend, int processor_id,
-		       uint32_t value, uint32_t addr)
-{
-	PR_ERROR("TODO: cfam access not supported with i2c backend\n");
-
-	return -1;
-}
-
 static int i2c_set_scom_addr(struct i2c_data *i2c_data, uint32_t addr)
 {
 	uint8_t data[4];
@@ -72,16 +58,10 @@ static int i2c_set_scom_addr(struct i2c_data *i2c_data, uint32_t addr)
 	return 0;
 }
 
-static int i2c_getscom(struct scom_backend *backend, int processor_id,
-		       uint64_t *value, uint32_t addr)
+static int i2c_getscom(struct target *target, uint64_t addr, uint64_t *value)
 {
-	struct i2c_data *i2c_data = backend->priv;
-	uint8_t data[8];
-
-	if (processor_id) {
-		PR_ERROR("TODO: secondary processor access not supported with i2c backend\n");
-		return -1;
-	}
+	struct i2c_data *i2c_data = target->priv;
+	uint64_t data;
 
 	CHECK_ERR(i2c_set_scom_addr(i2c_data, addr));
 
@@ -90,21 +70,15 @@ static int i2c_getscom(struct scom_backend *backend, int processor_id,
 		return -1;
 	}
 
-	*value = *((uint64_t *) data);
+	*value = le64toh(data);
 
 	return 0;
 }
 
-static int i2c_putscom(struct scom_backend *backend, int processor_id,
-		       uint64_t value, uint32_t addr)
+static int i2c_putscom(struct target *target, uint64_t addr, uint64_t value)
 {
-	struct i2c_data *i2c_data = backend->priv;
+	struct i2c_data *i2c_data = target->priv;
 	uint8_t data[12];
-
-	if (processor_id) {
-		PR_ERROR("TODO: secondary processor access not supported with i2c backend\n");
-		return -1;
-	}
 
 	/* Setup scom address */
 	addr <<= 1;
@@ -132,43 +106,39 @@ static int i2c_putscom(struct scom_backend *backend, int processor_id,
 	return 0;
 }
 
-static void i2c_destroy(struct scom_backend *backend)
+static void i2c_destroy(struct target *target)
 {
-	struct i2c_data *i2c_data = backend->priv;
+	struct i2c_data *i2c_data = target->priv;
 
 	close(i2c_data->fd);
-	free(backend->priv);
+	free(target->priv);
 }
 
 /*
  * Initialise a i2c backend on the given bus at the given bus address.
  */
-struct scom_backend *i2c_init(char *bus, int addr)
+int i2c_target_init(struct target *target, const char *name, struct target *next,
+		    const char *bus, int addr)
 {
-	struct scom_backend *backend;
 	struct i2c_data *i2c_data;
 
-	backend = malloc(sizeof(*backend));
 	i2c_data = malloc(sizeof(*i2c_data));
-	if (!backend || !i2c_data)
+	if (!i2c_data)
 		exit(1);
 
 	i2c_data->addr = addr;
 	i2c_data->fd = open(bus, O_RDWR);
 	if (i2c_data->fd < 0) {
 		perror("Error opening bus");
-		exit(1);
+		return -1;
 	}
 
 	if (i2c_set_addr(i2c_data->fd, addr) < 0)
-		exit(1);
+		return -1;
 
-	backend->getscom = i2c_getscom;
-	backend->putscom = i2c_putscom;
-	backend->getcfam = i2c_getcfam;
-	backend->putcfam = i2c_putcfam;
-	backend->destroy = i2c_destroy;
-	backend->priv = i2c_data;
+	target_init(target, name, addr, i2c_getscom, i2c_putscom, i2c_destroy,
+		    next);
+	target->priv = i2c_data;
 
-	return backend;
+	return 0;
 }

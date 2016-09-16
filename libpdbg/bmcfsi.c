@@ -22,9 +22,11 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <assert.h>
 
 #include "bitutils.h"
 #include "operations.h"
+#include "target.h"
 
 #define FSI_CLK		4	//GPIOA4
 #define FSI_DAT		5	//GPIOA5
@@ -78,7 +80,8 @@ enum fsi_result {
 /* FSI private data */
 static void *gpio_reg = NULL;
 static int mem_fd = 0;
-static int slave = 0;
+
+static void fsi_reset(struct target *target);
 
 static uint32_t readl(void *addr)
 {
@@ -211,14 +214,14 @@ static inline void fsi_send_bit(uint64_t bit)
 }
 
 /* Format a CFAM address into an FSI slaveId, command and address. */
-static uint64_t fsi_abs_ar(uint8_t slave_id, int processor_id, uint32_t addr, int read)
+static uint64_t fsi_abs_ar(uint32_t addr, int read)
 {
-	addr |= 0x80000 * processor_id;
+	uint32_t slave_id = (addr >> 21) & 0x3;
 
 	/* Reformat the address. I'm not sure I fully understand this
 	 * yet but we basically shift the bottom byte and add 0b01
 	 * (for the write word?) */
-       	addr = ((addr & 0x3fff00) | ((addr & 0xff) << 2)) << 1;
+       	addr = ((addr & 0x1fff00) | ((addr & 0xff) << 2)) << 1;
 	addr |= 0x3;
 	addr |= slave_id << 26;
 	addr |= (0x8ULL | !!(read)) << 22;
@@ -240,7 +243,6 @@ static void fsi_break(void)
 	/* Crank things - not sure if we need this yet */
 	write_gpio(FSI_CLK, 1);
 	write_gpio(FSI_DAT, 1); /* Data standby state */
-	clock_cycle(FSI_CLK, 5000);
 
 	/* Send break command */
 	write_gpio(FSI_DAT, 0);
@@ -352,12 +354,14 @@ static enum fsi_result fsi_d_poll_wait(uint8_t slave_id, uint64_t *resp, int len
 	return rc;
 }
 
-static int fsi_getcfam(struct scom_backend *backend, int processor_id,
-		       uint32_t *value, uint32_t addr)
+static int fsi_getcfam(struct target *target, uint64_t addr, uint64_t *value)
 {
 	uint64_t seq;
 	uint64_t resp;
 	enum fsi_result rc;
+
+	/* This must be the last target in a chain */
+	assert(!target->next);
 
 	/* Format of the read sequence is:
 	 *  6666555555555544444444443333333333222222222211111111110000000000
@@ -366,7 +370,7 @@ static int fsi_getcfam(struct scom_backend *backend, int processor_id,
 	 *  ii1001aaaaaaaaaaaaaaaaaaa011cccc
 	 *
 	 * Where:
-	 *  ii  = slaveId (hardcoded to 11 for the moment)
+	 *  ii  = slaveId
 	 *  a   = address bit
 	 *  011 = write word size
 	 *  d   = data bit
@@ -375,27 +379,30 @@ static int fsi_getcfam(struct scom_backend *backend, int processor_id,
 	 * When applying the sequence it should be inverted (active
 	 * low)
 	 */
-	seq = fsi_abs_ar(slave, processor_id, addr, 1) << 36;
+	seq = fsi_abs_ar(addr, 1) << 36;
 	fsi_send_seq(seq, 28);
 
 	if ((rc = fsi_read_resp(&resp, 36)) == FSI_BUSY)
-		rc = fsi_d_poll_wait(slave, &resp, 36);
+		rc = fsi_d_poll_wait(0, &resp, 36);
 
 	if (rc != FSI_ACK) {
-		PR_ERROR("getcfam error. Response: 0x%01x\n", rc);
+		PR_DEBUG("getcfam error. Response: 0x%01x\n", rc);
 		rc = -1;
 	}
 
 	*value = resp & 0xffffffff;
+
 	return rc;
 }
 
-static int fsi_putcfam(struct scom_backend *backend, int processor_id,
-		       uint32_t data, uint32_t addr)
+static int fsi_putcfam(struct target *target, uint64_t addr, uint64_t data)
 {
 	uint64_t seq;
 	uint64_t resp;
 	enum fsi_result rc;
+
+	/* This must be the last target in a chain */
+	assert(!target->next);
 
 	/* Format of the sequence is:
 	 *  6666555555555544444444443333333333222222222211111111110000000000
@@ -404,7 +411,7 @@ static int fsi_putcfam(struct scom_backend *backend, int processor_id,
 	 *  ii1000aaaaaaaaaaaaaaaaaaa011ddddddddddddddddddddddddddddddddcccc
 	 *
 	 * Where:
-	 *  ii  = slaveId (hardcoded to 11 for the moment)
+	 *  ii  = slaveId
 	 *  a   = address bit
 	 *  011 = write word size
 	 *  d   = data bit
@@ -413,52 +420,37 @@ static int fsi_putcfam(struct scom_backend *backend, int processor_id,
 	 * When applying the sequence it should be inverted (active
 	 * low)
 	 */
-	seq = fsi_abs_ar(slave, processor_id, addr, 0) << 36;
+	seq = fsi_abs_ar(addr, 0) << 36;
 	seq |= ((uint64_t) data & 0xffffffff) << (4);
 
 	fsi_send_seq(seq, 60);
 	if ((rc = fsi_read_resp(&resp, 4)) == FSI_BUSY)
-		rc = fsi_d_poll_wait(slave, &resp, 4);
+		rc = fsi_d_poll_wait(0, &resp, 4);
 
-	if (rc != FSI_ACK) {
+	if (rc != FSI_ACK)
 		PR_DEBUG("putcfam error. Response: 0x%01x\n", rc);
-	} else
+	else
 		rc = 0;
 
 	return rc;
 }
 
-static int fsi_getscom(struct scom_backend *backend, int processor_id,
-		       uint64_t *value, uint32_t addr)
+static void fsi_reset(struct target *target)
 {
-	uint32_t result;
+	uint64_t val64, old_base = target->base;
 
-	usleep(FSI2PIB_RELAX);
+	target->base = 0;
 
-	/* Get scom works by putting the address in FSI_CMD_REG and
-	 * reading the result from FST_DATA[01]_REG. */
-	CHECK_ERR(fsi_putcfam(backend, processor_id, addr, FSI_CMD_REG));
-	CHECK_ERR(fsi_getcfam(backend, processor_id, &result, FSI_DATA0_REG));
-	*value = (uint64_t) result << 32;
-	CHECK_ERR(fsi_getcfam(backend, processor_id, &result, FSI_DATA1_REG));
-	*value |= result;
-	return 0;
+	fsi_break();
+
+	/* Clear own id on the master CFAM to access hMFSI ports */
+	fsi_getcfam(target, 0x800, &val64);
+	val64 &= ~(PPC_BIT32(6) | PPC_BIT32(7));
+	fsi_putcfam(target, 0x800, val64);
+	target->base = old_base;
 }
 
-static int fsi_putscom(struct scom_backend *backend, int processor_id,
-		       uint64_t value, uint32_t addr)
-{
-	usleep(FSI2PIB_RELAX);
-
-	CHECK_ERR(fsi_putcfam(backend, processor_id, FSI_RESET_CMD, FSI_RESET_REG));
-	CHECK_ERR(fsi_putcfam(backend, processor_id, (value >> 32) & 0xffffffff, FSI_DATA0_REG));
-	CHECK_ERR(fsi_putcfam(backend, processor_id, value & 0xffffffff, FSI_DATA1_REG));
-	CHECK_ERR(fsi_putcfam(backend, processor_id, FSI_CMD_REG_WRITE | addr, FSI_CMD_REG));
-
-	return 0;
-}
-
-static void fsi_destroy(struct scom_backend *backend)
+static void fsi_destroy(struct target *target)
 {
 	set_direction_out(FSI_CLK);
 	set_direction_out(FSI_DAT);
@@ -475,59 +467,39 @@ static void fsi_destroy(struct scom_backend *backend)
 	write_gpio(CRONUS_SEL, 0);  //Set Cronus control to FSP2
 }
 
-struct scom_backend *fsi_init(void)
+int fsi_target_init(struct target *target, const char *name, uint64_t base, struct target *next)
 {
-	int i;
-	uint32_t val;
-	uint64_t val64;
-	struct scom_backend *backend;
-
-	if (gpio_reg) {
-		/* FIXME .... */
-		PR_ERROR("One a single instance of this backend is supported\n");
-		return NULL;
+	if (!mem_fd) {
+		mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
+		if (mem_fd < 0) {
+			perror("Unable to open /dev/mem");
+			exit(1);
+		}
 	}
 
-	backend = malloc(sizeof(*backend));
-	if (!backend)
-		return NULL;
+	if (!gpio_reg) {
+		/* We only have to do this init once per backend */
+		gpio_reg = mmap(NULL, getpagesize(),
+				PROT_READ | PROT_WRITE, MAP_SHARED, mem_fd, GPIO_BASE);
+		if (gpio_reg == MAP_FAILED) {
+			perror("Unable to map GPIO register memory");
+			exit(1);
+		}
 
-	mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
-	if (mem_fd < 0) {
-		perror("Unable to open /dev/mem");
-		exit(1);
+		set_direction_out(CRONUS_SEL);
+		set_direction_out(FSI_ENABLE);
+		set_direction_out(FSI_DAT_EN);
+
+		write_gpio(FSI_ENABLE, 1);
+		write_gpio(CRONUS_SEL, 1);  //Set Cronus control to BMC
+
+		fsi_reset(target);
 	}
 
-	gpio_reg = mmap(NULL, getpagesize(),
-			PROT_READ | PROT_WRITE, MAP_SHARED, mem_fd, GPIO_BASE);
-	if (gpio_reg == MAP_FAILED) {
-		perror("Unable to map GPIO register memory");
-		exit(1);
-	}
+	/* No cascaded devices after this one. */
+	assert(next == NULL);
+	target_init(target, name, base, fsi_getcfam, fsi_putcfam, fsi_destroy,
+		    next);
 
-	set_direction_out(CRONUS_SEL);
-	set_direction_out(FSI_ENABLE);
-	set_direction_out(FSI_DAT_EN);
-
-	write_gpio(FSI_ENABLE, 1);
-	write_gpio(CRONUS_SEL, 1);  //Set Cronus control to BMC
-
-	slave = 0;
-	backend->getscom = fsi_getscom;
-	backend->putscom = fsi_putscom;
-	backend->getcfam = fsi_getcfam;
-	backend->putcfam = fsi_putcfam;
-	backend->destroy = fsi_destroy;
-	backend->priv = NULL;
-
-	fsi_break();
-
-	/* Clear own id on the master CFAM to access hMFSI ports */
-	if (fsi_getcfam(backend, 0, &val, 0x800))
-		return NULL;
-	val &= ~(PPC_BIT32(6) | PPC_BIT32(7));
-	if (fsi_putcfam(backend, 0, val, 0x800))
-		return NULL;
-
-	return backend;
+	return 0;
 }

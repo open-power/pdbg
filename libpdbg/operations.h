@@ -16,6 +16,8 @@
 #ifndef __OPERATIONS_H
 #define __OPERATIONS_H
 
+#include "target.h"
+
 /* Error codes */
 #define EFSI 1
 
@@ -35,38 +37,45 @@
 
 #define THREADS_PER_CORE	8
 
-/* Structure to allow alternative backend implentations */
-struct scom_backend {
-	void (*destroy)(struct scom_backend *backend);
-	int (*getscom)(struct scom_backend *backend, int processor_id, uint64_t *value, uint32_t addr);
-	int (*putscom)(struct scom_backend *backend, int processor_id, uint64_t value, uint32_t addr);
-	int (*getcfam)(struct scom_backend *backend, int processor_id, uint32_t *value, uint32_t addr);
-	int (*putcfam)(struct scom_backend *backend, int processor_id, uint32_t value, uint32_t addr);
-	int processor_id;
-	void *priv;
-};
+#define FSI2PIB_BASE	0x1000
 
 /* Alter display unit functions */
-int adu_getmem(uint64_t addr, uint8_t *output, uint64_t size);
+int adu_getmem(struct target *target, uint64_t addr, uint8_t *output, uint64_t size);
 
 /* Functions to ram instructions */
-int ram_getgpr(int chip, int thread, int gpr, uint64_t *value);
-int ram_getnia(int chip, int thread, uint64_t *value);
-int ram_getspr(int chip, int thread, int spr, uint64_t *value);
-int ram_running_threads(uint64_t chip, uint64_t *active_threads);
-int ram_stop_chip(uint64_t chip, uint64_t *thread_active);
-int ram_start_chip(uint64_t chip, uint64_t thread_active);
+#define THREAD_STATUS_ACTIVE	PPC_BIT(63)
+#define THREAD_STATUS_STATE	PPC_BITMASK(61, 62)
+#define THREAD_STATUS_DOZE	PPC_BIT(62)
+#define THREAD_STATUS_NAP	PPC_BIT(61)
+#define THREAD_STATUS_SLEEP	PPC_BITMASK(61, 62)
+#define THREAD_STATUS_QUIESCE	PPC_BIT(60)
+
+int ram_getgpr(struct target *thread, int gpr, uint64_t *value);
+int ram_putgpr(struct target *thread, int gpr, uint64_t value);
+int ram_getnia(struct target *thread, uint64_t *value);
+int ram_putnia(struct target *thread, uint64_t value);
+int ram_getspr(struct target *thread, int spr, uint64_t *value);
+int ram_putspr(struct target *thread, int spr, uint64_t value);
+int ram_getmsr(struct target *thread, uint64_t *value);
+int ram_putmsr(struct target *thread, uint64_t value);
+uint64_t chiplet_thread_status(struct target *thread);
+int ram_stop_thread(struct target *thread);
+int ram_step_thread(struct target *thread, int count);
+int ram_start_thread(struct target *thread);
 
 /* GDB server functionality */
 int gdbserver_start(uint16_t port);
 
-/* scom backend functions. Most other operations use these. */
-int backend_init(int processor_id);
-void backend_destroy(void);
-void backend_set_processor(int processor_id);
-int getscom(uint64_t *value, uint32_t addr);
-int putscom(uint64_t value, uint32_t addr);
-int getcfam(uint32_t *value, uint32_t addr);
-int putcfam(uint32_t value, uint32_t addr);
+int fsi_target_init(struct target *target, const char *name, uint64_t base, struct target *next);
+int fsi_target_probe(struct target *targets, int max_target_count);
+int i2c_target_init(struct target *target, const char *name, struct target *next,
+		    const char *bus, int addr);
+int fsi2pib_target_init(struct target *target, const char *name, uint64_t base, struct target *next);
+int opb_target_init(struct target *target, const char *name, uint64_t base, struct target *next);
+int thread_target_init(struct target *thread, const char *name, uint64_t thread_id, struct target *next);
+int thread_target_probe(struct target *chiplet, struct target *targets, int max_target_count);
+int chiplet_target_init(struct target *target, const char *name, uint64_t chip_id, struct target *next);
+int chiplet_target_probe(struct target *processor, struct target *targets, int max_target_count);
+int hmfsi_target_probe(struct target *cfam, struct target *targets, int max_target_count);
 
 #endif

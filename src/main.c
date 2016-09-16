@@ -21,16 +21,21 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <errno.h>
+#include <assert.h>
+#include <limits.h>
 
 #include <backend.h>
 #include <operations.h>
+#include <target.h>
 
-/* EX/Chiplet GP0 SCOM address */
-#define SCOM_EX_GP0	0x10000000
+#include <config.h>
+
+#include "bitutils.h"
 
 enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
 	       GETMEM, PUTMEM, GETGPR, GETNIA, GETSPR,	\
-	       STOPCHIP, STARTCHIP, THREADSTATUS,	\
+	       GETMSR, PUTGPR, PUTNIA, PUTSPR, PUTMSR,	\
+	       STOPCHIP, STARTCHIP, THREADSTATUS, STEP, \
 	       PROBE };
 
 #define MAX_CMD_ARGS 2
@@ -40,15 +45,43 @@ static int cmd_arg_count = 0;
 /* At the moment all commands only take some kind of number */
 static uint64_t cmd_args[MAX_CMD_ARGS];
 
-static int processor = 0;
-static int chip = 0;
-static int thread = 0;
-
 enum backend { FSI, I2C };
 static enum backend backend = I2C;
 
 static char const *device_node = "/dev/i2c4";
 static int i2c_addr = 0x50;
+
+#define MAX_TARGETS 400
+static struct target targets[MAX_TARGETS];
+
+#define MAX_PROCESSORS 16
+#define MAX_CHIPS 16
+#define MAX_THREADS THREADS_PER_CORE
+
+static int **processor[MAX_PROCESSORS];
+static int *chip[MAX_PROCESSORS][MAX_CHIPS];
+static int thread[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
+
+struct target_class cfams = {
+	.name = "CFAMS",
+};
+
+struct target_class processors = {
+	.name = "Processors",
+};
+
+struct target_class chiplets = {
+	.name = "Chiplets",
+};
+
+struct target_class threads = {
+	.name = "Threads",
+};
+
+#define for_each_thread(x) list_for_each(&threads.targets, x, class_link)
+#define for_each_chiplet(x) list_for_each(&chiplets.targets, x, class_link)
+#define for_each_processor(x) list_for_each(&processors.targets, x, class_link)
+#define for_each_cfam(x) list_for_each(&cfams.targets, x, class_link)
 
 static void print_usage(char *pname)
 {
@@ -57,6 +90,8 @@ static void print_usage(char *pname)
 	printf("\t-p, --processor=processor-id\n");
 	printf("\t-c, --chip=chiplet-id\n");
 	printf("\t-t, --thread=thread\n");
+	printf("\t-a, --all\n");
+	printf("\t\tRun command on all possible processors/chips/threads (default)\n");
 	printf("\t-b, --backend=backend\n");
 	printf("\t\tfsi:\tAn experimental backend that uses\n");
 	printf("\t\t\tbit-banging to access the host processor\n");
@@ -66,9 +101,10 @@ static void print_usage(char *pname)
 	printf("\t\tDevice node used by the backend to access the bus.\n");
 	printf("\t\tNot used by the FSI backend and defaults to /dev/i2c4\n");
 	printf("\t\tfor the I2C backend.\n");
-	printf("\t-a, --address=backend device address\n");
-	printf("\t\tDevice address to use for the backend. Not used by FSI\n");
+	printf("\t-s, --slave-address=backend device address\n");
+	printf("\t\tDevice slave address to use for the backend. Not used by FSI\n");
 	printf("\t\tand defaults to 0x50 for I2C\n");
+	printf("\t-V, --version\n");
 	printf("\t-h, --help\n");
 	printf("\n");
 	printf(" Commands:\n");
@@ -78,10 +114,14 @@ static void print_usage(char *pname)
 	printf("\tputscom <address> <value>\n");
 	printf("\tgetmem <address> <count>\n");
 	printf("\tgetgpr <gpr>\n");
+	printf("\tputgpr <gpr> <value>\n");
 	printf("\tgetnia\n");
+	printf("\tputnia <value>\n");
 	printf("\tgetspr <spr>\n");
+	printf("\tputspr <spr> <value>\n");
+	printf("\tstartchip\n");
+	printf("\tstep <count>\n");
 	printf("\tstopchip\n");
-	printf("\tstartchip <threads>\n");
 	printf("\tthreadstatus\n");
 	printf("\tprobe\n");
 }
@@ -106,18 +146,36 @@ enum command parse_cmd(char *optarg)
 	} else if (strcmp(optarg, "getgpr") == 0) {
 		cmd = GETGPR;
 		cmd_arg_count = 1;
+	} else if (strcmp(optarg, "putgpr") == 0) {
+		cmd = PUTGPR;
+		cmd_arg_count = 2;
 	} else if (strcmp(optarg, "getnia") == 0) {
 		cmd = GETNIA;
 		cmd_arg_count = 0;
+	} else if (strcmp(optarg, "putnia") == 0) {
+		cmd = PUTNIA;
+		cmd_arg_count = 1;
 	} else if (strcmp(optarg, "getspr") == 0) {
 		cmd = GETSPR;
+		cmd_arg_count = 1;
+	} else if (strcmp(optarg, "putspr") == 0) {
+		cmd = PUTSPR;
+		cmd_arg_count = 2;
+	} else if (strcmp(optarg, "getmsr") == 0) {
+		cmd = GETMSR;
+		cmd_arg_count = 0;
+	} else if (strcmp(optarg, "putmsr") == 0) {
+		cmd = PUTMSR;
+		cmd_arg_count = 1;
+	} else if (strcmp(optarg, "startchip") == 0) {
+		cmd = STARTCHIP;
+		cmd_arg_count = 0;
+	} else if (strcmp(optarg, "step") == 0) {
+		cmd = STEP;
 		cmd_arg_count = 1;
 	} else if (strcmp(optarg, "stopchip") == 0) {
 		cmd = STOPCHIP;
 		cmd_arg_count = 0;
-	} else if (strcmp(optarg, "startchip") == 0) {
-		cmd = STARTCHIP;
-		cmd_arg_count = 1;
 	} else if (strcmp(optarg, "threadstatus") == 0) {
 		cmd = THREADSTATUS;
 		cmd_arg_count = 0;
@@ -133,18 +191,21 @@ static bool parse_options(int argc, char *argv[])
 {
 	int c, oidx = 0, cmd_arg_idx = 0;
 	bool opt_error = true;
+	static int current_processor = INT_MAX, current_chip = INT_MAX, current_thread = INT_MAX;
 	struct option long_opts[] = {
-		{"processor",	required_argument,	NULL,	'p'},
-		{"chip",	required_argument,	NULL,	'c'},
-		{"thread",	required_argument,	NULL,	't'},
-		{"backend",	required_argument,	NULL,	'b'},
-		{"device",	required_argument,	NULL,	'd'},
-		{"address",	required_argument,	NULL,	'a'},
-		{"help",	no_argument,		NULL,	'h'},
+		{"all",			no_argument,		NULL,	'a'},
+		{"processor",		required_argument,	NULL,	'p'},
+		{"chip",		required_argument,	NULL,	'c'},
+		{"thread",		required_argument,	NULL,	't'},
+		{"backend",		required_argument,	NULL,	'b'},
+		{"device",		required_argument,	NULL,	'd'},
+		{"slave-address",	required_argument,	NULL,	's'},
+		{"version",		no_argument,		NULL,	'V'},
+		{"help",		no_argument,		NULL,	'h'},
 	};
 
 	do {
-		c = getopt_long(argc, argv, "-p:c:t:b:d:a:h", long_opts, &oidx);
+		c = getopt_long(argc, argv, "-p:c:t:b:d:s:haV", long_opts, &oidx);
 		switch(c) {
 		case 1:
 			/* Positional argument */
@@ -160,20 +221,45 @@ static bool parse_options(int argc, char *argv[])
 			}
 			break;
 
+		case 'a':
+			opt_error = false;
+			for (current_processor = 0; current_processor < MAX_PROCESSORS; current_processor++) {
+				processor[current_processor] = &chip[current_processor][0];
+				for (current_chip = 0; current_chip < MAX_CHIPS; current_chip++) {
+					chip[current_processor][current_chip] = &thread[current_processor][current_chip][0];
+					for (current_thread = 0; current_thread < MAX_THREADS; current_thread++)
+						thread[current_processor][current_chip][current_thread] = 1;
+				}
+			}
+			break;
+
 		case 'p':
 			errno = 0;
-			processor = strtoull(optarg, NULL, 0);
-			opt_error = errno;
-			break;
-		case 't':
-			errno = 0;
-			thread = strtoull(optarg, NULL, 0);
+			current_processor = strtoul(optarg, NULL, 0);
+			if (current_processor >= MAX_PROCESSORS)
+				errno = -1;
+			else
+				processor[current_processor] = &chip[current_processor][0];
 			opt_error = errno;
 			break;
 
 		case 'c':
 			errno = 0;
-			chip = strtoull(optarg, NULL, 0);
+			current_chip = strtoul(optarg, NULL, 0);
+			if (current_chip >= MAX_CHIPS)
+				errno = -1;
+			else
+				chip[current_processor][current_chip] = &thread[current_processor][current_chip][0];
+			opt_error = errno;
+			break;
+
+		case 't':
+			errno = 0;
+			current_thread = strtoul(optarg, NULL, 0);
+			if (current_thread >= MAX_THREADS)
+				errno = -1;
+			else
+				thread[current_processor][current_chip][current_thread] = 1;
 			opt_error = errno;
 			break;
 
@@ -192,10 +278,16 @@ static bool parse_options(int argc, char *argv[])
 			device_node = optarg;
 			break;
 
-		case 'a':
+		case 's':
 			errno = 0;
 			i2c_addr = strtoull(optarg, NULL, 0);
 			opt_error = errno;
+			break;
+
+		case 'V':
+			errno = 0;
+			printf("%s (commit %s)\n", PACKAGE_STRING, GIT_SHA1);
+			exit(1);
 			break;
 
 		case 'h':
@@ -211,126 +303,430 @@ static bool parse_options(int argc, char *argv[])
 	return opt_error;
 }
 
-static uint64_t probe(void)
-{
-	int i, j;
-	uint64_t addr, value;
-
-	/* Probe for processors by trying to read all possible
-	 * 0xf000f device-id registers. */
-	printf("Probing for valid processors...\n");
-	for (i = 0; i < 8; i++) {
-		backend_set_processor(i);
-		if (!getscom(&value, 0xf000f) && value) {
-			printf("\tProcessor-ID %d: 0x%llx\n", i, value);
-			for (j = 0; j < 0xf; j++) {
-				addr = SCOM_EX_GP0 | (j << 24);
-				if (!getscom(&value, addr) && value)
-					printf("\t\tChiplet-ID %d present\n", j);
-			}
-		}
-	}
-}
-
-static uint64_t active_threads;
-
 /*
- * Stop all threads on the chip.
+ * Add a given target to the class
  */
-static int stop_chip(void)
+void target_class_add(struct target_class *class, struct target *target, int index)
 {
-	int rc;
-
-	if ((rc = ram_stop_chip(chip, &active_threads)))
-		PR_ERROR("Error stopping chip\n");
-
-	return rc;
-}
-
-static void print_thread_status(void)
-{
-	int i;
-	uint64_t value;
-
-	if (ram_running_threads(chip, &value)) {
-		PR_ERROR("Unable to read thread status\n");
-		return;
-	}
-
-	for (i = 0; i < THREADS_PER_CORE; i++)
-			if (value & (1 << (THREADS_PER_CORE - i - 1)))
-				printf("Thread %d is RUNNING\n", i);
-			else
-				printf("Thread %d is STOPPED\n", i);
+	list_add_tail(&class->targets, &target->class_link);
+	target->index = index;
 }
 
 /*
- * Restart previously active threads.
+ * Initialises an I2C based backend. Returns the number of targets
+ * added on success.
  */
-static int start_chip(void)
+static int i2c_backend_targets_init(const char *bus, int addr)
 {
-	int rc;
+	int i, cfam_count;
 
-	if ((rc = ram_start_chip(chip, active_threads)))
-		PR_ERROR("Error starting chip\n");
+	CHECK_ERR(i2c_target_init(&targets[0], "BMC I2C Backend", NULL, device_node, i2c_addr));
+	CHECK_ERR(opb_target_init(&targets[1], "PIB2OPB", 0x20010, &targets[0]));
 
-	return rc;
+	if (processor[0])
+		target_class_add(&processors, &targets[0], 0);
+
+	/* Probe cascaded CFAMs on hMFSI ports and add FSI2PIB bridges */
+	cfam_count = hmfsi_target_probe(&targets[1], &targets[2], MAX_TARGETS);
+	for (i = 0; i < cfam_count; i++) {
+		/* Skip prcessors that aren't selected */
+		if (!(processor[i + 1]))
+			continue;
+
+		fsi2pib_target_init(&targets[2 + cfam_count + i], "FSI2PIB", FSI2PIB_BASE, &targets[2 + i]);
+
+		/* CFAM index should match processor index even though
+		 * we don't support cfam 0 on i2c */
+		target_class_add(&cfams, &targets[2 + i], i + 1);
+		target_class_add(&processors, &targets[2 + cfam_count + i], i + 1);
+	}
+
+	return 2 + 2*cfam_count;
 }
 
-int main(int argc, char *argv[])
+static int fsi_backend_targets_init(void)
 {
-	int rc = 0;
-	uint32_t u32_value = 0;
-	uint64_t value = 0;
-	uint8_t *buf;
+	struct target *cfam;
+	int i, cfam_count;
 
-	if (parse_options(argc, argv))
-		return 1;
+	fsi_target_init(&targets[0], "BMC FSI Backend", 0, NULL);
+
+	/* The backend is directly connected to a processor CFAM */
+	target_class_add(&cfams, &targets[0], 0);
+	cfam_count = 1;
+
+	/* Probe cascaded CFAMs on hMFSI ports */
+	cfam_count += hmfsi_target_probe(&targets[0], &targets[1], MAX_TARGETS);
+	for (i = 1; i < cfam_count; i++)
+		target_class_add(&cfams, &targets[i], i);
+
+	/* Add a FSI2PIB bridges for each CFAM */
+	i = 0;
+	for_each_cfam(cfam) {
+		fsi2pib_target_init(&targets[cfam_count + i], "FSI2PIB", FSI2PIB_BASE, cfam);
+
+		if (processor[i])
+			target_class_add(&processors, &targets[cfam_count + i], i);
+		i++;
+	}
+
+	return 2*cfam_count;
+}
+
+static int backend_init(void)
+{
+	int i, j, target_count = 0, chiplet_count = 0, thread_count = 0;
+	struct target *target, *processor, *chiplet;
+
+	list_head_init(&cfams.targets);
+	list_head_init(&processors.targets);
+	list_head_init(&chiplets.targets);
+	list_head_init(&threads.targets);
 
 	switch (backend) {
 	case I2C:
-		if (backend_i2c_init(device_node, i2c_addr)) {
+		if ((target_count = i2c_backend_targets_init(device_node, i2c_addr)) < 0) {
 			PR_ERROR("Unable to I2C initialise backend\n");
-			return 1;
+			return -1;
 		}
 		break;
 
 	case FSI:
-		if (backend_fsi_init(processor)) {
+		if ((target_count = fsi_backend_targets_init()) < 0) {
 			PR_ERROR("Unable to FSI initialise backend\n");
-			return 1;
+			return -1;
 		}
+		break;
+
+	default:
+		PR_ERROR("Invalid backend specified\n");
+		return -1;
+	}
+
+	target = &targets[target_count];
+	j = 0;
+	for_each_processor(processor) {
+		chiplet_count += chiplet_target_probe(processor, target, MAX_TARGETS - target_count);
+		for (i = 0; j < chiplet_count; i++, j++) {
+			/* Skip chips that aren't selected */
+			if (chip[processor->index][j])
+				target_class_add(&chiplets, target, i);
+
+			target++;
+		}
+	}
+
+	target_count += chiplet_count;
+	target = &targets[target_count];
+	j = 0;
+	for_each_chiplet(chiplet) {
+		thread_count += thread_target_probe(chiplet, target, MAX_TARGETS - target_count);
+		for (i = 0; j < thread_count; i++, j++) {
+			if (chip[chiplet->next->index][chiplet->index][j])
+				target_class_add(&threads, target, i);
+			target++;
+		}
+	}
+
+	return 0;
+}
+
+
+static void dump_targets(int indent, struct target *target)
+{
+	int i;
+	struct target *child;
+
+	for (i = 0; i < indent; i++)
+		printf("    ");
+
+	printf("%s@%llx\n", target->name, target->base);
+
+	if (!list_empty(&target->children))
+		list_for_each(&target->children, child, link)
+			dump_targets(indent + 1, child);
+}
+
+/* Dump all processors and chiplets */
+static uint64_t probe(void)
+{
+	struct target *cfam, *processor, *chiplet, *thread;
+	int i, j;
+
+	printf("Overall System Topology\n");
+	printf("=======================\n\n");
+	dump_targets(0, &targets[0]);
+
+	i = 0;
+	printf("\nCFAMs Present\n");
+	printf("=============\n\n");
+	for_each_cfam(cfam)
+		printf("%d: %s@%llx\n", i++, cfam->name, cfam->base);
+
+	i = 0;
+	printf("\nProcessors/Chiplets Present\n");
+	printf("===========================\n\n");
+	for_each_processor(processor) {
+		printf("Processor-ID %d: %s@%llx\n", processor->index, processor->name, processor->base);
+		j = 0;
+		for_each_chiplet(chiplet)
+			if (chiplet->next == processor) {
+				printf("\tChiplet-ID %d: %s@%llx\n", chiplet->index, chiplet->name, chiplet->base);
+				for_each_thread(thread)
+					if (thread->next == chiplet)
+						printf("\t\tThread-ID %d: %s@%llx\n", thread->index, thread->name, thread->base);
+			}
+	}
+
+	return 0;
+}
+
+static int filter_parent(struct target *target, void *priv)
+{
+	struct target *parent = priv;
+
+	return target->next == parent;
+}
+
+/*
+ * Call cb() on each member of the target class when filter() returns
+ * true. Returns either the result from cb() (should be -ve on error)
+ * or the number of time cb() was called.
+ */
+static int for_each_class_call(struct target_class *class, int (*filter)(struct target *, void *),
+			       int (*cb)(struct target *, uint64_t, uint64_t *),
+			       void *priv, uint64_t addr, uint64_t *data)
+{
+	struct target *target;
+	int rc, count = 0;
+
+	list_for_each(&class->targets, target, class_link)
+		if (!filter || filter(target, priv)) {
+			count++;
+			if((rc = cb(target, addr, data)))
+				return rc;
+		}
+
+	return count;
+}
+
+static int print_thread_status(struct target *thread, uint64_t addr, uint64_t *data)
+{
+	uint64_t status = chiplet_thread_status(thread);
+	static int last_index = -1;
+	int i;
+
+	if (thread->index <= last_index)
+		last_index = -1;
+
+	for (i = last_index + 1; i < thread->index; i++)
+		printf("  ");
+
+	last_index = thread->index;
+
+	switch (status)
+	{
+	case THREAD_STATUS_ACTIVE:
+		printf(" A");
+		break;
+
+	case THREAD_STATUS_DOZE:
+	case THREAD_STATUS_QUIESCE | THREAD_STATUS_DOZE:
+		printf(" D");
+		break;
+
+	case THREAD_STATUS_NAP:
+	case THREAD_STATUS_QUIESCE | THREAD_STATUS_NAP:
+		printf(" N");
+		break;
+
+	case THREAD_STATUS_SLEEP:
+	case THREAD_STATUS_QUIESCE | THREAD_STATUS_SLEEP:
+		printf(" S");
+		break;
+
+	case THREAD_STATUS_ACTIVE | THREAD_STATUS_QUIESCE:
+		printf(" Q");
+		break;
+
+	default:
+		printf(" U");
 		break;
 	}
 
+	return 0;
+}
+
+static int print_chiplet_thread_status(struct target *chiplet, uint64_t addr, uint64_t *data)
+{
+	printf("c%02d:", chiplet->index);
+
+	for_each_class_call(&threads, filter_parent, print_thread_status, chiplet, 0, NULL);
+	printf("\n");
+
+	return 0;
+}
+
+static int getaddr(struct target *target, uint64_t addr, uint64_t *data)
+{
+	int rc;
+
+	if ((rc = read_target(target, addr, data)))
+		PR_ERROR("Error reading register\n");
+	else
+		printf("p%d:0x%llx: 0x%016llx\n", target->index, addr, *data);
+
+	return rc;
+}
+
+static int putaddr(struct target *target, uint64_t addr, uint64_t *data)
+{
+	int rc;
+
+	if ((rc = write_target(target, addr, *data)))
+		PR_ERROR("Error writing register\n");
+	else
+		printf("p%d:0x%llx: 0x%016llx\n", target->index, addr, *data);
+
+	return rc;
+}
+
+static int startstopstep_thread(struct target *thread, uint64_t action, uint64_t *data)
+{
+	uint64_t status;
+
+	if (action == 1)
+		return ram_start_thread(thread);
+	else if (action == 2) {
+		status = chiplet_thread_status(thread);
+		if (!(GETFIELD(THREAD_STATUS_QUIESCE, status) && GETFIELD(THREAD_STATUS_ACTIVE, status))) {
+			PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
+
+			/* Return 0 so we continue stepping other threads if requested */
+			return 0;
+		}
+
+		return ram_step_thread(thread, *data);
+	} else
+		return ram_stop_thread(thread);
+}
+
+/*
+ * Start/stop all threads on the chip.
+ */
+static int startstopstep_chip(struct target *chiplet, uint64_t action, uint64_t *data)
+{
+	for_each_class_call(&threads, filter_parent, startstopstep_thread, chiplet, action, NULL);
+
+	return 0;
+}
+
+#define REG_MSR -2ULL
+#define REG_NIA -1ULL
+#define REG_R31 31ULL
+
+static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
+{
+	uint64_t status = chiplet_thread_status(thread);
+
+	if (status != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE)) {
+		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
+
+		/* Return 0 so we continue stepping other threads if requested */
+		return 0;
+	}
+
+	 if (reg == REG_NIA)
+		if (ram_putnia(thread, *data))
+			PR_ERROR("Error reading register\n");
+		else
+			printf("c%02d:t%d:nia = 0x%016llx\n", thread->next->index, thread->index, *data);
+	 else if (reg == REG_MSR)
+		if (ram_putmsr(thread, *data))
+			PR_ERROR("Error reading register\n");
+		else
+			printf("c%02d:t%d:msr = 0x%016llx\n", thread->next->index, thread->index, *data);
+	 else if (reg <= REG_R31)
+		if (ram_putgpr(thread, reg, *data))
+			PR_ERROR("Error reading register\n");
+		else
+			printf("c%02d:t%d:r%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
+	 else
+		if (ram_putspr(thread, reg, *data))
+			PR_ERROR("Error reading register\n");
+		else
+			printf("c%02d:t%d:spr%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
+
+	return 0;
+}
+
+static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
+{
+	uint64_t status = chiplet_thread_status(thread);
+
+	if (status != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE)) {
+		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
+
+		/* Return 0 so we continue stepping other threads if requested */
+		return 0;
+	}
+
+	 if (reg == REG_NIA)
+		if (ram_getnia(thread, data))
+			PR_ERROR("Error reading register\n");
+		else
+			printf("c%02d:t%d:nia = 0x%016llx\n", thread->next->index, thread->index, *data);
+	 else if (reg == REG_MSR)
+		 if (ram_getmsr(thread, data))
+			 PR_ERROR("Error reading register\n");
+		 else
+			printf("c%02d:t%d:msr = 0x%016llx\n", thread->next->index, thread->index, *data);
+	 else if (reg <= REG_R31)
+		if (ram_getgpr(thread, reg, data))
+			PR_ERROR("Error reading register\n");
+		else
+			printf("c%02d:t%d:r%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
+	else
+		if (ram_getspr(thread, reg, data))
+			PR_ERROR("Error reading register\n");
+		else
+			printf("c%02d:t%d:spr%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
+
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	int rc = 1;
+	uint64_t value = 0;
+	uint8_t *buf;
+	struct target *target;
+
+	if (parse_options(argc, argv))
+		return 1;
+
+	if (backend_init())
+		return 1;
+
 	switch(cmd) {
 	case GETCFAM:
-		if (getcfam(&u32_value, cmd_args[0]))
-			PR_ERROR("Error writing register\n");
-		else
-			printf("0x%llx: 0x%08x\n", cmd_args[0], u32_value);
+		rc = for_each_class_call(&cfams, NULL, getaddr, NULL, cmd_args[0], &value);
 		break;
 	case GETSCOM:
-		if (getscom(&value, cmd_args[0]))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("0x%llx: 0x%016llx\n", cmd_args[0], value);
+		rc = for_each_class_call(&processors, NULL, getaddr, NULL, cmd_args[0], &value);
 		break;
 	case PUTCFAM:
-		if (putcfam(cmd_args[1], cmd_args[0]))
-			PR_ERROR("Error writing register\n");
-		else
-			printf("0x%llx: 0x%08llx\n", cmd_args[0], cmd_args[1]);
+		rc = for_each_class_call(&cfams, NULL, putaddr, NULL, cmd_args[0], &cmd_args[1]);
 		break;
 	case PUTSCOM:
-		if (putscom(cmd_args[1], cmd_args[0]))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("0x%llx: 0x%016llx\n", cmd_args[0], cmd_args[1]);
+		rc = for_each_class_call(&processors, NULL, putaddr, NULL, cmd_args[0], &cmd_args[1]);
 		break;
 	case GETMEM:
+		/* It doesn't matter which processor we execute on so
+		 * just use the primary one */
+		target = list_entry(processors.targets.n.next, struct target, class_link);
 		buf = malloc(cmd_args[1]);
-		if (!adu_getmem(cmd_args[0], buf, cmd_args[1]))
+		if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1]))
 			write(STDOUT_FILENO, buf, cmd_args[1]);
 		else
 			PR_ERROR("Unable to read memory.\n");
@@ -338,57 +734,55 @@ int main(int argc, char *argv[])
 		free(buf);
 		break;
 	case GETGPR:
-		if (stop_chip())
-			break;
-
-		if (ram_getgpr(chip, thread, cmd_args[0], &value))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("r%lld = 0x%016llx\n", cmd_args[0], value);
-
-		start_chip();
+		rc = for_each_class_call(&threads, NULL, getreg, NULL, cmd_args[0], &value);
+		break;
+	case PUTGPR:
+		rc = for_each_class_call(&threads, NULL, putreg, NULL, cmd_args[0], &cmd_args[1]);
 		break;
 	case GETNIA:
-		if (stop_chip())
-			break;
-
-		if (ram_getnia(chip, thread, &value))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("pc = 0x%016llx\n", value);
-
-		start_chip();
+		rc = for_each_class_call(&threads, NULL, getreg, NULL, REG_NIA, &value);
+		break;
+	case PUTNIA:
+		rc = for_each_class_call(&threads, NULL, putreg, NULL, REG_NIA, &cmd_args[0]);
 		break;
 	case GETSPR:
-		if (stop_chip())
-			break;
-
-		if (ram_getspr(chip, thread, cmd_args[0], &value))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("spr%lld = 0x%016llx\n", cmd_args[0], value);
-
-		start_chip();
+		rc = for_each_class_call(&threads, NULL, getreg, NULL, cmd_args[0] + 32, &value);
 		break;
-	case STOPCHIP:
-		stop_chip();
-		printf("Previously active thread mask: 0x%02llx\n", active_threads);
-		print_thread_status();
+	case PUTSPR:
+		rc = for_each_class_call(&threads, NULL, putreg, NULL, cmd_args[0] + 32, &cmd_args[1]);
 		break;
-	case STARTCHIP:
-		active_threads = cmd_args[0];
-		start_chip();
-		print_thread_status();
+	case GETMSR:
+		rc = for_each_class_call(&threads, NULL, getreg, NULL, REG_MSR, &value);
+		break;
+	case PUTMSR:
+		rc = for_each_class_call(&threads, NULL, putreg, NULL, REG_MSR, &cmd_args[0]);
 		break;
 	case THREADSTATUS:
-		print_thread_status();
+		printf("  t: 0 1 2 3 4 5 6 7\n");
+		rc = for_each_class_call(&chiplets, NULL, print_chiplet_thread_status, NULL, 0, 0);
+		printf("\nA - Active\nS - Sleep\nN - Nap\nD - Doze\nQ - Quiesced/Stopped\nU - Unknown\n");
+		break;
+	case STARTCHIP:
+		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, 1, NULL);
+		break;
+	case STEP:
+		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, 2, &cmd_args[0]);
+		break;
+	case STOPCHIP:
+		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, 0, NULL);
 		break;
 	case PROBE:
 		probe();
 		break;
 	}
 
-	backend_destroy();
+	if (!rc) {
+		printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
+		printf("Alternatively run %s -a probe to get a list of all valid targets\n", argv[0]);
+	}
+
+	/* TODO: We don't properly tear down all the targets yet */
+	targets[0].destroy(&targets[0]);
 
 	return rc;
 }
