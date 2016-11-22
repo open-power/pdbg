@@ -58,6 +58,7 @@ int ram_getspr(struct target *thread, int spr, uint64_t *value);
 int ram_putspr(struct target *thread, int spr, uint64_t value);
 int ram_getmsr(struct target *thread, uint64_t *value);
 int ram_putmsr(struct target *thread, uint64_t value);
+int ram_getmem(struct target *thread, uint64_t addr, uint64_t *value);
 uint64_t chiplet_thread_status(struct target *thread);
 int ram_stop_thread(struct target *thread);
 int ram_step_thread(struct target *thread, int count);

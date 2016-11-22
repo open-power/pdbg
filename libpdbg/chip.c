@@ -77,6 +77,7 @@
 #define MTMSR_OPCODE 0x7c000124UL
 #define MFSPR_OPCODE 0x7c0002a6UL
 #define MTSPR_OPCODE 0x7c0003a6UL
+#define LD_OPCODE 0xe8000000UL
 
 static uint64_t mfspr(uint64_t reg, uint64_t spr)
 {
@@ -124,6 +125,14 @@ static uint64_t mtmsr(uint64_t reg)
 		PR_ERROR("Invalid register specified\n");
 
 	return MTMSR_OPCODE | (reg << 21);
+}
+
+static uint64_t ld(uint64_t rt, uint64_t ds, uint64_t ra)
+{
+	if ((rt > 31) | (ra > 31) | (ds > 0x3fff))
+		PR_ERROR("Invalid register specified\n");
+
+	return LD_OPCODE | (rt << 21) | (ra << 16) | (ds << 2);
 }
 
 static int assert_special_wakeup(struct target *chip)
@@ -295,10 +304,11 @@ int ram_start_thread(struct target *thread)
 static int ram_instructions(struct target *thread, uint64_t *opcodes,
 			    uint64_t *results, int len, unsigned int lpar)
 {
-	uint64_t ram_mode, val, opcode, r0 = 0;
+	uint64_t ram_mode, val, opcode, r0 = 0, r1 = 0;
 	struct target *chiplet = thread->next;
 	int thread_id = (thread->base >> 4) & 0x7;
 	int i;
+	int exception = 0;
 
 	/* Activate RAM mode */
 	CHECK_ERR(read_target(chiplet, RAM_MODE_REG, &ram_mode));
@@ -313,16 +323,22 @@ static int ram_instructions(struct target *thread, uint64_t *opcodes,
 	CHECK_ERR(write_target(chiplet, L0_SCOM_SPRC_REG, SCOM_SPRC_SCRATCH_SPR));
 
 	/* RAM instructions */
-	for (i = -1; i <= len; i++) {
-		if (i < 0)
+	for (i = -2; i < len + 2; i++) {
+		if (i == -2)
+			opcode = mtspr(277, 1);
+		else if (i == -1)
 			/* Save r0 (assumes opcodes don't touch other registers) */
 			opcode = mtspr(277, 0);
 		else if (i < len) {
 			CHECK_ERR(write_target(chiplet, SCR0_REG, results[i]));
 			opcode = opcodes[i];
-		} else if (i >= len) {
+		} else if (i == len) {
 			/* Restore r0 */
 			CHECK_ERR(write_target(chiplet, SCR0_REG, r0));
+			opcode = mfspr(0, 277);
+		} else if (i == len + 1) {
+			/* Restore r1 */
+			CHECK_ERR(write_target(chiplet, SCR0_REG, r1));
 			opcode = mfspr(0, 277);
 		}
 
@@ -334,14 +350,23 @@ static int ram_instructions(struct target *thread, uint64_t *opcodes,
 		/* wait for completion */
 		do {
 			CHECK_ERR(read_target(chiplet, RAM_STATUS_REG, &val));
-		} while (!val);
+		} while (!((val & PPC_BIT(1)) || ((val & PPC_BIT(2)) && (val & PPC_BIT(3)))));
 
-		if (!(val & RAM_STATUS))
-			PR_ERROR("RAMMING failed with status 0x%llx\n", val);
+		if (!(val & PPC_BIT(1))) {
+			exception = GETFIELD(PPC_BITMASK(2,3), val) == 0x3;
+			if (exception) {
+				/* Skip remaining instructions */
+				i = len - 1;
+				continue;
+			} else
+				PR_ERROR("RAMMING failed with status 0x%llx\n", val);
+		}
 
 		/* Save the results */
 		CHECK_ERR(read_target(chiplet, SCR0_REG, &val));
-		if (i < 0)
+		if (i == -2)
+			r1 = val;
+		else if (i == -1)
 			r0 = val;
 		else if (i < len)
 			results[i] = val;
@@ -351,7 +376,7 @@ static int ram_instructions(struct target *thread, uint64_t *opcodes,
 	ram_mode &= ~RAM_MODE_ENABLE;
 	CHECK_ERR(write_target(chiplet, RAM_MODE_REG, ram_mode));
 
-	return 0;
+	return exception;
 }
 
 /*
@@ -431,6 +456,16 @@ int ram_putmsr(struct target *thread, uint64_t value)
 	uint64_t results[] = {value, 0};
 
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
+	return 0;
+}
+
+int ram_getmem(struct target *thread, uint64_t addr, uint64_t *value)
+{
+	uint64_t opcodes[] = {mfspr(0, 277), mfspr(1, 277), ld(0, 0, 1), mtspr(277, 0)};
+	uint64_t results[] = {0xdeaddeaddeaddead, addr, 0, 0};
+
+	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
+	*value = results[3];
 	return 0;
 }
 

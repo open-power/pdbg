@@ -36,7 +36,7 @@ enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
 	       GETMEM, PUTMEM, GETGPR, GETNIA, GETSPR,	\
 	       GETMSR, PUTGPR, PUTNIA, PUTSPR, PUTMSR,	\
 	       STOPCHIP, STARTCHIP, THREADSTATUS, STEP, \
-	       PROBE };
+	       PROBE, GETVMEM };
 
 #define MAX_CMD_ARGS 2
 enum command cmd = 0;
@@ -113,6 +113,7 @@ static void print_usage(char *pname)
 	printf("\tgetscom <address>\n");
 	printf("\tputscom <address> <value>\n");
 	printf("\tgetmem <address> <count>\n");
+	printf("\tgetvmem <virtual address>\n");
 	printf("\tgetgpr <gpr>\n");
 	printf("\tputgpr <gpr> <value>\n");
 	printf("\tgetnia\n");
@@ -166,6 +167,9 @@ enum command parse_cmd(char *optarg)
 		cmd_arg_count = 0;
 	} else if (strcmp(optarg, "putmsr") == 0) {
 		cmd = PUTMSR;
+		cmd_arg_count = 1;
+	} else if (strcmp(optarg, "getvmem") == 0) {
+		cmd = GETVMEM;
 		cmd_arg_count = 1;
 	} else if (strcmp(optarg, "startchip") == 0) {
 		cmd = STARTCHIP;
@@ -616,11 +620,12 @@ static int startstopstep_thread(struct target *thread, uint64_t action, uint64_t
  */
 static int startstopstep_chip(struct target *chiplet, uint64_t action, uint64_t *data)
 {
-	for_each_class_call(&threads, filter_parent, startstopstep_thread, chiplet, action, NULL);
+	for_each_class_call(&threads, filter_parent, startstopstep_thread, chiplet, action, data);
 
 	return 0;
 }
 
+#define REG_MEM -3ULL
 #define REG_MSR -2ULL
 #define REG_NIA -1ULL
 #define REG_R31 31ULL
@@ -663,6 +668,7 @@ static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
 static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
 {
 	uint64_t status = chiplet_thread_status(thread);
+	uint64_t addr = *data;
 
 	if (status != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE)) {
 		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
@@ -671,17 +677,22 @@ static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
 		return 0;
 	}
 
-	 if (reg == REG_NIA)
+	if (reg == REG_NIA)
 		if (ram_getnia(thread, data))
 			PR_ERROR("Error reading register\n");
 		else
 			printf("c%02d:t%d:nia = 0x%016llx\n", thread->next->index, thread->index, *data);
-	 else if (reg == REG_MSR)
-		 if (ram_getmsr(thread, data))
-			 PR_ERROR("Error reading register\n");
-		 else
+	else if (reg == REG_MSR)
+		if (ram_getmsr(thread, data))
+			PR_ERROR("Error reading register\n");
+		else
 			printf("c%02d:t%d:msr = 0x%016llx\n", thread->next->index, thread->index, *data);
-	 else if (reg <= REG_R31)
+	else if (reg == REG_MEM)
+		if (ram_getmem(thread, addr, data))
+			PR_ERROR("Page fault reading memory\n");
+		else
+			printf("c%02d:t%d:0x%016llx = 0x%016llx\n", thread->next->index, thread->index, addr, *data);
+	else if (reg <= REG_R31)
 		if (ram_getgpr(thread, reg, data))
 			PR_ERROR("Error reading register\n");
 		else
@@ -756,6 +767,9 @@ int main(int argc, char *argv[])
 		break;
 	case PUTMSR:
 		rc = for_each_class_call(&threads, NULL, putreg, NULL, REG_MSR, &cmd_args[0]);
+		break;
+	case GETVMEM:
+		rc = for_each_class_call(&threads, NULL, getreg, NULL, REG_MEM, &cmd_args[0]);
 		break;
 	case THREADSTATUS:
 		printf("  t: 0 1 2 3 4 5 6 7\n");
