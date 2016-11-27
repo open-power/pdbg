@@ -641,26 +641,28 @@ static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
 		return 0;
 	}
 
-	 if (reg == REG_NIA)
+	if (reg == REG_NIA)
 		if (ram_putnia(thread, *data))
 			PR_ERROR("Error reading register\n");
 		else
 			printf("c%02d:t%d:nia = 0x%016llx\n", thread->next->index, thread->index, *data);
-	 else if (reg == REG_MSR)
+	else if (reg == REG_MSR)
 		if (ram_putmsr(thread, *data))
 			PR_ERROR("Error reading register\n");
 		else
 			printf("c%02d:t%d:msr = 0x%016llx\n", thread->next->index, thread->index, *data);
-	 else if (reg <= REG_R31)
+	else if (reg <= REG_R31)
 		if (ram_putgpr(thread, reg, *data))
 			PR_ERROR("Error reading register\n");
 		else
 			printf("c%02d:t%d:r%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
-	 else
+	else {
+		reg -= 32;
 		if (ram_putspr(thread, reg, *data))
 			PR_ERROR("Error reading register\n");
 		else
 			printf("c%02d:t%d:spr%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
+	}
 
 	return 0;
 }
@@ -697,11 +699,13 @@ static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
 			PR_ERROR("Error reading register\n");
 		else
 			printf("c%02d:t%d:r%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
-	else
+	else {
+		reg -= 32;
 		if (ram_getspr(thread, reg, data))
 			PR_ERROR("Error reading register\n");
 		else
 			printf("c%02d:t%d:spr%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
+	}
 
 	return 0;
 }
