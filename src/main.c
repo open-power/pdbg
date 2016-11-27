@@ -712,7 +712,7 @@ static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
 
 int main(int argc, char *argv[])
 {
-	int rc = 1;
+	int rc = 0;
 	uint64_t value = 0;
 	uint8_t *buf;
 	struct target *target;
@@ -739,11 +739,15 @@ int main(int argc, char *argv[])
 	case GETMEM:
 		/* It doesn't matter which processor we execute on so
 		 * just use the primary one */
+		if (list_empty(&processors.targets))
+			break;
+
 		target = list_entry(processors.targets.n.next, struct target, class_link);
 		buf = malloc(cmd_args[1]);
-		if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1]))
+		if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1])) {
+			rc = 1;
 			write(STDOUT_FILENO, buf, cmd_args[1]);
-		else
+		} else
 			PR_ERROR("Unable to read memory.\n");
 
 		free(buf);
@@ -790,6 +794,7 @@ int main(int argc, char *argv[])
 		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, 0, NULL);
 		break;
 	case PROBE:
+		rc = 1;
 		probe();
 		break;
 	}
