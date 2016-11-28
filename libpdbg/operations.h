@@ -41,6 +41,7 @@
 
 /* Alter display unit functions */
 int adu_getmem(struct target *target, uint64_t addr, uint8_t *output, uint64_t size);
+int adu_putmem(struct target *target, uint64_t start_addr, uint8_t *input, uint64_t size);
 
 /* Functions to ram instructions */
 #define THREAD_STATUS_ACTIVE	PPC_BIT(63)

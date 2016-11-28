@@ -113,6 +113,7 @@ static void print_usage(char *pname)
 	printf("\tgetscom <address>\n");
 	printf("\tputscom <address> <value>\n");
 	printf("\tgetmem <address> <count>\n");
+	printf("\tputmem <address>\n");
 	printf("\tgetvmem <virtual address>\n");
 	printf("\tgetgpr <gpr>\n");
 	printf("\tputgpr <gpr> <value>\n");
@@ -144,6 +145,9 @@ enum command parse_cmd(char *optarg)
 	} else if (strcmp(optarg, "getmem") == 0) {
 		cmd = GETMEM;
 		cmd_arg_count = 2;
+	} else if (strcmp(optarg, "putmem") == 0) {
+		cmd = PUTMEM;
+		cmd_arg_count = 1;
 	} else if (strcmp(optarg, "getgpr") == 0) {
 		cmd = GETGPR;
 		cmd_arg_count = 1;
@@ -710,6 +714,36 @@ static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
 	return 0;
 }
 
+#define PUTMEM_BUF_SIZE 1024
+static int putmem(uint64_t addr)
+{
+	uint8_t *buf;
+	int read_size, rc = 0;
+	struct target *target;
+
+	/* It doesn't matter which processor we execute on so
+	 * just use the primary one */
+	if (list_empty(&processors.targets))
+		return 0;
+
+	target = list_entry(processors.targets.n.next, struct target, class_link);
+	buf = malloc(PUTMEM_BUF_SIZE);
+	assert(buf);
+	do {
+		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
+		if (adu_putmem(target, addr, buf, read_size)) {
+			rc = 0;
+			PR_ERROR("Unable to write memory.\n");
+			break;
+		}
+
+		rc += read_size;
+	} while (read_size > 0);
+
+	free(buf);
+	return rc;
+}
+
 int main(int argc, char *argv[])
 {
 	int rc = 0;
@@ -744,6 +778,7 @@ int main(int argc, char *argv[])
 
 		target = list_entry(processors.targets.n.next, struct target, class_link);
 		buf = malloc(cmd_args[1]);
+		assert(buf);
 		if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1])) {
 			rc = 1;
 			write(STDOUT_FILENO, buf, cmd_args[1]);
@@ -751,6 +786,10 @@ int main(int argc, char *argv[])
 			PR_ERROR("Unable to read memory.\n");
 
 		free(buf);
+		break;
+	case PUTMEM:
+		rc = putmem(cmd_args[0]);
+		printf("Wrote %d bytes starting at 0x%016llx\n", rc, cmd_args[0]);
 		break;
 	case GETGPR:
 		rc = for_each_class_call(&threads, NULL, getreg, NULL, cmd_args[0], &value);

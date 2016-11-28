@@ -47,6 +47,7 @@
 /* ALTD_CONTROL_REG fields */
 #define FBC_ALTD_TTYPE		PPC_BITMASK(0, 5)
 #define TTYPE_TREAD 		PPC_BIT(6)
+#define TTYPE_TWRITE 		0
 #define FBC_ALTD_TSIZE		PPC_BITMASK(7, 13)
 #define FBC_ALTD_ADDRESS	PPC_BITMASK(14, 63)
 
@@ -171,7 +172,75 @@ int adu_getmem(struct target *target, uint64_t start_addr, uint8_t *output, uint
 			memcpy(output, &data, 8);
 			output += 8;
 		}
+	}
 
+	adu_unlock(target);
+
+	return rc;
+}
+
+int adu_putmem(struct target *target, uint64_t start_addr, uint8_t *input, uint64_t size)
+{
+	int rc = 0, tsize;
+	uint64_t addr, cmd_reg, ctrl_reg, val, data, end_addr;
+
+	CHECK_ERR(adu_lock(target));
+
+	ctrl_reg = TTYPE_TWRITE;
+	ctrl_reg = SETFIELD(FBC_ALTD_TTYPE, ctrl_reg, TTYPE_DMA_PARTIAL_WRITE);
+
+	CHECK_ERR(read_target(target, ALTD_CMD_REG, &cmd_reg));
+	cmd_reg |= FBC_ALTD_START_OP;
+	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
+	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
+
+	end_addr = start_addr + size;
+	for (addr = start_addr; addr < end_addr; addr += tsize, input += tsize) {
+		if ((addr % 8) || (addr + 8 > end_addr)) {
+			/* If the address is not 64-bit aligned we
+			 * copy in a byte at a time until it is. */
+			tsize = 1;
+
+			/* Copy the input data in with correct alignment */
+			data = ((uint64_t) *input) << 8*(8 - (addr % 8) - 1);
+		} else {
+			tsize = 8;
+			memcpy(&data, input, sizeof(data));
+			data = __builtin_bswap64(data);
+		}
+		ctrl_reg = SETFIELD(FBC_ALTD_TSIZE, ctrl_reg, tsize);
+
+	retry:
+		/* Clear status bits */
+		CHECK_ERR(adu_reset(target));
+
+		/* Set the address */
+		ctrl_reg = SETFIELD(FBC_ALTD_ADDRESS, ctrl_reg, addr);
+		CHECK_ERR(write_target(target, ALTD_CONTROL_REG, ctrl_reg));
+
+		/* Write the data */
+		CHECK_ERR(write_target(target, ALTD_DATA_REG, data));
+
+		/* Start the command */
+		CHECK_ERR(write_target(target, ALTD_CMD_REG, cmd_reg));
+
+		/* Wait for completion */
+		do {
+			CHECK_ERR(read_target(target, ALTD_STATUS_REG, &val));
+		} while (!val);
+
+		if( !(val & FBC_ALTD_ADDR_DONE) ||
+		    !(val & FBC_ALTD_DATA_DONE)) {
+			/* PBINIT_MISSING is expected occasionally so just retry */
+			if (val & FBC_ALTD_PBINIT_MISSING)
+				goto retry;
+			else {
+				PR_ERROR("Unable to write memory. "	\
+					 "ALTD_STATUS_REG = 0x%016llx\n", val);
+				rc = -1;
+				break;
+			}
+		}
 	}
 
 	adu_unlock(target);
