@@ -44,6 +44,7 @@ int adu_getmem(struct target *target, uint64_t addr, uint8_t *output, uint64_t s
 int adu_putmem(struct target *target, uint64_t start_addr, uint8_t *input, uint64_t size);
 
 /* Functions to ram instructions */
+#define THREAD_STATUS_DISABLED  PPC_BIT(0)
 #define THREAD_STATUS_ACTIVE	PPC_BIT(63)
 #define THREAD_STATUS_STATE	PPC_BITMASK(61, 62)
 #define THREAD_STATUS_DOZE	PPC_BIT(62)

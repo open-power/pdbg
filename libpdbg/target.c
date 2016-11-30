@@ -16,6 +16,7 @@ void target_init(struct target *target, const char *name, uint64_t base,
 	target->write = write;
 	target->destroy = destroy;
 	target->next = next;
+	target->status = 0;
 
 	list_head_init(&target->children);
 

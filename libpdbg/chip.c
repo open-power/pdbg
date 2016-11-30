@@ -172,7 +172,7 @@ uint64_t chiplet_thread_status(struct target *thread)
 
 static uint64_t get_thread_status(struct target *thread)
 {
-	uint64_t val, mode_reg, thread_status = 0;
+	uint64_t val, mode_reg, thread_status = thread->status;
 
 	/* Need to activete debug mode to get complete status */
 	CHECK_ERR(read_target(thread, RAS_MODE_REG, &mode_reg));
@@ -182,11 +182,8 @@ static uint64_t get_thread_status(struct target *thread)
 	/* Read status */
 	CHECK_ERR(read_target(thread, RAS_STATUS_REG, &val));
 
-	if (val & RAS_STATUS_THREAD_ACTIVE)
-		thread_status |= THREAD_STATUS_ACTIVE;
-
-	if (val & RAS_STATUS_TS_QUIESCE)
-		thread_status |= THREAD_STATUS_QUIESCE;
+	thread_status = SETFIELD(THREAD_STATUS_ACTIVE, thread_status, !!(val & RAS_STATUS_THREAD_ACTIVE));
+	thread_status = SETFIELD(THREAD_STATUS_QUIESCE, thread_status, !!(val & RAS_STATUS_TS_QUIESCE));
 
 	/* Read POW status */
 	CHECK_ERR(read_target(thread, POW_STATUS_REG, &val));
@@ -235,10 +232,6 @@ int ram_stop_thread(struct target *thread)
 	uint64_t val;
 	struct target *chip = thread->next;
 
-	/* Skip inactive threads */
-	if (!GETFIELD(THREAD_STATUS_ACTIVE, thread->status))
-		return -1;
-
 	do {
 		/* Quiese active thread */
 		CHECK_ERR(write_target(thread, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STOP));
@@ -277,9 +270,6 @@ int ram_start_thread(struct target *thread)
 	uint64_t val;
 	struct target *chip = thread->next;
 	int thread_id = (thread->base >> 4) & 0x7;
-
-	if (!GETFIELD(THREAD_STATUS_ACTIVE, thread->status))
-		return -1;
 
 	/* Activate thread */
 	CHECK_ERR(write_target(thread, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));

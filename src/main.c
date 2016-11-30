@@ -430,8 +430,9 @@ static int backend_init(void)
 	for_each_chiplet(chiplet) {
 		thread_count += thread_target_probe(chiplet, target, MAX_TARGETS - target_count);
 		for (i = 0; j < thread_count; i++, j++) {
-			if (chip[chiplet->next->index][chiplet->index][j])
-				target_class_add(&threads, target, i);
+			target_class_add(&threads, target, i);
+			if (!chip[chiplet->next->index][chiplet->index][j])
+				target->status |= THREAD_STATUS_DISABLED;
 			target++;
 		}
 	}
@@ -504,6 +505,24 @@ static int filter_parent(struct target *target, void *priv)
 static int for_each_class_call(struct target_class *class, int (*filter)(struct target *, void *),
 			       int (*cb)(struct target *, uint64_t, uint64_t *),
 			       void *priv, uint64_t addr, uint64_t *data)
+{
+	struct target *target;
+	int rc, count = 0;
+
+	list_for_each(&class->targets, target, class_link)
+		if ((!filter || filter(target, priv)) && !(target->status & THREAD_STATUS_DISABLED)) {
+			count++;
+			if((rc = cb(target, addr, data)))
+				return rc;
+		}
+
+	return count;
+}
+
+/* Same as above but calls cb() on all targets rather than just active ones */
+static int for_each_class_call_all(struct target_class *class, int (*filter)(struct target *, void *),
+				   int (*cb)(struct target *, uint64_t, uint64_t *),
+				   void *priv, uint64_t addr, uint64_t *data)
 {
 	struct target *target;
 	int rc, count = 0;
@@ -599,13 +618,16 @@ static int putaddr(struct target *target, uint64_t addr, uint64_t *data)
 	return rc;
 }
 
+#define START_CHIP 1
+#define STEP_CHIP 2
+#define STOP_CHIP 3
 static int startstopstep_thread(struct target *thread, uint64_t action, uint64_t *data)
 {
 	uint64_t status;
 
-	if (action == 1)
+	if (action == START_CHIP)
 		return ram_start_thread(thread);
-	else if (action == 2) {
+	else if (action == STEP_CHIP) {
 		status = chiplet_thread_status(thread);
 		if (!(GETFIELD(THREAD_STATUS_QUIESCE, status) && GETFIELD(THREAD_STATUS_ACTIVE, status))) {
 			PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
@@ -624,9 +646,22 @@ static int startstopstep_thread(struct target *thread, uint64_t action, uint64_t
  */
 static int startstopstep_chip(struct target *chiplet, uint64_t action, uint64_t *data)
 {
-	for_each_class_call(&threads, filter_parent, startstopstep_thread, chiplet, action, data);
+	if (action == STEP_CHIP)
+		for_each_class_call(&threads, filter_parent, startstopstep_thread, chiplet, action, data);
+	else
+		for_each_class_call_all(&threads, filter_parent, startstopstep_thread, chiplet, action, data);
 
 	return 0;
+}
+
+static int check_thread_status(struct target *thread, uint64_t unused, uint64_t *unused1)
+{
+	uint64_t status = chiplet_thread_status(thread);
+
+	if (status & THREAD_STATUS_QUIESCE)
+		return 0;
+	else
+		return -1;
 }
 
 #define REG_MEM -3ULL
@@ -636,13 +671,17 @@ static int startstopstep_chip(struct target *chiplet, uint64_t action, uint64_t 
 
 static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
 {
-	uint64_t status = chiplet_thread_status(thread);
+	struct target *chiplet = thread->next;
 
-	if (status != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE)) {
+	if (for_each_class_call_all(&threads, filter_parent, check_thread_status, chiplet, 0, NULL) < 0) {
+		PR_ERROR("Not all threads are quiesced. Use the stopchip command"
+			 " first to ensure all chiplet threads are quiesced\n");
+		return -1;
+	}
+
+	if (!((thread->status & THREAD_STATUS_ACTIVE) && (thread->status & THREAD_STATUS_QUIESCE))) {
 		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
-
-		/* Return 0 so we continue stepping other threads if requested */
-		return 0;
+		return -1;
 	}
 
 	if (reg == REG_NIA)
@@ -673,14 +712,18 @@ static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
 
 static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
 {
-	uint64_t status = chiplet_thread_status(thread);
+	struct target *chiplet = thread->next;
 	uint64_t addr = *data;
 
-	if (status != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE)) {
-		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
+	if (for_each_class_call_all(&threads, filter_parent, check_thread_status, chiplet, 0, NULL) < 0) {
+		PR_ERROR("Not all threads are quiesced. Use the stopchip command"
+			 " first to ensure all chiplet threads are quiesced.\n");
+		return -1;
+	}
 
-		/* Return 0 so we continue stepping other threads if requested */
-		return 0;
+	if (!((thread->status & THREAD_STATUS_ACTIVE) && (thread->status & THREAD_STATUS_QUIESCE))) {
+		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
+		return -1;
 	}
 
 	if (reg == REG_NIA)
@@ -824,13 +867,13 @@ int main(int argc, char *argv[])
 		printf("\nA - Active\nS - Sleep\nN - Nap\nD - Doze\nQ - Quiesced/Stopped\nU - Unknown\n");
 		break;
 	case STARTCHIP:
-		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, 1, NULL);
+		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, START_CHIP, NULL);
 		break;
 	case STEP:
-		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, 2, &cmd_args[0]);
+		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, STEP_CHIP, &cmd_args[0]);
 		break;
 	case STOPCHIP:
-		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, 0, NULL);
+		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, STOP_CHIP, NULL);
 		break;
 	case PROBE:
 		rc = 1;
