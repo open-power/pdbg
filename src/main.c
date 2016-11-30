@@ -664,12 +664,7 @@ static int check_thread_status(struct target *thread, uint64_t unused, uint64_t 
 		return -1;
 }
 
-#define REG_MEM -3ULL
-#define REG_MSR -2ULL
-#define REG_NIA -1ULL
-#define REG_R31 31ULL
-
-static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
+static int check_state(struct target *thread)
 {
 	struct target *chiplet = thread->next;
 
@@ -680,9 +675,29 @@ static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
 	}
 
 	if (!((thread->status & THREAD_STATUS_ACTIVE) && (thread->status & THREAD_STATUS_QUIESCE))) {
-		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
-		return -1;
+		PR_ERROR("Skipping thread %d as it is not active.\n", thread->index);
+		return -2;
 	}
+
+	return 0;
+}
+
+#define REG_MEM -3ULL
+#define REG_MSR -2ULL
+#define REG_NIA -1ULL
+#define REG_R31 31ULL
+
+static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
+{
+	int state;
+
+	state = check_state(thread);
+	if (state == -2)
+		/* Return 0 so we keep attempting other non-sleeping
+		 * threads on the chiplet if requested */
+		return 0;
+	else if (state)
+		return state;
 
 	if (reg == REG_NIA)
 		if (ram_putnia(thread, *data))
@@ -712,19 +727,16 @@ static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
 
 static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
 {
-	struct target *chiplet = thread->next;
 	uint64_t addr = *data;
+	int state;
 
-	if (for_each_class_call_all(&threads, filter_parent, check_thread_status, chiplet, 0, NULL) < 0) {
-		PR_ERROR("Not all threads are quiesced. Use the stopchip command"
-			 " first to ensure all chiplet threads are quiesced.\n");
-		return -1;
-	}
-
-	if (!((thread->status & THREAD_STATUS_ACTIVE) && (thread->status & THREAD_STATUS_QUIESCE))) {
-		PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
-		return -1;
-	}
+	state = check_state(thread);
+	if (state == -2)
+		/* Return 0 so we keep attempting other non-sleeping
+		 * threads on the chiplet if requested */
+		return 0;
+	else if (state)
+		return state;
 
 	if (reg == REG_NIA)
 		if (ram_getnia(thread, data))
