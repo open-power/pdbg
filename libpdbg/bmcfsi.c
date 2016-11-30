@@ -41,8 +41,7 @@
 #define GPIO_BASE	0x1e780000
 #define GPIO_DATA	0x0
 #define GPIO_DIR	0x4
-#define GPIOE_DATA	0x20
-#define GPIOE_DIR	0x24
+#define GPIOS_PER_REGBLOCK	(8 * 4)
 
 #define CRC_LEN		4
 
@@ -95,76 +94,85 @@ static void writel(uint32_t val, void *addr)
 	*(volatile uint32_t *) addr = val;
 }
 
+static const uintptr_t regblock_offsets[] = {
+	0x000,		/* GPIO_A/B/C/D */
+	0x020,		/* GPIO_E/F/G/H */
+	0x070,		/* GPIO_I/J/K/L */
+	0x078,		/* GPIO_M/N/O/P */
+	0x080,		/* GPIO_Q/R/S/T */
+	0x088,		/* GPIO_U/V/W/X */
+	0x1e0,		/* GPIO_Y/Z/AA/AB */
+	0x1e8,		/* GPIO_AC */
+};
+static const size_t num_regblocks = sizeof(regblock_offsets) /
+	sizeof(*regblock_offsets);
+
+static void *get_gpio_reg(int gpio)
+{
+	int block_index = gpio / GPIOS_PER_REGBLOCK;
+	if (block_index >= num_regblocks || block_index < 0)
+		fprintf(stderr, "Error: no GPIO regblock for GPIO #%d\n", gpio);
+	return gpio_reg + regblock_offsets[block_index];
+}
+
+static int get_gpio_bit(int gpio)
+{
+	/* GPIO_AC has only one eight-GPIO block */
+	if (gpio >= num_regblocks * GPIOS_PER_REGBLOCK - 24)
+		fprintf(stderr, "Error: GPIO #%d out of bounds\n", gpio);
+	return gpio % GPIOS_PER_REGBLOCK;
+}
+
 static int __attribute__((unused)) get_direction(int gpio)
 {
-	void *offset = gpio_reg + GPIO_DIR;
+	void *reg = get_gpio_reg(gpio) + GPIO_DIR;
+	int bit = get_gpio_bit(gpio);
 
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DIR;
-	}
-
-	return !!(readl(offset) & (1ULL << gpio));
+	return !!(readl(reg) & (1ULL << bit));
 }
 
 static void set_direction_out(int gpio)
 {
 	uint32_t x;
-	void *offset = gpio_reg + GPIO_DIR;
+	void *reg = get_gpio_reg(gpio) + GPIO_DIR;
+	int bit = get_gpio_bit(gpio);
 
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DIR;
-	}
-
-	x = readl(offset);
-	x |= 1ULL << gpio;
-	writel(x, offset);
+	x = readl(reg);
+	x |= 1ULL << bit;
+	writel(x, reg);
 }
 
 static void set_direction_in(int gpio)
 {
 	uint32_t x;
-	void *offset = gpio_reg + GPIO_DIR;
+	void *reg = get_gpio_reg(gpio) + GPIO_DIR;
+	int bit = get_gpio_bit(gpio);
 
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DIR;
-	}
-
-	x = readl(offset);
-	x &= ~(1ULL << gpio);
-	writel(x, offset);
+	x = readl(reg);
+	x &= ~(1ULL << bit);
+	writel(x, reg);
 }
 
 static int read_gpio(int gpio)
 {
-	void *offset = gpio_reg + GPIO_DATA;
+	void *reg = get_gpio_reg(gpio) + GPIO_DATA;
+	int bit = get_gpio_bit(gpio);
 
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DATA;
-	}
-
-	return (readl(offset) >> gpio) & 0x1;
+	return (readl(reg) >> bit) & 0x1;
 }
 
 static void write_gpio(int gpio, int val)
 {
 	uint32_t x;
-	void *offset = gpio_reg + GPIO_DATA;
+	void *reg = get_gpio_reg(gpio) + GPIO_DATA;
+	int bit = get_gpio_bit(gpio);
 
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DATA;
-	}
-
-	x = readl(offset);
+	x = readl(reg);
 	if (val)
-		x |= 1ULL << gpio;
+		x |= 1ULL << bit;
 	else
-		x &= ~(1ULL << gpio);
-	writel(x, offset);
+		x &= ~(1ULL << bit);
+	writel(x, reg);
 }
 
 static inline void clock_cycle(int gpio, int num_clks)
