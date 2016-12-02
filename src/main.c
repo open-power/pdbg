@@ -893,10 +893,12 @@ int main(int argc, char *argv[])
 		break;
 	}
 
-	if (!rc) {
+	if (rc <= 0) {
 		printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
 		printf("Alternatively run %s -a probe to get a list of all valid targets\n", argv[0]);
-	}
+		rc = -1;
+	} else
+	  rc = 0;
 
 	/* TODO: We don't properly tear down all the targets yet */
 	targets[0].destroy(&targets[0]);
