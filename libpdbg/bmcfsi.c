@@ -28,23 +28,57 @@
 #include "operations.h"
 #include "target.h"
 
-#define FSI_CLK		4	//GPIOA4
-#define FSI_DAT		5	//GPIOA5
-#define CRONUS_SEL	6	//GPIOA6
-#define PCIE_RST_N	13	//GPIOB5
-#define PEX_PERST_N	14	//GPIOB6
-#define POWER		33    	//GPIOE1
-#define PGOOD		23    	//GPIOC7
-#define FSI_ENABLE      24      //GPIOD0
-#define FSI_DAT_EN	62	//GPIOH6
-
 #define GPIO_BASE	0x1e780000
 #define GPIO_DATA	0x0
 #define GPIO_DIR	0x4
-#define GPIOE_DATA	0x20
-#define GPIOE_DIR	0x24
 
 #define CRC_LEN		4
+
+/* Defines a GPIO. The Aspeed devices dont have consistent stride
+ * between registers so we need to encode register bit number and base
+ * address offset */
+struct gpio_pin {
+	uint32_t offset;
+	int bit;
+};
+
+enum gpio {
+	GPIO_FSI_CLK = 0,
+	GPIO_FSI_DAT = 1,
+	GPIO_FSI_DAT_EN = 2,
+	GPIO_FSI_ENABLE = 3,
+	GPIO_CRONUS_SEL = 4,
+};
+
+/* POWER8 GPIO mappings */
+struct gpio_pin p8_gpio_pins[] = {
+	{0, 4},		/* FSI_CLK = A4*/
+	{0, 5},		/* FSI_DAT = A5 */
+	{0x20, 30},	/* FSI_DAT_EN = H6 */
+	{0, 24},	/* FSI_ENABLE = D0 */
+	{0, 6},		/* CRONUS_SEL = A6 */
+};
+/* Clock delay in a for loop, determined by trial and error with
+ * -O2 */
+#define P8_CLOCK_DELAY 3
+
+/* POWER9 Witherspoon mappings */
+struct gpio_pin p9w_gpio_pins[] = {
+	{0x1e0, 16},	/* FSI_CLK = AA0 */
+	{0x20, 0},	/* FSI_DAT = E0 */
+	{0x80, 10},	/* FSI_DAT_EN = R2 */
+	{0, 24},	/* FSI_ENABLE = D0 */
+	{0, 6},		/* CRONUS_SEL = A6 */
+};
+#define P9W_CLOCK_DELAY 20
+
+/* Pointer to the GPIO pins to use for this system */
+static struct gpio_pin *gpio_pins;
+#define FSI_CLK		&gpio_pins[GPIO_FSI_CLK]
+#define FSI_DAT		&gpio_pins[GPIO_FSI_DAT]
+#define FSI_DAT_EN	&gpio_pins[GPIO_FSI_DAT_EN]
+#define FSI_ENABLE      &gpio_pins[GPIO_FSI_ENABLE]
+#define CRONUS_SEL	&gpio_pins[GPIO_CRONUS_SEL]
 
 /* FSI result symbols */
 enum fsi_result {
@@ -56,6 +90,8 @@ enum fsi_result {
 	FSI_ERR_C = 0x3,
 };
 
+static int clock_delay  = 0;
+
 #define FSI_DATA0_REG	0x1000
 #define FSI_DATA1_REG	0x1001
 #define FSI_CMD_REG	0x1002
@@ -66,10 +102,6 @@ enum fsi_result {
 
 #define FSI_SET_PIB_RESET_REG 0x1007
 #define  FSI_SET_PIB_RESET PPC_BIT32(0)
-
-/* Clock delay in a for loop, determined by trial and error with
- * -O2 */
-#define CLOCK_DELAY	3
 
 /* For some reason the FSI2PIB engine dies with frequent
  * access. Letting it have a bit of a rest seems to stop the
@@ -95,90 +127,65 @@ static void writel(uint32_t val, void *addr)
 	*(volatile uint32_t *) addr = val;
 }
 
-static int __attribute__((unused)) get_direction(int gpio)
+static int __attribute__((unused)) get_direction(struct gpio_pin *pin)
 {
-	void *offset = gpio_reg + GPIO_DIR;
+	void *offset = gpio_reg + pin->offset + GPIO_DIR;
 
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DIR;
-	}
-
-	return !!(readl(offset) & (1ULL << gpio));
+	return !!(readl(offset) & (1ULL << pin->bit));
 }
 
-static void set_direction_out(int gpio)
+static void set_direction_out(struct gpio_pin *pin)
 {
 	uint32_t x;
-	void *offset = gpio_reg + GPIO_DIR;
-
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DIR;
-	}
+	void *offset = gpio_reg + pin->offset + GPIO_DIR;
 
 	x = readl(offset);
-	x |= 1ULL << gpio;
+	x |= 1ULL << pin->bit;
 	writel(x, offset);
 }
 
-static void set_direction_in(int gpio)
+static void set_direction_in(struct gpio_pin *pin)
 {
 	uint32_t x;
-	void *offset = gpio_reg + GPIO_DIR;
-
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DIR;
-	}
+	void *offset = gpio_reg + pin->offset + GPIO_DIR;
 
 	x = readl(offset);
-	x &= ~(1ULL << gpio);
+	x &= ~(1ULL << pin->bit);
 	writel(x, offset);
 }
 
-static int read_gpio(int gpio)
+static int read_gpio(struct gpio_pin *pin)
 {
-	void *offset = gpio_reg + GPIO_DATA;
+	void *offset = gpio_reg + pin->offset + GPIO_DATA;
 
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DATA;
-	}
-
-	return (readl(offset) >> gpio) & 0x1;
+	return (readl(offset) >> pin->bit) & 0x1;
 }
 
-static void write_gpio(int gpio, int val)
+static void write_gpio(struct gpio_pin *pin, int val)
 {
 	uint32_t x;
-	void *offset = gpio_reg + GPIO_DATA;
-
-	if (gpio > 31) {
-		gpio -= 32;
-		offset = gpio_reg + GPIOE_DATA;
-	}
+	void *offset = gpio_reg + pin->offset + GPIO_DATA;
 
 	x = readl(offset);
 	if (val)
-		x |= 1ULL << gpio;
+		x |= 1ULL << pin->bit;
 	else
-		x &= ~(1ULL << gpio);
+		x &= ~(1ULL << pin->bit);
 	writel(x, offset);
 }
 
-static inline void clock_cycle(int gpio, int num_clks)
+static inline void clock_cycle(struct gpio_pin *pin, int num_clks)
 {
         int i;
 	volatile int j;
 
 	/* Need to introduce delays when inlining this function */
-	for (j = 0; j < CLOCK_DELAY; j++);
+	for (j = 0; j < clock_delay; j++);
         for (i = 0; i < num_clks; i++) {
-                write_gpio(gpio, 0);
-                write_gpio(gpio, 1);
+                write_gpio(pin, 0);
+                write_gpio(pin, 1);
         }
-	for (j = 0; j < CLOCK_DELAY; j++);
+	for (j = 0; j < clock_delay; j++);
 }
 
 static uint8_t crc4(uint8_t c, int b)
@@ -464,11 +471,13 @@ static void fsi_destroy(struct target *target)
 
 	write_gpio(FSI_CLK, 0);
 	write_gpio(FSI_ENABLE, 0);
-	write_gpio(CRONUS_SEL, 0);  //Set Cronus control to FSP2
+	write_gpio(CRONUS_SEL, 0);
 }
 
-int fsi_target_init(struct target *target, const char *name, uint64_t base, struct target *next)
+int fsi_target_init(struct target *target, const char *name, enum fsi_system_type type, struct target *next)
 {
+	uint64_t value;
+
 	if (!mem_fd) {
 		mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
 		if (mem_fd < 0) {
@@ -478,12 +487,26 @@ int fsi_target_init(struct target *target, const char *name, uint64_t base, stru
 	}
 
 	if (!gpio_reg) {
+		switch (type) {
+		case FSI_SYSTEM_P8:
+			gpio_pins = p8_gpio_pins;
+			clock_delay = P8_CLOCK_DELAY;
+			break;
+		case FSI_SYSTEM_P9W:
+			gpio_pins = p9w_gpio_pins;
+			clock_delay = P9W_CLOCK_DELAY;
+			break;
+		default:
+			PR_ERROR("Unrecognized system type specified\n");
+			exit(-1);
+		}
+
 		/* We only have to do this init once per backend */
 		gpio_reg = mmap(NULL, getpagesize(),
 				PROT_READ | PROT_WRITE, MAP_SHARED, mem_fd, GPIO_BASE);
 		if (gpio_reg == MAP_FAILED) {
 			perror("Unable to map GPIO register memory");
-			exit(1);
+			exit(-1);
 		}
 
 		set_direction_out(CRONUS_SEL);
@@ -491,14 +514,14 @@ int fsi_target_init(struct target *target, const char *name, uint64_t base, stru
 		set_direction_out(FSI_DAT_EN);
 
 		write_gpio(FSI_ENABLE, 1);
-		write_gpio(CRONUS_SEL, 1);  //Set Cronus control to BMC
+		write_gpio(CRONUS_SEL, 1);
 
 		fsi_reset(target);
 	}
 
 	/* No cascaded devices after this one. */
 	assert(next == NULL);
-	target_init(target, name, base, fsi_getcfam, fsi_putcfam, fsi_destroy,
+	target_init(target, name, 0, fsi_getcfam, fsi_putcfam, fsi_destroy,
 		    next);
 
 	return 0;

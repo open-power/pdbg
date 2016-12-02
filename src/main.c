@@ -50,7 +50,7 @@ static uint64_t cmd_args[MAX_CMD_ARGS];
 enum backend { FSI, I2C };
 static enum backend backend = I2C;
 
-static char const *device_node = "/dev/i2c4";
+static char const *device_node;
 static int i2c_addr = 0x50;
 
 #define MAX_TARGETS 400
@@ -99,10 +99,10 @@ static void print_usage(char *pname)
 	printf("\t\t\tbit-banging to access the host processor\n");
 	printf("\t\t\tvia the FSI bus.\n");
 	printf("\t\ti2c:\tThe default backend which goes via I2C.\n");
-	printf("\t-d, --device=backend device node\n");
-	printf("\t\tDevice node used by the backend to access the bus.\n");
-	printf("\t\tNot used by the FSI backend and defaults to /dev/i2c4\n");
-	printf("\t\tfor the I2C backend.\n");
+	printf("\t-d, --device=backend device\n");
+	printf("\t\tFor I2C the device node used by the backend to access the bus.\n");
+	printf("\t\tFor FSI the system board type, one of p8 or p9w\n");
+	printf("\t\tDefaults to /dev/i2c4 for I2C\n");
 	printf("\t-s, --slave-address=backend device address\n");
 	printf("\t\tDevice slave address to use for the backend. Not used by FSI\n");
 	printf("\t\tand defaults to 0x50 for I2C\n");
@@ -288,11 +288,13 @@ static bool parse_options(int argc, char *argv[])
 
 		case 'b':
 			opt_error = false;
-			if (strcmp(optarg, "fsi") == 0)
+			if (strcmp(optarg, "fsi") == 0) {
 				backend = FSI;
-			else if (strcmp(optarg, "i2c") == 0)
+				device_node = "";
+			} else if (strcmp(optarg, "i2c") == 0) {
 				backend = I2C;
-			else
+				device_node = "/dev/i2c4";
+			} else
 				opt_error = true;
 			break;
 
@@ -373,8 +375,18 @@ static int fsi_backend_targets_init(void)
 {
 	struct target *cfam;
 	int i, cfam_count;
+	enum fsi_system_type type;
 
-	fsi_target_init(&targets[0], "BMC FSI Backend", 0, NULL);
+	if (!strcmp(device_node, "p8"))
+		type = FSI_SYSTEM_P8;
+	else if (!strcmp(device_node, "p9w"))
+		type = FSI_SYSTEM_P9W;
+	else {
+		PR_ERROR("Unrecognized FSI system type %s\n", device_node);
+		return -1;
+	}
+
+	fsi_target_init(&targets[0], "BMC FSI Backend", type, NULL);
 
 	/* The backend is directly connected to a processor CFAM */
 	target_class_add(&cfams, &targets[0], 0);
