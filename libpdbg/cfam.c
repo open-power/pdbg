@@ -225,6 +225,20 @@ int opb_target_init(struct target *target, const char *name, uint64_t base, stru
 	return 0;
 }
 
+enum chip_type get_chip_type(uint64_t chip_id)
+{
+	switch(GETFIELD(PPC_BITMASK32(12, 19), chip_id)) {
+	case 0xea:
+		return CHIP_P8;
+	case 0xd3:
+		return CHIP_P8NV;
+	case 0xd1:
+		return CHIP_P9;
+	default:
+		return CHIP_UNKNOWN;
+	}
+}
+
 int mfsi_target_init(struct target *target, const char *name, uint64_t base, struct target *next)
 {
 	target_init(target, name, base, NULL, NULL, NULL, next);
@@ -236,7 +250,7 @@ int mfsi_target_init(struct target *target, const char *name, uint64_t base, str
 int hmfsi_target_probe(struct target *cfam, struct target *targets, int max_target_count)
 {
 	struct target *target = targets;
-	uint64_t value, chip_id;
+	uint64_t value;
 	int target_count = 0, i;
 
 	for (i = 0; i < 8 && i < max_target_count; i++) {
@@ -246,9 +260,8 @@ int hmfsi_target_probe(struct target *cfam, struct target *targets, int max_targ
 			continue;
 		}
 
-		/* Ignore unknown chip ids */
-		chip_id = GETFIELD(PPC_BITMASK32(12, 19), value);
-		if (chip_id != 0xea && chip_id != 0xd3) {
+		target->chip_type = get_chip_type(value);
+		if (target->chip_type == CHIP_UNKNOWN) {
 			target_del(target);
 			continue;
 		}

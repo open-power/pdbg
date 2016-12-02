@@ -113,6 +113,10 @@ int adu_getmem(struct target *target, uint64_t start_addr, uint8_t *output, uint
 	int rc = 0;
 	uint64_t addr, cmd_reg, ctrl_reg, val;
 
+	/* P9 ADU is not currently supported */
+	if (target->chip_type == CHIP_P9)
+		return -1;
+
 	CHECK_ERR(adu_lock(target));
 
 	ctrl_reg = TTYPE_TREAD;
@@ -183,6 +187,10 @@ int adu_putmem(struct target *target, uint64_t start_addr, uint8_t *input, uint6
 {
 	int rc = 0, tsize;
 	uint64_t addr, cmd_reg, ctrl_reg, val, data, end_addr;
+
+	/* P9 ADU is not currently supported */
+	if (target->chip_type == CHIP_P9)
+		return -1;
 
 	CHECK_ERR(adu_lock(target));
 

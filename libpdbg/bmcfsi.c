@@ -524,5 +524,9 @@ int fsi_target_init(struct target *target, const char *name, enum fsi_system_typ
 	target_init(target, name, 0, fsi_getcfam, fsi_putcfam, fsi_destroy,
 		    next);
 
+	/* Read chip id */
+	CHECK_ERR(read_target(target, 0xc09, &value));
+	target->chip_type = get_chip_type(value);
+
 	return 0;
 }

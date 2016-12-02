@@ -139,6 +139,7 @@ int i2c_target_init(struct target *target, const char *name, struct target *next
 	target_init(target, name, addr, i2c_getscom, i2c_putscom, i2c_destroy,
 		    next);
 	target->priv = i2c_data;
+	target->chip_type = CHIP_P8;
 
 	return 0;
 }

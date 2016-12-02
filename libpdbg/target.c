@@ -20,8 +20,10 @@ void target_init(struct target *target, const char *name, uint64_t base,
 
 	list_head_init(&target->children);
 
-	if (next)
+	if (next) {
+		target->chip_type = target->next->chip_type;
 		list_add_tail(&next->children, &target->link);
+	}
 }
 
 void target_del(struct target *target)

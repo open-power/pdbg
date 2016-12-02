@@ -24,6 +24,8 @@ typedef int (*target_read)(struct target *target, uint64_t addr, uint64_t *value
 typedef int (*target_write)(struct target *target, uint64_t addr, uint64_t value);
 typedef void (*target_destroy)(struct target *target);
 
+enum chip_type {CHIP_UNKNOWN, CHIP_P8, CHIP_P8NV, CHIP_P9};
+
 struct target {
 	const char *name;
 	int index;
@@ -31,6 +33,7 @@ struct target {
 	target_read read;
 	target_write write;
 	target_destroy destroy;
+	enum chip_type chip_type;
 	struct target *next;
 	struct list_node link;
 	struct list_head children;
