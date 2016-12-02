@@ -38,9 +38,11 @@ enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
 	       STOPCHIP, STARTCHIP, THREADSTATUS, STEP, \
 	       PROBE, GETVMEM };
 
-#define MAX_CMD_ARGS 2
+#define MAX_CMD_ARGS 3
 enum command cmd = 0;
 static int cmd_arg_count = 0;
+static int cmd_min_arg_count = 0;
+static int cmd_max_arg_count = 0;
 
 /* At the moment all commands only take some kind of number */
 static uint64_t cmd_args[MAX_CMD_ARGS];
@@ -109,9 +111,9 @@ static void print_usage(char *pname)
 	printf("\n");
 	printf(" Commands:\n");
 	printf("\tgetcfam <address>\n");
-	printf("\tputcfam <address> <value>\n");
+	printf("\tputcfam <address> <value> [<mask>]\n");
 	printf("\tgetscom <address>\n");
-	printf("\tputscom <address> <value>\n");
+	printf("\tputscom <address> <value> [<mask>]\n");
 	printf("\tgetmem <address> <count>\n");
 	printf("\tputmem <address>\n");
 	printf("\tgetvmem <virtual address>\n");
@@ -130,67 +132,80 @@ static void print_usage(char *pname)
 
 enum command parse_cmd(char *optarg)
 {
+	cmd_max_arg_count = 0;
+
 	if (strcmp(optarg, "getcfam") == 0) {
 		cmd = GETCFAM;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "getscom") == 0) {
 		cmd = GETSCOM;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "putcfam") == 0) {
 		cmd = PUTCFAM;
-		cmd_arg_count = 2;
+		cmd_min_arg_count = 2;
+		cmd_max_arg_count = 3;
+
+		/* No mask by default */
+		cmd_args[2] = -1ULL;
 	} else if (strcmp(optarg, "putscom") == 0) {
 		cmd = PUTSCOM;
-		cmd_arg_count = 2;
+		cmd_min_arg_count = 2;
+		cmd_max_arg_count = 3;
+
+		/* No mask by default */
+		cmd_args[2] = -1ULL;
 	} else if (strcmp(optarg, "getmem") == 0) {
 		cmd = GETMEM;
-		cmd_arg_count = 2;
+		cmd_min_arg_count = 2;
 	} else if (strcmp(optarg, "putmem") == 0) {
 		cmd = PUTMEM;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "getgpr") == 0) {
 		cmd = GETGPR;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "putgpr") == 0) {
 		cmd = PUTGPR;
-		cmd_arg_count = 2;
+		cmd_min_arg_count = 2;
 	} else if (strcmp(optarg, "getnia") == 0) {
 		cmd = GETNIA;
-		cmd_arg_count = 0;
+		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "putnia") == 0) {
 		cmd = PUTNIA;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "getspr") == 0) {
 		cmd = GETSPR;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "putspr") == 0) {
 		cmd = PUTSPR;
-		cmd_arg_count = 2;
+		cmd_min_arg_count = 2;
 	} else if (strcmp(optarg, "getmsr") == 0) {
 		cmd = GETMSR;
-		cmd_arg_count = 0;
+		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "putmsr") == 0) {
 		cmd = PUTMSR;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "getvmem") == 0) {
 		cmd = GETVMEM;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "startchip") == 0) {
 		cmd = STARTCHIP;
-		cmd_arg_count = 0;
+		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "step") == 0) {
 		cmd = STEP;
-		cmd_arg_count = 1;
+		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "stopchip") == 0) {
 		cmd = STOPCHIP;
-		cmd_arg_count = 0;
+		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "threadstatus") == 0) {
 		cmd = THREADSTATUS;
-		cmd_arg_count = 0;
+		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "probe") == 0) {
 		cmd = PROBE;
-		cmd_arg_count = 0;
+		cmd_min_arg_count = 0;
 	}
+
+	if (cmd_min_arg_count && !cmd_max_arg_count)
+		cmd_max_arg_count = cmd_min_arg_count;
 
 	return cmd;
 }
@@ -220,7 +235,7 @@ static bool parse_options(int argc, char *argv[])
 			if (!cmd)
 				opt_error = !parse_cmd(optarg);
 			else if (cmd_arg_idx >= MAX_CMD_ARGS ||
-				 (cmd && cmd_arg_idx >= cmd_arg_count))
+				 (cmd && cmd_arg_idx >= cmd_max_arg_count))
 				opt_error = true;
 			else {
 				errno = 0;
@@ -304,9 +319,11 @@ static bool parse_options(int argc, char *argv[])
 		}
 	} while (c != EOF && !opt_error);
 
-	opt_error |= cmd_arg_idx < cmd_arg_count;
+	opt_error |= cmd_arg_idx < cmd_min_arg_count;
 	if (opt_error)
 		print_usage(argv[0]);
+
+	cmd_arg_count = cmd_arg_idx;
 
 	return opt_error;
 }
@@ -608,12 +625,24 @@ static int getaddr(struct target *target, uint64_t addr, uint64_t *data)
 
 static int putaddr(struct target *target, uint64_t addr, uint64_t *data)
 {
+	uint64_t val, mask = data[1];
 	int rc;
 
-	if ((rc = write_target(target, addr, *data)))
+	if (mask != -1ULL) {
+		if ((rc = read_target(target, addr, &val))) {
+			PR_ERROR("Unable to read register\n");
+			return rc;
+		}
+
+		val &= ~mask;
+		val |= data[0] & mask;
+	} else
+		val = data[0];
+
+	if ((rc = write_target(target, addr, val)))
 		PR_ERROR("Error writing register\n");
 	else
-		printf("p%d:0x%llx: 0x%016llx\n", target->index, addr, *data);
+		printf("p%d:0x%llx: 0x%016llx\n", target->index, addr, val);
 
 	return rc;
 }
@@ -898,7 +927,7 @@ int main(int argc, char *argv[])
 		printf("Alternatively run %s -a probe to get a list of all valid targets\n", argv[0]);
 		rc = -1;
 	} else
-	  rc = 0;
+		rc = 0;
 
 	/* TODO: We don't properly tear down all the targets yet */
 	targets[0].destroy(&targets[0]);
