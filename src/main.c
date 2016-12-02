@@ -383,6 +383,8 @@ static int fsi_backend_targets_init(void)
 		type = FSI_SYSTEM_P9W;
 	else if (!strcmp(device_node, "p9r") || !strcmp(device_node, "romulus"))
 		type = FSI_SYSTEM_P9R;
+	else if (!strcmp(device_node, "p9z") || !strcmp(device_node, "zaius"))
+		type = FSI_SYSTEM_P9Z;
 	else {
 		PR_ERROR("Unrecognized FSI system type %s\n", device_node);
 		return -1;
