@@ -290,7 +290,7 @@ static bool parse_options(int argc, char *argv[])
 			opt_error = false;
 			if (strcmp(optarg, "fsi") == 0) {
 				backend = FSI;
-				device_node = "";
+				device_node = "p9w";
 			} else if (strcmp(optarg, "i2c") == 0) {
 				backend = I2C;
 				device_node = "/dev/i2c4";
