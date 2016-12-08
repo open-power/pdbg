@@ -515,7 +515,7 @@ int chiplet_target_probe(struct target *processor, struct target *targets, int m
 	int i, count = 0, rc = 0;
 
 	/* P9 chiplets are not currently supported */
-	if (target->chip_type == CHIP_P9)
+	if (processor->chip_type == CHIP_P9)
 		return 0;
 
 	for (i = 0; i <= 0xf && i < max_target_count; i++) {
