@@ -379,7 +379,7 @@ static int fsi_backend_targets_init(void)
 
 	if (!strcmp(device_node, "p8"))
 		type = FSI_SYSTEM_P8;
-	else if (!strcmp(device_node, "p9w"))
+	else if (!strcmp(device_node, "p9w") || !strcmp(device_node, "witherspoon"))
 		type = FSI_SYSTEM_P9W;
 	else {
 		PR_ERROR("Unrecognized FSI system type %s\n", device_node);
