@@ -331,7 +331,7 @@ static enum fsi_result fsi_read_resp(uint64_t *result, int len)
 	}
 
 	if (crc != 0) {
-		printf("CRC error: 0x%llx\n", resp);
+		fprintf(stderr, "CRC error: 0x%llx\n", resp);
 		return FSI_MERR_C;
 	}
 
