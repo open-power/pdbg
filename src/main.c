@@ -47,8 +47,8 @@ static int cmd_max_arg_count = 0;
 /* At the moment all commands only take some kind of number */
 static uint64_t cmd_args[MAX_CMD_ARGS];
 
-enum backend { FSI, I2C };
-static enum backend backend = I2C;
+enum backend { FSI, I2C, KERNEL };
+static enum backend backend = KERNEL;
 
 static char const *device_node;
 static int i2c_addr = 0x50;
@@ -98,7 +98,8 @@ static void print_usage(char *pname)
 	printf("\t\tfsi:\tAn experimental backend that uses\n");
 	printf("\t\t\tbit-banging to access the host processor\n");
 	printf("\t\t\tvia the FSI bus.\n");
-	printf("\t\ti2c:\tThe default backend which goes via I2C.\n");
+	printf("\t\ti2c:\tThe P8 only backend which goes via I2C.\n");
+	printf("\t\tkernel:\tThe default backend which goes the kernel FSI driver.\n");
 	printf("\t-d, --device=backend device\n");
 	printf("\t\tFor I2C the device node used by the backend to access the bus.\n");
 	printf("\t\tFor FSI the system board type, one of p8 or p9w\n");
@@ -294,6 +295,10 @@ static bool parse_options(int argc, char *argv[])
 			} else if (strcmp(optarg, "i2c") == 0) {
 				backend = I2C;
 				device_node = "/dev/i2c4";
+			} else if (strcmp(optarg, "kernel") == 0) {
+				backend = KERNEL;
+				/* TODO: use device node to point at a slave
+				 * other than the first? */
 			} else
 				opt_error = true;
 			break;
@@ -371,6 +376,38 @@ static int i2c_backend_targets_init(const char *bus, int addr)
 	return 2 + 2*cfam_count;
 }
 
+static int kernel_backend_targets_init(void)
+{
+	struct target *cfam;
+	int rc, i, cfam_count;
+
+	rc = kernel_fsi_target_init(&targets[0], "Kernel FSI Backend", NULL);
+	if (rc < 0)
+		exit(1);
+
+	/* The backend is directly connected to a processor CFAM */
+	target_class_add(&cfams, &targets[0], 0);
+	cfam_count = 1;
+
+	/* Probe cascaded CFAMs on hMFSI ports */
+	cfam_count += hmfsi_target_probe(&targets[0], &targets[1], MAX_TARGETS);
+	for (i = 1; i < cfam_count; i++)
+		target_class_add(&cfams, &targets[i], i);
+
+	/* Add a FSI2PIB bridges for each CFAM */
+	i = 0;
+	for_each_cfam(cfam) {
+		kernel_fsi2pib_target_init(&targets[cfam_count + i],
+					   "FSI2PIB", FSI2PIB_BASE, cfam);
+
+		if (processor[i])
+			target_class_add(&processors, &targets[cfam_count + i], i);
+		i++;
+	}
+
+	return 2*cfam_count;
+}
+
 static int fsi_backend_targets_init(void)
 {
 	struct target *cfam;
@@ -437,6 +474,13 @@ static int backend_init(void)
 	case FSI:
 		if ((target_count = fsi_backend_targets_init()) < 0) {
 			PR_ERROR("Unable to FSI initialise backend\n");
+			return -1;
+		}
+		break;
+
+	case KERNEL:
+		if ((target_count = kernel_backend_targets_init()) < 0) {
+			PR_ERROR("Unable to initialise kernel backend\n");
 			return -1;
 		}
 		break;
