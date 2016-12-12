@@ -15,5 +15,6 @@ libpdbg_a_SOURCES = \
 	libpdbg/cfam.c \
 	libpdbg/adu.c \
 	libpdbg/bmcfsi.c \
+	libpdbg/kernel.c \
 	libpdbg/i2c.c \
 	libpdbg/chip.c
