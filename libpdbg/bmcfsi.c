@@ -72,6 +72,16 @@ struct gpio_pin p9w_gpio_pins[] = {
 };
 #define P9W_CLOCK_DELAY 20
 
+/* POWER9 Witherspoon mappings */
+struct gpio_pin p9r_gpio_pins[] = {
+	{0x1e0, 16},	/* FSI_CLK = AA0 */
+	{0x1e0, 18},	/* FSI_DAT = AA2 */
+	{0x80, 10},	/* FSI_DAT_EN = R2 */
+	{0, 24},	/* FSI_ENABLE = D0 */
+	{0, 6},		/* CRONUS_SEL = A6 */
+};
+#define P9R_CLOCK_DELAY 20
+
 /* Pointer to the GPIO pins to use for this system */
 static struct gpio_pin *gpio_pins;
 #define FSI_CLK		&gpio_pins[GPIO_FSI_CLK]
@@ -495,6 +505,10 @@ int fsi_target_init(struct target *target, const char *name, enum fsi_system_typ
 		case FSI_SYSTEM_P9W:
 			gpio_pins = p9w_gpio_pins;
 			clock_delay = P9W_CLOCK_DELAY;
+			break;
+		case FSI_SYSTEM_P9R:
+			gpio_pins = p9r_gpio_pins;
+			clock_delay = P9R_CLOCK_DELAY;
 			break;
 		default:
 			PR_ERROR("Unrecognized system type specified\n");

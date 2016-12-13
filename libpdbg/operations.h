@@ -69,7 +69,7 @@ int ram_start_thread(struct target *thread);
 /* GDB server functionality */
 int gdbserver_start(uint16_t port);
 
-enum fsi_system_type {FSI_SYSTEM_P8, FSI_SYSTEM_P9W};
+enum fsi_system_type {FSI_SYSTEM_P8, FSI_SYSTEM_P9W, FSI_SYSTEM_P9R};
 int fsi_target_init(struct target *target, const char *name, enum fsi_system_type tpye, struct target *next);
 int fsi_target_probe(struct target *targets, int max_target_count);
 int i2c_target_init(struct target *target, const char *name, struct target *next,
