@@ -34,9 +34,10 @@
 
 int fsi_fd;
 
-static int kernel_fsi_getcfam(struct target *target, uint64_t addr, uint64_t *value)
+static int kernel_fsi_getcfam(struct target *target, uint64_t addr64, uint64_t *value)
 {
 	int rc;
+	uint32_t addr = (addr64 & 0x1fff00) | ((addr64 & 0xff) << 2);
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
@@ -46,16 +47,17 @@ static int kernel_fsi_getcfam(struct target *target, uint64_t addr, uint64_t *va
 
 	rc = read(fsi_fd, value, 4);
 	if (rc < 0) {
-		warn("Failed to read from 0x%08x", (uint32_t)addr);
+		warn("Failed to read from 0x%08x (%016llx)", (uint32_t)addr, addr64);
 		return errno;
 	}
 
 	return 0;
 }
 
-static int kernel_fsi_putcfam(struct target *target, uint64_t addr, uint64_t data)
+static int kernel_fsi_putcfam(struct target *target, uint64_t addr64, uint64_t data)
 {
 	int rc;
+	uint32_t addr = (addr64 & 0x1fff00) | ((addr64 & 0xff) << 2);
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
@@ -65,7 +67,7 @@ static int kernel_fsi_putcfam(struct target *target, uint64_t addr, uint64_t dat
 
 	rc = write(fsi_fd, &data, 4);
 	if (rc < 0) {
-		warn("Failed to write to 0x%08x", (uint32_t)addr);
+		warn("Failed to write to 0x%08x (%016llx)", addr, addr64);
 		return errno;
 	}
 
@@ -121,7 +123,7 @@ found:
 		    kernel_fsi_destroy, next);
 
 	/* Read chip id */
-	CHECK_ERR(read_target(target, 0xc24, &value));
+	CHECK_ERR(read_target(target, 0xc09, &value));
 	target->chip_type = get_chip_type(value);
 
 	return 0;
