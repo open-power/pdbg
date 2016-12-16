@@ -44,9 +44,9 @@ static int kernel_fsi_getcfam(struct target *target, uint64_t addr, uint64_t *va
 		return errno;
 	}
 
-	rc = read(fsi_fd, value, sizeof(*value));
+	rc = read(fsi_fd, value, 4);
 	if (rc < 0) {
-		warn("Failed to read from 0x%016"PRIx64, addr);
+		warn("Failed to read from 0x%08x", (uint32_t)addr);
 		return errno;
 	}
 
@@ -63,9 +63,9 @@ static int kernel_fsi_putcfam(struct target *target, uint64_t addr, uint64_t dat
 		return errno;
 	}
 
-	rc = write(fsi_fd, &data, sizeof(data));
+	rc = write(fsi_fd, &data, 4);
 	if (rc < 0) {
-		warn("Failed to write to 0x%016"PRIx64, addr);
+		warn("Failed to write to 0x%08x", (uint32_t)addr);
 		return errno;
 	}
 
