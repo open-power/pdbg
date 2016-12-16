@@ -121,7 +121,7 @@ found:
 		    kernel_fsi_destroy, next);
 
 	/* Read chip id */
-	CHECK_ERR(read_target(target, 0xc09, &value));
+	CHECK_ERR(read_target(target, 0xc24, &value));
 	target->chip_type = get_chip_type(value);
 
 	return 0;
