@@ -26,6 +26,7 @@
 
 #include "bitutils.h"
 #include "operations.h"
+#include "device.h"
 #include "target.h"
 
 #define GPIO_BASE	0x1e780000
@@ -50,54 +51,13 @@ enum gpio {
 	GPIO_CRONUS_SEL = 4,
 };
 
-/* POWER8 GPIO mappings */
-struct gpio_pin p8_gpio_pins[] = {
-	{0, 4},		/* FSI_CLK = A4*/
-	{0, 5},		/* FSI_DAT = A5 */
-	{0x20, 30},	/* FSI_DAT_EN = H6 */
-	{0, 24},	/* FSI_ENABLE = D0 */
-	{0, 6},		/* CRONUS_SEL = A6 */
-};
-/* Clock delay in a for loop, determined by trial and error with
- * -O2 */
-#define P8_CLOCK_DELAY 3
-
-/* POWER9 Witherspoon mappings */
-struct gpio_pin p9w_gpio_pins[] = {
-	{0x1e0, 16},	/* FSI_CLK = AA0 */
-	{0x20, 0},	/* FSI_DAT = E0 */
-	{0x80, 10},	/* FSI_DAT_EN = R2 */
-	{0, 24},	/* FSI_ENABLE = D0 */
-	{0, 6},		/* CRONUS_SEL = A6 */
-};
-#define P9W_CLOCK_DELAY 20
-
-/* POWER9 Romulus mappings */
-struct gpio_pin p9r_gpio_pins[] = {
-	{0x1e0, 16},	/* FSI_CLK = AA0 */
-	{0x1e0, 18},	/* FSI_DAT = AA2 */
-	{0x80, 10},	/* FSI_DAT_EN = R2 */
-	{0, 24},	/* FSI_ENABLE = D0 */
-	{0, 6},		/* CRONUS_SEL = A6 */
-};
-#define P9R_CLOCK_DELAY 20
-
-struct gpio_pin p9z_gpio_pins[] = {
-	{0, 19},	/* FSI_CLK = C3 */
-	{0, 18},	/* FSI_DAT = C2 */
-	{0x78, 22},	/* FSI_DAT_EN = O6 */
-	{0, 24},	/* FSI_ENABLE = D0 */
-	{0x78, 30},	/* CRONUS_SEL = P6 */
-};
-#define P9Z_CLOCK_DELAY 20
-
 /* Pointer to the GPIO pins to use for this system */
-static struct gpio_pin *gpio_pins;
 #define FSI_CLK		&gpio_pins[GPIO_FSI_CLK]
 #define FSI_DAT		&gpio_pins[GPIO_FSI_DAT]
 #define FSI_DAT_EN	&gpio_pins[GPIO_FSI_DAT_EN]
 #define FSI_ENABLE      &gpio_pins[GPIO_FSI_ENABLE]
 #define CRONUS_SEL	&gpio_pins[GPIO_CRONUS_SEL]
+static struct gpio_pin gpio_pins[GPIO_CRONUS_SEL + 1];
 
 /* FSI result symbols */
 enum fsi_result {
@@ -132,7 +92,7 @@ static int clock_delay  = 0;
 static void *gpio_reg = NULL;
 static int mem_fd = 0;
 
-static void fsi_reset(struct target *target);
+static void fsi_reset(struct fsi *fsi);
 
 static uint32_t readl(void *addr)
 {
@@ -380,14 +340,11 @@ static enum fsi_result fsi_d_poll_wait(uint8_t slave_id, uint64_t *resp, int len
 	return rc;
 }
 
-static int fsi_getcfam(struct target *target, uint64_t addr, uint64_t *value)
+static int fsi_getcfam(struct fsi *fsi, uint32_t addr, uint32_t *value)
 {
 	uint64_t seq;
 	uint64_t resp;
 	enum fsi_result rc;
-
-	/* This must be the last target in a chain */
-	assert(!target->next);
 
 	/* Format of the read sequence is:
 	 *  6666555555555544444444443333333333222222222211111111110000000000
@@ -421,14 +378,11 @@ static int fsi_getcfam(struct target *target, uint64_t addr, uint64_t *value)
 	return rc;
 }
 
-static int fsi_putcfam(struct target *target, uint64_t addr, uint64_t data)
+static int fsi_putcfam(struct fsi *fsi, uint32_t addr, uint32_t data)
 {
 	uint64_t seq;
 	uint64_t resp;
 	enum fsi_result rc;
-
-	/* This must be the last target in a chain */
-	assert(!target->next);
 
 	/* Format of the sequence is:
 	 *  6666555555555544444444443333333333222222222211111111110000000000
@@ -461,22 +415,19 @@ static int fsi_putcfam(struct target *target, uint64_t addr, uint64_t data)
 	return rc;
 }
 
-static void fsi_reset(struct target *target)
+static void fsi_reset(struct fsi *fsi)
 {
-	uint64_t val64, old_base = target->base;
-
-	target->base = 0;
+	uint32_t val;
 
 	fsi_break();
 
 	/* Clear own id on the master CFAM to access hMFSI ports */
-	fsi_getcfam(target, 0x800, &val64);
-	val64 &= ~(PPC_BIT32(6) | PPC_BIT32(7));
-	fsi_putcfam(target, 0x800, val64);
-	target->base = old_base;
+	fsi_getcfam(fsi, 0x800, &val);
+	val &= ~(PPC_BIT32(6) | PPC_BIT32(7));
+	fsi_putcfam(fsi, 0x800, val);
 }
 
-static void fsi_destroy(struct target *target)
+void fsi_destroy(struct target *target)
 {
 	set_direction_out(FSI_CLK);
 	set_direction_out(FSI_DAT);
@@ -493,8 +444,9 @@ static void fsi_destroy(struct target *target)
 	write_gpio(CRONUS_SEL, 0);
 }
 
-int fsi_target_init(struct target *target, const char *name, enum fsi_system_type type, struct target *next)
+int bmcfsi_probe(struct target *target)
 {
+	struct fsi *fsi = target_to_fsi(target);
 	uint64_t value;
 
 	if (!mem_fd) {
@@ -506,27 +458,17 @@ int fsi_target_init(struct target *target, const char *name, enum fsi_system_typ
 	}
 
 	if (!gpio_reg) {
-		switch (type) {
-		case FSI_SYSTEM_P8:
-			gpio_pins = p8_gpio_pins;
-			clock_delay = P8_CLOCK_DELAY;
-			break;
-		case FSI_SYSTEM_P9W:
-			gpio_pins = p9w_gpio_pins;
-			clock_delay = P9W_CLOCK_DELAY;
-			break;
-		case FSI_SYSTEM_P9R:
-			gpio_pins = p9r_gpio_pins;
-			clock_delay = P9R_CLOCK_DELAY;
-			break;
-		case FSI_SYSTEM_P9Z:
-			gpio_pins = p9z_gpio_pins;
-			clock_delay = P9Z_CLOCK_DELAY;
-			break;
-		default:
-			PR_ERROR("Unrecognized system type specified\n");
-			exit(-1);
-		}
+		gpio_pins[GPIO_FSI_CLK].offset = dt_prop_get_u32_index(target->dn, "fsi_clk", 0);
+		gpio_pins[GPIO_FSI_CLK].bit = dt_prop_get_u32_index(target->dn, "fsi_clk", 1);
+		gpio_pins[GPIO_FSI_DAT].offset = dt_prop_get_u32_index(target->dn, "fsi_dat", 0);
+		gpio_pins[GPIO_FSI_DAT].bit = dt_prop_get_u32_index(target->dn, "fsi_dat", 1);
+		gpio_pins[GPIO_FSI_DAT_EN].offset = dt_prop_get_u32_index(target->dn, "fsi_dat_en", 0);
+		gpio_pins[GPIO_FSI_DAT_EN].bit = dt_prop_get_u32_index(target->dn, "fsi_dat_en", 1);
+		gpio_pins[GPIO_FSI_ENABLE].offset = dt_prop_get_u32_index(target->dn, "fsi_enable", 0);
+		gpio_pins[GPIO_FSI_ENABLE].bit = dt_prop_get_u32_index(target->dn, "fsi_enable", 1);
+		gpio_pins[GPIO_CRONUS_SEL].offset = dt_prop_get_u32_index(target->dn, "cronus_sel", 0);
+		gpio_pins[GPIO_CRONUS_SEL].bit = dt_prop_get_u32_index(target->dn, "cronus_sel", 1);
+		clock_delay = dt_prop_get_u32(target->dn, "clock_delay");
 
 		/* We only have to do this init once per backend */
 		gpio_reg = mmap(NULL, getpagesize(),
@@ -543,17 +485,21 @@ int fsi_target_init(struct target *target, const char *name, enum fsi_system_typ
 		write_gpio(FSI_ENABLE, 1);
 		write_gpio(CRONUS_SEL, 1);
 
-		fsi_reset(target);
+		fsi_reset(fsi);
 	}
-
-	/* No cascaded devices after this one. */
-	assert(next == NULL);
-	target_init(target, name, 0, fsi_getcfam, fsi_putcfam, fsi_destroy,
-		    next);
-
-	/* Read chip id */
-	CHECK_ERR(read_target(target, 0xc09, &value));
-	target->chip_type = get_chip_type(value);
 
 	return 0;
 }
+
+struct fsi bmcfsi = {
+	.target = {
+		.name = "BMC GPIO bit-banging FSI master",
+		.compatible = "ibm,bmcfsi",
+		.class = "fsi",
+		.probe = bmcfsi_probe,
+
+	},
+	.read = fsi_getcfam,
+	.write = fsi_putcfam,
+};
+DECLARE_HW_UNIT(bmcfsi);

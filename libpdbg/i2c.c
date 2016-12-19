@@ -58,9 +58,9 @@ static int i2c_set_scom_addr(struct i2c_data *i2c_data, uint32_t addr)
 	return 0;
 }
 
-static int i2c_getscom(struct target *target, uint64_t addr, uint64_t *value)
+static int i2c_getscom(struct pib *pib, uint64_t addr, uint64_t *value)
 {
-	struct i2c_data *i2c_data = target->priv;
+	struct i2c_data *i2c_data = pib->priv;
 	uint64_t data;
 
 	CHECK_ERR(i2c_set_scom_addr(i2c_data, addr));
@@ -75,9 +75,9 @@ static int i2c_getscom(struct target *target, uint64_t addr, uint64_t *value)
 	return 0;
 }
 
-static int i2c_putscom(struct target *target, uint64_t addr, uint64_t value)
+static int i2c_putscom(struct pib *pib, uint64_t addr, uint64_t value)
 {
-	struct i2c_data *i2c_data = target->priv;
+	struct i2c_data *i2c_data = pib->priv;
 	uint8_t data[12];
 
 	/* Setup scom address */
@@ -106,21 +106,27 @@ static int i2c_putscom(struct target *target, uint64_t addr, uint64_t value)
 	return 0;
 }
 
-static void i2c_destroy(struct target *target)
+static void i2c_destroy(struct pib *pib)
 {
-	struct i2c_data *i2c_data = target->priv;
+	struct i2c_data *i2c_data = pib->priv;
 
 	close(i2c_data->fd);
-	free(target->priv);
+	free(i2c_data);
 }
 
 /*
  * Initialise a i2c backend on the given bus at the given bus address.
  */
-int i2c_target_init(struct target *target, const char *name, struct target *next,
-		    const char *bus, int addr)
+int i2c_target_probe(struct target *target)
 {
+	struct pib *pib = target_to_pib(target);
 	struct i2c_data *i2c_data;
+	const char *bus;
+	int addr;
+
+	bus = "/dev/i2c4";
+	addr = dt_get_address(pib->target.dn, 0, NULL);
+	assert(addr);
 
 	i2c_data = malloc(sizeof(*i2c_data));
 	if (!i2c_data)
@@ -136,10 +142,19 @@ int i2c_target_init(struct target *target, const char *name, struct target *next
 	if (i2c_set_addr(i2c_data->fd, addr) < 0)
 		return -1;
 
-	target_init(target, name, addr, i2c_getscom, i2c_putscom, i2c_destroy,
-		    next);
-	target->priv = i2c_data;
-	target->chip_type = CHIP_P8;
+	pib->priv = i2c_data;
 
 	return 0;
 }
+
+struct pib p8_i2c_pib = {
+	.target = {
+		.name =	"POWER8 I2C Slave",
+		.compatible = "ibm,power8-i2c-slave",
+		.class = "pib",
+		.probe = i2c_target_probe,
+	},
+	.read = i2c_getscom,
+	.write = i2c_putscom,
+};
+DECLARE_HW_UNIT(p8_i2c_pib);

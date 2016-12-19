@@ -31,52 +31,10 @@
 
 #define FSI_SCAN_PATH "/sys/devices/platform/fsi-master/scan"
 #define FSI_CFAM_PATH "/sys/devices/platform/fsi-master/slave@00:00/raw"
-#define FSI_SCOM_PATH "/sys/devices/platform/fsi-master/slave@00:00/"
 
 int fsi_fd;
-int scom_fd;
 
-static int kernel_putscom(struct target *target, uint64_t addr, uint64_t value)
-{
-	int rc;
-
-	rc = lseek(scom_fd, addr, SEEK_SET);
-	if (rc < 0) {
-		warn("Failed to seek %s", FSI_SCOM_PATH);
-		return errno;
-	}
-
-	rc = write(scom_fd, &value, sizeof(value));
-	if (rc < 0) {
-		warn("Failed to write to 0x%016llx", addr);
-		return errno;
-	}
-
-	return 0;
-
-}
-
-static int kernel_getscom(struct target *target, uint64_t addr, uint64_t *value)
-{
-	int rc;
-
-	rc = lseek(fsi_fd, addr, SEEK_SET);
-	if (rc < 0) {
-		warn("Failed to seek %s", FSI_SCOM_PATH);
-		return errno;
-	}
-
-	rc = read(fsi_fd, value, sizeof(*value));
-	if (rc < 0) {
-		warn("Failed to read from 0x%016llx", addr);
-		return errno;
-	}
-
-	return 0;
-
-}
-
-static int kernel_fsi_getcfam(struct target *target, uint64_t addr64, uint64_t *value)
+static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 {
 	int rc;
 	uint32_t addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
@@ -100,7 +58,7 @@ static int kernel_fsi_getcfam(struct target *target, uint64_t addr64, uint64_t *
 	return 0;
 }
 
-static int kernel_fsi_putcfam(struct target *target, uint64_t addr64, uint64_t data)
+static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 {
 	int rc;
 	uint32_t addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
@@ -141,9 +99,9 @@ static void kernel_fsi_scan_devices(void)
 	close(fd);
 }
 
-int kernel_fsi_target_init(struct target *target, const char *name,
-			   struct target *next)
+int kernel_fsi_probe(struct target *target)
 {
+	struct fsi *fsi = target_to_fsi(target);
 	uint64_t value;
 
 	if (!fsi_fd) {
@@ -153,36 +111,31 @@ int kernel_fsi_target_init(struct target *target, const char *name,
 			/* Open first raw device */
 			fsi_fd = open(FSI_CFAM_PATH, O_RDWR | O_SYNC);
 			if (fsi_fd >= 0)
-				goto found;
+				return 0;
 			tries--;
 
 			/* Scan */
 			kernel_fsi_scan_devices();
 			sleep(1);
 		}
-		if (fsi_fd < 0)
+		if (fsi_fd < 0) {
 			err(errno, "Unable to open %s", FSI_CFAM_PATH);
+			return -1;
+		}
 
 	}
-found:
-	/* No cascaded devices after this one. */
-	assert(next == NULL);
-	target_init(target, name, 0, kernel_fsi_getcfam, kernel_fsi_putcfam,
-		    kernel_fsi_destroy, next);
 
-	/* Read chip id */
-	CHECK_ERR(read_target(target, 0xc09, &value));
-	target->chip_type = get_chip_type(value);
-
-	return 0;
+	return -1;
 }
 
-int kernel_fsi2pib_target_init(struct target *target, const char *name,
-				uint64_t base, struct target *next)
-{
-	target_init(target, name, base, kernel_getscom, kernel_putscom, NULL,
-			next);
-
-	return 0;
-
-}
+struct fsi kernel_fsi = {
+	.target = {
+		.name = "Kernel based FSI master",
+		.compatible = "ibm,kernel-fsi",
+		.class = "fsi",
+		.probe = kernel_fsi_probe,
+	},
+	.read = kernel_fsi_getcfam,
+	.write = kernel_fsi_putcfam,
+};
+DECLARE_HW_UNIT(kernel_fsi);

@@ -18,43 +18,109 @@
 
 #include <stdint.h>
 #include <ccan/list/list.h>
+#include <ccan/container_of/container_of.h>
+#include "compiler.h"
+#include "device.h"
 
-struct target;
-typedef int (*target_read)(struct target *target, uint64_t addr, uint64_t *value);
-typedef int (*target_write)(struct target *target, uint64_t addr, uint64_t value);
-typedef void (*target_destroy)(struct target *target);
+#define PR_DEBUG(x, args...) \
+	fprintf(stderr, x, ##args)
+#define PR_INFO(x, args...) \
+	fprintf(stderr, x, ##args)
+#define PR_ERROR(x, args...) \
+	fprintf(stderr, "%s: " x, __FUNCTION__, ##args)
 
 enum chip_type {CHIP_UNKNOWN, CHIP_P8, CHIP_P8NV, CHIP_P9};
 
-struct target {
-	const char *name;
-	int index;
-	uint64_t base;
-	target_read read;
-	target_write write;
-	target_destroy destroy;
-	enum chip_type chip_type;
-	struct target *next;
-	struct list_node link;
-	struct list_head children;
-	struct list_node class_link;
-	void *priv;
-	uint64_t status;
-};
-
 struct target_class {
-	const char *name;
+	char *name;
 	struct list_head targets;
+	struct list_node class_head_link;
 };
 
-int read_target(struct target *target, uint64_t addr, uint64_t *value);
-int read_next_target(struct target *target, uint64_t addr, uint64_t *value);
-int write_target(struct target *target, uint64_t addr, uint64_t value);
-int write_next_target(struct target *target, uint64_t addr, uint64_t value);
-void target_init(struct target *target, const char *name, uint64_t base,
-		 target_read read, target_write write,
-		 target_destroy destroy, struct target *next);
-void target_class_add(struct target_class *class, struct target *target, int index);
-void target_del(struct target *target);
+struct target {
+	char *name;
+	char *compatible;
+	char *class;
+	int (*probe)(struct target *target);
+	struct dt_node *dn;
+	struct list_node class_link;
+};
+
+struct target_class *find_target_class(const char *name);
+struct target_class *require_target_class(const char *name);
+
+extern struct list_head empty_list;
+#define for_each_class_target(class_name, target)			\
+	list_for_each((find_target_class(class_name) ? &require_target_class(class_name)->targets : &empty_list), target, class_link)
+
+struct hw_unit_info {
+	void *hw_unit;
+	size_t size;
+	size_t struct_target_offset;
+};
+
+/* We can't pack the structs themselves directly into a special
+ * section because there doesn't seem to be any standard way of doing
+ * that due to alignment rules. So instead we pack pointers into a
+ * special section. */
+#define DECLARE_HW_UNIT(name)						\
+	const struct hw_unit_info __used name ##_hw_unit = \
+	{ .hw_unit = &name, .size = sizeof(name), .struct_target_offset = container_off(typeof(name), target) }; \
+	const struct hw_unit_info __used __section("hw_units") *name ##_hw_unit_p = &name ##_hw_unit
+
+struct adu {
+	struct target target;
+	int (*getmem)(struct adu *, uint64_t, uint8_t *, uint64_t);
+	int (*putmem)(struct adu *, uint64_t, uint8_t *, uint64_t);
+	uint64_t (*_get_ctrl_reg)(uint64_t, uint64_t);
+	uint64_t (*_get_cmd_reg)(uint64_t, uint64_t);
+	uint64_t (*_wait_completion)(struct adu *);
+};
+#define target_to_adu(x) container_of(x, struct adu, target)
+
+struct pib {
+	struct target target;
+	int (*read)(struct pib *, uint64_t, uint64_t *);
+	int (*write)(struct pib *, uint64_t, uint64_t);
+	void *priv;
+};
+#define target_to_pib(x) container_of(x, struct pib, target)
+
+struct opb {
+	struct target target;
+	int (*read)(struct opb *, uint32_t, uint32_t *);
+	int (*write)(struct opb *, uint32_t, uint32_t);
+};
+#define target_to_opb(x) container_of(x, struct opb, target)
+
+struct fsi {
+	struct target target;
+	int (*read)(struct fsi *, uint32_t, uint32_t *);
+	int (*write)(struct fsi *, uint32_t, uint32_t);
+	enum chip_type chip_type;
+};
+#define target_to_fsi(x) container_of(x, struct fsi, target)
+
+struct chiplet {
+	struct target target;
+};
+#define target_to_chiplet(x) container_of(x, struct chiplet, target)
+
+struct thread {
+	struct target target;
+	uint64_t status;
+	int id;
+};
+#define target_to_thread(x) container_of(x, struct thread, target)
+
+void targets_init(void *fdt);
+void target_probe(void);
+
+int pib_read(struct target *pib_dt, uint64_t addr, uint64_t *data);
+int pib_write(struct target *pib_dt, uint64_t addr, uint64_t data);
+int opb_read(struct target *opb_dt, uint32_t addr, uint32_t *data);
+int opb_write(struct target *opb_dt, uint32_t addr, uint32_t data);
+int fsi_read(struct target *fsi_dt, uint32_t addr, uint32_t *data);
+int fsi_write(struct target *fsi_dt, uint32_t addr, uint32_t data);
 
 #endif

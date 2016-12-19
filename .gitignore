@@ -23,3 +23,11 @@ config.h
 config.log
 config.status
 libpdbg.a
+.libs
+config.guess
+config.sub
+*.la
+*.lo
+ltmain.sh
+libtool
+m4

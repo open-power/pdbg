@@ -22,6 +22,9 @@
 #include "bitutils.h"
 #include "operations.h"
 
+#undef PR_DEBUG
+#define PR_DEBUG(...)
+
 #define FSI_DATA0_REG	0x0
 #define FSI_DATA1_REG	0x1
 #define FSI_CMD_REG	0x2
@@ -76,44 +79,48 @@
 /* We try up to 1.2ms for an OPB access */
 #define MFSI_OPB_MAX_TRIES	1200
 
-static int fsi2pib_getscom(struct target *target, uint64_t addr, uint64_t *value)
+static int fsi2pib_getscom(struct pib *pib, uint64_t addr, uint64_t *value)
 {
-	uint64_t result;
+	uint32_t result;
 
 	usleep(FSI2PIB_RELAX);
 
 	/* Get scom works by putting the address in FSI_CMD_REG and
 	 * reading the result from FST_DATA[01]_REG. */
-	CHECK_ERR(write_next_target(target, FSI_RESET_REG, FSI_RESET_CMD));
-	CHECK_ERR(write_next_target(target, FSI_CMD_REG, addr));
-	CHECK_ERR(read_next_target(target, FSI_DATA0_REG, &result));
-	*value = result << 32;
-	CHECK_ERR(read_next_target(target, FSI_DATA1_REG, &result));
+	CHECK_ERR(fsi_write(&pib->target, FSI_RESET_REG, FSI_RESET_CMD));
+	CHECK_ERR(fsi_write(&pib->target, FSI_CMD_REG, addr));
+	CHECK_ERR(fsi_read(&pib->target, FSI_DATA0_REG, &result));
+	*value = ((uint64_t) result) << 32;
+	CHECK_ERR(fsi_read(&pib->target, FSI_DATA1_REG, &result));
 	*value |= result;
 
 	return 0;
 }
 
-static int fsi2pib_putscom(struct target *target, uint64_t addr, uint64_t value)
+static int fsi2pib_putscom(struct pib *pib, uint64_t addr, uint64_t value)
 {
 	usleep(FSI2PIB_RELAX);
 
-	CHECK_ERR(write_next_target(target, FSI_RESET_REG, FSI_RESET_CMD));
-	CHECK_ERR(write_next_target(target, FSI_DATA0_REG, (value >> 32) & 0xffffffff));
-	CHECK_ERR(write_next_target(target, FSI_DATA1_REG, value & 0xffffffff));
-	CHECK_ERR(write_next_target(target, FSI_CMD_REG, FSI_CMD_REG_WRITE | addr));
+	CHECK_ERR(fsi_write(&pib->target, FSI_RESET_REG, FSI_RESET_CMD));
+	CHECK_ERR(fsi_write(&pib->target, FSI_DATA0_REG, (value >> 32) & 0xffffffff));
+	CHECK_ERR(fsi_write(&pib->target, FSI_DATA1_REG, value & 0xffffffff));
+	CHECK_ERR(fsi_write(&pib->target, FSI_CMD_REG, FSI_CMD_REG_WRITE | addr));
 
 	return 0;
 }
 
-int fsi2pib_target_init(struct target *target, const char *name, uint64_t base, struct target *next)
-{
-	target_init(target, name, base, fsi2pib_getscom, fsi2pib_putscom, NULL, next);
+struct pib fsi_pib = {
+	.target = {
+		.name =	"POWER FSI2PIB",
+		.compatible = "ibm,fsi-pib",
+		.class = "pib",
+	},
+	.read = fsi2pib_getscom,
+	.write = fsi2pib_putscom,
+};
+DECLARE_HW_UNIT(fsi_pib);
 
-	return 0;
-}
-
-static uint64_t opb_poll(struct target *target, uint64_t *read_data)
+static uint64_t opb_poll(struct opb *opb, uint32_t *read_data)
 {
 	unsigned long retries = MFSI_OPB_MAX_TRIES;
 	uint64_t sval;
@@ -123,7 +130,7 @@ static uint64_t opb_poll(struct target *target, uint64_t *read_data)
 	/* We try again every 10us for a bit more than 1ms */
 	for (;;) {
 		/* Read OPB status register */
-		rc = read_next_target(target, PIB2OPB_REG_STAT, &sval);
+		rc = pib_read(&opb->target, PIB2OPB_REG_STAT, &sval);
 		if (rc) {
 			/* Do something here ? */
 			PR_ERROR("XSCOM error %lld read OPB STAT\n", rc);
@@ -151,8 +158,8 @@ static uint64_t opb_poll(struct target *target, uint64_t *read_data)
 	 * probing the system.
 	 */
 	if (stat & OPB_STAT_ANY_ERR) {
-		write_next_target(target, PIB2OPB_REG_RESET, PPC_BIT(0));
-		write_next_target(target, PIB2OPB_REG_STAT, PPC_BIT(0));
+		pib_write(&opb->target, PIB2OPB_REG_RESET, PPC_BIT(0));
+		pib_write(&opb->target, PIB2OPB_REG_STAT, PPC_BIT(0));
 		PR_DEBUG("OPB Error. Status 0x%08x\n", stat);
 		rc = -1;
 	} else if (read_data) {
@@ -166,7 +173,7 @@ static uint64_t opb_poll(struct target *target, uint64_t *read_data)
 	return rc;
 }
 
-static int opb_read(struct target *target, uint64_t addr, uint64_t *data)
+static int p8_opb_read(struct opb *opb, uint32_t addr, uint32_t *data)
 {
 	uint64_t opb_cmd = OPB_CMD_READ | OPB_CMD_32BIT;
 	int64_t rc;
@@ -179,18 +186,17 @@ static int opb_read(struct target *target, uint64_t addr, uint64_t *data)
 	opb_cmd |= addr;
 	opb_cmd <<= 32;
 
-	PR_DEBUG("MFSI_OPB_READ: Writing 0x%16llx to XSCOM %llx\n",
-		 opb_cmd, target->base);
+	PR_DEBUG("MFSI_OPB_READ: Writing 0x%16llx\n", opb_cmd);
 
-	rc = write_next_target(target, PIB2OPB_REG_CMD, opb_cmd);
+	rc = pib_write(&opb->target, PIB2OPB_REG_CMD, opb_cmd);
 	if (rc) {
 		PR_ERROR("XSCOM error %lld writing OPB CMD\n", rc);
 		return OPB_ERR_XSCOM_ERR;
 	}
-	return opb_poll(target, data);
+	return opb_poll(opb, data);
 }
 
-static int opb_write(struct target *target, uint64_t addr, uint64_t data)
+static int p8_opb_write(struct opb *opb, uint32_t addr, uint32_t data)
 {
 	uint64_t opb_cmd = OPB_CMD_WRITE | OPB_CMD_32BIT;
 	int64_t rc;
@@ -203,27 +209,26 @@ static int opb_write(struct target *target, uint64_t addr, uint64_t data)
 	opb_cmd <<= 32;
 	opb_cmd |= data;
 
-	PR_DEBUG("MFSI_OPB_WRITE: Writing 0x%16llx to XSCOM %llx\n",
-		 opb_cmd, target->base);
+	PR_DEBUG("MFSI_OPB_WRITE: Writing 0x%16llx\n", opb_cmd);
 
-	rc = write_next_target(target, PIB2OPB_REG_CMD, opb_cmd);
+	rc = pib_write(&opb->target, PIB2OPB_REG_CMD, opb_cmd);
 	if (rc) {
 		PR_ERROR("XSCOM error %lld writing OPB CMD\n", rc);
 		return OPB_ERR_XSCOM_ERR;
 	}
-	return opb_poll(target, NULL);
+	return opb_poll(opb, NULL);
 }
 
-int opb_target_init(struct target *target, const char *name, uint64_t base, struct target *next)
-{
-	target_init(target, name, base, opb_read, opb_write, NULL, next);
-
-	/* Clear any outstanding errors */
-	write_next_target(target, PIB2OPB_REG_RESET, PPC_BIT(0));
-	write_next_target(target, PIB2OPB_REG_STAT, PPC_BIT(0));
-
-	return 0;
-}
+struct opb p8_opb = {
+	.target = {
+		.name = "POWER8 OPB",
+		.compatible = "ibm,power8-opb",
+		.class = "opb",
+	},
+	.read = p8_opb_read,
+	.write = p8_opb_write,
+};
+DECLARE_HW_UNIT(p8_opb);
 
 enum chip_type get_chip_type(uint64_t chip_id)
 {
@@ -239,36 +244,90 @@ enum chip_type get_chip_type(uint64_t chip_id)
 	}
 }
 
-int mfsi_target_init(struct target *target, const char *name, uint64_t base, struct target *next)
+static int p8_hmfsi_read(struct fsi *fsi, uint32_t addr, uint32_t *data)
 {
-	target_init(target, name, base, NULL, NULL, NULL, next);
+	return opb_read(&fsi->target, addr, data);
+}
+
+static int p8_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
+{
+	return opb_write(&fsi->target, addr, data);
+}
+
+static int p8_hmfsi_probe(struct target *target)
+{
+	struct fsi *fsi = target_to_fsi(target);
+	uint32_t value;
+	int rc;
+
+	if ((rc = opb_read(&fsi->target, 0xc09, &value)))
+		return rc;
+
+	fsi->chip_type = get_chip_type(value);
+
+	PR_DEBUG("Found chip type %x\n", fsi->chip_type);
+	if (fsi->chip_type == CHIP_UNKNOWN)
+		return -1;
 
 	return 0;
 }
 
-#define HMFSI_STRIDE 0x80000
-int hmfsi_target_probe(struct target *cfam, struct target *targets, int max_target_count)
+struct fsi p8_opb_hmfsi = {
+	.target = {
+		.name = "POWER8 OPB attached hMFSI",
+		.compatible = "ibm,power8-opb-hmfsi",
+		.class = "fsi",
+		.probe = p8_hmfsi_probe,
+	},
+	.read = p8_hmfsi_read,
+	.write = p8_hmfsi_write,
+};
+DECLARE_HW_UNIT(p8_opb_hmfsi);
+
+static int cfam_hmfsi_read(struct fsi *fsi, uint32_t addr, uint32_t *data)
 {
-	struct target *target = targets;
-	uint64_t value;
-	int target_count = 0, i;
+	struct target *parent_fsi = fsi->target.dn->parent->target;
 
-	for (i = 0; i < 8 && i < max_target_count; i++) {
-		mfsi_target_init(target, "MFSI Port", 0x80000 + i * HMFSI_STRIDE, cfam);
-		if (read_target(target, 0xc09, &value)) {
-			target_del(target);
-			continue;
-		}
+	addr += dt_get_address(fsi->target.dn, 0, NULL);
 
-		target->chip_type = get_chip_type(value);
-		if (target->chip_type == CHIP_UNKNOWN) {
-			target_del(target);
-			continue;
-		}
-
-		target++;
-		target_count++;
-	}
-
-	return target_count;
+	return fsi_read(parent_fsi, addr, data);
 }
+
+static int cfam_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
+{
+	struct target *parent_fsi = fsi->target.dn->parent->target;
+
+	addr += dt_get_address(fsi->target.dn, 0, NULL);
+
+	return fsi_write(parent_fsi, addr, data);
+}
+
+static int cfam_hmfsi_probe(struct target *target)
+{
+	struct fsi *fsi = target_to_fsi(target);
+	uint32_t value;
+	int rc;
+
+	if ((rc = fsi_read(&fsi->target, 0xc09, &value)))
+		return rc;
+
+	fsi->chip_type = get_chip_type(value);
+
+	PR_DEBUG("Found chip type %x\n", fsi->chip_type);
+	if (fsi->chip_type == CHIP_UNKNOWN)
+		return -1;
+
+	return 0;
+}
+
+struct fsi cfam_hmfsi = {
+	.target = {
+		.name = "CFAM hMFSI Port",
+		.compatible = "ibm,fsi-hmfsi",
+		.class = "fsi",
+		.probe = cfam_hmfsi_probe,
+	},
+	.read = cfam_hmfsi_read,
+	.write = cfam_hmfsi_write,
+};
+DECLARE_HW_UNIT(cfam_hmfsi);

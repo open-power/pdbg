@@ -23,20 +23,25 @@
 #include <errno.h>
 #include <assert.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include <backend.h>
 #include <operations.h>
 #include <target.h>
+#include <device.h>
 
 #include <config.h>
 
 #include "bitutils.h"
 
+#undef PR_DEBUG
+#define PR_DEBUG(...)
+
 enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
 	       GETMEM, PUTMEM, GETGPR, GETNIA, GETSPR,	\
 	       GETMSR, PUTGPR, PUTNIA, PUTSPR, PUTMSR,	\
-	       STOPCHIP, STARTCHIP, THREADSTATUS, STEP, \
-	       PROBE, GETVMEM };
+	       STOP, START, THREADSTATUS, STEP, PROBE,	\
+	       GETVMEM };
 
 #define MAX_CMD_ARGS 3
 enum command cmd = 0;
@@ -47,43 +52,25 @@ static int cmd_max_arg_count = 0;
 /* At the moment all commands only take some kind of number */
 static uint64_t cmd_args[MAX_CMD_ARGS];
 
-enum backend { FSI, I2C, KERNEL };
+enum backend { FSI, I2C, KERNEL, FAKE };
 static enum backend backend = KERNEL;
 
 static char const *device_node;
 static int i2c_addr = 0x50;
 
-#define MAX_TARGETS 400
-static struct target targets[MAX_TARGETS];
-
 #define MAX_PROCESSORS 16
 #define MAX_CHIPS 16
 #define MAX_THREADS THREADS_PER_CORE
 
-static int **processor[MAX_PROCESSORS];
-static int *chip[MAX_PROCESSORS][MAX_CHIPS];
-static int thread[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
+static int **processorsel[MAX_PROCESSORS];
+static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
+static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
 
-struct target_class cfams = {
-	.name = "CFAMS",
-};
-
-struct target_class processors = {
-	.name = "Processors",
-};
-
-struct target_class chiplets = {
-	.name = "Chiplets",
-};
-
-struct target_class threads = {
-	.name = "Threads",
-};
-
-#define for_each_thread(x) list_for_each(&threads.targets, x, class_link)
-#define for_each_chiplet(x) list_for_each(&chiplets.targets, x, class_link)
-#define for_each_processor(x) list_for_each(&processors.targets, x, class_link)
-#define for_each_cfam(x) list_for_each(&cfams.targets, x, class_link)
+/* Convenience functions */
+#define for_each_thread(x) while(0)
+#define for_each_chiplet(x) while(0)
+#define for_each_processor(x) while(0)
+#define for_each_cfam(x) while(0)
 
 static void print_usage(char *pname)
 {
@@ -124,9 +111,9 @@ static void print_usage(char *pname)
 	printf("\tputnia <value>\n");
 	printf("\tgetspr <spr>\n");
 	printf("\tputspr <spr> <value>\n");
-	printf("\tstartchip\n");
+	printf("\tstart\n");
 	printf("\tstep <count>\n");
-	printf("\tstopchip\n");
+	printf("\tstop\n");
 	printf("\tthreadstatus\n");
 	printf("\tprobe\n");
 }
@@ -188,14 +175,14 @@ enum command parse_cmd(char *optarg)
 	} else if (strcmp(optarg, "getvmem") == 0) {
 		cmd = GETVMEM;
 		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "startchip") == 0) {
-		cmd = STARTCHIP;
+	} else if (strcmp(optarg, "start") == 0) {
+		cmd = START;
 		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "step") == 0) {
 		cmd = STEP;
 		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "stopchip") == 0) {
-		cmd = STOPCHIP;
+	} else if (strcmp(optarg, "stop") == 0) {
+		cmd = STOP;
 		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "threadstatus") == 0) {
 		cmd = THREADSTATUS;
@@ -248,11 +235,11 @@ static bool parse_options(int argc, char *argv[])
 		case 'a':
 			opt_error = false;
 			for (current_processor = 0; current_processor < MAX_PROCESSORS; current_processor++) {
-				processor[current_processor] = &chip[current_processor][0];
+				processorsel[current_processor] = &chipsel[current_processor][0];
 				for (current_chip = 0; current_chip < MAX_CHIPS; current_chip++) {
-					chip[current_processor][current_chip] = &thread[current_processor][current_chip][0];
+					chipsel[current_processor][current_chip] = &threadsel[current_processor][current_chip][0];
 					for (current_thread = 0; current_thread < MAX_THREADS; current_thread++)
-						thread[current_processor][current_chip][current_thread] = 1;
+						threadsel[current_processor][current_chip][current_thread] = 1;
 				}
 			}
 			break;
@@ -263,7 +250,7 @@ static bool parse_options(int argc, char *argv[])
 			if (current_processor >= MAX_PROCESSORS)
 				errno = -1;
 			else
-				processor[current_processor] = &chip[current_processor][0];
+				processorsel[current_processor] = &chipsel[current_processor][0];
 			opt_error = errno;
 			break;
 
@@ -273,7 +260,7 @@ static bool parse_options(int argc, char *argv[])
 			if (current_chip >= MAX_CHIPS)
 				errno = -1;
 			else
-				chip[current_processor][current_chip] = &thread[current_processor][current_chip][0];
+				chipsel[current_processor][current_chip] = &threadsel[current_processor][current_chip][0];
 			opt_error = errno;
 			break;
 
@@ -283,7 +270,7 @@ static bool parse_options(int argc, char *argv[])
 			if (current_thread >= MAX_THREADS)
 				errno = -1;
 			else
-				thread[current_processor][current_chip][current_thread] = 1;
+				threadsel[current_processor][current_chip][current_thread] = 1;
 			opt_error = errno;
 			break;
 
@@ -335,156 +322,335 @@ static bool parse_options(int argc, char *argv[])
 	return opt_error;
 }
 
-/*
- * Add a given target to the class
- */
-void target_class_add(struct target_class *class, struct target *target, int index)
+/* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
+static int for_each_child_target(char *class, struct target *parent,
+				 int (*cb)(struct target *, uint32_t, uint64_t *, uint64_t *),
+				 uint64_t *arg1, uint64_t *arg2)
 {
-	list_add_tail(&class->targets, &target->class_link);
-	target->index = index;
-}
+	int rc = 0;
+	struct target *target;
+	uint32_t index;
+	struct dt_node *dn;
 
-/*
- * Initialises an I2C based backend. Returns the number of targets
- * added on success.
- */
-static int i2c_backend_targets_init(const char *bus, int addr)
-{
-	int i, cfam_count;
+	for_each_class_target(class, target) {
+		struct dt_property *p;
 
-	CHECK_ERR(i2c_target_init(&targets[0], "BMC I2C Backend", NULL, device_node, i2c_addr));
-	CHECK_ERR(opb_target_init(&targets[1], "PIB2OPB", 0x20010, &targets[0]));
-
-	if (processor[0])
-		target_class_add(&processors, &targets[0], 0);
-
-	/* Probe cascaded CFAMs on hMFSI ports and add FSI2PIB bridges */
-	cfam_count = hmfsi_target_probe(&targets[1], &targets[2], MAX_TARGETS);
-	for (i = 0; i < cfam_count; i++) {
-		/* Skip prcessors that aren't selected */
-		if (!(processor[i + 1]))
+		dn = target->dn;
+		if (parent && dn->parent != parent->dn)
 			continue;
 
-		fsi2pib_target_init(&targets[2 + cfam_count + i], "FSI2PIB", FSI2PIB_BASE, &targets[2 + i]);
+		/* Search up the tree for an index */
+		for (index = dt_prop_get_u32_def(dn, "index", -1); index == -1; dn = dn->parent);
+		assert(index != -1);
 
-		/* CFAM index should match processor index even though
-		 * we don't support cfam 0 on i2c */
-		target_class_add(&cfams, &targets[2 + i], i + 1);
-		target_class_add(&processors, &targets[2 + cfam_count + i], i + 1);
+		p = dt_find_property(dn, "status");
+		if (p && (!strcmp(p->prop, "disabled") || !strcmp(p->prop, "hidden")))
+			continue;
+
+		rc += cb(target, index, arg1, arg2);
 	}
 
-	return 2 + 2*cfam_count;
+	return rc;
 }
 
-static int kernel_backend_targets_init(void)
+static int for_each_target(char *class, int (*cb)(struct target *, uint32_t, uint64_t *, uint64_t *), uint64_t *arg1, uint64_t *arg2)
 {
-	struct target *cfam;
-	int rc, i, cfam_count;
-
-	rc = kernel_fsi_target_init(&targets[0], "Kernel FSI Backend", NULL);
-	if (rc < 0)
-		exit(1);
-
-	/* The backend is directly connected to a processor CFAM */
-	if (processor[0])
-		target_class_add(&cfams, &targets[0], 0);
-	cfam_count = 1;
-
-	/* Probe cascaded CFAMs on hMFSI ports */
-	cfam_count += hmfsi_target_probe(&targets[0], &targets[1], MAX_TARGETS);
-	for (i = 1; i < cfam_count; i++)
-		if (processor[i])
-			target_class_add(&cfams, &targets[i], i);
-
-	/* Add a FSI2PIB bridges for each CFAM */
-	i = 0;
-	for_each_cfam(cfam) {
-		kernel_fsi2pib_target_init(&targets[cfam_count + i],
-					   "FSI2PIB", FSI2PIB_BASE, cfam);
-
-		if (processor[i])
-			target_class_add(&processors, &targets[cfam_count + i], i);
-		i++;
-	}
-
-	return 2*cfam_count;
+	return for_each_child_target(class, NULL, cb, arg1, arg2);
 }
 
-static int fsi_backend_targets_init(void)
+static int getcfam(struct target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
 {
-	struct target *cfam;
-	int i, cfam_count;
-	enum fsi_system_type type;
+	uint32_t value;
 
-	if (!strcmp(device_node, "p8"))
-		type = FSI_SYSTEM_P8;
-	else if (!strcmp(device_node, "p9w") || !strcmp(device_node, "witherspoon"))
-		type = FSI_SYSTEM_P9W;
-	else if (!strcmp(device_node, "p9r") || !strcmp(device_node, "romulus"))
-		type = FSI_SYSTEM_P9R;
-	else if (!strcmp(device_node, "p9z") || !strcmp(device_node, "zaius"))
-		type = FSI_SYSTEM_P9Z;
-	else {
-		PR_ERROR("Unrecognized FSI system type %s\n", device_node);
-		return -1;
-	}
+	if (fsi_read(target, *addr, &value))
+		return 0;
 
-	fsi_target_init(&targets[0], "BMC FSI Backend", type, NULL);
+	printf("p%d:0x%x = 0x%08x\n", index, (uint32_t) *addr, value);
 
-	/* The backend is directly connected to a processor CFAM */
-	if (processor[0])
-		target_class_add(&cfams, &targets[0], 0);
-	cfam_count = 1;
-
-	/* Probe cascaded CFAMs on hMFSI ports */
-	cfam_count += hmfsi_target_probe(&targets[0], &targets[1], MAX_TARGETS);
-	for (i = 1; i < cfam_count; i++)
-		if (processor[i])
-			target_class_add(&cfams, &targets[i], i);
-
-	/* Add a FSI2PIB bridges for each CFAM */
-	i = 0;
-	for_each_cfam(cfam) {
-		fsi2pib_target_init(&targets[cfam_count + i], "FSI2PIB", FSI2PIB_BASE, cfam);
-
-		if (processor[cfam->index])
-			target_class_add(&processors, &targets[cfam_count + i], cfam->index);
-		i++;
-	}
-
-	return 2*cfam_count;
+	return 1;
 }
 
-static int backend_init(void)
+static int putcfam(struct target *target, uint32_t index, uint64_t *addr, uint64_t *data)
 {
-	int i, j, target_count = 0, chiplet_count = 0, thread_count = 0;
-	struct target *target, *processor, *chiplet;
+	if (fsi_write(target, *addr, *data))
+		return 0;
 
-	list_head_init(&cfams.targets);
-	list_head_init(&processors.targets);
-	list_head_init(&chiplets.targets);
-	list_head_init(&threads.targets);
+	return 1;
+}
+
+static int getscom(struct target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
+{
+	uint64_t value;
+
+	if (pib_read(target, *addr, &value))
+		return 0;
+
+	printf("p%d:0x%" PRIx64 " = 0x%016" PRIx64 "\n", index, *addr, value);
+
+	return 1;
+}
+
+static int putscom(struct target *target, uint32_t index, uint64_t *addr, uint64_t *data)
+{
+	if (pib_write(target, *addr, *data))
+		return 0;
+
+	return 1;
+}
+
+static int print_thread_status(struct target *thread_target, uint32_t index, uint64_t *status, uint64_t *unused1)
+{
+	struct thread *thread = target_to_thread(thread_target);
+
+	*status = SETFIELD(0xf << (index * 4), *status, thread_status(thread) & 0xf);
+	return 1;
+}
+
+static int print_chiplet_thread_status(struct target *chiplet_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+{
+	uint64_t status = -1UL;
+	int i, rc;
+
+	printf("c%02d:", index);
+	rc = for_each_child_target("thread", chiplet_target, print_thread_status, &status, NULL);
+	for (i = 0; i < 8; i++)
+		switch ((status >> (i * 4)) & 0xf) {
+		case THREAD_STATUS_ACTIVE:
+			printf(" A");
+			break;
+
+		case THREAD_STATUS_DOZE:
+		case THREAD_STATUS_QUIESCE | THREAD_STATUS_DOZE:
+			printf(" D");
+			break;
+
+		case THREAD_STATUS_NAP:
+		case THREAD_STATUS_QUIESCE | THREAD_STATUS_NAP:
+			printf(" N");
+			break;
+
+		case THREAD_STATUS_SLEEP:
+		case THREAD_STATUS_QUIESCE | THREAD_STATUS_SLEEP:
+			printf(" S");
+			break;
+
+		case THREAD_STATUS_ACTIVE | THREAD_STATUS_QUIESCE:
+			printf(" Q");
+			break;
+
+		case 0xf:
+			printf("  ");
+			break;
+
+		default:
+			printf(" U");
+			break;
+		}
+	printf("\n");
+
+	return rc;
+}
+
+static int print_proc_thread_status(struct target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+{
+	printf("\np%01dt: 0 1 2 3 4 5 6 7\n", index);
+	return for_each_child_target("chiplet", pib_target, print_chiplet_thread_status, NULL, NULL);
+};
+
+#define REG_MEM -3
+#define REG_MSR -2
+#define REG_NIA -1
+#define REG_R31 31
+static void print_proc_reg(struct thread *thread, uint64_t reg, uint64_t value, int rc)
+{
+	int proc_index, chip_index, thread_index;
+
+	thread_index = dt_prop_get_u32(thread->target.dn, "index");
+	chip_index = dt_prop_get_u32(thread->target.dn->parent, "index");
+	proc_index = dt_prop_get_u32(thread->target.dn->parent->parent, "index");
+	printf("p%d:c%d:t%d:", proc_index, chip_index, thread_index);
+
+	if (reg == REG_MSR)
+		printf("msr: ");
+	else if (reg == REG_NIA)
+		printf("nia: ");
+	else if (reg > REG_R31)
+		printf("spr%03" PRIu64 ": ", reg - REG_R31);
+	else if (reg >= 0 && reg <= 31)
+		printf("gpr%02" PRIu64 ": ", reg);
+
+	if (rc == 1)
+		printf("Chiplet in incorrect state\n");
+	else if (rc == 2)
+		printf("Thread in incorrect state\n");
+	else
+		printf("0x%016" PRIx64 "\n", value);
+}
+
+static int putprocreg(struct target *thread_target, uint32_t index, uint64_t *reg, uint64_t *value)
+{
+	struct thread *thread = target_to_thread(thread_target);
+	int rc;
+
+	if (*reg == REG_MSR)
+		rc = ram_putmsr(thread, *value);
+	else if (*reg == REG_NIA)
+		rc = ram_putnia(thread, *value);
+	else if (*reg > REG_R31)
+		rc = ram_putspr(thread, *reg - REG_R31, *value);
+	else if (*reg >= 0 && *reg <= 31)
+		rc = ram_putgpr(thread, *reg, *value);
+
+	print_proc_reg(thread, *reg, *value, rc);
+
+	return 0;
+}
+
+static int getprocreg(struct target *thread_target, uint32_t index, uint64_t *reg, uint64_t *unused)
+{
+	struct thread *thread = target_to_thread(thread_target);
+	int rc;
+	uint64_t value;
+
+	if (*reg == REG_MSR)
+		rc = ram_getmsr(thread, &value);
+	else if (*reg == REG_NIA)
+		rc = ram_getnia(thread, &value);
+	else if (*reg > REG_R31)
+		rc = ram_getspr(thread, *reg - REG_R31, &value);
+	else if (*reg >= 0 && *reg <= 31)
+		rc = ram_getgpr(thread, *reg, &value);
+
+	print_proc_reg(thread, *reg, value, rc);
+
+	return !rc;
+}
+
+#define PUTMEM_BUF_SIZE 1024
+static int putmem(uint64_t addr)
+{
+        uint8_t *buf;
+        int read_size, rc = 0;
+        struct target *adu_target;
+
+	for_each_class_target("adu", adu_target)
+		break;
+
+        buf = malloc(PUTMEM_BUF_SIZE);
+        assert(buf);
+	do {
+                read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
+                if (adu_putmem(adu_target, addr, buf, read_size)) {
+                        rc = 0;
+                        PR_ERROR("Unable to write memory.\n");
+                        break;
+                }
+                rc += read_size;
+        } while (read_size > 0);
+
+        free(buf);
+        return rc;
+}
+
+static int start_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+{
+	struct thread *thread = target_to_thread(thread_target);
+
+	return ram_start_thread(thread) ? 1 : 0;
+}
+
+static int step_thread(struct target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1)
+{
+	struct thread *thread = target_to_thread(thread_target);
+
+	return ram_step_thread(thread, *count) ? 1 : 0;
+}
+
+static int stop_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+{
+	struct thread *thread = target_to_thread(thread_target);
+
+	return ram_stop_thread(thread) ? 1 : 0;
+}
+
+static void enable_dn(struct dt_node *dn)
+{
+	struct dt_property *p;
+
+	PR_DEBUG("Enabling %s\n", dn->name);
+	p = dt_find_property(dn, "status");
+
+	if (!p)
+		/* Default assumption enabled */
+		return;
+
+	/* We only override a status of "hidden" */
+	if (strcmp(p->prop, "hidden"))
+		return;
+
+	dt_del_property(dn, p);
+}
+
+static void disable_dn(struct dt_node *dn)
+{
+	struct dt_property *p;
+
+	PR_DEBUG("Disabling %s\n", dn->name);
+	p = dt_find_property(dn, "status");
+	if (p)
+		/* We don't override hard-coded device tree
+		 * status. This is needed to avoid disabling that
+		 * backend. */
+		return;
+
+	dt_add_property_string(dn, "status", "disabled");
+}
+
+/* TODO: It would be nice to have a more dynamic way of doing this */
+extern unsigned char _binary_p8_i2c_dtb_o_start;
+extern unsigned char _binary_p8_i2c_dtb_o_end;
+extern unsigned char _binary_p8_fsi_dtb_o_start;
+extern unsigned char _binary_p8_fsi_dtb_o_end;
+extern unsigned char _binary_p9w_fsi_dtb_o_start;
+extern unsigned char _binary_p9w_fsi_dtb_o_end;
+extern unsigned char _binary_p9r_fsi_dtb_o_start;
+extern unsigned char _binary_p9r_fsi_dtb_o_end;
+extern unsigned char _binary_p9z_fsi_dtb_o_start;
+extern unsigned char _binary_p9z_fsi_dtb_o_end;
+extern unsigned char _binary_p9_kernel_dtb_o_start;
+extern unsigned char _binary_p9_kernel_dtb_o_end;
+extern unsigned char _binary_fake_dtb_o_start;
+extern unsigned char _binary_fake_dtb_o_end;
+static int target_select(void)
+{
+	struct target *fsi, *pib, *chip, *thread;
 
 	switch (backend) {
 	case I2C:
-		if ((target_count = i2c_backend_targets_init(device_node, i2c_addr)) < 0) {
-			PR_ERROR("Unable to I2C initialise backend\n");
-			return -1;
-		}
+		targets_init(&_binary_p8_i2c_dtb_o_start);
 		break;
 
 	case FSI:
-		if ((target_count = fsi_backend_targets_init()) < 0) {
-			PR_ERROR("Unable to FSI initialise backend\n");
+		if (!strcmp(device_node, "p8"))
+			targets_init(&_binary_p8_fsi_dtb_o_start);
+		else if (!strcmp(device_node, "p9w") || !strcmp(device_node, "witherspoon"))
+			targets_init(&_binary_p9w_fsi_dtb_o_start);
+		else if (!strcmp(device_node, "p9r") || !strcmp(device_node, "romulus"))
+			targets_init(&_binary_p9r_fsi_dtb_o_start);
+		else if (!strcmp(device_node, "p9z") || !strcmp(device_node, "zaius"))
+			targets_init(&_binary_p9z_fsi_dtb_o_start);
+		else {
+			PR_ERROR("Invalid device type specified\n");
 			return -1;
 		}
 		break;
 
 	case KERNEL:
-		if ((target_count = kernel_backend_targets_init()) < 0) {
-			PR_ERROR("Unable to initialise kernel backend\n");
-			return -1;
-		}
+		targets_init(&_binary_p9_kernel_dtb_o_start);
+		break;
+
+	case FAKE:
+		targets_init(&_binary_fake_dtb_o_start);
 		break;
 
 	default:
@@ -492,509 +658,151 @@ static int backend_init(void)
 		return -1;
 	}
 
-	target = &targets[target_count];
-	j = 0;
-	for_each_processor(processor) {
-		chiplet_count += chiplet_target_probe(processor, target, MAX_TARGETS - target_count);
-		for (i = 0; j < chiplet_count; i++, j++) {
-			/* Skip chips that aren't selected */
-			if (chip[processor->index][j])
-				target_class_add(&chiplets, target, i);
+	/* At this point we should have a device-tree loaded. We want
+	 * to walk the tree and disabled nodes we don't care about
+	 * prior to probing. */
+	for_each_class_target("pib", pib) {
+		int proc_index = dt_prop_get_u32(pib->dn, "index");
 
-			target++;
-		}
-	}
+		if (processorsel[proc_index]) {
+			enable_dn(pib->dn);
+			if (!find_target_class("chiplet"))
+				continue;
+			for_each_class_target("chiplet", chip) {
+				if (chip->dn->parent != pib->dn)
+					continue;
+				int chip_index = dt_prop_get_u32(chip->dn, "index");
+				if (chipsel[proc_index][chip_index]) {
+					enable_dn(chip->dn);
+					if (!find_target_class("thread"))
+						continue;
+					for_each_class_target("thread", thread) {
+						if (thread->dn->parent != chip->dn)
+							continue;
 
-	target_count += chiplet_count;
-	target = &targets[target_count];
-	j = 0;
-	for_each_chiplet(chiplet) {
-		thread_count += thread_target_probe(chiplet, target, MAX_TARGETS - target_count);
-		for (i = 0; j < thread_count; i++, j++) {
-			target_class_add(&threads, target, i);
-			if (!chip[chiplet->next->index][chiplet->index][j])
-				target->status |= THREAD_STATUS_DISABLED;
-			target++;
-		}
-	}
-
-	return 0;
-}
-
-
-static void dump_targets(int indent, struct target *target)
-{
-	int i;
-	struct target *child;
-
-	for (i = 0; i < indent; i++)
-		printf("    ");
-
-	printf("%s@%llx\n", target->name, target->base);
-
-	if (!list_empty(&target->children))
-		list_for_each(&target->children, child, link)
-			dump_targets(indent + 1, child);
-}
-
-/* Dump all processors and chiplets */
-static uint64_t probe(void)
-{
-	struct target *cfam, *processor, *chiplet, *thread;
-	int i, j;
-
-	printf("Overall System Topology\n");
-	printf("=======================\n\n");
-	dump_targets(0, &targets[0]);
-
-	i = 0;
-	printf("\nCFAMs Present\n");
-	printf("=============\n\n");
-	for_each_cfam(cfam)
-		printf("%d: %s@%llx\n", i++, cfam->name, cfam->base);
-
-	i = 0;
-	printf("\nProcessors/Chiplets Present\n");
-	printf("===========================\n\n");
-	for_each_processor(processor) {
-		printf("Processor-ID %d: %s@%llx\n", processor->index, processor->name, processor->base);
-		j = 0;
-		for_each_chiplet(chiplet)
-			if (chiplet->next == processor) {
-				printf("\tChiplet-ID %d: %s@%llx\n", chiplet->index, chiplet->name, chiplet->base);
-				for_each_thread(thread)
-					if (thread->next == chiplet)
-						printf("\t\tThread-ID %d: %s@%llx\n", thread->index, thread->name, thread->base);
+						int thread_index = dt_prop_get_u32(thread->dn, "index");
+						if (threadsel[proc_index][chip_index][thread_index])
+							enable_dn(thread->dn);
+						else
+							disable_dn(thread->dn);
+					}
+				} else
+					disable_dn(chip->dn);
 			}
+		} else
+			disable_dn(pib->dn);
+	}
+
+	for_each_class_target("fsi", fsi) {
+		int index = dt_prop_get_u32(fsi->dn, "index");
+		if (processorsel[index])
+			enable_dn(fsi->dn);
+		else
+			disable_dn(fsi->dn);
 	}
 
 	return 0;
-}
-
-static int filter_parent(struct target *target, void *priv)
-{
-	struct target *parent = priv;
-
-	return target->next == parent;
-}
-
-/*
- * Call cb() on each member of the target class when filter() returns
- * true. Returns either the result from cb() (should be -ve on error)
- * or the number of time cb() was called.
- */
-static int for_each_class_call(struct target_class *class, int (*filter)(struct target *, void *),
-			       int (*cb)(struct target *, uint64_t, uint64_t *),
-			       void *priv, uint64_t addr, uint64_t *data)
-{
-	struct target *target;
-	int rc, count = 0;
-
-	list_for_each(&class->targets, target, class_link)
-		if ((!filter || filter(target, priv)) && !(target->status & THREAD_STATUS_DISABLED)) {
-			count++;
-			if((rc = cb(target, addr, data)))
-				return rc;
-		}
-
-	return count;
-}
-
-/* Same as above but calls cb() on all targets rather than just active ones */
-static int for_each_class_call_all(struct target_class *class, int (*filter)(struct target *, void *),
-				   int (*cb)(struct target *, uint64_t, uint64_t *),
-				   void *priv, uint64_t addr, uint64_t *data)
-{
-	struct target *target;
-	int rc, count = 0;
-
-	list_for_each(&class->targets, target, class_link)
-		if (!filter || filter(target, priv)) {
-			count++;
-			if((rc = cb(target, addr, data)))
-				return rc;
-		}
-
-	return count;
-}
-
-static int print_thread_status(struct target *thread, uint64_t addr, uint64_t *data)
-{
-	uint64_t status = chiplet_thread_status(thread);
-	static int last_index = -1;
-	int i;
-
-	if (thread->index <= last_index)
-		last_index = -1;
-
-	for (i = last_index + 1; i < thread->index; i++)
-		printf("  ");
-
-	last_index = thread->index;
-
-	switch (status)
-	{
-	case THREAD_STATUS_ACTIVE:
-		printf(" A");
-		break;
-
-	case THREAD_STATUS_DOZE:
-	case THREAD_STATUS_QUIESCE | THREAD_STATUS_DOZE:
-		printf(" D");
-		break;
-
-	case THREAD_STATUS_NAP:
-	case THREAD_STATUS_QUIESCE | THREAD_STATUS_NAP:
-		printf(" N");
-		break;
-
-	case THREAD_STATUS_SLEEP:
-	case THREAD_STATUS_QUIESCE | THREAD_STATUS_SLEEP:
-		printf(" S");
-		break;
-
-	case THREAD_STATUS_ACTIVE | THREAD_STATUS_QUIESCE:
-		printf(" Q");
-		break;
-
-	default:
-		printf(" U");
-		break;
-	}
-
-	return 0;
-}
-
-static int print_chiplet_thread_status(struct target *chiplet, uint64_t addr, uint64_t *data)
-{
-	printf("c%02d:", chiplet->index);
-
-	for_each_class_call(&threads, filter_parent, print_thread_status, chiplet, 0, NULL);
-	printf("\n");
-
-	return 0;
-}
-
-static int getaddr(struct target *target, uint64_t addr, uint64_t *data)
-{
-	int rc;
-
-	if ((rc = read_target(target, addr, data)))
-		PR_ERROR("Error reading register\n");
-	else
-		printf("p%d:0x%llx: 0x%016llx\n", target->index, addr, *data);
-
-	return rc;
-}
-
-static int putaddr(struct target *target, uint64_t addr, uint64_t *data)
-{
-	uint64_t val, mask = data[1];
-	int rc;
-
-	if (mask != -1ULL) {
-		if ((rc = read_target(target, addr, &val))) {
-			PR_ERROR("Unable to read register\n");
-			return rc;
-		}
-
-		val &= ~mask;
-		val |= data[0] & mask;
-	} else
-		val = data[0];
-
-	if ((rc = write_target(target, addr, val)))
-		PR_ERROR("Error writing register\n");
-	else
-		printf("p%d:0x%llx: 0x%016llx\n", target->index, addr, val);
-
-	return rc;
-}
-
-#define START_CHIP 1
-#define STEP_CHIP 2
-#define STOP_CHIP 3
-static int startstopstep_thread(struct target *thread, uint64_t action, uint64_t *data)
-{
-	uint64_t status;
-
-	if (action == START_CHIP)
-		return ram_start_thread(thread);
-	else if (action == STEP_CHIP) {
-		status = chiplet_thread_status(thread);
-		if (!(GETFIELD(THREAD_STATUS_QUIESCE, status) && GETFIELD(THREAD_STATUS_ACTIVE, status))) {
-			PR_ERROR("Thread %d not stopped. Use stopchip first.\n", thread->index);
-
-			/* Return 0 so we continue stepping other threads if requested */
-			return 0;
-		}
-
-		return ram_step_thread(thread, *data);
-	} else
-		return ram_stop_thread(thread);
-}
-
-/*
- * Start/stop all threads on the chip.
- */
-static int startstopstep_chip(struct target *chiplet, uint64_t action, uint64_t *data)
-{
-	if (action == STEP_CHIP)
-		for_each_class_call(&threads, filter_parent, startstopstep_thread, chiplet, action, data);
-	else
-		for_each_class_call_all(&threads, filter_parent, startstopstep_thread, chiplet, action, data);
-
-	return 0;
-}
-
-static int check_thread_status(struct target *thread, uint64_t unused, uint64_t *unused1)
-{
-	uint64_t status = chiplet_thread_status(thread);
-
-	if (status & THREAD_STATUS_QUIESCE)
-		return 0;
-	else
-		return -1;
-}
-
-static int check_state(struct target *thread)
-{
-	struct target *chiplet = thread->next;
-
-	if (for_each_class_call_all(&threads, filter_parent, check_thread_status, chiplet, 0, NULL) < 0) {
-		PR_ERROR("Not all threads are quiesced. Use the stopchip command"
-			 " first to ensure all chiplet threads are quiesced\n");
-		return -1;
-	}
-
-	if (!((thread->status & THREAD_STATUS_ACTIVE) && (thread->status & THREAD_STATUS_QUIESCE))) {
-		PR_ERROR("Skipping thread %d as it is not active.\n", thread->index);
-		return -2;
-	}
-
-	return 0;
-}
-
-#define REG_MEM -3ULL
-#define REG_MSR -2ULL
-#define REG_NIA -1ULL
-#define REG_R31 31ULL
-
-static int putreg(struct target *thread, uint64_t reg, uint64_t *data)
-{
-	int state;
-
-	state = check_state(thread);
-	if (state == -2)
-		/* Return 0 so we keep attempting other non-sleeping
-		 * threads on the chiplet if requested */
-		return 0;
-	else if (state)
-		return state;
-
-	if (reg == REG_NIA)
-		if (ram_putnia(thread, *data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:nia = 0x%016llx\n", thread->next->index, thread->index, *data);
-	else if (reg == REG_MSR)
-		if (ram_putmsr(thread, *data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:msr = 0x%016llx\n", thread->next->index, thread->index, *data);
-	else if (reg <= REG_R31)
-		if (ram_putgpr(thread, reg, *data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:r%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
-	else {
-		reg -= 32;
-		if (ram_putspr(thread, reg, *data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:spr%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
-	}
-
-	return 0;
-}
-
-static int getreg(struct target *thread, uint64_t reg, uint64_t *data)
-{
-	uint64_t addr = *data;
-	int state;
-
-	state = check_state(thread);
-	if (state == -2)
-		/* Return 0 so we keep attempting other non-sleeping
-		 * threads on the chiplet if requested */
-		return 0;
-	else if (state)
-		return state;
-
-	if (reg == REG_NIA)
-		if (ram_getnia(thread, data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:nia = 0x%016llx\n", thread->next->index, thread->index, *data);
-	else if (reg == REG_MSR)
-		if (ram_getmsr(thread, data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:msr = 0x%016llx\n", thread->next->index, thread->index, *data);
-	else if (reg == REG_MEM)
-		if (ram_getmem(thread, addr, data))
-			PR_ERROR("Page fault reading memory\n");
-		else
-			printf("c%02d:t%d:0x%016llx = 0x%016llx\n", thread->next->index, thread->index, addr, *data);
-	else if (reg <= REG_R31)
-		if (ram_getgpr(thread, reg, data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:r%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
-	else {
-		reg -= 32;
-		if (ram_getspr(thread, reg, data))
-			PR_ERROR("Error reading register\n");
-		else
-			printf("c%02d:t%d:spr%lld = 0x%016llx\n", thread->next->index, thread->index, reg, *data);
-	}
-
-	return 0;
-}
-
-#define PUTMEM_BUF_SIZE 1024
-static int putmem(uint64_t addr)
-{
-	uint8_t *buf;
-	int read_size, rc = 0;
-	struct target *target;
-
-	/* It doesn't matter which processor we execute on so
-	 * just use the primary one */
-	if (list_empty(&processors.targets))
-		return 0;
-
-	target = list_entry(processors.targets.n.next, struct target, class_link);
-	buf = malloc(PUTMEM_BUF_SIZE);
-	assert(buf);
-	do {
-		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
-		if (adu_putmem(target, addr, buf, read_size)) {
-			rc = 0;
-			PR_ERROR("Unable to write memory.\n");
-			break;
-		}
-
-		rc += read_size;
-	} while (read_size > 0);
-
-	free(buf);
-	return rc;
 }
 
 int main(int argc, char *argv[])
 {
 	int rc = 0;
-	uint64_t value = 0;
 	uint8_t *buf;
 	struct target *target;
 
 	if (parse_options(argc, argv))
 		return 1;
 
-	if (backend_init())
+	/* Disable unselected targets */
+	if (target_select())
 		return 1;
+
+	target_probe();
 
 	switch(cmd) {
 	case GETCFAM:
-		rc = for_each_class_call(&cfams, NULL, getaddr, NULL, cmd_args[0], &value);
-		break;
-	case GETSCOM:
-		rc = for_each_class_call(&processors, NULL, getaddr, NULL, cmd_args[0], &value);
+		rc = for_each_target("fsi", getcfam, &cmd_args[0], NULL);
 		break;
 	case PUTCFAM:
-		rc = for_each_class_call(&cfams, NULL, putaddr, NULL, cmd_args[0], &cmd_args[1]);
+		rc = for_each_target("fsi", putcfam, &cmd_args[0], &cmd_args[1]);
+		break;
+	case GETSCOM:
+		rc = for_each_target("pib", getscom, &cmd_args[0], NULL);
 		break;
 	case PUTSCOM:
-		rc = for_each_class_call(&processors, NULL, putaddr, NULL, cmd_args[0], &cmd_args[1]);
+		rc = for_each_target("pib", putscom, &cmd_args[0], &cmd_args[1]);
 		break;
 	case GETMEM:
-		/* It doesn't matter which processor we execute on so
-		 * just use the primary one */
-		if (list_empty(&processors.targets))
-			break;
+                buf = malloc(cmd_args[1]);
+                assert(buf);
+		for_each_class_target("adu", target) {
+			if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1])) {
+				write(STDOUT_FILENO, buf, cmd_args[1]);
+				rc++;
+			} else
+				PR_ERROR("Unable to read memory.\n");
 
-		target = list_entry(processors.targets.n.next, struct target, class_link);
-		buf = malloc(cmd_args[1]);
-		assert(buf);
-		if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1])) {
-			rc = 1;
-			write(STDOUT_FILENO, buf, cmd_args[1]);
-		} else
-			PR_ERROR("Unable to read memory.\n");
+			/* We only ever care about getting memory from a single processor */
+			break;
+		}
 
 		free(buf);
 		break;
 	case PUTMEM:
-		rc = putmem(cmd_args[0]);
-		printf("Wrote %d bytes starting at 0x%016llx\n", rc, cmd_args[0]);
+                rc = putmem(cmd_args[0]);
+                printf("Wrote %d bytes starting at 0x%016" PRIx64 "\n", rc, cmd_args[0]);
 		break;
 	case GETGPR:
-		rc = for_each_class_call(&threads, NULL, getreg, NULL, cmd_args[0], &value);
+		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTGPR:
-		rc = for_each_class_call(&threads, NULL, putreg, NULL, cmd_args[0], &cmd_args[1]);
+		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case GETNIA:
-		rc = for_each_class_call(&threads, NULL, getreg, NULL, REG_NIA, &value);
+		cmd_args[0] = REG_NIA;
+		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTNIA:
-		rc = for_each_class_call(&threads, NULL, putreg, NULL, REG_NIA, &cmd_args[0]);
+		cmd_args[1] = cmd_args[0];
+		cmd_args[0] = REG_NIA;
+		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case GETSPR:
-		rc = for_each_class_call(&threads, NULL, getreg, NULL, cmd_args[0] + 32, &value);
+		cmd_args[0] += REG_R31;
+		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTSPR:
-		rc = for_each_class_call(&threads, NULL, putreg, NULL, cmd_args[0] + 32, &cmd_args[1]);
+		cmd_args[0] += REG_R31;
+		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case GETMSR:
-		rc = for_each_class_call(&threads, NULL, getreg, NULL, REG_MSR, &value);
+		cmd_args[0] = REG_MSR;
+		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTMSR:
-		rc = for_each_class_call(&threads, NULL, putreg, NULL, REG_MSR, &cmd_args[0]);
-		break;
-	case GETVMEM:
-		rc = for_each_class_call(&threads, NULL, getreg, NULL, REG_MEM, &cmd_args[0]);
+		cmd_args[1] = cmd_args[0];
+		cmd_args[0] = REG_MSR;
+		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case THREADSTATUS:
-		printf("  t: 0 1 2 3 4 5 6 7\n");
-		rc = for_each_class_call(&chiplets, NULL, print_chiplet_thread_status, NULL, 0, 0);
-		printf("\nA - Active\nS - Sleep\nN - Nap\nD - Doze\nQ - Quiesced/Stopped\nU - Unknown\n");
+		for_each_target("pib", print_proc_thread_status, NULL, NULL);
 		break;
-	case STARTCHIP:
-		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, START_CHIP, NULL);
+	case START:
+		for_each_target("thread", start_thread, NULL, NULL);
 		break;
 	case STEP:
-		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, STEP_CHIP, &cmd_args[0]);
+		for_each_target("thread", step_thread, &cmd_args[0], NULL);
 		break;
-	case STOPCHIP:
-		rc = for_each_class_call(&chiplets, NULL, startstopstep_chip, NULL, STOP_CHIP, NULL);
+	case STOP:
+		for_each_target("thread", stop_thread, NULL, NULL);
 		break;
-	case PROBE:
-		rc = 1;
-		probe();
+	default:
+		PR_ERROR("Unsupported command\n");
 		break;
 	}
 
-	if (rc <= 0) {
-		printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
-		printf("Alternatively run %s -a probe to get a list of all valid targets\n", argv[0]);
-		rc = -1;
-	} else
-		rc = 0;
-
-	/* TODO: We don't properly tear down all the targets yet */
-	targets[0].destroy(&targets[0]);
+	if (backend == FSI)
+		fsi_destroy(NULL);
 
 	return rc;
 }

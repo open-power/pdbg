@@ -20,6 +20,7 @@
 #include <ccan/array_size/array_size.h>
 #include <unistd.h>
 
+#include "target.h"
 #include "operations.h"
 #include "bitutils.h"
 
@@ -68,7 +69,7 @@
 #define  SPECIAL_WKUP_DONE		PPC_BIT(31)
 
 /* How long (in us) to wait for a special wakeup to complete */
-#define SPECIAL_WKUP_TIMEOUT		1000
+#define SPECIAL_WKUP_TIMEOUT		10
 
 /* Opcodes */
 #define MTNIA_OPCODE 0x00000002UL
@@ -135,21 +136,22 @@ static uint64_t ld(uint64_t rt, uint64_t ds, uint64_t ra)
 	return LD_OPCODE | (rt << 21) | (ra << 16) | (ds << 2);
 }
 
-static int assert_special_wakeup(struct target *chip)
+static int assert_special_wakeup(struct chiplet *chip)
 {
 	int i = 0;
 	uint64_t gp0;
 
 	/* Assert special wakeup to prevent low power states */
-	CHECK_ERR(write_target(chip, PMSPCWKUPFSP_REG, FSP_SPECIAL_WAKEUP));
+	CHECK_ERR(pib_write(&chip->target, PMSPCWKUPFSP_REG, FSP_SPECIAL_WAKEUP));
 
 	/* Poll for completion */
 	do {
 		usleep(1);
-		CHECK_ERR(read_target(chip, EX_PM_GP0_REG, &gp0));
+		CHECK_ERR(pib_read(&chip->target, EX_PM_GP0_REG, &gp0));
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
-			PR_ERROR("Timeout waiting for special wakeup\n");
+			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08lx\n", chip->target.name,
+				 dt_get_address(chip->target.dn, 0, NULL));
 			return -1;
 		}
 	} while (!(gp0 & SPECIAL_WKUP_DONE));
@@ -157,41 +159,41 @@ static int assert_special_wakeup(struct target *chip)
 	return 0;
 }
 
-static int deassert_special_wakeup(struct target *chip)
+static int deassert_special_wakeup(struct chiplet *chip)
 {
 	/* Assert special wakeup to prevent low power states */
-	CHECK_ERR(write_target(chip, PMSPCWKUPFSP_REG, 0));
+	CHECK_ERR(pib_write(&chip->target, PMSPCWKUPFSP_REG, 0));
 
 	return 0;
 }
 
-uint64_t chiplet_thread_status(struct target *thread)
+uint64_t thread_status(struct thread *thread)
 {
 	return thread->status;
 }
 
-static uint64_t get_thread_status(struct target *thread)
+static uint64_t get_thread_status(struct thread *thread)
 {
 	uint64_t val, mode_reg, thread_status = thread->status;
 
 	/* Need to activete debug mode to get complete status */
-	CHECK_ERR(read_target(thread, RAS_MODE_REG, &mode_reg));
+	CHECK_ERR(pib_read(&thread->target, RAS_MODE_REG, &mode_reg));
 	mode_reg |= MR_THREAD_IN_DEBUG;
-	CHECK_ERR(write_target(thread, RAS_MODE_REG, mode_reg));
+	CHECK_ERR(pib_write(&thread->target, RAS_MODE_REG, mode_reg));
 
 	/* Read status */
-	CHECK_ERR(read_target(thread, RAS_STATUS_REG, &val));
+	CHECK_ERR(pib_read(&thread->target, RAS_STATUS_REG, &val));
 
 	thread_status = SETFIELD(THREAD_STATUS_ACTIVE, thread_status, !!(val & RAS_STATUS_THREAD_ACTIVE));
 	thread_status = SETFIELD(THREAD_STATUS_QUIESCE, thread_status, !!(val & RAS_STATUS_TS_QUIESCE));
 
 	/* Read POW status */
-	CHECK_ERR(read_target(thread, POW_STATUS_REG, &val));
+	CHECK_ERR(pib_read(&thread->target, POW_STATUS_REG, &val));
 	thread_status = SETFIELD(THREAD_STATUS_STATE, thread_status, GETFIELD(PMC_POW_STATE, val));
 
 	/* Clear debug mode */
 	mode_reg &= ~MR_THREAD_IN_DEBUG;
-	CHECK_ERR(write_target(thread, RAS_MODE_REG, mode_reg));
+	CHECK_ERR(pib_write(&thread->target, RAS_MODE_REG, mode_reg));
 
 	return thread_status;
 }
@@ -199,48 +201,48 @@ static uint64_t get_thread_status(struct target *thread)
 /*
  * Single step the thread count instructions.
  */
-int ram_step_thread(struct target *thread, int count)
+int ram_step_thread(struct thread *thread, int count)
 {
 	int i;
 	uint64_t ras_mode, ras_status;
 
 	/* Activate single-step mode */
-	CHECK_ERR(read_target(thread, RAS_MODE_REG, &ras_mode));
+	CHECK_ERR(pib_read(&thread->target, RAS_MODE_REG, &ras_mode));
 	ras_mode |= MR_DO_SINGLE_MODE;
-	CHECK_ERR(write_target(thread, RAS_MODE_REG, ras_mode));
+	CHECK_ERR(pib_write(&thread->target, RAS_MODE_REG, ras_mode));
 
 	/* Step the core */
 	for (i = 0; i < count; i++) {
-		CHECK_ERR(write_target(thread, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STEP));
+		CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STEP));
 
 		/* Wait for step to complete */
 		do {
-			CHECK_ERR(read_target(thread, RAS_STATUS_REG, &ras_status));
+			CHECK_ERR(pib_read(&thread->target, RAS_STATUS_REG, &ras_status));
 		} while (!(ras_status & RAS_STATUS_INST_COMPLETE));
 	}
 
 	/* Deactivate single-step mode */
 	ras_mode &= ~MR_DO_SINGLE_MODE;
-	CHECK_ERR(write_target(thread, RAS_MODE_REG, ras_mode));
+	CHECK_ERR(pib_write(&thread->target, RAS_MODE_REG, ras_mode));
 
 	return 0;
 }
 
-int ram_stop_thread(struct target *thread)
+int ram_stop_thread(struct thread *thread)
 {
-	int i = 0, thread_id = (thread->base >> 4) & 0x7;
+	int i = 0;
 	uint64_t val;
-	struct target *chip = thread->next;
+	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
 
 	do {
 		/* Quiese active thread */
-		CHECK_ERR(write_target(thread, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STOP));
+		CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STOP));
 
 		/* Wait for thread to quiese */
-		CHECK_ERR(read_target(chip, RAS_STATUS_REG, &val));
+		CHECK_ERR(pib_read(&chip->target, RAS_STATUS_REG, &val));
 		if (i++ > RAS_STATUS_TIMEOUT) {
 			PR_ERROR("Unable to quiesce thread %d (0x%016llx).\n",
-				 thread->index, val);
+				 thread->id, val);
 			PR_ERROR("Continuing anyway.\n");
 			if (val & PPC_BIT(48)) {
 				PR_ERROR("Unable to continue\n");
@@ -258,27 +260,42 @@ int ram_stop_thread(struct target *thread)
 
 
 	/* Make the threads RAM thread active */
-	CHECK_ERR(read_target(chip, THREAD_ACTIVE_REG, &val));
-	val |= PPC_BIT(8) >> thread_id;
-	CHECK_ERR(write_target(chip, THREAD_ACTIVE_REG, val));
+	CHECK_ERR(pib_read(&chip->target, THREAD_ACTIVE_REG, &val));
+	val |= PPC_BIT(8) >> thread->id;
+	CHECK_ERR(pib_write(&chip->target, THREAD_ACTIVE_REG, val));
 
 	return 0;
 }
 
-int ram_start_thread(struct target *thread)
+int ram_start_thread(struct thread *thread)
 {
 	uint64_t val;
-	struct target *chip = thread->next;
-	int thread_id = (thread->base >> 4) & 0x7;
+	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
 
 	/* Activate thread */
-	CHECK_ERR(write_target(thread, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));
+	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));
 
 	/* Restore thread active */
-	CHECK_ERR(read_target(chip, THREAD_ACTIVE_REG, &val));
-	val &= ~(PPC_BIT(8) >> thread_id);
-	val |= PPC_BIT(thread_id);
-	CHECK_ERR(write_target(chip, THREAD_ACTIVE_REG, val));
+	CHECK_ERR(pib_read(&chip->target, THREAD_ACTIVE_REG, &val));
+	val &= ~(PPC_BIT(8) >> thread->id);
+	val |= PPC_BIT(thread->id);
+	CHECK_ERR(pib_write(&chip->target, THREAD_ACTIVE_REG, val));
+
+	return 0;
+}
+
+/* We can only ram a thread if all the threads on the core/chip are
+ * quiesced */
+int ram_status(struct chiplet *chip)
+{
+	struct dt_node *dn;
+
+	dt_for_each_compatible(chip->target.dn, dn, "ibm,power8-thread") {
+		struct thread *thread;
+		thread = target_to_thread(dn->target);
+		if (!(get_thread_status(thread) & THREAD_STATUS_QUIESCE))
+			return -1;
+	}
 
 	return 0;
 }
@@ -291,26 +308,32 @@ int ram_start_thread(struct target *thread)
  * data. Note that only register r0 is saved and restored so opcodes
  * must not touch other registers.
  */
-static int ram_instructions(struct target *thread, uint64_t *opcodes,
+static int ram_instructions(struct thread *thread, uint64_t *opcodes,
 			    uint64_t *results, int len, unsigned int lpar)
 {
 	uint64_t ram_mode, val, opcode, r0 = 0, r1 = 0;
-	struct target *chiplet = thread->next;
-	int thread_id = (thread->base >> 4) & 0x7;
+	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
 	int i;
 	int exception = 0;
 
+	/* Check to see if the parent chip is in a state that can RAM instructions */
+	if (ram_status(chip))
+		return 1;
+
+	if (!(thread_status(thread) & THREAD_STATUS_ACTIVE))
+		return 2;
+
 	/* Activate RAM mode */
-	CHECK_ERR(read_target(chiplet, RAM_MODE_REG, &ram_mode));
+	CHECK_ERR(pib_read(&chip->target, RAM_MODE_REG, &ram_mode));
 	ram_mode |= RAM_MODE_ENABLE;
-	CHECK_ERR(write_target(chiplet, RAM_MODE_REG, ram_mode));
+	CHECK_ERR(pib_write(&chip->target, RAM_MODE_REG, ram_mode));
 
 	/* Setup SPRC to use SPRD */
 	val = SPR_MODE_SPRC_WR_EN;
 	val = SETFIELD(SPR_MODE_SPRC_SEL, val, 1 << (3 - lpar));
-	val = SETFIELD(SPR_MODE_SPRC_T_SEL, val, 1 << (7 - thread_id));
-	CHECK_ERR(write_target(chiplet, SPR_MODE_REG, val));
-	CHECK_ERR(write_target(chiplet, L0_SCOM_SPRC_REG, SCOM_SPRC_SCRATCH_SPR));
+	val = SETFIELD(SPR_MODE_SPRC_T_SEL, val, 1 << (7 - thread->id));
+	CHECK_ERR(pib_write(&chip->target, SPR_MODE_REG, val));
+	CHECK_ERR(pib_write(&chip->target, L0_SCOM_SPRC_REG, SCOM_SPRC_SCRATCH_SPR));
 
 	/* RAM instructions */
 	for (i = -2; i < len + 2; i++) {
@@ -320,26 +343,26 @@ static int ram_instructions(struct target *thread, uint64_t *opcodes,
 			/* Save r0 (assumes opcodes don't touch other registers) */
 			opcode = mtspr(277, 0);
 		else if (i < len) {
-			CHECK_ERR(write_target(chiplet, SCR0_REG, results[i]));
+			CHECK_ERR(pib_write(&chip->target, SCR0_REG, results[i]));
 			opcode = opcodes[i];
 		} else if (i == len) {
 			/* Restore r0 */
-			CHECK_ERR(write_target(chiplet, SCR0_REG, r0));
+			CHECK_ERR(pib_write(&chip->target, SCR0_REG, r0));
 			opcode = mfspr(0, 277);
 		} else if (i == len + 1) {
 			/* Restore r1 */
-			CHECK_ERR(write_target(chiplet, SCR0_REG, r1));
+			CHECK_ERR(pib_write(&chip->target, SCR0_REG, r1));
 			opcode = mfspr(0, 277);
 		}
 
 		/* ram instruction */
-		val = SETFIELD(RAM_THREAD_SELECT, 0ULL, thread_id);
+		val = SETFIELD(RAM_THREAD_SELECT, 0ULL, thread->id);
 		val = SETFIELD(RAM_INSTR, val, opcode);
-		CHECK_ERR(write_target(chiplet, RAM_CTRL_REG, val));
+		CHECK_ERR(pib_write(&chip->target, RAM_CTRL_REG, val));
 
 		/* wait for completion */
 		do {
-			CHECK_ERR(read_target(chiplet, RAM_STATUS_REG, &val));
+			CHECK_ERR(pib_read(&chip->target, RAM_STATUS_REG, &val));
 		} while (!((val & PPC_BIT(1)) || ((val & PPC_BIT(2)) && (val & PPC_BIT(3)))));
 
 		if (!(val & PPC_BIT(1))) {
@@ -353,7 +376,7 @@ static int ram_instructions(struct target *thread, uint64_t *opcodes,
 		}
 
 		/* Save the results */
-		CHECK_ERR(read_target(chiplet, SCR0_REG, &val));
+		CHECK_ERR(pib_read(&chip->target, SCR0_REG, &val));
 		if (i == -2)
 			r1 = val;
 		else if (i == -1)
@@ -364,7 +387,7 @@ static int ram_instructions(struct target *thread, uint64_t *opcodes,
 
 	/* Disable RAM mode */
 	ram_mode &= ~RAM_MODE_ENABLE;
-	CHECK_ERR(write_target(chiplet, RAM_MODE_REG, ram_mode));
+	CHECK_ERR(pib_write(&chip->target, RAM_MODE_REG, ram_mode));
 
 	return exception;
 }
@@ -372,7 +395,7 @@ static int ram_instructions(struct target *thread, uint64_t *opcodes,
 /*
  * Get gpr value. Chip must be stopped.
  */
-int ram_getgpr(struct target *thread, int gpr, uint64_t *value)
+int ram_getgpr(struct thread *thread, int gpr, uint64_t *value)
 {
 	uint64_t opcodes[] = {mtspr(277, gpr)};
 	uint64_t results[] = {0};
@@ -382,7 +405,7 @@ int ram_getgpr(struct target *thread, int gpr, uint64_t *value)
 	return 0;
 }
 
-int ram_putgpr(struct target *thread, int gpr, uint64_t value)
+int ram_putgpr(struct thread *thread, int gpr, uint64_t value)
 {
 	uint64_t opcodes[] = {mfspr(gpr, 277)};
 	uint64_t results[] = {value};
@@ -392,7 +415,7 @@ int ram_putgpr(struct target *thread, int gpr, uint64_t value)
 	return 0;
 }
 
-int ram_getnia(struct target *thread, uint64_t *value)
+int ram_getnia(struct thread *thread, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfnia(0), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
@@ -402,7 +425,7 @@ int ram_getnia(struct target *thread, uint64_t *value)
 	return 0;
 }
 
-int ram_putnia(struct target *thread, uint64_t value)
+int ram_putnia(struct thread *thread, uint64_t value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mtnia(0)};
 	uint64_t results[] = {value, 0};
@@ -411,7 +434,7 @@ int ram_putnia(struct target *thread, uint64_t value)
 	return 0;
 }
 
-int ram_getspr(struct target *thread, int spr, uint64_t *value)
+int ram_getspr(struct thread *thread, int spr, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfspr(0, spr), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
@@ -421,7 +444,7 @@ int ram_getspr(struct target *thread, int spr, uint64_t *value)
 	return 0;
 }
 
-int ram_putspr(struct target *thread, int spr, uint64_t value)
+int ram_putspr(struct thread *thread, int spr, uint64_t value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mtspr(spr, 0)};
 	uint64_t results[] = {value, 0};
@@ -430,7 +453,7 @@ int ram_putspr(struct target *thread, int spr, uint64_t value)
 	return 0;
 }
 
-int ram_getmsr(struct target *thread, uint64_t *value)
+int ram_getmsr(struct thread *thread, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfmsr(0), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
@@ -440,7 +463,7 @@ int ram_getmsr(struct target *thread, uint64_t *value)
 	return 0;
 }
 
-int ram_putmsr(struct target *thread, uint64_t value)
+int ram_putmsr(struct thread *thread, uint64_t value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mtmsr(0)};
 	uint64_t results[] = {value, 0};
@@ -449,7 +472,7 @@ int ram_putmsr(struct target *thread, uint64_t value)
 	return 0;
 }
 
-int ram_getmem(struct target *thread, uint64_t addr, uint64_t *value)
+int ram_getmem(struct thread *thread, uint64_t addr, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mfspr(1, 277), ld(0, 0, 1), mtspr(277, 0)};
 	uint64_t results[] = {0xdeaddeaddeaddead, addr, 0, 0};
@@ -459,81 +482,54 @@ int ram_getmem(struct target *thread, uint64_t addr, uint64_t *value)
 	return 0;
 }
 
-int thread_target_init(struct target *thread, const char *name, uint64_t thread_id, struct target *next)
-{
-	target_init(thread, name, 0x13000 | (thread_id << 4), NULL, NULL, NULL, next);
-	thread->status = get_thread_status(thread);
-
-	/* Threads always exist, although they may not be in a useful state for most operations */
-	return 0;
-}
-
 /*
  * Initialise all viable threads for ramming on the given chiplet.
  */
-int thread_target_probe(struct target *chiplet, struct target *targets, int max_target_count)
+static int p8_thread_probe(struct target *target)
 {
-	struct target *thread = targets;
-	int i, count = 0;
+	struct thread *thread = target_to_thread(target);
 
-	for (i = 0; i < THREADS_PER_CORE && i < max_target_count; i++) {
-		thread_target_init(thread, "Thread", i, chiplet);
-		thread++;
-		count++;
-	}
+	thread->id = (dt_get_address(target->dn, 0, NULL) >> 4) & 0xf;
+	thread->status = get_thread_status(thread);
 
-	return count;
+	return 0;
 }
 
-int chiplet_target_init(struct target *target, const char *name, uint64_t chip_id, struct target *next)
+struct thread p8_thread = {
+	.target = {
+		.name = "POWER8 Thread",
+		.compatible = "ibm,power8-thread",
+		.class = "thread",
+		.probe = p8_thread_probe,
+	},
+};
+DECLARE_HW_UNIT(p8_thread);
+
+static int p8_chiplet_probe(struct target *target)
 {
-	uint64_t value, base;
-
-	base = 0x10000000 | (chip_id << 24);
-
-	target_init(target, name, base, NULL, NULL, NULL, next);
+	uint64_t value;
+	struct chiplet *chiplet = target_to_chiplet(target);
+	int i, count = 0, rc = 0;
 
 	/* Work out if this chip is actually present */
-	if (read_target(target, SCOM_EX_GP3, &value)) {
+	if (pib_read(target, SCOM_EX_GP3, &value)) {
 		PR_DEBUG("Error reading chip GP3 register\n");
 		return -1;
 	}
 
-	/* Return 0 is a chip is actually present. We still leave the
-	   target initialised even if it isn't present as a user may
-	   want to continue anyway. */
-	return -!GETFIELD(PPC_BIT(0), value);
+	if (!GETFIELD(PPC_BIT(0), value))
+		return -1;
+
+	assert_special_wakeup(chiplet);
+	return 0;
 }
 
-/* Initialises all possible chiplets on the given processor
- * target. *targets should point to pre-allocated memory with enough
- * free space for the maximum number of targets. Returns the number of
- * chips found. */
-int chiplet_target_probe(struct target *processor, struct target *targets, int max_target_count)
-{
-	struct target *target = targets;
-	int i, count = 0, rc = 0;
-
-	/* P9 chiplets are not currently supported */
-	if (processor->chip_type == CHIP_P9)
-		return 0;
-
-	for (i = 0; i <= 0xf && i < max_target_count; i++) {
-		if (i == 0 || i == 7 || i == 8 || i == 0xf)
-			/* 0, 7, 8 & 0xf are reserved */
-			continue;
-
-		if (!(rc = chiplet_target_init(target, "Chiplet", i, processor))) {
-			assert_special_wakeup(target);
-			target++;
-			count++;
-		} else
-			target_del(target);
-	}
-
-	if (rc)
-		/* The last target is invalid, zero it out */
-		memset(target, 0, sizeof(*target));
-
-	return count;
-}
+struct chiplet p8_chiplet = {
+	.target = {
+		.name = "POWER8 Chiplet",
+		.compatible = "ibm,power8-core",
+		.class = "chiplet",
+		.probe = p8_chiplet_probe,
+	},
+};
+DECLARE_HW_UNIT(p8_chiplet);
