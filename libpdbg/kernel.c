@@ -31,8 +31,50 @@
 
 #define FSI_SCAN_PATH "/sys/devices/platform/fsi-master/scan"
 #define FSI_CFAM_PATH "/sys/devices/platform/fsi-master/slave@00:00/raw"
+#define FSI_SCOM_PATH "/sys/devices/platform/fsi-master/slave@00:00/"
 
 int fsi_fd;
+int scom_fd;
+
+static int kernel_putscom(struct target *target, uint64_t addr, uint64_t value)
+{
+	int rc;
+
+	rc = lseek(scom_fd, addr, SEEK_SET);
+	if (rc < 0) {
+		warn("Failed to seek %s", FSI_SCOM_PATH);
+		return errno;
+	}
+
+	rc = write(scom_fd, &value, sizeof(value));
+	if (rc < 0) {
+		warn("Failed to write to 0x%016llx", addr);
+		return errno;
+	}
+
+	return 0;
+
+}
+
+static int kernel_getscom(struct target *target, uint64_t addr, uint64_t *value)
+{
+	int rc;
+
+	rc = lseek(fsi_fd, addr, SEEK_SET);
+	if (rc < 0) {
+		warn("Failed to seek %s", FSI_SCOM_PATH);
+		return errno;
+	}
+
+	rc = read(fsi_fd, value, sizeof(*value));
+	if (rc < 0) {
+		warn("Failed to read from 0x%016llx", addr);
+		return errno;
+	}
+
+	return 0;
+
+}
 
 static int kernel_fsi_getcfam(struct target *target, uint64_t addr64, uint64_t *value)
 {
@@ -127,4 +169,14 @@ found:
 	target->chip_type = get_chip_type(value);
 
 	return 0;
+}
+
+int kernel_fsi2pib_target_init(struct target *target, const char *name,
+				uint64_t base, struct target *next)
+{
+	target_init(target, name, base, kernel_getscom, kernel_putscom, NULL,
+			next);
+
+	return 0;
+
 }

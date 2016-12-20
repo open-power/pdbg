@@ -397,7 +397,8 @@ static int kernel_backend_targets_init(void)
 	/* Add a FSI2PIB bridges for each CFAM */
 	i = 0;
 	for_each_cfam(cfam) {
-		fsi2pib_target_init(&targets[cfam_count + i], "FSI2PIB", FSI2PIB_BASE, cfam);
+		kernel_fsi2pib_target_init(&targets[cfam_count + i],
+					   "FSI2PIB", FSI2PIB_BASE, cfam);
 
 		if (processor[i])
 			target_class_add(&processors, &targets[cfam_count + i], i);

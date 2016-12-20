@@ -75,6 +75,7 @@ int fsi_target_probe(struct target *targets, int max_target_count);
 int i2c_target_init(struct target *target, const char *name, struct target *next,
 		    const char *bus, int addr);
 int fsi2pib_target_init(struct target *target, const char *name, uint64_t base, struct target *next);
+int kernel_fsi2pib_target_init(struct target *target, const char *name, uint64_t base, struct target *next);
 int opb_target_init(struct target *target, const char *name, uint64_t base, struct target *next);
 enum chip_type get_chip_type(uint64_t chip_id);
 int thread_target_init(struct target *thread, const char *name, uint64_t thread_id, struct target *next);
