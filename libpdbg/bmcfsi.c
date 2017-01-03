@@ -83,8 +83,8 @@ struct gpio_pin p9r_gpio_pins[] = {
 #define P9R_CLOCK_DELAY 20
 
 struct gpio_pin p9z_gpio_pins[] = {
-	{0x1e0, 16},	/* FSI_CLK = AA0 */
-	{0x20, 0},	/* FSI_DAT = E0 */
+	{0, 19},	/* FSI_CLK = C3 */
+	{0, 18},	/* FSI_DAT = C2 */
 	{0x78, 22},	/* FSI_DAT_EN = O6 */
 	{0, 24},	/* FSI_ENABLE = D0 */
 	{0x78, 30},	/* CRONUS_SEL = P6 */
