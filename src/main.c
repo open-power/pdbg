@@ -393,21 +393,23 @@ static int fsi_backend_targets_init(void)
 	fsi_target_init(&targets[0], "BMC FSI Backend", type, NULL);
 
 	/* The backend is directly connected to a processor CFAM */
-	target_class_add(&cfams, &targets[0], 0);
+	if (processor[0])
+		target_class_add(&cfams, &targets[0], 0);
 	cfam_count = 1;
 
 	/* Probe cascaded CFAMs on hMFSI ports */
 	cfam_count += hmfsi_target_probe(&targets[0], &targets[1], MAX_TARGETS);
 	for (i = 1; i < cfam_count; i++)
-		target_class_add(&cfams, &targets[i], i);
+		if (processor[i])
+			target_class_add(&cfams, &targets[i], i);
 
 	/* Add a FSI2PIB bridges for each CFAM */
 	i = 0;
 	for_each_cfam(cfam) {
 		fsi2pib_target_init(&targets[cfam_count + i], "FSI2PIB", FSI2PIB_BASE, cfam);
 
-		if (processor[i])
-			target_class_add(&processors, &targets[cfam_count + i], i);
+		if (processor[cfam->index])
+			target_class_add(&processors, &targets[cfam_count + i], cfam->index);
 		i++;
 	}
 
