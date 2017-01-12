@@ -20,15 +20,19 @@
 #include "operations.h"
 #include "bitutils.h"
 
-enum adu_retcode {ADU_DONE, ADU_RETRY, ADU_ERR};
-
-/* ADU SCOM Register Definitions */
-#define ALTD_CONTROL_REG	0x0
-#define ALTD_CMD_REG		0x1
+/* P8 ADU SCOM Register Definitions */
+#define P8_ALTD_CONTROL_REG	0x0
+#define P8_ALTD_CMD_REG		0x1
 #define P8_ALTD_STATUS_REG	0x2
 #define P8_ALTD_DATA_REG	0x3
 
-/* ALTD_CMD_REG fields */
+/* P9 ADU SCOM Register Definitions */
+#define P9_ALTD_CONTROL_REG	0x0
+#define P9_ALTD_CMD_REG		0x1
+#define P9_ALTD_STATUS_REG	0x3
+#define P9_ALTD_DATA_REG	0x4
+
+/* Common ALTD_CMD_REG fields */
 #define FBC_ALTD_START_OP	PPC_BIT(2)
 #define FBC_ALTD_CLEAR_STATUS	PPC_BIT(3)
 #define FBC_ALTD_RESET_AD_PCB	PPC_BIT(4)
@@ -36,6 +40,15 @@ enum adu_retcode {ADU_DONE, ADU_RETRY, ADU_ERR};
 #define FBC_ALTD_AUTO_INC	PPC_BIT(19)
 #define FBC_ALTD_DROP_PRIORITY	PPC_BITMASK(20, 21)
 #define FBC_LOCKED		PPC_BIT(11)
+
+/* P9_ALTD_CMD_REG fields */
+#define P9_TTYPE_TREAD 	       		PPC_BIT(5)
+#define P9_TTYPE_TWRITE 		0
+#define P9_FBC_ALTD_TTYPE		PPC_BITMASK(25, 31)
+#define P9_TTYPE_DMA_PARTIAL_READ	0b000110
+#define P9_TTYPE_DMA_PARTIAL_WRITE	0b100110
+#define P9_FBC_ALTD_TSIZE		PPC_BITMASK(32, 39)
+#define P9_FBC_ALTD_ADDRESS		PPC_BITMASK(8, 63)
 
 #define DROP_PRIORITY_LOW	0ULL
 #define DROP_PRIORITY_MEDIUM	1ULL
@@ -46,153 +59,40 @@ enum adu_retcode {ADU_DONE, ADU_RETRY, ADU_ERR};
 #define SCOPE_SYSTEM		2
 #define SCOPE_REMOTE		3
 
-/* ALTD_CONTROL_REG fields */
-#define FBC_ALTD_TTYPE		PPC_BITMASK(0, 5)
-#define TTYPE_TREAD 		PPC_BIT(6)
-#define TTYPE_TWRITE 		0
-#define FBC_ALTD_TSIZE		PPC_BITMASK(7, 13)
-#define FBC_ALTD_ADDRESS	PPC_BITMASK(14, 63)
+/* P8_ALTD_CONTROL_REG fields */
+#define P8_FBC_ALTD_TTYPE	PPC_BITMASK(0, 5)
+#define P8_TTYPE_TREAD		PPC_BIT(6)
+#define P8_TTYPE_TWRITE		0
+#define P8_FBC_ALTD_TSIZE	PPC_BITMASK(7, 13)
+#define P8_FBC_ALTD_ADDRESS	PPC_BITMASK(14, 63)
 
-#define TTYPE_CI_PARTIAL_WRITE		0b110111
-#define TTYPE_CI_PARTIAL_OOO_WRITE	0b110110
-#define TTYPE_DMA_PARTIAL_WRITE    	0b100110
-#define TTYPE_CI_PARTIAL_READ 	 	0b110100
-#define TTYPE_DMA_PARTIAL_READ 		0b110101
-#define TTYPE_PBOPERATION 		0b111111
+#define P8_TTYPE_CI_PARTIAL_WRITE	0b110111
+#define P8_TTYPE_CI_PARTIAL_OOO_WRITE	0b110110
+#define P8_TTYPE_DMA_PARTIAL_WRITE    	0b100110
+#define P8_TTYPE_CI_PARTIAL_READ 	0b110100
+#define P8_TTYPE_DMA_PARTIAL_READ 	0b110101
+#define P8_TTYPE_PBOPERATION 		0b111111
 
-/* P8_ALTD_STATUS_REG fields */
+/* P8/P9_ALTD_STATUS_REG fields */
 #define FBC_ALTD_ADDR_DONE	PPC_BIT(2)
 #define FBC_ALTD_DATA_DONE	PPC_BIT(3)
 #define FBC_ALTD_PBINIT_MISSING PPC_BIT(18)
 
-static int adu_lock(struct adu *adu)
+int adu_getmem(struct target *adu_target, uint64_t start_addr, uint8_t *output, uint64_t size)
 {
-	uint64_t val;
-
-	CHECK_ERR(pib_read(&adu->target, ALTD_CMD_REG, &val));
-
-	if (val & FBC_LOCKED)
-		PR_INFO("ADU already locked! Ignoring.\n");
-
-	val |= FBC_LOCKED;
-	CHECK_ERR(pib_write(&adu->target, ALTD_CMD_REG, val));
-
-	return 0;
-}
-
-static int adu_unlock(struct adu *adu)
-{
-	uint64_t val;
-
-	CHECK_ERR(pib_read(&adu->target, ALTD_CMD_REG, &val));
-
-	if (!(val & FBC_LOCKED)) {
-		PR_INFO("ADU already unlocked!\n");
-		return 0;
-	}
-
-	val &= ~FBC_LOCKED;
-	CHECK_ERR(pib_write(&adu->target, ALTD_CMD_REG, val));
-
-	return 0;
-}
-
-static int adu_reset(struct adu *adu)
-{
-	uint64_t val;
-
-	CHECK_ERR(pib_read(&adu->target, ALTD_CMD_REG, &val));
-	val |= FBC_ALTD_CLEAR_STATUS | FBC_ALTD_RESET_AD_PCB;
-	CHECK_ERR(pib_write(&adu->target, ALTD_CMD_REG, val));
-
-	return 0;
-}
-
-static uint64_t p8_get_ctrl_reg(uint64_t ctrl_reg, uint64_t addr)
-{
-	ctrl_reg |= TTYPE_TREAD;
-	ctrl_reg = SETFIELD(FBC_ALTD_TTYPE, ctrl_reg, TTYPE_DMA_PARTIAL_READ);
-	ctrl_reg = SETFIELD(FBC_ALTD_TSIZE, ctrl_reg, 8);
-	ctrl_reg = SETFIELD(FBC_ALTD_ADDRESS, ctrl_reg, addr);
-	return ctrl_reg;
-}
-
-static uint64_t p8_get_cmd_reg(uint64_t cmd_reg, uint64_t addr)
-{
-	cmd_reg |= FBC_ALTD_START_OP;
-	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
-	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
-	return cmd_reg;
-}
-
-static enum adu_retcode p8_wait_completion(struct adu *adu)
-{
-	uint64_t val;
-
-	/* Wait for completion */
-	do {
-		CHECK_ERR(pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
-	} while (!val);
-
-	if( !(val & FBC_ALTD_ADDR_DONE) ||
-	    !(val & FBC_ALTD_DATA_DONE)) {
-		/* PBINIT_MISSING is expected occasionally so just retry */
-		if (val & FBC_ALTD_PBINIT_MISSING)
-			return ADU_RETRY;
-		else {
-			PR_ERROR("ALTD_STATUS_REG = 0x%016llx\n", val);
-			return ADU_ERR;
-		}
-	}
-
-	return ADU_DONE;
-}
-
-static int p8_adu_getmem(struct adu *adu, uint64_t addr)
-{
-}
-
-/* Return size bytes of memory in *output. *output must point to an
- * array large enough to hold size bytes. */
-static int _adu_getmem(struct adu *adu, uint64_t start_addr, uint8_t *output, uint64_t size)
-{
+	struct adu *adu;
 	int rc = 0;
-	uint64_t addr, ctrl_reg, cmd_reg, val;
+	uint64_t addr;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
 
 	/* We read data in 8-byte aligned chunks */
 	for (addr = 8*(start_addr / 8); addr < start_addr + size; addr += 8) {
 		uint64_t data;
 
-	retry:
-		/* Clear status bits */
-		CHECK_ERR(adu_reset(adu));
-
-		/* Set the address */
-		ctrl_reg = adu->_get_ctrl_reg(ctrl_reg, addr);
-		cmd_reg = adu->_get_cmd_reg(cmd_reg, addr);
-
-		CHECK_ERR(pib_write(&adu->target, ALTD_CONTROL_REG, ctrl_reg));
-
-		/* Start the command */
-		CHECK_ERR(pib_write(&adu->target, ALTD_CMD_REG, cmd_reg));
-
-		/* Wait for completion */
-		switch (adu->_wait_completion(adu)) {
-		case ADU_DONE:
-			break;
-		case ADU_RETRY:
-			goto retry;
-			break;
-		case ADU_ERR:
-			/* Fall through - other return codes also indicate error */
-		default:
-			PR_ERROR("Unable to read memory\n");
-			rc = ADU_ERR;
-			break;
-		}
-
-		/* Read data */
-		CHECK_ERR(pib_read(&adu->target, P8_ALTD_DATA_REG, &data));
+		if (adu->getmem(adu, addr, &data))
+			return -1;
 
 		/* ADU returns data in big-endian form in the register */
 		data = __builtin_bswap64(data);
@@ -208,26 +108,17 @@ static int _adu_getmem(struct adu *adu, uint64_t start_addr, uint8_t *output, ui
 		}
 	}
 
-	adu_unlock(adu);
-
 	return rc;
 }
 
-int p8_adu_putmem(struct adu *adu, uint64_t start_addr, uint8_t *input, uint64_t size)
+int adu_putmem(struct target *adu_target, uint64_t start_addr, uint8_t *input, uint64_t size)
 {
+	struct adu *adu;
 	int rc = 0, tsize;
-	uint64_t addr, cmd_reg, ctrl_reg, val, data, end_addr;
+	uint64_t addr, data, end_addr;
 
-	CHECK_ERR(adu_lock(adu));
-
-	ctrl_reg = TTYPE_TWRITE;
-	ctrl_reg = SETFIELD(FBC_ALTD_TTYPE, ctrl_reg, TTYPE_DMA_PARTIAL_WRITE);
-
-	CHECK_ERR(pib_read(&adu->target, ALTD_CMD_REG, &cmd_reg));
-	cmd_reg |= FBC_ALTD_START_OP;
-	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
-	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
-
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
 	end_addr = start_addr + size;
 	for (addr = start_addr; addr < end_addr; addr += tsize, input += tsize) {
 		if ((addr % 8) || (addr + 8 > end_addr)) {
@@ -242,38 +133,152 @@ int p8_adu_putmem(struct adu *adu, uint64_t start_addr, uint8_t *input, uint64_t
 			memcpy(&data, input, sizeof(data));
 			data = __builtin_bswap64(data);
 		}
-		ctrl_reg = SETFIELD(FBC_ALTD_TSIZE, ctrl_reg, tsize);
 
-	retry:
-		/* Clear status bits */
-		CHECK_ERR(adu_reset(adu));
+		adu->putmem(adu, addr, data, tsize);
+	}
 
-		/* Set the address */
-		ctrl_reg = SETFIELD(FBC_ALTD_ADDRESS, ctrl_reg, addr);
-		CHECK_ERR(pib_write(&adu->target, ALTD_CONTROL_REG, ctrl_reg));
+	return rc;
+}
 
-		/* Write the data */
-		CHECK_ERR(pib_write(&adu->target, P8_ALTD_DATA_REG, data));
+static int adu_lock(struct adu *adu)
+{
+	uint64_t val;
 
-		/* Start the command */
-		CHECK_ERR(pib_write(&adu->target, ALTD_CMD_REG, cmd_reg));
+	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &val));
 
-		/* Wait for completion */
-		do {
-			CHECK_ERR(pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
-		} while (!val);
+	if (val & FBC_LOCKED)
+		PR_INFO("ADU already locked! Ignoring.\n");
 
-		if( !(val & FBC_ALTD_ADDR_DONE) ||
-		    !(val & FBC_ALTD_DATA_DONE)) {
-			/* PBINIT_MISSING is expected occasionally so just retry */
-			if (val & FBC_ALTD_PBINIT_MISSING)
-				goto retry;
-			else {
-				PR_ERROR("Unable to write memory. "	\
-					 "P8_ALTD_STATUS_REG = 0x%016llx\n", val);
-				rc = -1;
-				break;
-			}
+	val |= FBC_LOCKED;
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CMD_REG, val));
+
+	return 0;
+}
+
+static int adu_unlock(struct adu *adu)
+{
+	uint64_t val;
+
+	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &val));
+
+	if (!(val & FBC_LOCKED)) {
+		PR_INFO("ADU already unlocked!\n");
+		return 0;
+	}
+
+	val &= ~FBC_LOCKED;
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CMD_REG, val));
+
+	return 0;
+}
+
+static int adu_reset(struct adu *adu)
+{
+	uint64_t val;
+
+	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &val));
+	val |= FBC_ALTD_CLEAR_STATUS | FBC_ALTD_RESET_AD_PCB;
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CMD_REG, val));
+
+	return 0;
+}
+
+static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data)
+{
+	uint64_t ctrl_reg, cmd_reg, val;
+
+	CHECK_ERR(adu_lock(adu));
+
+	ctrl_reg = P8_TTYPE_TREAD;
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_READ);
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, 8);
+
+	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
+	cmd_reg |= FBC_ALTD_START_OP;
+	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
+	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
+
+retry:
+	/* Clear status bits */
+	CHECK_ERR(adu_reset(adu));
+
+	/* Set the address */
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_ADDRESS, ctrl_reg, addr);
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CONTROL_REG, ctrl_reg));
+
+	/* Start the command */
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CMD_REG, cmd_reg));
+
+	/* Wait for completion */
+	do {
+		CHECK_ERR(pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
+	} while (!val);
+
+	if( !(val & FBC_ALTD_ADDR_DONE) ||
+	    !(val & FBC_ALTD_DATA_DONE)) {
+		/* PBINIT_MISSING is expected occasionally so just retry */
+		if (val & FBC_ALTD_PBINIT_MISSING)
+			goto retry;
+		else {
+			PR_ERROR("Unable to read memory. "		\
+					 "ALTD_STATUS_REG = 0x%016llx\n", val);
+			return -1;
+		}
+	}
+
+	/* Read data */
+	CHECK_ERR(pib_read(&adu->target, P8_ALTD_DATA_REG, data));
+
+	adu_unlock(adu);
+
+	return 0;
+}
+
+int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size)
+{
+	int rc = 0;
+	uint64_t cmd_reg, ctrl_reg, val;
+
+	CHECK_ERR(adu_lock(adu));
+
+	ctrl_reg = P8_TTYPE_TWRITE;
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_WRITE);
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, size);
+
+	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
+	cmd_reg |= FBC_ALTD_START_OP;
+	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
+	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
+
+	/* Clear status bits */
+	CHECK_ERR(adu_reset(adu));
+
+	/* Set the address */
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_ADDRESS, ctrl_reg, addr);
+
+retry:
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CONTROL_REG, ctrl_reg));
+
+	/* Write the data */
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_DATA_REG, data));
+
+	/* Start the command */
+	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CMD_REG, cmd_reg));
+
+	/* Wait for completion */
+	do {
+		CHECK_ERR(pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
+	} while (!val);
+
+	if( !(val & FBC_ALTD_ADDR_DONE) ||
+	    !(val & FBC_ALTD_DATA_DONE)) {
+		/* PBINIT_MISSING is expected occasionally so just retry */
+		if (val & FBC_ALTD_PBINIT_MISSING)
+			goto retry;
+		else {
+			PR_ERROR("Unable to write memory. "		\
+				 "P8_ALTD_STATUS_REG = 0x%016llx\n", val);
+			rc = -1;
 		}
 	}
 
@@ -282,21 +287,112 @@ int p8_adu_putmem(struct adu *adu, uint64_t start_addr, uint8_t *input, uint64_t
 	return rc;
 }
 
+static int p9_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data)
+{
+	uint64_t ctrl_reg, cmd_reg, val;
+
+	cmd_reg = P9_TTYPE_TREAD;
+	cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_READ);
+
+	/* For a read size is apparently always 0 */
+	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, 0);
+ 	cmd_reg |= FBC_ALTD_START_OP;
+	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_REMOTE);
+	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_LOW);
+
+retry:
+	/* Clear status bits */
+	CHECK_ERR(adu_reset(adu));
+
+	/* Set the address */
+	ctrl_reg = SETFIELD(P9_FBC_ALTD_ADDRESS, 0, addr);
+	CHECK_ERR(pib_write(&adu->target, P9_ALTD_CONTROL_REG, ctrl_reg));
+
+	/* Start the command */
+	CHECK_ERR(pib_write(&adu->target, P9_ALTD_CMD_REG, cmd_reg));
+
+	/* Wait for completion */
+	do {
+		CHECK_ERR(pib_read(&adu->target, P9_ALTD_STATUS_REG, &val));
+	} while (!val);
+
+	if( !(val & FBC_ALTD_ADDR_DONE) ||
+	    !(val & FBC_ALTD_DATA_DONE)) {
+		/* PBINIT_MISSING is expected occasionally so just retry */
+		if (val & FBC_ALTD_PBINIT_MISSING)
+			goto retry;
+		else {
+			PR_ERROR("Unable to read memory. "		\
+					 "ALTD_STATUS_REG = 0x%016llx\n", val);
+			return -1;
+		}
+	}
+
+	/* Read data */
+	CHECK_ERR(pib_read(&adu->target, P9_ALTD_DATA_REG, data));
+
+	return 0;
+}
+
+static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size)
+{
+	uint64_t ctrl_reg, cmd_reg, val;
+
+	/* Format to tsize. This is the "secondary encode" and is
+	   shifted left on for writes. */
+	size <<= 1;
+
+	cmd_reg = P9_TTYPE_TWRITE;
+	cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_WRITE);
+	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, size);
+ 	cmd_reg |= FBC_ALTD_START_OP;
+	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_REMOTE);
+	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_LOW);
+
+	/* Clear status bits */
+	CHECK_ERR(adu_reset(adu));
+
+	/* Set the address */
+	ctrl_reg = SETFIELD(P9_FBC_ALTD_ADDRESS, 0, addr);
+retry:
+	CHECK_ERR(pib_write(&adu->target, P9_ALTD_CONTROL_REG, ctrl_reg));
+
+	/* Write the data */
+	CHECK_ERR(pib_write(&adu->target, P9_ALTD_DATA_REG, data));
+
+	/* Start the command */
+	CHECK_ERR(pib_write(&adu->target, P9_ALTD_CMD_REG, cmd_reg));
+
+	/* Wait for completion */
+	do {
+		CHECK_ERR(pib_read(&adu->target, P9_ALTD_STATUS_REG, &val));
+	} while (!val);
+
+	if( !(val & FBC_ALTD_ADDR_DONE) ||
+	    !(val & FBC_ALTD_DATA_DONE)) {
+		/* PBINIT_MISSING is expected occasionally so just retry */
+		if (val & FBC_ALTD_PBINIT_MISSING)
+			goto retry;
+		else {
+			PR_ERROR("Unable to read memory. "		\
+					 "ALTD_STATUS_REG = 0x%016llx\n", val);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 struct adu p8_adu = {
 	.target = {
 		.name =	"POWER8 ADU",
 		.compatible = "ibm,power8-adu",
 		.class = "adu",
 	},
-	.getmem = _adu_getmem,
+	.getmem = p8_adu_getmem,
 	.putmem = p8_adu_putmem,
-	._get_ctrl_reg = p8_get_ctrl_reg,
-	._get_cmd_reg = p8_get_cmd_reg,
-	._wait_completion = p8_wait_completion,
 };
 DECLARE_HW_UNIT(p8_adu);
-
-
 
 struct adu p9_adu = {
 	.target = {
@@ -304,7 +400,7 @@ struct adu p9_adu = {
 		.compatible = "ibm,power9-adu",
 		.class = "adu",
 	},
-//	.getmem = p9_adu_getmem,
-//	.putmem = p9_adu_putmem,
+	.getmem = p9_adu_getmem,
+	.putmem = p9_adu_putmem,
 };
 DECLARE_HW_UNIT(p9_adu);

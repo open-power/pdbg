@@ -70,11 +70,8 @@ struct hw_unit_info {
 
 struct adu {
 	struct target target;
-	int (*getmem)(struct adu *, uint64_t, uint8_t *, uint64_t);
-	int (*putmem)(struct adu *, uint64_t, uint8_t *, uint64_t);
-	uint64_t (*_get_ctrl_reg)(uint64_t, uint64_t);
-	uint64_t (*_get_cmd_reg)(uint64_t, uint64_t);
-	uint64_t (*_wait_completion)(struct adu *);
+	int (*getmem)(struct adu *, uint64_t, uint64_t *);
+	int (*putmem)(struct adu *, uint64_t, uint64_t, int);
 };
 #define target_to_adu(x) container_of(x, struct adu, target)
 

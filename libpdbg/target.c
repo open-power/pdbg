@@ -105,24 +105,6 @@ int fsi_write(struct target *fsi_dt, uint32_t addr, uint32_t data)
 	return fsi->write(fsi, addr64, data);
 }
 
-int adu_getmem(struct target *adu_target, uint64_t addr, uint8_t *output, uint64_t size)
-{
-	struct adu *adu;
-
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
-	return adu->getmem(adu, addr, output, size);
-}
-
-int adu_putmem(struct target *adu_target, uint64_t start_addr, uint8_t *input, uint64_t size)
-{
-	struct adu *adu;
-
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
-	return adu->putmem(adu, start_addr, input, size);
-}
-
 /* Finds the given class. Returns NULL if not found. */
 struct target_class *find_target_class(const char *name)
 {
