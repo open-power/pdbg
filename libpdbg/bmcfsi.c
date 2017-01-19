@@ -518,6 +518,7 @@ int fsi_target_init(struct target *target, const char *name, enum fsi_system_typ
 		case FSI_SYSTEM_P9R:
 			gpio_pins = p9r_gpio_pins;
 			clock_delay = P9R_CLOCK_DELAY;
+			break;
 		case FSI_SYSTEM_P9Z:
 			gpio_pins = p9z_gpio_pins;
 			clock_delay = P9Z_CLOCK_DELAY;
