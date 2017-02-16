@@ -144,8 +144,6 @@ int kernel_fsi_target_init(struct target *target, const char *name,
 
 	if (!fsi_fd) {
 		int tries = 5;
-		/* Scan */
-		kernel_fsi_scan_devices();
 
 		while (tries) {
 			/* Open first raw device */
@@ -153,10 +151,14 @@ int kernel_fsi_target_init(struct target *target, const char *name,
 			if (fsi_fd >= 0)
 				goto found;
 			tries--;
+
+			/* Scan */
+			kernel_fsi_scan_devices();
 			sleep(1);
 		}
 		if (fsi_fd < 0)
 			err(errno, "Unable to open %s", FSI_CFAM_PATH);
+
 	}
 found:
 	/* No cascaded devices after this one. */
