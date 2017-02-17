@@ -381,7 +381,7 @@ static int kernel_backend_targets_init(void)
 	struct target *cfam;
 	int rc, i, cfam_count;
 
-	rc = kernel_fsi_target_init(&targets[0], "Kernel FSI Backend", 0, NULL);
+	rc = kernel_fsi_target_init(&targets[0], "Kernel FSI Backend", NULL);
 	if (rc < 0)
 		exit(1);
 

@@ -138,7 +138,7 @@ static void kernel_fsi_scan_devices(void)
 }
 
 int kernel_fsi_target_init(struct target *target, const char *name,
-			enum fsi_system_type type, struct target *next)
+			   struct target *next)
 {
 	uint64_t value;
 
