@@ -89,7 +89,11 @@ static int kernel_fsi_getcfam(struct target *target, uint64_t addr64, uint64_t *
 
 	rc = read(fsi_fd, value, 4);
 	if (rc < 0) {
-		warn("Failed to read from 0x%08x (%016llx)", (uint32_t)addr, addr64);
+		if ((addr64 & 0xfff) != 0xc09)
+			/* We expect reads of 0xc09 to occasionally
+			 * fail as the probing code uses it to see
+			 * if anything is present on the link. */
+			warn("Failed to read from 0x%08x (%016llx)", (uint32_t)addr, addr64);
 		return errno;
 	}
 
