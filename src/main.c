@@ -386,13 +386,15 @@ static int kernel_backend_targets_init(void)
 		exit(1);
 
 	/* The backend is directly connected to a processor CFAM */
-	target_class_add(&cfams, &targets[0], 0);
+	if (processor[0])
+		target_class_add(&cfams, &targets[0], 0);
 	cfam_count = 1;
 
 	/* Probe cascaded CFAMs on hMFSI ports */
 	cfam_count += hmfsi_target_probe(&targets[0], &targets[1], MAX_TARGETS);
 	for (i = 1; i < cfam_count; i++)
-		target_class_add(&cfams, &targets[i], i);
+		if (processor[i])
+			target_class_add(&cfams, &targets[i], i);
 
 	/* Add a FSI2PIB bridges for each CFAM */
 	i = 0;
