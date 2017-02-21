@@ -79,7 +79,7 @@ static int kernel_getscom(struct target *target, uint64_t addr, uint64_t *value)
 static int kernel_fsi_getcfam(struct target *target, uint64_t addr64, uint64_t *value)
 {
 	int rc;
-	uint32_t addr = (addr64 & 0x1fff00) | ((addr64 & 0xff) << 2);
+	uint32_t addr = (addr64 & 0xffff00) | ((addr64 & 0xff) << 2);
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
@@ -103,7 +103,7 @@ static int kernel_fsi_getcfam(struct target *target, uint64_t addr64, uint64_t *
 static int kernel_fsi_putcfam(struct target *target, uint64_t addr64, uint64_t data)
 {
 	int rc;
-	uint32_t addr = (addr64 & 0x1fff00) | ((addr64 & 0xff) << 2);
+	uint32_t addr = (addr64 & 0xffff00) | ((addr64 & 0xff) << 2);
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
