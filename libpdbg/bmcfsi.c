@@ -247,7 +247,7 @@ static uint64_t fsi_abs_ar(uint32_t addr, int read)
 	/* Reformat the address. I'm not sure I fully understand this
 	 * yet but we basically shift the bottom byte and add 0b01
 	 * (for the write word?) */
-       	addr = ((addr & 0x1fff00) | ((addr & 0xff) << 2)) << 1;
+       	addr = ((addr & 0x1ffc00) | ((addr & 0x3ff) << 2)) << 1;
 	addr |= 0x3;
 	addr |= slave_id << 26;
 	addr |= (0x8ULL | !!(read)) << 22;
