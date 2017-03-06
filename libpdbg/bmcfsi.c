@@ -72,7 +72,7 @@ struct gpio_pin p9w_gpio_pins[] = {
 };
 #define P9W_CLOCK_DELAY 20
 
-/* POWER9 Witherspoon mappings */
+/* POWER9 Romulus mappings */
 struct gpio_pin p9r_gpio_pins[] = {
 	{0x1e0, 16},	/* FSI_CLK = AA0 */
 	{0x1e0, 18},	/* FSI_DAT = AA2 */
