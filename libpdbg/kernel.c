@@ -37,7 +37,7 @@ int fsi_fd;
 static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 {
 	int rc;
-	uint32_t addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
+	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
@@ -45,7 +45,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 		return errno;
 	}
 
-	rc = read(fsi_fd, value, 4);
+	rc = read(fsi_fd, &tmp, 4);
 	if (rc < 0) {
 		if ((addr64 & 0xfff) != 0xc09)
 			/* We expect reads of 0xc09 to occasionally
@@ -54,6 +54,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 			warn("Failed to read from 0x%08x (%016llx)", (uint32_t)addr, addr64);
 		return errno;
 	}
+	*value = be32toh(tmp);
 
 	return 0;
 }
@@ -61,7 +62,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 {
 	int rc;
-	uint32_t addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
+	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
@@ -69,7 +70,8 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 		return errno;
 	}
 
-	rc = write(fsi_fd, &data, 4);
+	tmp = htobe32(data);
+	rc = write(fsi_fd, &tmp, 4);
 	if (rc < 0) {
 		warn("Failed to write to 0x%08x (%016llx)", addr, addr64);
 		return errno;
