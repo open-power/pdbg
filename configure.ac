@@ -1,4 +1,4 @@
-AC_INIT([pdbg], [0.3])
+AC_INIT([pdbg], [0.4])
 AM_INIT_AUTOMAKE([subdir-objects])
 
 AC_PROG_CC
