@@ -37,22 +37,28 @@ int pib_read(struct target *pib_dt, uint64_t addr, uint64_t *data)
 {
 	struct pib *pib;
 	struct dt_node *dn = pib_dt->dn;
+	int rc;
 
 	dn = get_class_target_addr(dn, "pib", &addr);
 	pib_dt = dn->target;
 	pib = target_to_pib(pib_dt);
-	return pib->read(pib, addr, data);
+	rc = pib->read(pib, addr, data);
+//	printf("pib_read 0x%016llx = 0x%016llx\n", addr, *data);
+	return rc;
 }
 
 int pib_write(struct target *pib_dt, uint64_t addr, uint64_t data)
 {
 	struct pib *pib;
 	struct dt_node *dn = pib_dt->dn;
+	int rc;
 
 	dn = get_class_target_addr(dn, "pib", &addr);
 	pib_dt = dn->target;
 	pib = target_to_pib(pib_dt);
-	return pib->write(pib, addr, data);
+	rc = pib->write(pib, addr, data);
+//	printf("pib_write 0x%016llx = 0x%016llx\n", addr, data);
+	return rc;
 }
 
 int opb_read(struct target *opb_dt, uint32_t addr, uint32_t *data)
@@ -103,6 +109,14 @@ int fsi_write(struct target *fsi_dt, uint32_t addr, uint32_t data)
 	fsi = target_to_fsi(fsi_dt);
 
 	return fsi->write(fsi, addr64, data);
+}
+
+struct target *require_target_parent(struct target *target)
+{
+	struct dt_node *dn;
+
+	assert((dn = target->dn));
+	return dn->parent->target;
 }
 
 /* Finds the given class. Returns NULL if not found. */

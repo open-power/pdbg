@@ -45,6 +45,16 @@ int adu_putmem(struct target *target, uint64_t start_addr, uint8_t *input, uint6
 #define THREAD_STATUS_SLEEP	PPC_BITMASK(61, 62)
 #define THREAD_STATUS_QUIESCE	PPC_BIT(60)
 
+/* Opcodes for instruction ramming */
+#define OPCODE_MASK  0xfc0003ffUL
+#define MTNIA_OPCODE 0x00000002UL
+#define MFNIA_OPCODE 0x00000004UL
+#define MFMSR_OPCODE 0x7c0000a6UL
+#define MTMSR_OPCODE 0x7c000124UL
+#define MFSPR_OPCODE 0x7c0002a6UL
+#define MTSPR_OPCODE 0x7c0003a6UL
+#define LD_OPCODE 0xe8000000UL
+
 int ram_getgpr(struct thread *thread, int gpr, uint64_t *value);
 int ram_putgpr(struct thread *thread, int gpr, uint64_t value);
 int ram_getnia(struct thread *thread, uint64_t *value);
@@ -55,9 +65,9 @@ int ram_getmsr(struct thread *thread, uint64_t *value);
 int ram_putmsr(struct thread *thread, uint64_t value);
 int ram_getmem(struct thread *thread, uint64_t addr, uint64_t *value);
 uint64_t thread_status(struct thread *thread);
-int ram_stop_thread(struct thread *thread);
-int ram_step_thread(struct thread *thread, int count);
-int ram_start_thread(struct thread *thread);
+int ram_stop_thread(struct target *thread);
+int ram_step_thread(struct target *thread, int count);
+int ram_start_thread(struct target *thread);
 void fsi_destroy(struct target *target);
 
 /* GDB server functionality */

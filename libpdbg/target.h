@@ -47,6 +47,7 @@ struct target {
 	struct list_node class_link;
 };
 
+struct target *require_target_parent(struct target *target);
 struct target_class *find_target_class(const char *name);
 struct target_class *require_target_class(const char *name);
 
@@ -108,6 +109,16 @@ struct thread {
 	struct target target;
 	uint64_t status;
 	int id;
+	int (*step)(struct thread *, int);
+	int (*start)(struct thread *);
+	int (*stop)(struct thread *);
+
+	/* ram_setup() should be called prior to using ram_instruction() to
+	 * actually ram the instruction and return the result. ram_destroy()
+	 * should be called at completion to clean-up. */
+	int (*ram_setup)(struct thread *);
+	int (*ram_instruction)(struct thread *, uint64_t opcode, uint64_t *scratch);
+	int (*ram_destroy)(struct thread *);
 };
 #define target_to_thread(x) container_of(x, struct thread, target)
 

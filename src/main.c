@@ -59,7 +59,7 @@ static char const *device_node;
 static int i2c_addr = 0x50;
 
 #define MAX_PROCESSORS 16
-#define MAX_CHIPS 16
+#define MAX_CHIPS 24
 #define MAX_THREADS THREADS_PER_CORE
 
 static int **processorsel[MAX_PROCESSORS];
@@ -479,9 +479,9 @@ static void print_proc_reg(struct thread *thread, uint64_t reg, uint64_t value, 
 	else if (reg >= 0 && reg <= 31)
 		printf("gpr%02" PRIu64 ": ", reg);
 
-	if (rc == 1)
-		printf("Chiplet in incorrect state\n");
-	else if (rc == 2)
+	if (rc == 1) {
+		printf("Check threadstatus - not all threads on this chiplet are quiesced\n");
+	} else if (rc == 2)
 		printf("Thread in incorrect state\n");
 	else
 		printf("0x%016" PRIx64 "\n", value);
@@ -556,7 +556,7 @@ static int start_thread(struct target *thread_target, uint32_t index, uint64_t *
 {
 	struct thread *thread = target_to_thread(thread_target);
 
-	return ram_start_thread(thread) ? 1 : 0;
+	return ram_start_thread(thread_target) ? 1 : 0;
 }
 
 static int step_thread(struct target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1)
@@ -568,9 +568,7 @@ static int step_thread(struct target *thread_target, uint32_t index, uint64_t *c
 
 static int stop_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
-	struct thread *thread = target_to_thread(thread_target);
-
-	return ram_stop_thread(thread) ? 1 : 0;
+	return ram_stop_thread(thread_target) ? 1 : 0;
 }
 
 static void enable_dn(struct dt_node *dn)
