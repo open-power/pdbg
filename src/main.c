@@ -702,6 +702,47 @@ static int target_select(void)
 	return 0;
 }
 
+void print_target(struct dt_node *dn, int level)
+{
+	int i;
+	struct dt_node *next;
+	struct dt_property *p;
+	char *status = "";
+
+	p = dt_find_property(dn, "status");
+	if (p)
+		status = p->prop;
+
+	if (!strcmp(status, "disabled"))
+		return;
+
+	if (strcmp(status, "hidden")) {
+		struct target *target;
+
+		for (i = 0; i < level; i++)
+			printf("    ");
+
+		target = dn->target;
+		if (target) {
+			char c = 0;
+			if (!strcmp(target->class, "pib"))
+				c = 'p';
+			else if (!strcmp(target->class, "chiplet"))
+				c = 'c';
+			else if (!strcmp(target->class, "thread"))
+				c = 't';
+
+			if (c)
+				printf("%c%d: %s\n", c, target->index, target->name);
+			else
+				printf("%s\n", target->name);
+		}
+	}
+
+	list_for_each(&dn->children, next, list)
+		print_target(next, level + 1);
+}
+
 int main(int argc, char *argv[])
 {
 	int rc = 0;
@@ -793,6 +834,11 @@ int main(int argc, char *argv[])
 		break;
 	case STOP:
 		for_each_target("thread", stop_thread, NULL, NULL);
+		break;
+	case PROBE:
+		print_target(dt_root, 0);
+		printf("\nNote that only selected targets will be shown above. If none are shown\n"
+		       "try adding '-a' to select all targets\n");
 		break;
 	default:
 		PR_ERROR("Unsupported command\n");
