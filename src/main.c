@@ -340,7 +340,7 @@ static int for_each_child_target(char *class, struct target *parent,
 			continue;
 
 		/* Search up the tree for an index */
-		for (index = dt_prop_get_u32_def(dn, "index", -1); index == -1; dn = dn->parent);
+		for (index = dn->target->index; index == -1; dn = dn->parent);
 		assert(index != -1);
 
 		p = dt_find_property(dn, "status");
@@ -465,9 +465,9 @@ static void print_proc_reg(struct thread *thread, uint64_t reg, uint64_t value, 
 {
 	int proc_index, chip_index, thread_index;
 
-	thread_index = dt_prop_get_u32(thread->target.dn, "index");
-	chip_index = dt_prop_get_u32(thread->target.dn->parent, "index");
-	proc_index = dt_prop_get_u32(thread->target.dn->parent->parent, "index");
+	thread_index = thread->target.index;
+	chip_index = thread->target.dn->parent->target->index;
+	proc_index = thread->target.dn->parent->parent->target->index;
 	printf("p%d:c%d:t%d:", proc_index, chip_index, thread_index);
 
 	if (reg == REG_MSR)
@@ -662,7 +662,7 @@ static int target_select(void)
 	 * to walk the tree and disabled nodes we don't care about
 	 * prior to probing. */
 	for_each_class_target("pib", pib) {
-		int proc_index = dt_prop_get_u32(pib->dn, "index");
+		int proc_index = pib->index;
 
 		if (processorsel[proc_index]) {
 			enable_dn(pib->dn);
@@ -671,7 +671,7 @@ static int target_select(void)
 			for_each_class_target("chiplet", chip) {
 				if (chip->dn->parent != pib->dn)
 					continue;
-				int chip_index = dt_prop_get_u32(chip->dn, "index");
+				int chip_index = chip->index;
 				if (chipsel[proc_index][chip_index]) {
 					enable_dn(chip->dn);
 					if (!find_target_class("thread"))
@@ -680,7 +680,7 @@ static int target_select(void)
 						if (thread->dn->parent != chip->dn)
 							continue;
 
-						int thread_index = dt_prop_get_u32(thread->dn, "index");
+						int thread_index = thread->index;
 						if (threadsel[proc_index][chip_index][thread_index])
 							enable_dn(thread->dn);
 						else
@@ -694,7 +694,7 @@ static int target_select(void)
 	}
 
 	for_each_class_target("fsi", fsi) {
-		int index = dt_prop_get_u32(fsi->dn, "index");
+		int index = fsi->index;
 		if (processorsel[index])
 			enable_dn(fsi->dn);
 		else

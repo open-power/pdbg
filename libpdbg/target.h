@@ -42,6 +42,7 @@ struct target {
 	char *compatible;
 	char *class;
 	int (*probe)(struct target *target);
+	int index;
 	struct dt_node *dn;
 	struct list_node class_link;
 };

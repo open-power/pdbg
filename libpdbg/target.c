@@ -173,6 +173,7 @@ void targets_init(void *fdt)
 	struct hw_unit_info *hw_unit_info;
 	void *new_hw_unit;
 	struct target *new_target;
+	uint32_t index;
 
 	dt_root = dt_new_root("");
 	dt_expand(fdt);
@@ -191,6 +192,8 @@ void targets_init(void *fdt)
 			new_target = new_hw_unit + hw_unit_info->struct_target_offset;
 			new_target->dn = dn;
 			dn->target = new_target;
+			index = dt_prop_get_u32_def(dn, "index", -1);
+			dn->target->index = index;
 			target_class = get_target_class(new_target->class);
 			list_add(&target_class->targets, &new_target->class_link);
 			PR_DEBUG("Found target %s for %s\n", new_target->name, dn->name);
