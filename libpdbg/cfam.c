@@ -305,8 +305,18 @@ static int cfam_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
 static int cfam_hmfsi_probe(struct target *target)
 {
 	struct fsi *fsi = target_to_fsi(target);
-	uint32_t value;
+	struct target *fsi_parent = target->dn->parent->target;
+	uint32_t value, port;
 	int rc;
+
+	/* Enable the port in the upstream control register */
+	port = dt_prop_get_u32(target->dn, "port");
+	fsi_read(fsi_parent, 0x3404, &value);
+	value |= 1 << (31 - port);
+	if ((rc = fsi_write(fsi_parent, 0x3404, value))) {
+		PR_ERROR("Unale to enable HMFSI port %d\n", port);
+		return rc;
+	}
 
 	if ((rc = fsi_read(&fsi->target, 0xc09, &value)))
 		return rc;

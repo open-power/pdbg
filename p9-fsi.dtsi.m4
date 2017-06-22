@@ -75,6 +75,7 @@ index = <HEX(eval($1, 16))>;
 		hmfsi@100000 {
 			compatible = "ibm,fsi-hmfsi";
 			reg = <0x0 0x100000 0x8000>;
+			port = <0x1>;
 			index = <0x1>;
 
 			pib@1000 {

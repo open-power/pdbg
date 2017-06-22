@@ -24,6 +24,7 @@
 			hmfsi@100000 {
 				compatible = "ibm,power8-opb-hmfsi";
 				reg = <0x100000 0x80000>;
+				port = <0x1>;
 				index = <0x1>;
 
 				pib@1000 {
