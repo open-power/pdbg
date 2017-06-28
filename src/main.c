@@ -554,16 +554,12 @@ static int putmem(uint64_t addr)
 
 static int start_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
-	struct thread *thread = target_to_thread(thread_target);
-
 	return ram_start_thread(thread_target) ? 1 : 0;
 }
 
 static int step_thread(struct target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1)
 {
-	struct thread *thread = target_to_thread(thread_target);
-
-	return ram_step_thread(thread, *count) ? 1 : 0;
+	return ram_step_thread(thread_target, *count) ? 1 : 0;
 }
 
 static int stop_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
