@@ -29,8 +29,8 @@
 #include "operations.h"
 #include "target.h"
 
-#define FSI_SCAN_PATH "/sys/devices/platform/fsi-master/scan"
-#define FSI_CFAM_PATH "/sys/devices/platform/fsi-master/slave@00:00/raw"
+#define FSI_SCAN_PATH "/sys/bus/platform/devices/gpio-fsi/fsi0/rescan"
+#define FSI_CFAM_PATH "/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/raw"
 
 int fsi_fd;
 
