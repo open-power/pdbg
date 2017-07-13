@@ -556,17 +556,17 @@ static int putmem(uint64_t addr)
 
 static int start_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
-	return ram_start_thread(thread_target) ? 1 : 0;
+	return ram_start_thread(thread_target) ? 0 : 1;
 }
 
 static int step_thread(struct target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1)
 {
-	return ram_step_thread(thread_target, *count) ? 1 : 0;
+	return ram_step_thread(thread_target, *count) ? 0 : 1;
 }
 
 static int stop_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
-	return ram_stop_thread(thread_target) ? 1 : 0;
+	return ram_stop_thread(thread_target) ? 0 : 1;
 }
 
 static void enable_dn(struct dt_node *dn)
@@ -790,50 +790,51 @@ int main(int argc, char *argv[])
                 printf("Wrote %d bytes starting at 0x%016" PRIx64 "\n", rc, cmd_args[0]);
 		break;
 	case GETGPR:
-		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
+		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTGPR:
-		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
+		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case GETNIA:
 		cmd_args[0] = REG_NIA;
-		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
+		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTNIA:
 		cmd_args[1] = cmd_args[0];
 		cmd_args[0] = REG_NIA;
-		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
+		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case GETSPR:
 		cmd_args[0] += REG_R31;
-		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
+		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTSPR:
 		cmd_args[0] += REG_R31;
-		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
+		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case GETMSR:
 		cmd_args[0] = REG_MSR;
-		for_each_target("thread", getprocreg, &cmd_args[0], NULL);
+		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;
 	case PUTMSR:
 		cmd_args[1] = cmd_args[0];
 		cmd_args[0] = REG_MSR;
-		for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
+		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
 		break;
 	case THREADSTATUS:
-		for_each_target("pib", print_proc_thread_status, NULL, NULL);
+		rc = for_each_target("pib", print_proc_thread_status, NULL, NULL);
 		break;
 	case START:
-		for_each_target("thread", start_thread, NULL, NULL);
+		rc = for_each_target("thread", start_thread, NULL, NULL);
 		break;
 	case STEP:
-		for_each_target("thread", step_thread, &cmd_args[0], NULL);
+		rc = for_each_target("thread", step_thread, &cmd_args[0], NULL);
 		break;
 	case STOP:
-		for_each_target("thread", stop_thread, NULL, NULL);
+		rc = for_each_target("thread", stop_thread, NULL, NULL);
 		break;
 	case PROBE:
+		rc = 1;
 		print_target(dt_root, 0);
 		printf("\nNote that only selected targets will be shown above. If none are shown\n"
 		       "try adding '-a' to select all targets\n");
@@ -842,6 +843,13 @@ int main(int argc, char *argv[])
 		PR_ERROR("Unsupported command\n");
 		break;
 	}
+
+	if (rc <= 0) {
+                printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
+                printf("Alternatively run %s -a probe to get a list of all valid targets\n", argv[0]);
+		rc = 1;
+	} else
+		rc = 0;
 
 	if (backend == FSI)
 		fsi_destroy(NULL);
