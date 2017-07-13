@@ -286,6 +286,8 @@ static bool parse_options(int argc, char *argv[])
 				backend = KERNEL;
 				/* TODO: use device node to point at a slave
 				 * other than the first? */
+			} else if (strcmp(optarg, "fake") == 0) {
+				backend = FAKE;
 			} else
 				opt_error = true;
 			break;

@@ -33,7 +33,7 @@ libfdt_la_SOURCES = \
 
 libpdbg_la_SOURCES = \
 	libpdbg/kernel.c \
-	libpdbg/fakepib.c \
+	libpdbg/fake.c \
 	libpdbg/chip.c \
 	libpdbg/p8chip.c \
 	libpdbg/p9chip.c \

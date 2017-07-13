@@ -12,5 +12,11 @@
 
 		index = <0x0>;
 		status = "hidden";
+
+		pib@0 {
+		      compatible = "ibm,fake-pib";
+		      reg = <0x0 0x0 0x0>;
+		      index = <0x0>;
+		};
 	};
 };
