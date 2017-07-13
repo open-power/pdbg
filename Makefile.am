@@ -13,7 +13,7 @@ pdbg_LDADD = fake.dtb.o p8-fsi.dtb.o p8-i2c.dtb.o p9w-fsi.dtb.o	\
 	p9z-fsi.dtb.o p9r-fsi.dtb.o p9-kernel.dtb.o
 
 pdbg_LDFLAGS = -L.libs -Wl,--whole-archive,-lpdbg,--no-whole-archive -lfdt
-pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -DGIT_SHA1=\"${GIT_SHA1}\" -g
+pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -DGIT_SHA1=\"${GIT_SHA1}\"
 
 lib_LTLIBRARIES = libpdbg.la libfdt.la
 
