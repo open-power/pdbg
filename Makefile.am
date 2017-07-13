@@ -10,9 +10,10 @@ AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall
 pdbg_SOURCES = \
 	src/main.c
 pdbg_LDADD = fake.dtb.o p8-fsi.dtb.o p8-i2c.dtb.o p9w-fsi.dtb.o	\
-	p9z-fsi.dtb.o p9r-fsi.dtb.o p9-kernel.dtb.o
+	p9z-fsi.dtb.o p9r-fsi.dtb.o p9-kernel.dtb.o libpdbg.la libfdt.la \
+	-L.libs
 
-pdbg_LDFLAGS = -L.libs -Wl,--whole-archive,-lpdbg,--no-whole-archive -lfdt
+pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -DGIT_SHA1=\"${GIT_SHA1}\"
 
 lib_LTLIBRARIES = libpdbg.la libfdt.la
@@ -59,5 +60,5 @@ p9w-fsi.dtb.o: p9w-fsi.dts p9-fsi.dtsi
 # unflattening the device-tree
 	dd if=$@.tmp of=$@ ibs=16 conv=sync
 	rm $@.tmp
-	objcopy -I binary -O elf32-littlearm -B arm $@ $@
-#	objcopy -I binary -O elf64-x86-64 -B i386:x86-64 $@ $@
+#	objcopy -I binary -O elf32-littlearm -B arm $@ $@
+	objcopy -I binary -O elf64-x86-64 -B i386:x86-64 $@ $@
