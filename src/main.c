@@ -774,8 +774,10 @@ int main(int argc, char *argv[])
                 assert(buf);
 		for_each_class_target("adu", target) {
 			if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1])) {
-				write(STDOUT_FILENO, buf, cmd_args[1]);
-				rc++;
+				if (write(STDOUT_FILENO, buf, cmd_args[1]) < 0)
+					PR_ERROR("Unable to write stdout.\n");
+				else
+					rc++;
 			} else
 				PR_ERROR("Unable to read memory.\n");
 
