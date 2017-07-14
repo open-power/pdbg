@@ -5,7 +5,7 @@ include libfdt/Makefile.libfdt
 bin_PROGRAMS = pdbg
 
 ACLOCAL_AMFLAGS = -Im4
-AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall
+AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror
 
 pdbg_SOURCES = \
 	src/main.c
@@ -14,12 +14,12 @@ pdbg_LDADD = fake.dtb.o p8-fsi.dtb.o p8-i2c.dtb.o p9w-fsi.dtb.o	\
 	-L.libs
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
-pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -DGIT_SHA1=\"${GIT_SHA1}\"
+pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\"
 
 lib_LTLIBRARIES = libpdbg.la libfdt.la
 
 libfdt_la_CFLAGS = -I$(top_srcdir)/libfdt -DHAVE_LITTLE_ENDIAN
-libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -DHAVE_LITTLE_ENDIAN
+libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -DHAVE_LITTLE_ENDIAN -Wall -Werror
 
 libfdt_la_SOURCES = \
 	libfdt/fdt.c \

@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "target.h"
 #include "operations.h"
@@ -72,7 +73,6 @@ static uint64_t p9_get_thread_status(struct thread *thread)
 static int p9_thread_probe(struct target *target)
 {
 	struct thread *thread = target_to_thread(target);
-	uint64_t value;
 
 	thread->id = dt_prop_get_u32(target->dn, "tid");
 	thread->status = p9_get_thread_status(thread);
@@ -82,8 +82,6 @@ static int p9_thread_probe(struct target *target)
 
 static int p9_thread_start(struct thread *thread)
 {
-	uint64_t value;
-
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(6 + 8*thread->id));
 	thread_write(thread, P9_RAS_MODEREG, 0);
 
@@ -93,7 +91,6 @@ static int p9_thread_start(struct thread *thread)
 static int p9_thread_stop(struct thread *thread)
 {
 	int i = 0;
-	uint64_t value;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(7 + 8*thread->id));
 	while(!(p9_get_thread_status(thread) & THREAD_STATUS_QUIESCE)) {
@@ -114,7 +111,6 @@ static int p9_ram_setup(struct thread *thread)
 {
 	struct dt_node *dn;
 	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
-	uint64_t ras_status;
 
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
@@ -141,7 +137,6 @@ static int p9_ram_setup(struct thread *thread)
 
 static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
 {
-	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
 	uint64_t predecode, value;
 
 	switch(opcode & OPCODE_MASK) {
@@ -205,7 +200,7 @@ DECLARE_HW_UNIT(p9_thread);
 
 static int p9_chiplet_probe(struct target *target)
 {
-	int i;
+	int i = 0;
 	uint64_t value;
 
 	if (pib_read(target, NET_CTRL0, &value))
@@ -220,9 +215,9 @@ static int p9_chiplet_probe(struct target *target)
 		CHECK_ERR(pib_read(target, PPM_GPMMR, &value));
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
-			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08lx\n", target->name,
+			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", target->name,
 				 dt_get_address(target->dn, 0, NULL));
-			return -1;
+			break;
 		}
 	} while (!(value & SPECIAL_WKUP_DONE));
 

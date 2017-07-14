@@ -51,7 +51,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 			/* We expect reads of 0xc09 to occasionally
 			 * fail as the probing code uses it to see
 			 * if anything is present on the link. */
-			warn("Failed to read from 0x%08x (%016llx)", (uint32_t)addr, addr64);
+			warn("Failed to read from 0x%08" PRIx32 " (%016" PRIx32 ")", (uint32_t) addr, addr64);
 		return errno;
 	}
 	*value = be32toh(tmp);
@@ -73,17 +73,22 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 	tmp = htobe32(data);
 	rc = write(fsi_fd, &tmp, 4);
 	if (rc < 0) {
-		warn("Failed to write to 0x%08x (%016llx)", addr, addr64);
+		warn("Failed to write to 0x%08" PRIx32 " (%016" PRIx32 ")", addr, addr64);
 		return errno;
 	}
 
 	return 0;
 }
 
+#if 0
+/* TODO: At present we don't have a generic destroy method as there aren't many
+ * use cases for it. So for the moment we can just let the OS close the file
+ * descriptor on exit. */
 static void kernel_fsi_destroy(struct target *target)
 {
 	close(fsi_fd);
 }
+#endif
 
 static void kernel_fsi_scan_devices(void)
 {
@@ -103,9 +108,6 @@ static void kernel_fsi_scan_devices(void)
 
 int kernel_fsi_probe(struct target *target)
 {
-	struct fsi *fsi = target_to_fsi(target);
-	uint64_t value;
-
 	if (!fsi_fd) {
 		int tries = 5;
 

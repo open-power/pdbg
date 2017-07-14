@@ -23,6 +23,7 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "bitutils.h"
 #include "operations.h"
@@ -310,7 +311,7 @@ static enum fsi_result fsi_read_resp(uint64_t *result, int len)
 	}
 
 	if (crc != 0) {
-		fprintf(stderr, "CRC error: 0x%llx\n", resp);
+		fprintf(stderr, "CRC error: 0x%" PRIx64 "\n", resp);
 		return FSI_MERR_C;
 	}
 
@@ -447,7 +448,6 @@ void fsi_destroy(struct target *target)
 int bmcfsi_probe(struct target *target)
 {
 	struct fsi *fsi = target_to_fsi(target);
-	uint64_t value;
 
 	if (!mem_fd) {
 		mem_fd = open("/dev/mem", O_RDWR | O_SYNC);

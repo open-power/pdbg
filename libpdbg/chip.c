@@ -126,7 +126,7 @@ int ram_stop_thread(struct target *thread_target)
 static int ram_instructions(struct thread *thread, uint64_t *opcodes,
 			    uint64_t *results, int len, unsigned int lpar)
 {
-	uint64_t ram_mode, opcode, r0 = 0, r1 = 0, scratch = 0;
+	uint64_t opcode = 0, r0 = 0, r1 = 0, scratch = 0;
 	int i;
 	int exception = 0;
 

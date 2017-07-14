@@ -168,9 +168,9 @@ extern struct hw_init_info *__stop_hw_units;
 struct hw_unit_info *find_compatible_target(const char *compat)
 {
 	struct hw_unit_info **p;
-	struct target *target, *tmp;
+	struct target *target;
 
-	for (p = &__start_hw_units; p < &__stop_hw_units; p++) {
+	for (p = &__start_hw_units; p < (struct hw_unit_info **) &__stop_hw_units; p++) {
 		target = (*p)->hw_unit + (*p)->struct_target_offset;
 		if (!strcmp(target->compatible, compat))
 			return *p;

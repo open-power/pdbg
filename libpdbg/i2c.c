@@ -106,6 +106,10 @@ static int i2c_putscom(struct pib *pib, uint64_t addr, uint64_t value)
 	return 0;
 }
 
+#if 0
+/* TODO: At present we don't have a generic destroy method as there aren't many
+ * use cases for it. So for the moment we can just let the OS close the file
+ * descriptor on exit. */
 static void i2c_destroy(struct pib *pib)
 {
 	struct i2c_data *i2c_data = pib->priv;
@@ -113,6 +117,7 @@ static void i2c_destroy(struct pib *pib)
 	close(i2c_data->fd);
 	free(i2c_data);
 }
+#endif
 
 /*
  * Initialise a i2c backend on the given bus at the given bus address.

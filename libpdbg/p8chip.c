@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <ccan/array_size/array_size.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "target.h"
 #include "operations.h"
@@ -85,7 +86,7 @@ static int assert_special_wakeup(struct chiplet *chip)
 		CHECK_ERR(pib_read(&chip->target, EX_PM_GP0_REG, &gp0));
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
-			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08lx\n", chip->target.name,
+			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", chip->target.name,
 				 dt_get_address(chip->target.dn, 0, NULL));
 			return -1;
 		}
@@ -94,6 +95,8 @@ static int assert_special_wakeup(struct chiplet *chip)
 	return 0;
 }
 
+#if 0
+/* TODO: Work out when to do this. */
 static int deassert_special_wakeup(struct chiplet *chip)
 {
 	/* Assert special wakeup to prevent low power states */
@@ -101,6 +104,7 @@ static int deassert_special_wakeup(struct chiplet *chip)
 
 	return 0;
 }
+#endif
 
 static uint64_t get_thread_status(struct thread *thread)
 {
@@ -168,7 +172,7 @@ static int p8_thread_stop(struct thread *thread)
 		/* Wait for thread to quiese */
 		CHECK_ERR(pib_read(&chip->target, RAS_STATUS_REG, &val));
 		if (i++ > RAS_STATUS_TIMEOUT) {
-			PR_ERROR("Unable to quiesce thread %d (0x%016llx).\n",
+			PR_ERROR("Unable to quiesce thread %d (0x%016" PRIx64 ").\n",
 				 thread->id, val);
 			PR_ERROR("Continuing anyway.\n");
 			if (val & PPC_BIT(48)) {
@@ -265,13 +269,15 @@ static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 		if (GETFIELD(PPC_BITMASK(2,3), val) == 0x3) {
 			return 1;
 		} else {
-			PR_ERROR("RAMMING failed with status 0x%llx\n", val);
+			PR_ERROR("RAMMING failed with status 0x%" PRIx64 "\n", val);
 			return 2;
 		}
 	}
 
 	/* Save the results */
 	CHECK_ERR(pib_read(&chip->target, SCR0_REG, scratch));
+
+	return 0;
 }
 
 static int p8_ram_destroy(struct thread *thread)
@@ -283,6 +289,8 @@ static int p8_ram_destroy(struct thread *thread)
 	CHECK_ERR(pib_read(&chip->target, RAM_MODE_REG, &ram_mode));
 	ram_mode &= ~RAM_MODE_ENABLE;
 	CHECK_ERR(pib_write(&chip->target, RAM_MODE_REG, ram_mode));
+
+	return 0;
 }
 
 /*
@@ -318,7 +326,6 @@ static int p8_chiplet_probe(struct target *target)
 {
 	uint64_t value;
 	struct chiplet *chiplet = target_to_chiplet(target);
-	int i, count = 0, rc = 0;
 
 	/* Work out if this chip is actually present */
 	if (pib_read(target, SCOM_EX_GP3, &value)) {

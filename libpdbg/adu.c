@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "operations.h"
 #include "bitutils.h"
@@ -221,7 +222,7 @@ retry:
 			goto retry;
 		else {
 			PR_ERROR("Unable to read memory. "		\
-					 "ALTD_STATUS_REG = 0x%016llx\n", val);
+					 "ALTD_STATUS_REG = 0x%016" PRIx64 "\n", val);
 			return -1;
 		}
 	}
@@ -277,7 +278,7 @@ retry:
 			goto retry;
 		else {
 			PR_ERROR("Unable to write memory. "		\
-				 "P8_ALTD_STATUS_REG = 0x%016llx\n", val);
+				 "P8_ALTD_STATUS_REG = 0x%016" PRIx64 "\n", val);
 			rc = -1;
 		}
 	}
@@ -323,7 +324,7 @@ retry:
 			goto retry;
 		else {
 			PR_ERROR("Unable to read memory. "		\
-					 "ALTD_STATUS_REG = 0x%016llx\n", val);
+					 "ALTD_STATUS_REG = 0x%016" PRIx64 "\n", val);
 			return -1;
 		}
 	}
@@ -375,7 +376,7 @@ retry:
 			goto retry;
 		else {
 			PR_ERROR("Unable to read memory. "		\
-					 "ALTD_STATUS_REG = 0x%016llx\n", val);
+					 "ALTD_STATUS_REG = 0x%016" PRIx64 "\n", val);
 			return -1;
 		}
 	}

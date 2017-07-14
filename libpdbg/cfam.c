@@ -17,6 +17,7 @@
  */
 #include <unistd.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "target.h"
 #include "bitutils.h"
@@ -133,7 +134,7 @@ static uint64_t opb_poll(struct opb *opb, uint32_t *read_data)
 		rc = pib_read(&opb->target, PIB2OPB_REG_STAT, &sval);
 		if (rc) {
 			/* Do something here ? */
-			PR_ERROR("XSCOM error %lld read OPB STAT\n", rc);
+			PR_ERROR("XSCOM error %" PRId64 " read OPB STAT\n", rc);
 			return -1;
 		}
 		PR_DEBUG("  STAT=0x%16llx...\n", sval);
@@ -190,7 +191,7 @@ static int p8_opb_read(struct opb *opb, uint32_t addr, uint32_t *data)
 
 	rc = pib_write(&opb->target, PIB2OPB_REG_CMD, opb_cmd);
 	if (rc) {
-		PR_ERROR("XSCOM error %lld writing OPB CMD\n", rc);
+		PR_ERROR("XSCOM error %" PRId64 " writing OPB CMD\n", rc);
 		return OPB_ERR_XSCOM_ERR;
 	}
 	return opb_poll(opb, data);
@@ -213,7 +214,7 @@ static int p8_opb_write(struct opb *opb, uint32_t addr, uint32_t data)
 
 	rc = pib_write(&opb->target, PIB2OPB_REG_CMD, opb_cmd);
 	if (rc) {
-		PR_ERROR("XSCOM error %lld writing OPB CMD\n", rc);
+		PR_ERROR("XSCOM error %" PRId64 " writing OPB CMD\n", rc);
 		return OPB_ERR_XSCOM_ERR;
 	}
 	return opb_poll(opb, NULL);

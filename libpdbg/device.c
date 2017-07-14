@@ -311,7 +311,7 @@ static const char *__dt_path_split(const char *p,
 struct dt_node *dt_find_by_path(struct dt_node *root, const char *path)
 {
 	struct dt_node *n;
-	const char *pn, *pa, *p = path, *nn, *na;
+	const char *pn, *pa = NULL, *p = path, *nn = NULL, *na = NULL;
 	unsigned int pnl, pal, nnl, nal;
 	bool match;
 
