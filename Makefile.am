@@ -46,10 +46,10 @@ libpdbg_la_SOURCES = \
 	libpdbg/target.c
 
 %.dts: %.dts.m4
-	m4 -Isrc $< > $@
+	m4 -I$(dir $<) $< > $@
 
 %.dtsi: %.dtsi.m4
-	m4 -Isrc $< > $@
+	m4 -I$(dir $<) $< > $@
 
 p9w-fsi.dtb.o: p9w-fsi.dts p9-fsi.dtsi
 %.dtb.o: %.dts
