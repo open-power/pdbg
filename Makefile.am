@@ -60,4 +60,4 @@ p9w-fsi.dtb.o: p9w-fsi.dts p9-fsi.dtsi
 # unflattening the device-tree
 	dd if=$@.tmp of=$@ ibs=16 conv=sync
 	rm $@.tmp
-	objcopy -I binary -O @ARCH_FF@ $@ $@
+	$(OBJCOPY) -I binary -O @ARCH_FF@ $@ $@
