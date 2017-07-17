@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = foreign
+
 GIT_SHA1 = `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty || echo unknown`
 
 include libfdt/Makefile.libfdt
