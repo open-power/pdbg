@@ -53,7 +53,7 @@ libpdbg_la_SOURCES = \
 
 p9w-fsi.dtb.o: p9w-fsi.dts p9-fsi.dtsi
 %.dtb.o: %.dts
-	dtc -I dts $< -O dtb > $@.tmp
+	dtc -i$(dir $@) -I dts $< -O dtb > $@.tmp
 
 # We need to align the output as some processor/kernel
 # combinations can't deal with the alignment errors when
