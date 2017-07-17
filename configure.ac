@@ -1,5 +1,6 @@
 AC_INIT([pdbg], [1.0])
 AM_INIT_AUTOMAKE([subdir-objects])
+AM_SILENT_RULES([yes])
 
 AC_PROG_CC
 AC_PROG_LIBTOOL
