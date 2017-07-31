@@ -112,6 +112,7 @@ struct thread {
 	int (*step)(struct thread *, int);
 	int (*start)(struct thread *);
 	int (*stop)(struct thread *);
+	int (*sreset)(struct thread *);
 
 	/* ram_setup() should be called prior to using ram_instruction() to
 	 * actually ram the instruction and return the result. ram_destroy()

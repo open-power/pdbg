@@ -41,7 +41,7 @@ enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
 	       GETMEM, PUTMEM, GETGPR, GETNIA, GETSPR,	\
 	       GETMSR, PUTGPR, PUTNIA, PUTSPR, PUTMSR,	\
 	       STOP, START, THREADSTATUS, STEP, PROBE,	\
-	       GETVMEM };
+	       GETVMEM, SRESET };
 
 #define MAX_CMD_ARGS 3
 enum command cmd = 0;
@@ -183,6 +183,9 @@ enum command parse_cmd(char *optarg)
 		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "stop") == 0) {
 		cmd = STOP;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "sreset") == 0) {
+		cmd = SRESET;
 		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "threadstatus") == 0) {
 		cmd = THREADSTATUS;
@@ -569,6 +572,11 @@ static int stop_thread(struct target *thread_target, uint32_t index, uint64_t *u
 	return ram_stop_thread(thread_target) ? 0 : 1;
 }
 
+static int sreset_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+{
+	return ram_sreset_thread(thread_target) ? 0 : 1;
+}
+
 static void enable_dn(struct dt_node *dn)
 {
 	struct dt_property *p;
@@ -834,6 +842,9 @@ int main(int argc, char *argv[])
 		break;
 	case STOP:
 		rc = for_each_target("thread", stop_thread, NULL, NULL);
+		break;
+	case SRESET:
+		rc = for_each_target("thread", sreset_thread, NULL, NULL);
 		break;
 	case PROBE:
 		rc = 1;

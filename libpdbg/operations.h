@@ -68,6 +68,7 @@ uint64_t thread_status(struct thread *thread);
 int ram_stop_thread(struct target *thread);
 int ram_step_thread(struct target *thread, int count);
 int ram_start_thread(struct target *thread);
+int ram_sreset_thread(struct target *thread);
 void fsi_destroy(struct target *target);
 
 /* GDB server functionality */

@@ -115,6 +115,15 @@ int ram_stop_thread(struct target *thread_target)
 	return thread->stop(thread);
 }
 
+int ram_sreset_thread(struct target *thread_target)
+{
+	struct thread *thread;
+
+	assert(!strcmp(thread_target->class, "thread"));
+	thread = target_to_thread(thread_target);
+	return thread->sreset(thread);
+}
+
 /*
  * RAMs the opcodes in *opcodes and store the results of each opcode
  * into *results. *results must point to an array the same size as
