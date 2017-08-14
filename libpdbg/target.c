@@ -262,5 +262,8 @@ static void _target_probe(struct dt_node *dn)
  * exist but don't */
 void target_probe(void)
 {
-	_target_probe(dt_first(dt_root));
+	struct dt_node *dn;
+
+	dt_for_each_node(dt_root, dn)
+		_target_probe(dn);
 }
