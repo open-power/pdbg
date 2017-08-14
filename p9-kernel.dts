@@ -14,16 +14,10 @@
 		status = "hidden";
 
 		pib@1000 {
-			#address-cells = <0x2>;
-			#size-cells = <0x1>;
 			reg = <0x0 0x1000 0x7>;
-			compatible = "ibm,fsi-pib", "ibm,power9-fsi-pib";
 			index = <0x0>;
-
-			adu@90000 {
-				compatible = "ibm,power9-adu";
-				reg = <0x0 0x90000 0x5>;
-			};
+			compatible = "ibm,fsi-pib", "ibm,power9-fsi-pib";
+			include(p9-pib.dts.m4)dnl
 		};
 
 		hmfsi@100000 {
@@ -33,16 +27,10 @@
 			index = <0x1>;
 
 			pib@1000 {
-				#address-cells = <0x2>;
-				#size-cells = <0x1>;
-				reg = <0x0 0x1000 0x7>;
-				compatible = "ibm,fsi-pib", "ibm,power9-fsi-pib";
-				index = <0x1>;
-
-				adu@90000 {
-					compatible = "ibm,power9-adu";
-					reg = <0x0 0x90000 0x5>;
-				};
+				 reg = <0x0 0x1000 0x7>;
+				 index = <0x1>;
+				 compatible = "ibm,fsi-pib", "ibm,power9-fsi-pib";
+				 include(p9-pib.dts.m4)dnl
 			};
 		};
 	};
