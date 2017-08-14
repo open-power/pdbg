@@ -52,7 +52,7 @@ static int cmd_max_arg_count = 0;
 /* At the moment all commands only take some kind of number */
 static uint64_t cmd_args[MAX_CMD_ARGS];
 
-enum backend { FSI, I2C, KERNEL, FAKE };
+enum backend { FSI, I2C, KERNEL, FAKE, HOST };
 static enum backend backend = KERNEL;
 
 static char const *device_node;
@@ -86,6 +86,7 @@ static void print_usage(char *pname)
 	printf("\t\t\tbit-banging to access the host processor\n");
 	printf("\t\t\tvia the FSI bus.\n");
 	printf("\t\ti2c:\tThe P8 only backend which goes via I2C.\n");
+	printf("\t\thost:\tUse the debugfs xscom nodes.\n");
 	printf("\t\tkernel:\tThe default backend which goes the kernel FSI driver.\n");
 	printf("\t-d, --device=backend device\n");
 	printf("\t\tFor I2C the device node used by the backend to access the bus.\n");
@@ -291,6 +292,8 @@ static bool parse_options(int argc, char *argv[])
 				 * other than the first? */
 			} else if (strcmp(optarg, "fake") == 0) {
 				backend = FAKE;
+			} else if (strcmp(optarg, "host") == 0) {
+				backend = HOST;
 			} else
 				opt_error = true;
 			break;
@@ -625,6 +628,10 @@ extern unsigned char _binary_p9_kernel_dtb_o_start;
 extern unsigned char _binary_p9_kernel_dtb_o_end;
 extern unsigned char _binary_fake_dtb_o_start;
 extern unsigned char _binary_fake_dtb_o_end;
+extern unsigned char _binary_p8_host_dtb_o_start;
+extern unsigned char _binary_p8_host_dtb_o_end;
+extern unsigned char _binary_p9_host_dtb_o_start;
+extern unsigned char _binary_p9_host_dtb_o_end;
 static int target_select(void)
 {
 	struct target *fsi, *pib, *chip, *thread;
@@ -655,6 +662,17 @@ static int target_select(void)
 
 	case FAKE:
 		targets_init(&_binary_fake_dtb_o_start);
+		break;
+
+	case HOST:
+		if (!strcmp(device_node, "p8"))
+			targets_init(&_binary_p8_host_dtb_o_start);
+		else if (!strcmp(device_node, "p9"))
+			targets_init(&_binary_p9_host_dtb_o_start);
+		else {
+			PR_ERROR("Unsupported device type for host backend\n");
+			return -1;
+		}
 		break;
 
 	default:
