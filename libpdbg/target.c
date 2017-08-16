@@ -4,8 +4,10 @@
 #include <ccan/list/list.h>
 #include <libfdt/libfdt.h>
 
+#include "bitutils.h"
 #include "target.h"
 #include "device.h"
+#include "operations.h"
 
 #undef PR_DEBUG
 #define PR_DEBUG(...)
@@ -33,6 +35,83 @@ static struct dt_node *get_class_target_addr(struct dt_node *dn, const char *nam
 	return dn;
 }
 
+/* The indirect access code was largely stolen from hw/xscom.c in skiboot */
+#define PIB_IND_MAX_RETRIES 10
+#define PIB_IND_READ PPC_BIT(0)
+#define PIB_IND_ADDR PPC_BITMASK(12, 31)
+#define PIB_IND_DATA PPC_BITMASK(48, 63)
+
+#define PIB_DATA_IND_COMPLETE PPC_BIT(32)
+#define PIB_DATA_IND_ERR PPC_BITMASK(33, 35)
+#define PIB_DATA_IND_DATA PPC_BITMASK(48, 63)
+
+static int pib_indirect_read(struct pib *pib, uint64_t addr, uint64_t *data)
+{
+	uint64_t indirect_addr;
+	int retries;
+
+	if ((addr >> 60) & 1) {
+		PR_ERROR("Indirect form 1 not supported\n");
+		return -1;
+	}
+
+	indirect_addr = addr & 0x7fffffff;
+	*data = PIB_IND_READ | (addr & PIB_IND_ADDR);
+	CHECK_ERR(pib->write(pib, indirect_addr, *data));
+
+	/* Wait for completion */
+	for (retries = 0; retries < PIB_IND_MAX_RETRIES; retries++) {
+		CHECK_ERR(pib->read(pib, indirect_addr, data));
+
+		if ((*data & PIB_DATA_IND_COMPLETE) &&
+		    ((*data & PIB_DATA_IND_ERR) == 0)) {
+			*data = *data & PIB_DATA_IND_DATA;
+			break;
+		}
+
+		if ((*data & PIB_DATA_IND_COMPLETE) ||
+		    (retries >= PIB_IND_MAX_RETRIES)) {
+			PR_ERROR("Error reading indirect register");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int pib_indirect_write(struct pib *pib, uint64_t addr, uint64_t data)
+{
+	uint64_t indirect_addr;
+	int retries;
+
+	if ((addr >> 60) & 1) {
+		PR_ERROR("Indirect form 1 not supported\n");
+		return -1;
+	}
+
+	indirect_addr = addr & 0x7fffffff;
+	data &= PIB_IND_DATA;
+	data |= addr & PIB_IND_ADDR;
+	CHECK_ERR(pib->write(pib, indirect_addr, data));
+
+	/* Wait for completion */
+	for (retries = 0; retries < PIB_IND_MAX_RETRIES; retries++) {
+		CHECK_ERR(pib->read(pib, indirect_addr, &data));
+
+		if ((data & PIB_DATA_IND_COMPLETE) &&
+		    ((data & PIB_DATA_IND_ERR) == 0))
+			break;
+
+		if ((data & PIB_DATA_IND_COMPLETE) ||
+		    (retries >= PIB_IND_MAX_RETRIES)) {
+			PR_ERROR("Error writing indirect register");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 int pib_read(struct target *pib_dt, uint64_t addr, uint64_t *data)
 {
 	struct pib *pib;
@@ -42,8 +121,10 @@ int pib_read(struct target *pib_dt, uint64_t addr, uint64_t *data)
 	dn = get_class_target_addr(dn, "pib", &addr);
 	pib_dt = dn->target;
 	pib = target_to_pib(pib_dt);
-	rc = pib->read(pib, addr, data);
-//	printf("pib_read 0x%016llx = 0x%016llx\n", addr, *data);
+	if (addr & PPC_BIT(0))
+		rc = pib_indirect_read(pib, addr, data);
+	else
+		rc = pib->read(pib, addr, data);
 	return rc;
 }
 
@@ -56,8 +137,10 @@ int pib_write(struct target *pib_dt, uint64_t addr, uint64_t data)
 	dn = get_class_target_addr(dn, "pib", &addr);
 	pib_dt = dn->target;
 	pib = target_to_pib(pib_dt);
-	rc = pib->write(pib, addr, data);
-//	printf("pib_write 0x%016llx = 0x%016llx\n", addr, data);
+	if (addr & PPC_BIT(0))
+		rc = pib_indirect_write(pib, addr, data);
+	else
+		rc = pib->write(pib, addr, data);
 	return rc;
 }
 
