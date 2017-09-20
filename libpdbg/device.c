@@ -21,7 +21,7 @@
 #include <libfdt/libfdt.h>
 #include <libfdt/libfdt_internal.h>
 #include <ccan/str/str.h>
-#include <ccan/endian/endian.h>
+#include <endian.h>
 
 #undef PR_DEBUG
 #define PR_DEBUG(...)
@@ -838,7 +838,7 @@ u64 dt_get_number(const void *pdata, unsigned int cells)
 	u64 ret = 0;
 
 	while(cells--)
-		ret = (ret << 32) | be32_to_cpu(*(p++));
+		ret = (ret << 32) | be32toh(*(p++));
 	return ret;
 }
 
