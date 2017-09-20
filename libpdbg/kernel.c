@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <err.h>
 #include <inttypes.h>
+#include <endian.h>
 
 #include "bitutils.h"
 #include "operations.h"
