@@ -29,6 +29,18 @@ adu@90000 {
 	  reg = <0x0 0x90000 0x5>;
 };
 
+htm@5012880 {
+	compatible = "ibm,htm";
+	reg = <0x0 0x5012880 0x40>;
+	index = <0x0>;
+};
+
+htm@50128C0 {
+	compatible = "ibm,htm";
+	reg = <0x0 0x50128C0 0x40>;
+	index = <0x1>;
+};
+
 CORE(0, 0);
 CORE(1, 1);
 CORE(2, 2);
