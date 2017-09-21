@@ -220,7 +220,7 @@ u32 dt_n_address_cells(const struct dt_node *node);
 u32 dt_n_size_cells(const struct dt_node *node);
 u64 dt_get_number(const void *pdata, unsigned int cells);
 
-/* Find an ibm,chip-id property in this node; if not found, walk up the parent
+/* Find an chip-id property in this node; if not found, walk up the parent
  * nodes. Returns -1 if no chip-id property exists. */
 u32 dt_get_chip_id(const struct dt_node *node);
 

@@ -878,7 +878,7 @@ static u32 __dt_get_chip_id(const struct dt_node *node)
 	const struct dt_property *prop;
 
 	for (; node; node = node->parent) {
-		prop = dt_find_property(node, "ibm,chip-id");
+		prop = dt_find_property(node, "chip-id");
 		if (prop)
 			return dt_property_get_cell(prop, 0);
 	}
