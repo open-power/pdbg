@@ -31,3 +31,4 @@ config.sub
 ltmain.sh
 libtool
 m4
+*.dtsi
