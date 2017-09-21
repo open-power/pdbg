@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _GNU_SOURCE
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -37,11 +38,15 @@
 #undef PR_DEBUG
 #define PR_DEBUG(...)
 
+#define HTM_DUMP_BASENAME "htm.dump"
+
 enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
 	       GETMEM, PUTMEM, GETGPR, GETNIA, GETSPR,	\
 	       GETMSR, PUTGPR, PUTNIA, PUTSPR, PUTMSR,	\
 	       STOP, START, THREADSTATUS, STEP, PROBE,	\
-	       GETVMEM, SRESET };
+	       GETVMEM, SRESET, HTM_STOP, HTM_ANALYSE,  \
+	       HTM_START, HTM_DUMP, HTM_RESET, HTM_GO,  \
+	       HTM_TRACE, HTM_STATUS };
 
 #define MAX_CMD_ARGS 3
 enum command cmd = 0;
@@ -117,6 +122,13 @@ static void print_usage(char *pname)
 	printf("\tstop\n");
 	printf("\tthreadstatus\n");
 	printf("\tprobe\n");
+	printf("\thtm_start\n");
+	printf("\thtm_stop\n");
+	printf("\thtm_status\n");
+	printf("\thtm_reset\n");
+	printf("\thtm_dump\n");
+	printf("\thtm_trace\n");
+	printf("\thtm_analyse\n");
 }
 
 enum command parse_cmd(char *optarg)
@@ -193,6 +205,30 @@ enum command parse_cmd(char *optarg)
 		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "probe") == 0) {
 		cmd = PROBE;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_start") == 0) {
+		cmd = HTM_START;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_go") == 0) {
+		cmd = HTM_START;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_stop") == 0) {
+		cmd = HTM_STOP;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_status") == 0) {
+		cmd = HTM_STATUS;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_reset") == 0) {
+		cmd = HTM_RESET;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_dump") == 0) {
+		cmd = HTM_DUMP;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_trace") == 0) {
+		cmd = HTM_TRACE;
+		cmd_min_arg_count = 0;
+	} else if (strcmp(optarg, "htm_analyse") == 0) {
+		cmd = HTM_ANALYSE;
 		cmd_min_arg_count = 0;
 	}
 
@@ -613,6 +649,195 @@ static void disable_dn(struct dt_node *dn)
 	dt_add_property_string(dn, "status", "disabled");
 }
 
+static char *get_htm_dump_filename(void)
+{
+	char *filename;
+	int i;
+
+	filename = strdup(HTM_DUMP_BASENAME);
+	if (!filename)
+		return NULL;
+
+	i = 0;
+	while (access(filename, F_OK) == 0) {
+		free(filename);
+		if (asprintf(&filename, "%s.%d", HTM_DUMP_BASENAME, i) == -1)
+			return NULL;
+		i++;
+	}
+
+	return filename;
+}
+
+static int run_htm_start(void)
+{
+	struct target *target;
+	int rc = 0;
+
+	for_each_class_target("htm", target) {
+		printf("Starting HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_start(target) != 1)
+			printf("Couldn't start HTM@%d#%d\n",
+				dt_get_chip_id(target->dn), target->index);
+		rc++;
+	}
+
+	return rc;
+}
+
+static int run_htm_stop(void)
+{
+	struct target *target;
+	int rc = 0;
+
+	for_each_class_target("htm", target) {
+		printf("Stopping HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_stop(target) != 1)
+			printf("Couldn't stop HTM@%d#%d\n",
+				dt_get_chip_id(target->dn), target->index);
+		rc++;
+	}
+
+	return rc;
+}
+
+static int run_htm_status(void)
+{
+	struct target *target;
+	int rc = 0;
+
+	for_each_class_target("htm", target) {
+		printf("HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_status(target) != 1)
+			printf("Couldn't get HTM@%d#%d status\n",
+				dt_get_chip_id(target->dn), target->index);
+		rc++;
+		printf("\n\n");
+	}
+
+	return rc;
+}
+
+static int run_htm_reset(void)
+{
+	uint64_t old_base = 0, base, size;
+	struct target *target;
+	int rc = 0;
+
+	for_each_class_target("htm", target) {
+		printf("Resetting HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_reset(target, &base, &size) != 1)
+			printf("Couldn't reset HTM@%d#%d\n",
+				dt_get_chip_id(target->dn), target->index);
+		if (old_base != base) {
+			printf("The kernel has initialised HTM memory at:\n");
+			printf("base: 0x%016" PRIx64 " for 0x%016" PRIx64 " size\n",
+				base, size);
+			printf("In case of system crash/xstop use the following to dump the trace on the BMC:\n");
+			printf("./pdbg getmem 0x%016" PRIx64 " 0x%016" PRIx64 " > htm.dump\n",
+					base, size);
+		}
+		rc++;
+	}
+
+	return rc;
+}
+
+static int run_htm_dump(void)
+{
+	struct target *target;
+	char *filename;
+	int rc = 0;
+
+	filename = get_htm_dump_filename();
+	if (!filename)
+		return 0;
+
+	/* size = 0 will dump everything */
+	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
+	for_each_class_target("htm", target) {
+		printf("Dumping HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_dump(target, 0, filename) == 1)
+			printf("Couldn't dump HTM@%d#%d\n",
+				dt_get_chip_id(target->dn), target->index);
+		rc++;
+	}
+	free(filename);
+
+	return rc;
+}
+
+static int run_htm_trace(void)
+{
+	uint64_t old_base = 0, base, size;
+	struct target *target;
+	int rc = 0;
+
+	for_each_class_target("htm", target) {
+		/*
+		 * Don't mind if stop fails, it will fail if it wasn't
+		 * running, if anything bad is happening reset will fail
+		 */
+		htm_stop(target);
+		printf("Resetting HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_reset(target, &base, &size) != 1)
+			printf("Couldn't reset HTM@%d#%d\n",
+				dt_get_chip_id(target->dn), target->index);
+		if (old_base != base) {
+			printf("The kernel has initialised HTM memory at:\n");
+			printf("base: 0x%016" PRIx64 " for 0x%016" PRIx64 " size\n",
+					base, size);
+			printf("./pdbg getmem 0x%016" PRIx64 " 0x%016" PRIx64 " > htm.dump\n\n",
+					base, size);
+		}
+		old_base = base;
+	}
+
+	for_each_class_target("htm", target) {
+		printf("Starting HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_start(target) != 1)
+			printf("Couldn't start HTM@%d#%d\n",
+				dt_get_chip_id(target->dn), target->index);
+		rc++;
+	}
+
+	return rc;
+}
+
+static int run_htm_analyse(void)
+{
+	struct target *target;
+	char *filename;
+	int rc = 0;
+
+	for_each_class_target("htm", target)
+		htm_stop(target);
+
+	filename = get_htm_dump_filename();
+	if (!filename)
+		return 0;
+
+	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
+	for_each_class_target("htm", target) {
+		printf("Dumping HTM@%d#%d\n",
+			dt_get_chip_id(target->dn), target->index);
+		if (htm_dump(target, 0, filename) != 1)
+			printf("Couldn't dump HTM@%d#%d\n",
+				dt_get_chip_id(target->dn), target->index);
+		rc++;
+	}
+	free(filename);
+
+	return rc;
+}
+
 /* TODO: It would be nice to have a more dynamic way of doing this */
 extern unsigned char _binary_p8_i2c_dtb_o_start;
 extern unsigned char _binary_p8_i2c_dtb_o_end;
@@ -869,6 +1094,28 @@ int main(int argc, char *argv[])
 		print_target(dt_root, 0);
 		printf("\nNote that only selected targets will be shown above. If none are shown\n"
 		       "try adding '-a' to select all targets\n");
+		break;
+	case HTM_GO:
+	case HTM_START:
+		rc = run_htm_start();
+		break;
+	case HTM_STOP:
+		rc = run_htm_stop();
+		break;
+	case HTM_STATUS:
+		rc = run_htm_status();
+		break;
+	case HTM_RESET:
+		rc = run_htm_reset();
+		break;
+	case HTM_DUMP:
+		rc = run_htm_dump();
+		break;
+	case HTM_TRACE:
+		rc = run_htm_trace();
+		break;
+	case HTM_ANALYSE:
+		rc = run_htm_analyse();
 		break;
 	default:
 		PR_ERROR("Unsupported command\n");

@@ -70,6 +70,17 @@ struct hw_unit_info {
 	{ .hw_unit = &name, .size = sizeof(name), .struct_target_offset = container_off(typeof(name), target) }; \
 	const struct hw_unit_info __used __section("hw_units") *name ##_hw_unit_p = &name ##_hw_unit
 
+struct htm {
+	struct target target;
+	int (*start)(struct htm *);
+	int (*stop)(struct htm *);
+	int (*reset)(struct htm *, uint64_t *, uint64_t *);
+	int (*pause)(struct htm *);
+	int (*status)(struct htm *);
+	int (*dump)(struct htm *, uint64_t, const char *);
+};
+#define target_to_htm(x) container_of(x, struct htm, target)
+
 struct adu {
 	struct target target;
 	int (*getmem)(struct adu *, uint64_t, uint64_t *);

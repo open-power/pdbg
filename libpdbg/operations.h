@@ -71,6 +71,12 @@ int ram_start_thread(struct target *thread);
 int ram_sreset_thread(struct target *thread);
 void fsi_destroy(struct target *target);
 
+int htm_stop(struct target *target);
+int htm_start(struct target *target);
+int htm_status(struct target *target);
+int htm_reset(struct target *target, uint64_t *base, uint64_t *size);
+int htm_dump(struct target *target, uint64_t, const char *);
+
 /* GDB server functionality */
 int gdbserver_start(uint16_t port);
 

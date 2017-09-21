@@ -47,7 +47,8 @@ libpdbg_la_SOURCES = \
 	libpdbg/i2c.c \
 	libpdbg/adu.c \
 	libpdbg/device.c \
-	libpdbg/target.c
+	libpdbg/target.c \
+	libpdbg/htm.c
 
 %.dts: %.dts.m4
 	m4 -I$(dir $<) $< > $@
