@@ -102,84 +102,84 @@ $ ./pdbg -a probe
         CFAM hMFSI Port
             p1: POWER FSI2PIB
                 POWER9 ADU
-                c16: POWER9 Chiplet
+                c16: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
-                c17: POWER9 Chiplet
+                c17: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
-                c18: POWER9 Chiplet
+                c18: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
-                c19: POWER9 Chiplet
+                c19: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
-                c20: POWER9 Chiplet
+                c20: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
-                c21: POWER9 Chiplet
+                c21: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
-                c22: POWER9 Chiplet
+                c22: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
-                c23: POWER9 Chiplet
+                c23: POWER9 Core
                     t0: POWER9 Thread
                     t1: POWER9 Thread
                     t2: POWER9 Thread
                     t3: POWER9 Thread
         p0: POWER FSI2PIB
             POWER9 ADU
-            c5: POWER9 Chiplet
+            c5: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
                 t3: POWER9 Thread
-            c7: POWER9 Chiplet
+            c7: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
                 t3: POWER9 Thread
-            c14: POWER9 Chiplet
+            c14: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
                 t3: POWER9 Thread
-            c15: POWER9 Chiplet
+            c15: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
                 t3: POWER9 Thread
-            c19: POWER9 Chiplet
+            c19: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
                 t3: POWER9 Thread
-            c20: POWER9 Chiplet
+            c20: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
                 t3: POWER9 Thread
-            c21: POWER9 Chiplet
+            c21: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
                 t3: POWER9 Thread
-            c22: POWER9 Chiplet
+            c22: POWER9 Core
                 t0: POWER9 Thread
                 t1: POWER9 Thread
                 t2: POWER9 Thread
@@ -189,7 +189,7 @@ Note that only selected targets will be shown above. If none are shown
 try adding '-a' to select all targets
 ```
 
-Chiplet-IDs are core/chip numbers which should be passed as arguments to `-c`
+Core-IDs are core/chip numbers which should be passed as arguments to `-c`
 when performing operations such as getgpr that operate on particular cores.
 Processor-IDs should be passed as arguments to `-p` to operate on different
 processor chips. Specifying no targets is an error and will result in the

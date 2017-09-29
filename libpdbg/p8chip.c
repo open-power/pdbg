@@ -72,7 +72,7 @@
 /* How long (in us) to wait for a special wakeup to complete */
 #define SPECIAL_WKUP_TIMEOUT		10
 
-static int assert_special_wakeup(struct chiplet *chip)
+static int assert_special_wakeup(struct core *chip)
 {
 	int i = 0;
 	uint64_t gp0;
@@ -97,7 +97,7 @@ static int assert_special_wakeup(struct chiplet *chip)
 
 #if 0
 /* TODO: Work out when to do this. */
-static int deassert_special_wakeup(struct chiplet *chip)
+static int deassert_special_wakeup(struct core *chip)
 {
 	/* Assert special wakeup to prevent low power states */
 	CHECK_ERR(pib_write(&chip->target, PMSPCWKUPFSP_REG, 0));
@@ -163,7 +163,7 @@ static int p8_thread_stop(struct thread *thread)
 {
 	int i = 0;
 	uint64_t val;
-	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.dn->parent->target);
 
 	do {
 		/* Quiese active thread */
@@ -201,7 +201,7 @@ static int p8_thread_stop(struct thread *thread)
 static int p8_thread_start(struct thread *thread)
 {
 	uint64_t val;
-	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.dn->parent->target);
 
 	/* Activate thread */
 	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));
@@ -218,7 +218,7 @@ static int p8_thread_start(struct thread *thread)
 static int p8_ram_setup(struct thread *thread)
 {
 	struct dt_node *dn;
-	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.dn->parent->target);
 	uint64_t ram_mode, val;
 
 	/* We can only ram a thread if all the threads on the core/chip are
@@ -250,7 +250,7 @@ static int p8_ram_setup(struct thread *thread)
 
 static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
 {
-	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.dn->parent->target);
 	uint64_t val;
 
 	CHECK_ERR(pib_write(&chip->target, SCR0_REG, *scratch));
@@ -282,7 +282,7 @@ static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 
 static int p8_ram_destroy(struct thread *thread)
 {
-	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.dn->parent->target);
 	uint64_t ram_mode;
 
 	/* Disable RAM mode */
@@ -294,7 +294,7 @@ static int p8_ram_destroy(struct thread *thread)
 }
 
 /*
- * Initialise all viable threads for ramming on the given chiplet.
+ * Initialise all viable threads for ramming on the given core.
  */
 static int p8_thread_probe(struct pdbg_target *target)
 {
@@ -322,10 +322,10 @@ struct thread p8_thread = {
 };
 DECLARE_HW_UNIT(p8_thread);
 
-static int p8_chiplet_probe(struct pdbg_target *target)
+static int p8_core_probe(struct pdbg_target *target)
 {
 	uint64_t value;
-	struct chiplet *chiplet = target_to_chiplet(target);
+	struct core *core = target_to_core(target);
 
 	/* Work out if this chip is actually present */
 	if (pib_read(target, SCOM_EX_GP3, &value)) {
@@ -336,16 +336,16 @@ static int p8_chiplet_probe(struct pdbg_target *target)
 	if (!GETFIELD(PPC_BIT(0), value))
 		return -1;
 
-	assert_special_wakeup(chiplet);
+	assert_special_wakeup(core);
 	return 0;
 }
 
-struct chiplet p8_chiplet = {
+struct core p8_core = {
 	.target = {
-		.name = "POWER8 Chiplet",
+		.name = "POWER8 Core",
 		.compatible = "ibm,power8-core",
-		.class = "chiplet",
-		.probe = p8_chiplet_probe,
+		.class = "core",
+		.probe = p8_core_probe,
 	},
 };
-DECLARE_HW_UNIT(p8_chiplet);
+DECLARE_HW_UNIT(p8_core);

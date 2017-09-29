@@ -126,7 +126,7 @@ static int p9_thread_sreset(struct thread *thread)
 static int p9_ram_setup(struct thread *thread)
 {
 	struct dt_node *dn;
-	struct chiplet *chip = target_to_chiplet(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.dn->parent->target);
 
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
@@ -215,7 +215,7 @@ struct thread p9_thread = {
 };
 DECLARE_HW_UNIT(p9_thread);
 
-static int p9_chiplet_probe(struct pdbg_target *target)
+static int p9_core_probe(struct pdbg_target *target)
 {
 	int i = 0;
 	uint64_t value;
@@ -241,12 +241,12 @@ static int p9_chiplet_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct chiplet p9_chiplet = {
+struct core p9_core = {
 	.target = {
-		.name = "POWER9 Chiplet",
+		.name = "POWER9 Core",
 		.compatible = "ibm,power9-core",
-		.class = "chiplet",
-		.probe = p9_chiplet_probe,
+		.class = "core",
+		.probe = p9_core_probe,
 	},
 };
-DECLARE_HW_UNIT(p9_chiplet);
+DECLARE_HW_UNIT(p9_core);

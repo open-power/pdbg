@@ -421,7 +421,7 @@ static int do_setup(struct htm *htm)
 					0xFFFF000000)))
 		return -1;
 
-	/* Stop on chiplet xstop */
+	/* Stop on core xstop */
 	if (HTM_ERR(pib_write(&htm->target, HTM_TRIGGER_CONTROL, HTM_CTRL_XSTOP_STOP)))
 		return -1;;
 

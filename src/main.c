@@ -77,7 +77,7 @@ static void print_usage(char *pname)
 	printf("Usage: %s [options] command ...\n\n", pname);
 	printf(" Options:\n");
 	printf("\t-p, --processor=processor-id\n");
-	printf("\t-c, --chip=chiplet-id\n");
+	printf("\t-c, --chip=core-id\n");
 	printf("\t-t, --thread=thread\n");
 	printf("\t-a, --all\n");
 	printf("\t\tRun command on all possible processors/chips/threads (default)\n");
@@ -450,13 +450,13 @@ static int print_thread_status(struct pdbg_target *target, uint32_t index, uint6
 	return 1;
 }
 
-static int print_chiplet_thread_status(struct pdbg_target *chiplet_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int print_core_thread_status(struct pdbg_target *core_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
 	uint64_t status = -1UL;
 	int i, rc;
 
 	printf("c%02d:", index);
-	rc = for_each_child_target("thread", chiplet_target, print_thread_status, &status, NULL);
+	rc = for_each_child_target("thread", core_target, print_thread_status, &status, NULL);
 	for (i = 0; i < 8; i++)
 		switch ((status >> (i * 4)) & 0xf) {
 		case THREAD_STATUS_ACTIVE:
@@ -498,7 +498,7 @@ static int print_chiplet_thread_status(struct pdbg_target *chiplet_target, uint3
 static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
 	printf("\np%01dt: 0 1 2 3 4 5 6 7\n", index);
-	return for_each_child_target("chiplet", pib_target, print_chiplet_thread_status, NULL, NULL);
+	return for_each_child_target("core", pib_target, print_core_thread_status, NULL, NULL);
 };
 
 #define REG_MEM -3
@@ -510,7 +510,7 @@ static void print_proc_reg(struct pdbg_target *target, uint64_t reg, uint64_t va
 	int proc_index, chip_index, thread_index;
 
 	thread_index = pdbg_target_index(target);
-	chip_index = pdbg_parent_index(target, "chiplet");
+	chip_index = pdbg_parent_index(target, "core");
 	proc_index = pdbg_parent_index(target, "pib");
 	printf("p%d:c%d:t%d:", proc_index, chip_index, thread_index);
 
@@ -524,7 +524,7 @@ static void print_proc_reg(struct pdbg_target *target, uint64_t reg, uint64_t va
 		printf("gpr%02" PRIu64 ": ", reg);
 
 	if (rc == 1) {
-		printf("Check threadstatus - not all threads on this chiplet are quiesced\n");
+		printf("Check threadstatus - not all threads on this core are quiesced\n");
 	} else if (rc == 2)
 		printf("Thread in incorrect state\n");
 	else
@@ -904,7 +904,7 @@ static int target_select(void)
 
 		if (processorsel[proc_index]) {
 			pdbg_enable_target(pib);
-			pdbg_for_each_target("chiplet", pib, chip) {
+			pdbg_for_each_target("core", pib, chip) {
 				int chip_index = pdbg_target_index(chip);
 				if (chipsel[proc_index][chip_index]) {
 					pdbg_enable_target(chip);
@@ -951,7 +951,7 @@ void print_target(struct pdbg_target *target, int level)
 			char c = 0;
 			if (!strcmp(pdbg_target_class_name(target), "pib"))
 				c = 'p';
-			else if (!strcmp(pdbg_target_class_name(target), "chiplet"))
+			else if (!strcmp(pdbg_target_class_name(target), "core"))
 				c = 'c';
 			else if (!strcmp(pdbg_target_class_name(target), "thread"))
 				c = 't';

@@ -112,10 +112,10 @@ struct fsi {
 };
 #define target_to_fsi(x) container_of(x, struct fsi, target)
 
-struct chiplet {
+struct core {
 	struct pdbg_target target;
 };
-#define target_to_chiplet(x) container_of(x, struct chiplet, target)
+#define target_to_core(x) container_of(x, struct core, target)
 
 struct thread {
 	struct pdbg_target target;
