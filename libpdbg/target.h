@@ -135,4 +135,8 @@ struct thread {
 };
 #define target_to_thread(x) container_of(x, struct thread, target)
 
+/* Place holder for chiplets which we just want translation for */
+struct chiplet {
+        struct pdbg_target target;
+};
 #endif

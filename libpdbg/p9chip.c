@@ -250,3 +250,26 @@ struct core p9_core = {
 	},
 };
 DECLARE_HW_UNIT(p9_core);
+
+static int p9_chiplet_probe(struct pdbg_target *target)
+{
+        uint64_t value;
+
+        if (pib_read(target, NET_CTRL0, &value))
+                return -1;
+
+        if (!(value & NET_CTRL0_CHIPLET_ENABLE))
+                return -1;
+
+        return 0;
+}
+
+struct chiplet p9_chiplet = {
+        .target = {
+                .name = "POWER9 Chiplet",
+                .compatible = "ibm,power9-chiplet",
+                .class = "chiplet",
+                .probe = p9_chiplet_probe,
+        },
+};
+DECLARE_HW_UNIT(p9_chiplet);
