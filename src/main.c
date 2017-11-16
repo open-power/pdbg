@@ -867,6 +867,10 @@ static int target_select(void)
 		break;
 
 	case FSI:
+		if (device_node == NULL) {
+			PR_ERROR("FSI backend requires a device type\n");
+			return -1;
+		}
 		if (!strcmp(device_node, "p8"))
 			targets_init(&_binary_p8_fsi_dtb_o_start);
 		else if (!strcmp(device_node, "p9w") || !strcmp(device_node, "witherspoon"))
@@ -890,6 +894,10 @@ static int target_select(void)
 		break;
 
 	case HOST:
+		if (device_node == NULL) {
+			PR_ERROR("Host backend requires a device type\n");
+			return -1;
+		}
 		if (!strcmp(device_node, "p8"))
 			targets_init(&_binary_p8_host_dtb_o_start);
 		else if (!strcmp(device_node, "p9"))
