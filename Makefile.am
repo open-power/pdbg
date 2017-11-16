@@ -61,10 +61,5 @@ p9r-fsi.dtb.o: p9r-fsi.dts p9-fsi.dtsi
 p9z-fsi.dtb.o: p9z-fsi.dts p9-fsi.dtsi
 %.dtb.o: %.dts
 	dtc -i$(dir $@) -I dts $< -O dtb > $@.tmp
-
-# We need to align the output as some processor/kernel
-# combinations can't deal with the alignment errors when
-# unflattening the device-tree
-	dd if=$@.tmp of=$@ ibs=16 conv=sync
-	rm $@.tmp
-	$(OBJCOPY) -I binary -O @ARCH_FF@ $@ $@
+	symbol_prefix=`echo $@ | tr '.-' '_'` ; \
+	sed "s%SYMBOL_PREFIX%$${symbol_prefix}%g; s%FILENAME%$@.tmp%g" $(top_srcdir)/template.S | $(CC) -xassembler - -c -o $@
