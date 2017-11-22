@@ -158,7 +158,7 @@ static int ram_instructions(struct thread *thread, uint64_t *opcodes,
 		} else if (i == len + 1) {
 			/* Restore r1 */
 			scratch = r1;
-			opcode = mfspr(0, 277);
+			opcode = mfspr(1, 277);
 		}
 
 		CHECK_ERR(thread->ram_instruction(thread, opcode, &scratch));
