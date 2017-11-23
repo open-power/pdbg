@@ -321,7 +321,6 @@ static bool parse_options(int argc, char *argv[])
 				device_node = "p9w";
 			} else if (strcmp(optarg, "i2c") == 0) {
 				backend = I2C;
-				device_node = "/dev/i2c4";
 			} else if (strcmp(optarg, "kernel") == 0) {
 				backend = KERNEL;
 				/* TODO: use device node to point at a slave
@@ -917,7 +916,18 @@ static int target_select(void)
 	 * to walk the tree and disabled nodes we don't care about
 	 * prior to probing. */
 	for_each_class_target("pib", pib) {
+		struct dt_property *p;
 		int proc_index = pib->index;
+
+		if (backend == I2C && device_node) {
+			if ((p = dt_find_property(pib->dn, "bus"))) {
+				if (strlen(device_node) > p->len)
+					dt_resize_property(&p, strlen(device_node) + 1);
+				strcpy(p->prop, device_node);
+			} else {
+				dt_add_property(pib->dn, "bus", device_node, strlen(device_node) + 1);
+			}
+		}
 
 		if (processorsel[proc_index]) {
 			enable_dn(pib->dn);
