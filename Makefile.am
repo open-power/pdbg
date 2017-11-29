@@ -62,5 +62,4 @@ p9r-fsi.dtb.o: p9r-fsi.dts p9-fsi.dtsi
 p9z-fsi.dtb.o: p9z-fsi.dts p9-fsi.dtsi
 %.dtb.o: %.dts
 	dtc -i$(dir $@) -I dts $< -O dtb > $@.tmp
-	symbol_prefix=`echo $@ | tr '.-' '_'` ; \
-	sed "s%SYMBOL_PREFIX%$${symbol_prefix}%g; s%FILENAME%$@.tmp%g" $(top_srcdir)/template.S | $(CC) -xassembler - -c -o $@
+	$(CC) -c $(top_srcdir)/template.S -DSYMBOL_PREFIX=$(shell echo $@ | tr '.-' '_') -DFILENAME=\"$@.tmp\" -o $@
