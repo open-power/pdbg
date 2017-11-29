@@ -61,8 +61,10 @@ p9w-fsi.dtb.o: p9w-fsi.dts p9-fsi.dtsi
 p9r-fsi.dtb.o: p9r-fsi.dts p9-fsi.dtsi
 p9z-fsi.dtb.o: p9z-fsi.dts p9-fsi.dtsi
 
-%.dtb.o.tmp: %.dts
+%.dtb: %.dts
 	dtc -i$(dir $@) -I dts $< -O dtb > $@
 
-%.dtb.o: %.dtb.o.tmp
-	$(CC) -c $(top_srcdir)/template.S -DSYMBOL_PREFIX=$(shell echo $@ | tr '.-' '_') -DFILENAME=\"$@.tmp\" -o $@
+%.dtb.o: %.dtb
+	$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell echo $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
+
+MOSTLYCLEANFILES = *.dtb
