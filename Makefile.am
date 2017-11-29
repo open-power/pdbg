@@ -1,4 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
+AM_MAKEFLAGS = --no-print-directory
 
 GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty || echo unknown`
 
