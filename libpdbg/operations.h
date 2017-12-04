@@ -28,8 +28,6 @@
 	}							\
 	} while(0)
 
-#define THREADS_PER_CORE	8
-
 #define FSI2PIB_BASE	0x1000
 
 /* Alter display unit functions */
@@ -54,28 +52,6 @@ int adu_putmem(struct pdbg_target *target, uint64_t start_addr, uint8_t *input, 
 #define MFSPR_OPCODE 0x7c0002a6UL
 #define MTSPR_OPCODE 0x7c0003a6UL
 #define LD_OPCODE 0xe8000000UL
-
-int ram_getgpr(struct thread *thread, int gpr, uint64_t *value);
-int ram_putgpr(struct thread *thread, int gpr, uint64_t value);
-int ram_getnia(struct thread *thread, uint64_t *value);
-int ram_putnia(struct thread *thread, uint64_t value);
-int ram_getspr(struct thread *thread, int spr, uint64_t *value);
-int ram_putspr(struct thread *thread, int spr, uint64_t value);
-int ram_getmsr(struct thread *thread, uint64_t *value);
-int ram_putmsr(struct thread *thread, uint64_t value);
-int ram_getmem(struct thread *thread, uint64_t addr, uint64_t *value);
-uint64_t thread_status(struct thread *thread);
-int ram_stop_thread(struct pdbg_target *thread);
-int ram_step_thread(struct pdbg_target *thread, int count);
-int ram_start_thread(struct pdbg_target *thread);
-int ram_sreset_thread(struct pdbg_target *thread);
-void fsi_destroy(struct pdbg_target *target);
-
-int htm_stop(struct pdbg_target *target);
-int htm_start(struct pdbg_target *target);
-int htm_status(struct pdbg_target *target);
-int htm_reset(struct pdbg_target *target, uint64_t *base, uint64_t *size);
-int htm_dump(struct pdbg_target *target, uint64_t, const char *);
 
 /* GDB server functionality */
 int gdbserver_start(uint16_t port);

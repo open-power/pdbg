@@ -21,6 +21,7 @@
 #include <ccan/container_of/container_of.h>
 #include "compiler.h"
 #include "device.h"
+#include "libpdbg.h"
 
 #define PR_DEBUG(x, args...) \
 	fprintf(stderr, x, ##args)
@@ -133,15 +134,5 @@ struct thread {
 	int (*ram_destroy)(struct thread *);
 };
 #define target_to_thread(x) container_of(x, struct thread, target)
-
-void targets_init(void *fdt);
-void target_probe(void);
-
-int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data);
-int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data);
-int opb_read(struct pdbg_target *opb_dt, uint32_t addr, uint32_t *data);
-int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data);
-int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data);
-int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data);
 
 #endif

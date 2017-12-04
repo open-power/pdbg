@@ -26,17 +26,18 @@
 #include <limits.h>
 #include <inttypes.h>
 
-#include <backend.h>
-#include <operations.h>
-#include <target.h>
-#include <device.h>
-
 #include <config.h>
+
+#include <libpdbg.h>
 
 #include "bitutils.h"
 
 #undef PR_DEBUG
 #define PR_DEBUG(...)
+#define PR_ERROR(x, args...)					\
+	fprintf(stderr, "%s: " x, __FUNCTION__, ##args)
+
+#define THREADS_PER_CORE	8
 
 #define HTM_DUMP_BASENAME "htm.dump"
 
@@ -70,12 +71,6 @@ static int i2c_addr = 0x50;
 static int **processorsel[MAX_PROCESSORS];
 static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
 static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
-
-/* Convenience functions */
-#define for_each_thread(x) while(0)
-#define for_each_chiplet(x) while(0)
-#define for_each_processor(x) while(0)
-#define for_each_cfam(x) while(0)
 
 static void print_usage(char *pname)
 {
@@ -373,21 +368,13 @@ static int for_each_child_target(char *class, struct pdbg_target *parent,
 	int rc = 0;
 	struct pdbg_target *target;
 	uint32_t index;
-	struct dt_node *dn;
+	enum pdbg_target_status status;
 
-	for_each_class_target(class, target) {
-		struct dt_property *p;
-
-		dn = target->dn;
-		if (parent && dn->parent != parent->dn)
-			continue;
-
-		/* Search up the tree for an index */
-		for (index = dn->target->index; index == -1; dn = dn->parent);
+	pdbg_for_each_target(class, parent, target) {
+		index = pdbg_target_index(target);
 		assert(index != -1);
-
-		p = dt_find_property(dn, "status");
-		if (p && (!strcmp(p->prop, "disabled") || !strcmp(p->prop, "hidden")))
+		status = pdbg_target_status(target);
+		if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_HIDDEN)
 			continue;
 
 		rc += cb(target, index, arg1, arg2);
@@ -396,9 +383,25 @@ static int for_each_child_target(char *class, struct pdbg_target *parent,
 	return rc;
 }
 
+/* Call the given call back on each enabled target in the given class */
 static int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *), uint64_t *arg1, uint64_t *arg2)
 {
-	return for_each_child_target(class, NULL, cb, arg1, arg2);
+	struct pdbg_target *target;
+	uint32_t index;
+	enum pdbg_target_status status;
+	int rc = 0;
+
+	pdbg_for_each_class_target(class, target) {
+		index = pdbg_target_index(target);
+		assert(index != -1);
+		status = pdbg_target_status(target);
+		if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_HIDDEN)
+			continue;
+
+		rc += cb(target, index, arg1, arg2);
+	}
+
+	return rc;
 }
 
 static int getcfam(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
@@ -441,11 +444,9 @@ static int putscom(struct pdbg_target *target, uint32_t index, uint64_t *addr, u
 	return 1;
 }
 
-static int print_thread_status(struct pdbg_target *thread_target, uint32_t index, uint64_t *status, uint64_t *unused1)
+static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *status, uint64_t *unused1)
 {
-	struct thread *thread = target_to_thread(thread_target);
-
-	*status = SETFIELD(0xf << (index * 4), *status, thread_status(thread) & 0xf);
+	*status = SETFIELD(0xf << (index * 4), *status, thread_status(target) & 0xf);
 	return 1;
 }
 
@@ -504,13 +505,13 @@ static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t ind
 #define REG_MSR -2
 #define REG_NIA -1
 #define REG_R31 31
-static void print_proc_reg(struct thread *thread, uint64_t reg, uint64_t value, int rc)
+static void print_proc_reg(struct pdbg_target *target, uint64_t reg, uint64_t value, int rc)
 {
 	int proc_index, chip_index, thread_index;
 
-	thread_index = thread->target.index;
-	chip_index = thread->target.dn->parent->target->index;
-	proc_index = thread->target.dn->parent->parent->target->index;
+	thread_index = pdbg_target_index(target);
+	chip_index = pdbg_parent_index(target, "chiplet");
+	proc_index = pdbg_parent_index(target, "pib");
 	printf("p%d:c%d:t%d:", proc_index, chip_index, thread_index);
 
 	if (reg == REG_MSR)
@@ -530,41 +531,39 @@ static void print_proc_reg(struct thread *thread, uint64_t reg, uint64_t value, 
 		printf("0x%016" PRIx64 "\n", value);
 }
 
-static int putprocreg(struct pdbg_target *thread_target, uint32_t index, uint64_t *reg, uint64_t *value)
+static int putprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *value)
 {
-	struct thread *thread = target_to_thread(thread_target);
 	int rc;
 
 	if (*reg == REG_MSR)
-		rc = ram_putmsr(thread, *value);
+		rc = ram_putmsr(target, *value);
 	else if (*reg == REG_NIA)
-		rc = ram_putnia(thread, *value);
+		rc = ram_putnia(target, *value);
 	else if (*reg > REG_R31)
-		rc = ram_putspr(thread, *reg - REG_R31, *value);
+		rc = ram_putspr(target, *reg - REG_R31, *value);
 	else if (*reg >= 0 && *reg <= 31)
-		rc = ram_putgpr(thread, *reg, *value);
+		rc = ram_putgpr(target, *reg, *value);
 
-	print_proc_reg(thread, *reg, *value, rc);
+	print_proc_reg(target, *reg, *value, rc);
 
 	return 0;
 }
 
-static int getprocreg(struct pdbg_target *thread_target, uint32_t index, uint64_t *reg, uint64_t *unused)
+static int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *unused)
 {
-	struct thread *thread = target_to_thread(thread_target);
 	int rc;
 	uint64_t value;
 
 	if (*reg == REG_MSR)
-		rc = ram_getmsr(thread, &value);
+		rc = ram_getmsr(target, &value);
 	else if (*reg == REG_NIA)
-		rc = ram_getnia(thread, &value);
+		rc = ram_getnia(target, &value);
 	else if (*reg > REG_R31)
-		rc = ram_getspr(thread, *reg - REG_R31, &value);
+		rc = ram_getspr(target, *reg - REG_R31, &value);
 	else if (*reg >= 0 && *reg <= 31)
-		rc = ram_getgpr(thread, *reg, &value);
+		rc = ram_getgpr(target, *reg, &value);
 
-	print_proc_reg(thread, *reg, value, rc);
+	print_proc_reg(target, *reg, value, rc);
 
 	return !rc;
 }
@@ -576,7 +575,7 @@ static int putmem(uint64_t addr)
         int read_size, rc = 0;
         struct pdbg_target *adu_target;
 
-	for_each_class_target("adu", adu_target)
+	pdbg_for_each_class_target("adu", adu_target)
 		break;
 
         buf = malloc(PUTMEM_BUF_SIZE);
@@ -615,39 +614,6 @@ static int sreset_thread(struct pdbg_target *thread_target, uint32_t index, uint
 	return ram_sreset_thread(thread_target) ? 0 : 1;
 }
 
-static void enable_dn(struct dt_node *dn)
-{
-	struct dt_property *p;
-
-	PR_DEBUG("Enabling %s\n", dn->name);
-	p = dt_find_property(dn, "status");
-
-	if (!p)
-		/* Default assumption enabled */
-		return;
-
-	/* We only override a status of "hidden" */
-	if (strcmp(p->prop, "hidden"))
-		return;
-
-	dt_del_property(dn, p);
-}
-
-static void disable_dn(struct dt_node *dn)
-{
-	struct dt_property *p;
-
-	PR_DEBUG("Disabling %s\n", dn->name);
-	p = dt_find_property(dn, "status");
-	if (p)
-		/* We don't override hard-coded device tree
-		 * status. This is needed to avoid disabling that
-		 * backend. */
-		return;
-
-	dt_add_property_string(dn, "status", "disabled");
-}
-
 static char *get_htm_dump_filename(void)
 {
 	char *filename;
@@ -672,13 +638,15 @@ static int run_htm_start(void)
 {
 	struct pdbg_target *target;
 	int rc = 0;
+	uint64_t chip_id;
 
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Starting HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_start(target) != 1)
 			printf("Couldn't start HTM@%d#%d\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		rc++;
 	}
 
@@ -689,13 +657,15 @@ static int run_htm_stop(void)
 {
 	struct pdbg_target *target;
 	int rc = 0;
+	uint64_t chip_id;
 
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Stopping HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_stop(target) != 1)
 			printf("Couldn't stop HTM@%d#%d\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		rc++;
 	}
 
@@ -706,13 +676,15 @@ static int run_htm_status(void)
 {
 	struct pdbg_target *target;
 	int rc = 0;
+	uint64_t chip_id;
 
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_status(target) != 1)
 			printf("Couldn't get HTM@%d#%d status\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		rc++;
 		printf("\n\n");
 	}
@@ -725,13 +697,15 @@ static int run_htm_reset(void)
 	uint64_t old_base = 0, base, size;
 	struct pdbg_target *target;
 	int rc = 0;
+	uint64_t chip_id;
 
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Resetting HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_reset(target, &base, &size) != 1)
 			printf("Couldn't reset HTM@%d#%d\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		if (old_base != base) {
 			printf("The kernel has initialised HTM memory at:\n");
 			printf("base: 0x%016" PRIx64 " for 0x%016" PRIx64 " size\n",
@@ -751,6 +725,7 @@ static int run_htm_dump(void)
 	struct pdbg_target *target;
 	char *filename;
 	int rc = 0;
+	uint64_t chip_id;
 
 	filename = get_htm_dump_filename();
 	if (!filename)
@@ -758,12 +733,13 @@ static int run_htm_dump(void)
 
 	/* size = 0 will dump everything */
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Dumping HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_dump(target, 0, filename) == 1)
 			printf("Couldn't dump HTM@%d#%d\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		rc++;
 	}
 	free(filename);
@@ -776,18 +752,20 @@ static int run_htm_trace(void)
 	uint64_t old_base = 0, base, size;
 	struct pdbg_target *target;
 	int rc = 0;
+	uint64_t chip_id;
 
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
 		/*
 		 * Don't mind if stop fails, it will fail if it wasn't
 		 * running, if anything bad is happening reset will fail
 		 */
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		htm_stop(target);
 		printf("Resetting HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_reset(target, &base, &size) != 1)
 			printf("Couldn't reset HTM@%d#%d\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		if (old_base != base) {
 			printf("The kernel has initialised HTM memory at:\n");
 			printf("base: 0x%016" PRIx64 " for 0x%016" PRIx64 " size\n",
@@ -798,12 +776,13 @@ static int run_htm_trace(void)
 		old_base = base;
 	}
 
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Starting HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_start(target) != 1)
 			printf("Couldn't start HTM@%d#%d\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		rc++;
 	}
 
@@ -815,8 +794,9 @@ static int run_htm_analyse(void)
 	struct pdbg_target *target;
 	char *filename;
 	int rc = 0;
+	uint64_t chip_id;
 
-	for_each_class_target("htm", target)
+	pdbg_for_each_class_target("htm", target)
 		htm_stop(target);
 
 	filename = get_htm_dump_filename();
@@ -824,12 +804,13 @@ static int run_htm_analyse(void)
 		return 0;
 
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
-	for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("htm", target) {
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Dumping HTM@%d#%d\n",
-			dt_get_chip_id(target->dn), target->index);
+		       (int) chip_id, pdbg_target_index(target));
 		if (htm_dump(target, 0, filename) != 1)
 			printf("Couldn't dump HTM@%d#%d\n",
-				dt_get_chip_id(target->dn), target->index);
+			       (int) chip_id, pdbg_target_index(target));
 		rc++;
 	}
 	free(filename);
@@ -862,7 +843,7 @@ static int target_select(void)
 
 	switch (backend) {
 	case I2C:
-		targets_init(&_binary_p8_i2c_dtb_o_start);
+		pdbg_targets_init(&_binary_p8_i2c_dtb_o_start);
 		break;
 
 	case FSI:
@@ -871,13 +852,13 @@ static int target_select(void)
 			return -1;
 		}
 		if (!strcmp(device_node, "p8"))
-			targets_init(&_binary_p8_fsi_dtb_o_start);
+			pdbg_targets_init(&_binary_p8_fsi_dtb_o_start);
 		else if (!strcmp(device_node, "p9w") || !strcmp(device_node, "witherspoon"))
-			targets_init(&_binary_p9w_fsi_dtb_o_start);
+			pdbg_targets_init(&_binary_p9w_fsi_dtb_o_start);
 		else if (!strcmp(device_node, "p9r") || !strcmp(device_node, "romulus"))
-			targets_init(&_binary_p9r_fsi_dtb_o_start);
+			pdbg_targets_init(&_binary_p9r_fsi_dtb_o_start);
 		else if (!strcmp(device_node, "p9z") || !strcmp(device_node, "zaius"))
-			targets_init(&_binary_p9z_fsi_dtb_o_start);
+			pdbg_targets_init(&_binary_p9z_fsi_dtb_o_start);
 		else {
 			PR_ERROR("Invalid device type specified\n");
 			return -1;
@@ -885,11 +866,11 @@ static int target_select(void)
 		break;
 
 	case KERNEL:
-		targets_init(&_binary_p9_kernel_dtb_o_start);
+		pdbg_targets_init(&_binary_p9_kernel_dtb_o_start);
 		break;
 
 	case FAKE:
-		targets_init(&_binary_fake_dtb_o_start);
+		pdbg_targets_init(&_binary_fake_dtb_o_start);
 		break;
 
 	case HOST:
@@ -898,9 +879,9 @@ static int target_select(void)
 			return -1;
 		}
 		if (!strcmp(device_node, "p8"))
-			targets_init(&_binary_p8_host_dtb_o_start);
+			pdbg_targets_init(&_binary_p8_host_dtb_o_start);
 		else if (!strcmp(device_node, "p9"))
-			targets_init(&_binary_p9_host_dtb_o_start);
+			pdbg_targets_init(&_binary_p9_host_dtb_o_start);
 		else {
 			PR_ERROR("Unsupported device type for host backend\n");
 			return -1;
@@ -915,98 +896,74 @@ static int target_select(void)
 	/* At this point we should have a device-tree loaded. We want
 	 * to walk the tree and disabled nodes we don't care about
 	 * prior to probing. */
-	for_each_class_target("pib", pib) {
-		struct dt_property *p;
-		int proc_index = pib->index;
+	pdbg_for_each_class_target("pib", pib) {
+		int proc_index = pdbg_target_index(pib);
 
-		if (backend == I2C && device_node) {
-			if ((p = dt_find_property(pib->dn, "bus"))) {
-				if (strlen(device_node) > p->len)
-					dt_resize_property(&p, strlen(device_node) + 1);
-				strcpy(p->prop, device_node);
-			} else {
-				dt_add_property(pib->dn, "bus", device_node, strlen(device_node) + 1);
-			}
-		}
+		if (backend == I2C && device_node)
+			pdbg_set_target_property(pib, "bus", device_node, strlen(device_node) + 1);
 
 		if (processorsel[proc_index]) {
-			enable_dn(pib->dn);
-			if (!find_target_class("chiplet"))
-				continue;
-			for_each_class_target("chiplet", chip) {
-				if (chip->dn->parent != pib->dn)
-					continue;
-				int chip_index = chip->index;
+			pdbg_enable_target(pib);
+			pdbg_for_each_target("chiplet", pib, chip) {
+				int chip_index = pdbg_target_index(chip);
 				if (chipsel[proc_index][chip_index]) {
-					enable_dn(chip->dn);
-					if (!find_target_class("thread"))
-						continue;
-					for_each_class_target("thread", thread) {
-						if (thread->dn->parent != chip->dn)
-							continue;
-
-						int thread_index = thread->index;
+					pdbg_enable_target(chip);
+					pdbg_for_each_target("thread", chip, thread) {
+						int thread_index = pdbg_target_index(thread);
 						if (threadsel[proc_index][chip_index][thread_index])
-							enable_dn(thread->dn);
+							pdbg_enable_target(thread);
 						else
-							disable_dn(thread->dn);
+							pdbg_disable_target(thread);
 					}
 				} else
-					disable_dn(chip->dn);
+					pdbg_disable_target(chip);
 			}
 		} else
-			disable_dn(pib->dn);
+			pdbg_disable_target(pib);
 	}
 
-	for_each_class_target("fsi", fsi) {
-		int index = fsi->index;
+	pdbg_for_each_class_target("fsi", fsi) {
+		int index = pdbg_target_index(fsi);
 		if (processorsel[index])
-			enable_dn(fsi->dn);
+			pdbg_enable_target(fsi);
 		else
-			disable_dn(fsi->dn);
+			pdbg_disable_target(fsi);
 	}
 
 	return 0;
 }
 
-void print_target(struct dt_node *dn, int level)
+void print_target(struct pdbg_target *target, int level)
 {
 	int i;
-	struct dt_node *next;
-	struct dt_property *p;
-	char *status = "";
+	struct pdbg_target *next;
+	enum pdbg_target_status status;
 
-	p = dt_find_property(dn, "status");
-	if (p)
-		status = p->prop;
-
-	if (!strcmp(status, "disabled"))
+	status = pdbg_target_status(target);
+	if (status == PDBG_TARGET_DISABLED)
 		return;
 
-	if (strcmp(status, "hidden")) {
-		struct pdbg_target *target;
-
+	if (status == PDBG_TARGET_ENABLED) {
 		for (i = 0; i < level; i++)
 			printf("    ");
 
-		target = dn->target;
 		if (target) {
 			char c = 0;
-			if (!strcmp(target->class, "pib"))
+			if (!strcmp(pdbg_target_class_name(target), "pib"))
 				c = 'p';
-			else if (!strcmp(target->class, "chiplet"))
+			else if (!strcmp(pdbg_target_class_name(target), "chiplet"))
 				c = 'c';
-			else if (!strcmp(target->class, "thread"))
+			else if (!strcmp(pdbg_target_class_name(target), "thread"))
 				c = 't';
 
 			if (c)
-				printf("%c%d: %s\n", c, target->index, target->name);
+				printf("%c%d: %s\n", c, pdbg_target_index(target), pdbg_target_name(target));
 			else
-				printf("%s\n", target->name);
+				printf("%s\n", pdbg_target_name(target));
 		}
 	}
 
-	list_for_each(&dn->children, next, list)
+	pdbg_for_each_child_target(target, next)
 		print_target(next, level + 1);
 }
 
@@ -1023,7 +980,7 @@ int main(int argc, char *argv[])
 	if (target_select())
 		return 1;
 
-	target_probe();
+	pdbg_target_probe();
 
 	switch(cmd) {
 	case GETCFAM:
@@ -1041,7 +998,7 @@ int main(int argc, char *argv[])
 	case GETMEM:
                 buf = malloc(cmd_args[1]);
                 assert(buf);
-		for_each_class_target("adu", target) {
+		pdbg_for_each_class_target("adu", target) {
 			if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1])) {
 				if (write(STDOUT_FILENO, buf, cmd_args[1]) < 0)
 					PR_ERROR("Unable to write stdout.\n");
@@ -1109,7 +1066,9 @@ int main(int argc, char *argv[])
 		break;
 	case PROBE:
 		rc = 1;
-		print_target(dt_root, 0);
+		pdbg_for_each_class_target("pib", target)
+			print_target(target, 0);
+
 		printf("\nNote that only selected targets will be shown above. If none are shown\n"
 		       "try adding '-a' to select all targets\n");
 		break;
@@ -1147,8 +1106,8 @@ int main(int argc, char *argv[])
 	} else
 		rc = 0;
 
-	if (backend == FSI)
-		fsi_destroy(NULL);
+	//if (backend == FSI)
+		//fsi_destroy(NULL);
 
 	return rc;
 }

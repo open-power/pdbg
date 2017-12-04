@@ -230,7 +230,7 @@ static int p8_ram_setup(struct thread *thread)
 			return 1;
 	}
 
-	if (!(thread_status(thread) & THREAD_STATUS_ACTIVE))
+	if (!(thread->status & THREAD_STATUS_ACTIVE))
 		return 2;
 
 	/* Activate RAM mode */

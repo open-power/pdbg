@@ -262,7 +262,7 @@ struct hw_unit_info *find_compatible_target(const char *compat)
 	return NULL;
 }
 
-void targets_init(void *fdt)
+void pdbg_targets_init(void *fdt)
 {
 	struct dt_node *dn;
 	const struct dt_property *p;
@@ -340,7 +340,7 @@ static void _target_probe(struct dt_node *dn)
 
 /* We walk the tree root down disabling targets which might/should
  * exist but don't */
-void target_probe(void)
+void pdbg_target_probe(void)
 {
 	struct dt_node *dn;
 

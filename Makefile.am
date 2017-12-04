@@ -36,6 +36,7 @@ libfdt_la_SOURCES = \
 	libfdt/fdt_overlay.c
 
 libpdbg_la_SOURCES = \
+	libpdbg/libpdbg.c \
 	libpdbg/host.c \
 	libpdbg/kernel.c \
 	libpdbg/fake.c \
