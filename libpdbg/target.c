@@ -316,8 +316,7 @@ static void disable_node(struct dt_node *dn)
 
 static void _target_probe(struct dt_node *dn)
 {
-	int rc;
-	struct dt_node *next;
+	int rc = 0;
 	struct dt_property *p;
 
 	PR_DEBUG("Probe %s - ", dn->name);
@@ -336,8 +335,6 @@ static void _target_probe(struct dt_node *dn)
 		disable_node(dn);
 	} else {
 		PR_DEBUG("success\n");
-		dt_for_each_child(dn, next)
-			_target_probe(next);
 	}
 }
 
