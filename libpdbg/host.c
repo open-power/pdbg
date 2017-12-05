@@ -80,7 +80,7 @@ static int xscom_write(struct pib *pib, uint64_t addr, uint64_t val)
 	return 0;
 }
 
-static int host_pib_probe(struct target *target)
+static int host_pib_probe(struct pdbg_target *target)
 {
 	struct pib *pib = target_to_pib(target);
 	int *fd;

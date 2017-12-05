@@ -428,7 +428,7 @@ static void fsi_reset(struct fsi *fsi)
 	fsi_putcfam(fsi, 0x800, val);
 }
 
-void fsi_destroy(struct target *target)
+void fsi_destroy(struct pdbg_target *target)
 {
 	set_direction_out(FSI_CLK);
 	set_direction_out(FSI_DAT);
@@ -445,7 +445,7 @@ void fsi_destroy(struct target *target)
 	write_gpio(CRONUS_SEL, 0);
 }
 
-int bmcfsi_probe(struct target *target)
+int bmcfsi_probe(struct pdbg_target *target)
 {
 	struct fsi *fsi = target_to_fsi(target);
 

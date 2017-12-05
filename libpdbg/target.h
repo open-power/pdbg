@@ -31,25 +31,25 @@
 
 enum chip_type {CHIP_UNKNOWN, CHIP_P8, CHIP_P8NV, CHIP_P9};
 
-struct target_class {
+struct pdbg_target_class {
 	char *name;
 	struct list_head targets;
 	struct list_node class_head_link;
 };
 
-struct target {
+struct pdbg_target {
 	char *name;
 	char *compatible;
 	char *class;
-	int (*probe)(struct target *target);
+	int (*probe)(struct pdbg_target *target);
 	int index;
 	struct dt_node *dn;
 	struct list_node class_link;
 };
 
-struct target *require_target_parent(struct target *target);
-struct target_class *find_target_class(const char *name);
-struct target_class *require_target_class(const char *name);
+struct pdbg_target *require_target_parent(struct pdbg_target *target);
+struct pdbg_target_class *find_target_class(const char *name);
+struct pdbg_target_class *require_target_class(const char *name);
 
 extern struct list_head empty_list;
 #define for_each_class_target(class_name, target)			\
@@ -71,7 +71,7 @@ struct hw_unit_info {
 	const struct hw_unit_info __used __section("hw_units") *name ##_hw_unit_p = &name ##_hw_unit
 
 struct htm {
-	struct target target;
+	struct pdbg_target target;
 	int (*start)(struct htm *);
 	int (*stop)(struct htm *);
 	int (*reset)(struct htm *, uint64_t *, uint64_t *);
@@ -82,14 +82,14 @@ struct htm {
 #define target_to_htm(x) container_of(x, struct htm, target)
 
 struct adu {
-	struct target target;
+	struct pdbg_target target;
 	int (*getmem)(struct adu *, uint64_t, uint64_t *);
 	int (*putmem)(struct adu *, uint64_t, uint64_t, int);
 };
 #define target_to_adu(x) container_of(x, struct adu, target)
 
 struct pib {
-	struct target target;
+	struct pdbg_target target;
 	int (*read)(struct pib *, uint64_t, uint64_t *);
 	int (*write)(struct pib *, uint64_t, uint64_t);
 	void *priv;
@@ -97,14 +97,14 @@ struct pib {
 #define target_to_pib(x) container_of(x, struct pib, target)
 
 struct opb {
-	struct target target;
+	struct pdbg_target target;
 	int (*read)(struct opb *, uint32_t, uint32_t *);
 	int (*write)(struct opb *, uint32_t, uint32_t);
 };
 #define target_to_opb(x) container_of(x, struct opb, target)
 
 struct fsi {
-	struct target target;
+	struct pdbg_target target;
 	int (*read)(struct fsi *, uint32_t, uint32_t *);
 	int (*write)(struct fsi *, uint32_t, uint32_t);
 	enum chip_type chip_type;
@@ -112,12 +112,12 @@ struct fsi {
 #define target_to_fsi(x) container_of(x, struct fsi, target)
 
 struct chiplet {
-	struct target target;
+	struct pdbg_target target;
 };
 #define target_to_chiplet(x) container_of(x, struct chiplet, target)
 
 struct thread {
-	struct target target;
+	struct pdbg_target target;
 	uint64_t status;
 	int id;
 	int (*step)(struct thread *, int);
@@ -137,11 +137,11 @@ struct thread {
 void targets_init(void *fdt);
 void target_probe(void);
 
-int pib_read(struct target *pib_dt, uint64_t addr, uint64_t *data);
-int pib_write(struct target *pib_dt, uint64_t addr, uint64_t data);
-int opb_read(struct target *opb_dt, uint32_t addr, uint32_t *data);
-int opb_write(struct target *opb_dt, uint32_t addr, uint32_t data);
-int fsi_read(struct target *fsi_dt, uint32_t addr, uint32_t *data);
-int fsi_write(struct target *fsi_dt, uint32_t addr, uint32_t data);
+int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data);
+int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data);
+int opb_read(struct pdbg_target *opb_dt, uint32_t addr, uint32_t *data);
+int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data);
+int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data);
+int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data);
 
 #endif

@@ -47,14 +47,14 @@
 
 static uint64_t thread_read(struct thread *thread, uint64_t addr, uint64_t *data)
 {
-	struct target *chip = require_target_parent(&thread->target);
+	struct pdbg_target *chip = require_target_parent(&thread->target);
 
 	return pib_read(chip, addr, data);
 }
 
 static uint64_t thread_write(struct thread *thread, uint64_t addr, uint64_t data)
 {
-	struct target *chip = require_target_parent(&thread->target);
+	struct pdbg_target *chip = require_target_parent(&thread->target);
 
 	return pib_write(chip, addr, data);
 }
@@ -70,7 +70,7 @@ static uint64_t p9_get_thread_status(struct thread *thread)
 	return status;
 }
 
-static int p9_thread_probe(struct target *target)
+static int p9_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
 
@@ -215,7 +215,7 @@ struct thread p9_thread = {
 };
 DECLARE_HW_UNIT(p9_thread);
 
-static int p9_chiplet_probe(struct target *target)
+static int p9_chiplet_probe(struct pdbg_target *target)
 {
 	int i = 0;
 	uint64_t value;

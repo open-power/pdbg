@@ -36,7 +36,7 @@
  * accesses. */
 #define FSI2PIB_RELAX	50
 
-static int fsi2pib_getscom(struct target *target, uint64_t addr, uint64_t *value)
+static int fsi2pib_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 {
 	uint64_t result;
 
@@ -52,7 +52,7 @@ static int fsi2pib_getscom(struct target *target, uint64_t addr, uint64_t *value
 	return 0;
 }
 
-static int fsi2pib_putscom(struct target *target, uint64_t addr, uint64_t value)
+static int fsi2pib_putscom(struct pdbg_target *target, uint64_t addr, uint64_t value)
 {
 	usleep(FSI2PIB_RELAX);
 
@@ -64,7 +64,7 @@ static int fsi2pib_putscom(struct target *target, uint64_t addr, uint64_t value)
 	return 0;
 }
 
-int fsi2pib_target_init(struct target *target, const char *name, uint64_t base, struct target *next)
+int fsi2pib_target_init(struct pdbg_target *target, const char *name, uint64_t base, struct pdbg_target *next)
 {
 	target->name = name;
 	target->read = fsi2pib_getscom;

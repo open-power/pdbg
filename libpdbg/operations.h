@@ -33,8 +33,8 @@
 #define FSI2PIB_BASE	0x1000
 
 /* Alter display unit functions */
-int adu_getmem(struct target *target, uint64_t addr, uint8_t *output, uint64_t size);
-int adu_putmem(struct target *target, uint64_t start_addr, uint8_t *input, uint64_t size);
+int adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size);
+int adu_putmem(struct pdbg_target *target, uint64_t start_addr, uint8_t *input, uint64_t size);
 
 /* Functions to ram instructions */
 #define THREAD_STATUS_DISABLED  PPC_BIT(0)
@@ -65,17 +65,17 @@ int ram_getmsr(struct thread *thread, uint64_t *value);
 int ram_putmsr(struct thread *thread, uint64_t value);
 int ram_getmem(struct thread *thread, uint64_t addr, uint64_t *value);
 uint64_t thread_status(struct thread *thread);
-int ram_stop_thread(struct target *thread);
-int ram_step_thread(struct target *thread, int count);
-int ram_start_thread(struct target *thread);
-int ram_sreset_thread(struct target *thread);
-void fsi_destroy(struct target *target);
+int ram_stop_thread(struct pdbg_target *thread);
+int ram_step_thread(struct pdbg_target *thread, int count);
+int ram_start_thread(struct pdbg_target *thread);
+int ram_sreset_thread(struct pdbg_target *thread);
+void fsi_destroy(struct pdbg_target *target);
 
-int htm_stop(struct target *target);
-int htm_start(struct target *target);
-int htm_status(struct target *target);
-int htm_reset(struct target *target, uint64_t *base, uint64_t *size);
-int htm_dump(struct target *target, uint64_t, const char *);
+int htm_stop(struct pdbg_target *target);
+int htm_start(struct pdbg_target *target);
+int htm_status(struct pdbg_target *target);
+int htm_reset(struct pdbg_target *target, uint64_t *base, uint64_t *size);
+int htm_dump(struct pdbg_target *target, uint64_t, const char *);
 
 /* GDB server functionality */
 int gdbserver_start(uint16_t port);

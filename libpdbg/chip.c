@@ -88,7 +88,7 @@ uint64_t thread_status(struct thread *thread)
 /*
  * Single step the thread count instructions.
  */
-int ram_step_thread(struct target *thread_target, int count)
+int ram_step_thread(struct pdbg_target *thread_target, int count)
 {
 	struct thread *thread;
 
@@ -97,7 +97,7 @@ int ram_step_thread(struct target *thread_target, int count)
 	return thread->step(thread, count);
 }
 
-int ram_start_thread(struct target *thread_target)
+int ram_start_thread(struct pdbg_target *thread_target)
 {
 	struct thread *thread;
 
@@ -106,7 +106,7 @@ int ram_start_thread(struct target *thread_target)
 	return thread->start(thread);
 }
 
-int ram_stop_thread(struct target *thread_target)
+int ram_stop_thread(struct pdbg_target *thread_target)
 {
 	struct thread *thread;
 
@@ -115,7 +115,7 @@ int ram_stop_thread(struct target *thread_target)
 	return thread->stop(thread);
 }
 
-int ram_sreset_thread(struct target *thread_target)
+int ram_sreset_thread(struct pdbg_target *thread_target)
 {
 	struct thread *thread;
 

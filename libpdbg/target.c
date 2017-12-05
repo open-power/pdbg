@@ -112,7 +112,7 @@ static int pib_indirect_write(struct pib *pib, uint64_t addr, uint64_t data)
 	return 0;
 }
 
-int pib_read(struct target *pib_dt, uint64_t addr, uint64_t *data)
+int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 {
 	struct pib *pib;
 	struct dt_node *dn = pib_dt->dn;
@@ -128,7 +128,7 @@ int pib_read(struct target *pib_dt, uint64_t addr, uint64_t *data)
 	return rc;
 }
 
-int pib_write(struct target *pib_dt, uint64_t addr, uint64_t data)
+int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 {
 	struct pib *pib;
 	struct dt_node *dn = pib_dt->dn;
@@ -144,7 +144,7 @@ int pib_write(struct target *pib_dt, uint64_t addr, uint64_t data)
 	return rc;
 }
 
-int opb_read(struct target *opb_dt, uint32_t addr, uint32_t *data)
+int opb_read(struct pdbg_target *opb_dt, uint32_t addr, uint32_t *data)
 {
 	struct opb *opb;
 	struct dt_node *dn = opb_dt->dn;
@@ -156,7 +156,7 @@ int opb_read(struct target *opb_dt, uint32_t addr, uint32_t *data)
 	return opb->read(opb, addr64, data);
 }
 
-int opb_write(struct target *opb_dt, uint32_t addr, uint32_t data)
+int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data)
 {
 	struct opb *opb;
 	struct dt_node *dn = opb_dt->dn;
@@ -169,7 +169,7 @@ int opb_write(struct target *opb_dt, uint32_t addr, uint32_t data)
 	return opb->write(opb, addr64, data);
 }
 
-int fsi_read(struct target *fsi_dt, uint32_t addr, uint32_t *data)
+int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 {
 	struct fsi *fsi;
 	struct dt_node *dn = fsi_dt->dn;
@@ -181,7 +181,7 @@ int fsi_read(struct target *fsi_dt, uint32_t addr, uint32_t *data)
 	return fsi->read(fsi, addr64, data);
 }
 
-int fsi_write(struct target *fsi_dt, uint32_t addr, uint32_t data)
+int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 {
 	struct fsi *fsi;
 	struct dt_node *dn = fsi_dt->dn;
@@ -194,7 +194,7 @@ int fsi_write(struct target *fsi_dt, uint32_t addr, uint32_t data)
 	return fsi->write(fsi, addr64, data);
 }
 
-struct target *require_target_parent(struct target *target)
+struct pdbg_target *require_target_parent(struct pdbg_target *target)
 {
 	struct dt_node *dn;
 
@@ -203,9 +203,9 @@ struct target *require_target_parent(struct target *target)
 }
 
 /* Finds the given class. Returns NULL if not found. */
-struct target_class *find_target_class(const char *name)
+struct pdbg_target_class *find_target_class(const char *name)
 {
-	struct target_class *target_class;
+	struct pdbg_target_class *target_class;
 
 	list_for_each(&target_classes, target_class, class_head_link)
 		if (!strcmp(target_class->name, name))
@@ -216,9 +216,9 @@ struct target_class *find_target_class(const char *name)
 
 /* Same as above but dies with an assert if the target class doesn't
  * exist */
-struct target_class *require_target_class(const char *name)
+struct pdbg_target_class *require_target_class(const char *name)
 {
-	struct target_class *target_class;
+	struct pdbg_target_class *target_class;
 
 	target_class = find_target_class(name);
 	if (!target_class) {
@@ -229,9 +229,9 @@ struct target_class *require_target_class(const char *name)
 }
 
 /* Returns the existing class or allocates space for a new one */
-static struct target_class *get_target_class(const char *name)
+static struct pdbg_target_class *get_target_class(const char *name)
 {
-	struct target_class *target_class;
+	struct pdbg_target_class *target_class;
 
 	if ((target_class = find_target_class(name)))
 		return target_class;
@@ -251,7 +251,7 @@ extern struct hw_init_info *__stop_hw_units;
 struct hw_unit_info *find_compatible_target(const char *compat)
 {
 	struct hw_unit_info **p;
-	struct target *target;
+	struct pdbg_target *target;
 
 	for (p = &__start_hw_units; p < (struct hw_unit_info **) &__stop_hw_units; p++) {
 		target = (*p)->hw_unit + (*p)->struct_target_offset;
@@ -266,16 +266,16 @@ void targets_init(void *fdt)
 {
 	struct dt_node *dn;
 	const struct dt_property *p;
-	struct target_class *target_class;
+	struct pdbg_target_class *target_class;
 	struct hw_unit_info *hw_unit_info;
 	void *new_hw_unit;
-	struct target *new_target;
+	struct pdbg_target *new_target;
 	uint32_t index;
 
 	dt_root = dt_new_root("");
 	dt_expand(fdt);
 
-	/* Now we need to walk the device-tree, assign struct targets
+	/* Now we need to walk the device-tree, assign struct pdbg_targets
 	 * to each of the nodes and add them to the appropriate target
 	 * classes */
 	dt_for_each_node(dt_root, dn) {

@@ -122,7 +122,7 @@ static void i2c_destroy(struct pib *pib)
 /*
  * Initialise a i2c backend on the given bus at the given bus address.
  */
-int i2c_target_probe(struct target *target)
+int i2c_target_probe(struct pdbg_target *target)
 {
 	struct pib *pib = target_to_pib(target);
 	struct i2c_data *i2c_data;

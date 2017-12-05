@@ -255,7 +255,7 @@ static int p8_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
 	return opb_write(&fsi->target, addr, data);
 }
 
-static int p8_hmfsi_probe(struct target *target)
+static int p8_hmfsi_probe(struct pdbg_target *target)
 {
 	struct fsi *fsi = target_to_fsi(target);
 	uint32_t value;
@@ -287,7 +287,7 @@ DECLARE_HW_UNIT(p8_opb_hmfsi);
 
 static int cfam_hmfsi_read(struct fsi *fsi, uint32_t addr, uint32_t *data)
 {
-	struct target *parent_fsi = fsi->target.dn->parent->target;
+	struct pdbg_target *parent_fsi = fsi->target.dn->parent->target;
 
 	addr += dt_get_address(fsi->target.dn, 0, NULL);
 
@@ -296,17 +296,17 @@ static int cfam_hmfsi_read(struct fsi *fsi, uint32_t addr, uint32_t *data)
 
 static int cfam_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
 {
-	struct target *parent_fsi = fsi->target.dn->parent->target;
+	struct pdbg_target *parent_fsi = fsi->target.dn->parent->target;
 
 	addr += dt_get_address(fsi->target.dn, 0, NULL);
 
 	return fsi_write(parent_fsi, addr, data);
 }
 
-static int cfam_hmfsi_probe(struct target *target)
+static int cfam_hmfsi_probe(struct pdbg_target *target)
 {
 	struct fsi *fsi = target_to_fsi(target);
-	struct target *fsi_parent = target->dn->parent->target;
+	struct pdbg_target *fsi_parent = target->dn->parent->target;
 	uint32_t value, port;
 	int rc;
 

@@ -296,7 +296,7 @@ static int p8_ram_destroy(struct thread *thread)
 /*
  * Initialise all viable threads for ramming on the given chiplet.
  */
-static int p8_thread_probe(struct target *target)
+static int p8_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
 
@@ -322,7 +322,7 @@ struct thread p8_thread = {
 };
 DECLARE_HW_UNIT(p8_thread);
 
-static int p8_chiplet_probe(struct target *target)
+static int p8_chiplet_probe(struct pdbg_target *target)
 {
 	uint64_t value;
 	struct chiplet *chiplet = target_to_chiplet(target);

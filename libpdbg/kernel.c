@@ -85,7 +85,7 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 /* TODO: At present we don't have a generic destroy method as there aren't many
  * use cases for it. So for the moment we can just let the OS close the file
  * descriptor on exit. */
-static void kernel_fsi_destroy(struct target *target)
+static void kernel_fsi_destroy(struct pdbg_target *target)
 {
 	close(fsi_fd);
 }
@@ -107,7 +107,7 @@ static void kernel_fsi_scan_devices(void)
 	close(fd);
 }
 
-int kernel_fsi_probe(struct target *target)
+int kernel_fsi_probe(struct pdbg_target *target)
 {
 	if (!fsi_fd) {
 		int tries = 5;

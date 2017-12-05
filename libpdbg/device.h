@@ -45,7 +45,7 @@ struct dt_node {
 	struct list_head children;
 	struct dt_node *parent;
 	u32 phandle;
-	struct target *target;
+	struct pdbg_target *target;
 };
 
 /* This is shared with device_tree.c .. make it static when

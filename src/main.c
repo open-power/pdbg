@@ -366,12 +366,12 @@ static bool parse_options(int argc, char *argv[])
 }
 
 /* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
-static int for_each_child_target(char *class, struct target *parent,
-				 int (*cb)(struct target *, uint32_t, uint64_t *, uint64_t *),
+static int for_each_child_target(char *class, struct pdbg_target *parent,
+				 int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *),
 				 uint64_t *arg1, uint64_t *arg2)
 {
 	int rc = 0;
-	struct target *target;
+	struct pdbg_target *target;
 	uint32_t index;
 	struct dt_node *dn;
 
@@ -396,12 +396,12 @@ static int for_each_child_target(char *class, struct target *parent,
 	return rc;
 }
 
-static int for_each_target(char *class, int (*cb)(struct target *, uint32_t, uint64_t *, uint64_t *), uint64_t *arg1, uint64_t *arg2)
+static int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *), uint64_t *arg1, uint64_t *arg2)
 {
 	return for_each_child_target(class, NULL, cb, arg1, arg2);
 }
 
-static int getcfam(struct target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
+static int getcfam(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
 {
 	uint32_t value;
 
@@ -413,7 +413,7 @@ static int getcfam(struct target *target, uint32_t index, uint64_t *addr, uint64
 	return 1;
 }
 
-static int putcfam(struct target *target, uint32_t index, uint64_t *addr, uint64_t *data)
+static int putcfam(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *data)
 {
 	if (fsi_write(target, *addr, *data))
 		return 0;
@@ -421,7 +421,7 @@ static int putcfam(struct target *target, uint32_t index, uint64_t *addr, uint64
 	return 1;
 }
 
-static int getscom(struct target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
+static int getscom(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
 {
 	uint64_t value;
 
@@ -433,7 +433,7 @@ static int getscom(struct target *target, uint32_t index, uint64_t *addr, uint64
 	return 1;
 }
 
-static int putscom(struct target *target, uint32_t index, uint64_t *addr, uint64_t *data)
+static int putscom(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *data)
 {
 	if (pib_write(target, *addr, *data))
 		return 0;
@@ -441,7 +441,7 @@ static int putscom(struct target *target, uint32_t index, uint64_t *addr, uint64
 	return 1;
 }
 
-static int print_thread_status(struct target *thread_target, uint32_t index, uint64_t *status, uint64_t *unused1)
+static int print_thread_status(struct pdbg_target *thread_target, uint32_t index, uint64_t *status, uint64_t *unused1)
 {
 	struct thread *thread = target_to_thread(thread_target);
 
@@ -449,7 +449,7 @@ static int print_thread_status(struct target *thread_target, uint32_t index, uin
 	return 1;
 }
 
-static int print_chiplet_thread_status(struct target *chiplet_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int print_chiplet_thread_status(struct pdbg_target *chiplet_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
 	uint64_t status = -1UL;
 	int i, rc;
@@ -494,7 +494,7 @@ static int print_chiplet_thread_status(struct target *chiplet_target, uint32_t i
 	return rc;
 }
 
-static int print_proc_thread_status(struct target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
 	printf("\np%01dt: 0 1 2 3 4 5 6 7\n", index);
 	return for_each_child_target("chiplet", pib_target, print_chiplet_thread_status, NULL, NULL);
@@ -530,7 +530,7 @@ static void print_proc_reg(struct thread *thread, uint64_t reg, uint64_t value, 
 		printf("0x%016" PRIx64 "\n", value);
 }
 
-static int putprocreg(struct target *thread_target, uint32_t index, uint64_t *reg, uint64_t *value)
+static int putprocreg(struct pdbg_target *thread_target, uint32_t index, uint64_t *reg, uint64_t *value)
 {
 	struct thread *thread = target_to_thread(thread_target);
 	int rc;
@@ -549,7 +549,7 @@ static int putprocreg(struct target *thread_target, uint32_t index, uint64_t *re
 	return 0;
 }
 
-static int getprocreg(struct target *thread_target, uint32_t index, uint64_t *reg, uint64_t *unused)
+static int getprocreg(struct pdbg_target *thread_target, uint32_t index, uint64_t *reg, uint64_t *unused)
 {
 	struct thread *thread = target_to_thread(thread_target);
 	int rc;
@@ -574,7 +574,7 @@ static int putmem(uint64_t addr)
 {
         uint8_t *buf;
         int read_size, rc = 0;
-        struct target *adu_target;
+        struct pdbg_target *adu_target;
 
 	for_each_class_target("adu", adu_target)
 		break;
@@ -595,22 +595,22 @@ static int putmem(uint64_t addr)
         return rc;
 }
 
-static int start_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int start_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
 	return ram_start_thread(thread_target) ? 0 : 1;
 }
 
-static int step_thread(struct target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1)
+static int step_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1)
 {
 	return ram_step_thread(thread_target, *count) ? 0 : 1;
 }
 
-static int stop_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int stop_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
 	return ram_stop_thread(thread_target) ? 0 : 1;
 }
 
-static int sreset_thread(struct target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int sreset_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
 	return ram_sreset_thread(thread_target) ? 0 : 1;
 }
@@ -670,7 +670,7 @@ static char *get_htm_dump_filename(void)
 
 static int run_htm_start(void)
 {
-	struct target *target;
+	struct pdbg_target *target;
 	int rc = 0;
 
 	for_each_class_target("htm", target) {
@@ -687,7 +687,7 @@ static int run_htm_start(void)
 
 static int run_htm_stop(void)
 {
-	struct target *target;
+	struct pdbg_target *target;
 	int rc = 0;
 
 	for_each_class_target("htm", target) {
@@ -704,7 +704,7 @@ static int run_htm_stop(void)
 
 static int run_htm_status(void)
 {
-	struct target *target;
+	struct pdbg_target *target;
 	int rc = 0;
 
 	for_each_class_target("htm", target) {
@@ -723,7 +723,7 @@ static int run_htm_status(void)
 static int run_htm_reset(void)
 {
 	uint64_t old_base = 0, base, size;
-	struct target *target;
+	struct pdbg_target *target;
 	int rc = 0;
 
 	for_each_class_target("htm", target) {
@@ -748,7 +748,7 @@ static int run_htm_reset(void)
 
 static int run_htm_dump(void)
 {
-	struct target *target;
+	struct pdbg_target *target;
 	char *filename;
 	int rc = 0;
 
@@ -774,7 +774,7 @@ static int run_htm_dump(void)
 static int run_htm_trace(void)
 {
 	uint64_t old_base = 0, base, size;
-	struct target *target;
+	struct pdbg_target *target;
 	int rc = 0;
 
 	for_each_class_target("htm", target) {
@@ -812,7 +812,7 @@ static int run_htm_trace(void)
 
 static int run_htm_analyse(void)
 {
-	struct target *target;
+	struct pdbg_target *target;
 	char *filename;
 	int rc = 0;
 
@@ -858,7 +858,7 @@ extern unsigned char _binary_p9_host_dtb_o_start;
 extern unsigned char _binary_p9_host_dtb_o_end;
 static int target_select(void)
 {
-	struct target *fsi, *pib, *chip, *thread;
+	struct pdbg_target *fsi, *pib, *chip, *thread;
 
 	switch (backend) {
 	case I2C:
@@ -984,7 +984,7 @@ void print_target(struct dt_node *dn, int level)
 		return;
 
 	if (strcmp(status, "hidden")) {
-		struct target *target;
+		struct pdbg_target *target;
 
 		for (i = 0; i < level; i++)
 			printf("    ");
@@ -1014,7 +1014,7 @@ int main(int argc, char *argv[])
 {
 	int rc = 0;
 	uint8_t *buf;
-	struct target *target;
+	struct pdbg_target *target;
 
 	if (parse_options(argc, argv))
 		return 1;

@@ -166,7 +166,7 @@ struct htm_status {
 	uint64_t raw;
 };
 
-static struct htm *check_and_convert(struct target *target)
+static struct htm *check_and_convert(struct pdbg_target *target)
 {
 	if (strcmp(target->class,"htm"))
 		return NULL;
@@ -174,42 +174,42 @@ static struct htm *check_and_convert(struct target *target)
 	return target_to_htm(target);
 }
 
-int htm_start(struct target *target)
+int htm_start(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
 	return htm ? htm->start(htm) : -1;
 }
 
-int htm_stop(struct target *target)
+int htm_stop(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
 	return htm ? htm->stop(htm) : -1;
 }
 
-int htm_reset(struct target *target, uint64_t *base, uint64_t *size)
+int htm_reset(struct pdbg_target *target, uint64_t *base, uint64_t *size)
 {
 	struct htm *htm = check_and_convert(target);
 
 	return htm ? htm->reset(htm, base, size) : -1;
 }
 
-int htm_pause(struct target *target)
+int htm_pause(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
 	return htm ? htm->pause(htm) : -1;
 }
 
-int htm_status(struct target *target)
+int htm_status(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
 	return htm ? htm->status(htm) : -1;
 }
 
-int htm_dump(struct target *target, uint64_t size, const char *filename)
+int htm_dump(struct pdbg_target *target, uint64_t size, const char *filename)
 {
 	struct htm *htm = check_and_convert(target);
 
@@ -335,7 +335,7 @@ static int do_htm_stop(struct htm *htm)
  * clearly what is going on.
  */
 #if 0
-static int do_adu_magic(struct target *target, uint32_t index, uint64_t *arg1, uint64_t *arg2)
+static int do_adu_magic(struct pdbg_target *target, uint32_t index, uint64_t *arg1, uint64_t *arg2)
 {
 	uint64_t val;
 	int i = 0;
@@ -827,7 +827,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 	return 1;
 }
 
-static int htm_probe(struct target *target)
+static int htm_probe(struct pdbg_target *target)
 {
 	uint64_t val;
 
