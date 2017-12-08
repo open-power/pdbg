@@ -66,9 +66,9 @@ DTC_V_0	= @echo "  DTC     " $@;
 %.dtsi: %.dtsi.m4
 	$(M4_V)m4 -I$(dir $<) $< > $@
 
-p9w-fsi.dtb.o: p9w-fsi.dts p9-fsi.dtsi
-p9r-fsi.dtb.o: p9r-fsi.dts p9-fsi.dtsi
-p9z-fsi.dtb.o: p9z-fsi.dts p9-fsi.dtsi
+p9w-fsi.dtb: p9w-fsi.dts p9-fsi.dtsi
+p9r-fsi.dtb: p9r-fsi.dts p9-fsi.dtsi
+p9z-fsi.dtb: p9z-fsi.dts p9-fsi.dtsi
 
 %.dtb: %.dts
 	$(DTC_V)dtc -q -i$(dir $@) -I dts $< -O dtb > $@
