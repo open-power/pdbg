@@ -102,11 +102,14 @@ void pdbg_disable_target(struct pdbg_target *target)
 /* Searches up the tree and returns the first valid index found */
 uint32_t pdbg_target_index(struct pdbg_target *target)
 {
-	uint32_t index;
-	struct dt_node *dn = target->dn;
+	struct dt_node *dn;
 
-	for (index = dn->target->index; index == -1; dn = dn->parent);
-	return index;
+	for (dn = target->dn; dn && dn->target->index == -1; dn = dn->parent);
+
+	if (!dn)
+		return -1;
+	else
+		return dn->target->index;
 }
 
 /* Searched up the tree for the first target of the right class and returns its index */
