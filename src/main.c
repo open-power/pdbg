@@ -235,7 +235,7 @@ enum command parse_cmd(char *optarg)
 
 static bool parse_options(int argc, char *argv[])
 {
-	int c, oidx = 0, cmd_arg_idx = 0;
+	int c, cmd_arg_idx = 0;
 	bool opt_error = true;
 	static int current_processor = INT_MAX, current_chip = INT_MAX, current_thread = INT_MAX;
 	struct option long_opts[] = {
@@ -251,7 +251,7 @@ static bool parse_options(int argc, char *argv[])
 	};
 
 	do {
-		c = getopt_long(argc, argv, "-p:c:t:b:d:s:haV", long_opts, &oidx);
+		c = getopt_long(argc, argv, "-p:c:t:b:d:s:haV", long_opts, NULL);
 		switch(c) {
 		case 1:
 			/* Positional argument */
