@@ -34,6 +34,7 @@
 #include "cfam.h"
 #include "scom.h"
 #include "reg.h"
+#include "mem.h"
 
 #undef PR_DEBUG
 #define PR_DEBUG(...)
@@ -486,32 +487,6 @@ static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t ind
 	printf("\np%01dt: 0 1 2 3 4 5 6 7\n", index);
 	return for_each_child_target("core", pib_target, print_core_thread_status, NULL, NULL);
 };
-
-#define PUTMEM_BUF_SIZE 1024
-static int putmem(uint64_t addr)
-{
-        uint8_t *buf;
-        int read_size, rc = 0;
-        struct pdbg_target *adu_target;
-
-	pdbg_for_each_class_target("adu", adu_target)
-		break;
-
-        buf = malloc(PUTMEM_BUF_SIZE);
-        assert(buf);
-	do {
-                read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
-                if (adu_putmem(adu_target, addr, buf, read_size)) {
-                        rc = 0;
-                        PR_ERROR("Unable to write memory.\n");
-                        break;
-                }
-                rc += read_size;
-        } while (read_size > 0);
-
-        free(buf);
-        return rc;
-}
 
 static int start_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
