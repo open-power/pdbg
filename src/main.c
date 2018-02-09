@@ -100,6 +100,8 @@ static struct {
 
 static void print_usage(char *pname)
 {
+	int i;
+
 	printf("Usage: %s [options] command ...\n\n", pname);
 	printf(" Options:\n");
 	printf("\t-p, --processor=processor-id\n");
@@ -125,31 +127,8 @@ static void print_usage(char *pname)
 	printf("\t-h, --help\n");
 	printf("\n");
 	printf(" Commands:\n");
-	printf("\tgetcfam <address>\n");
-	printf("\tputcfam <address> <value> [<mask>]\n");
-	printf("\tgetscom <address>\n");
-	printf("\tputscom <address> <value> [<mask>]\n");
-	printf("\tgetmem <address> <count>\n");
-	printf("\tputmem <address>\n");
-	printf("\tgetvmem <virtual address>\n");
-	printf("\tgetgpr <gpr>\n");
-	printf("\tputgpr <gpr> <value>\n");
-	printf("\tgetnia\n");
-	printf("\tputnia <value>\n");
-	printf("\tgetspr <spr>\n");
-	printf("\tputspr <spr> <value>\n");
-	printf("\tstart\n");
-	printf("\tstep <count>\n");
-	printf("\tstop\n");
-	printf("\tthreadstatus\n");
-	printf("\tprobe\n");
-	printf("\thtm_start\n");
-	printf("\thtm_stop\n");
-	printf("\thtm_status\n");
-	printf("\thtm_reset\n");
-	printf("\thtm_dump\n");
-	printf("\thtm_trace\n");
-	printf("\thtm_analyse\n");
+	for (i = 0; i < ARRAY_SIZE(actions); i++)
+		printf("\t%s %s\n", actions[i].name, actions[i].args);
 }
 
 static bool parse_options(int argc, char *argv[])
