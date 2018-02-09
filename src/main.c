@@ -250,6 +250,7 @@ static bool parse_options(int argc, char *argv[])
 		{"version",		no_argument,		NULL,	'V'},
 		{NULL,			0,			NULL,     0}
 	};
+	char *endptr;
 
 	do {
 		c = getopt_long(argc, argv, "-ab:c:d:hp:s:t:V", long_opts, NULL);
@@ -263,8 +264,8 @@ static bool parse_options(int argc, char *argv[])
 				opt_error = true;
 			else {
 				errno = 0;
-				cmd_args[cmd_arg_idx++] = strtoull(optarg, NULL, 0);
-				opt_error = errno;
+				cmd_args[cmd_arg_idx++] = strtoull(optarg, &endptr, 0);
+				opt_error = (errno || *endptr != '\0');
 			}
 			break;
 
@@ -282,32 +283,38 @@ static bool parse_options(int argc, char *argv[])
 
 		case 'p':
 			errno = 0;
-			current_processor = strtoul(optarg, NULL, 0);
-			if (current_processor >= MAX_PROCESSORS)
-				errno = -1;
-			else
-				processorsel[current_processor] = &chipsel[current_processor][0];
-			opt_error = errno;
+			current_processor = strtoul(optarg, &endptr, 0);
+			opt_error = (errno || *endptr != '\0');
+			if (!opt_error) {
+				if (current_processor >= MAX_PROCESSORS)
+					opt_error = true;
+				else
+					processorsel[current_processor] = &chipsel[current_processor][0];
+			}
 			break;
 
 		case 'c':
 			errno = 0;
-			current_chip = strtoul(optarg, NULL, 0);
-			if (current_chip >= MAX_CHIPS)
-				errno = -1;
-			else
-				chipsel[current_processor][current_chip] = &threadsel[current_processor][current_chip][0];
-			opt_error = errno;
+			current_chip = strtoul(optarg, &endptr, 0);
+			opt_error = (errno || *endptr != '\0');
+			if (!opt_error) {
+				if (current_chip >= MAX_CHIPS)
+					opt_error = true;
+				else
+					chipsel[current_processor][current_chip] = &threadsel[current_processor][current_chip][0];
+			}
 			break;
 
 		case 't':
 			errno = 0;
-			current_thread = strtoul(optarg, NULL, 0);
-			if (current_thread >= MAX_THREADS)
-				errno = -1;
-			else
-				threadsel[current_processor][current_chip][current_thread] = 1;
-			opt_error = errno;
+			current_thread = strtoul(optarg, &endptr, 0);
+			opt_error = (errno || *endptr != '\0');
+			if (!opt_error) {
+				if (current_thread >= MAX_THREADS)
+					opt_error = true;
+				else
+					threadsel[current_processor][current_chip][current_thread] = 1;
+			}
 			break;
 
 		case 'b':
@@ -336,8 +343,8 @@ static bool parse_options(int argc, char *argv[])
 
 		case 's':
 			errno = 0;
-			i2c_addr = strtoull(optarg, NULL, 0);
-			opt_error = errno;
+			i2c_addr = strtoull(optarg, &endptr, 0);
+			opt_error = (errno || *endptr != '\0');
 			break;
 
 		case 'V':
