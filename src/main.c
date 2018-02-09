@@ -87,7 +87,9 @@ static struct {
 	{ "getcfam", "<address>", "Read system cfam", &handle_cfams },
 	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam", &handle_cfams },
 	{ "getscom", "<address>", "Read system scom", &handle_scoms },
-	{ "putscom", "<address> <value> [<mask>]", "Write system scom", &handle_scoms }
+	{ "putscom", "<address> <value> [<mask>]", "Write system scom", &handle_scoms },
+	{ "getmem",  "<address> <count>", "Read system memory", &handle_mem },
+	{ "putmem",  "<address>", "Write to system memory", &handle_mem },
 };
 
 static void print_usage(char *pname)
@@ -148,13 +150,7 @@ enum command parse_cmd(char *optarg)
 {
 	cmd_max_arg_count = 0;
 
-	if (strcmp(optarg, "getmem") == 0) {
-		cmd = GETMEM;
-		cmd_min_arg_count = 2;
-	} else if (strcmp(optarg, "putmem") == 0) {
-		cmd = PUTMEM;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "getgpr") == 0) {
+	if (strcmp(optarg, "getgpr") == 0) {
 		cmd = GETGPR;
 		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "putgpr") == 0) {
@@ -587,7 +583,6 @@ int main(int argc, char *argv[])
 	struct pdbg_target *target;
 	bool found = true;
 	int i, rc = 0;
-	uint8_t *buf;
 
 	if (parse_options(argc, argv))
 		return 1;
@@ -607,28 +602,6 @@ int main(int argc, char *argv[])
 		return -1;
 
 	switch(cmd) {
-	case GETMEM:
-                buf = malloc(cmd_args[1]);
-                assert(buf);
-		pdbg_for_each_class_target("adu", target) {
-			if (!adu_getmem(target, cmd_args[0], buf, cmd_args[1])) {
-				if (write(STDOUT_FILENO, buf, cmd_args[1]) < 0)
-					PR_ERROR("Unable to write stdout.\n");
-				else
-					rc++;
-			} else
-				PR_ERROR("Unable to read memory.\n");
-
-			/* We only ever care about getting memory from a single processor */
-			break;
-		}
-
-		free(buf);
-		break;
-	case PUTMEM:
-                rc = putmem(cmd_args[0]);
-                printf("Wrote %d bytes starting at 0x%016" PRIx64 "\n", rc, cmd_args[0]);
-		break;
 	case GETGPR:
 		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
 		break;

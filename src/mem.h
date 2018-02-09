@@ -15,4 +15,4 @@
  */
 #include <inttypes.h>
 
-int putmem(uint64_t addr);
+int handle_mem(int optind, int argc, char *argv[]);
