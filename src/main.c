@@ -240,18 +240,19 @@ static bool parse_options(int argc, char *argv[])
 	static int current_processor = INT_MAX, current_chip = INT_MAX, current_thread = INT_MAX;
 	struct option long_opts[] = {
 		{"all",			no_argument,		NULL,	'a'},
-		{"processor",		required_argument,	NULL,	'p'},
-		{"chip",		required_argument,	NULL,	'c'},
-		{"thread",		required_argument,	NULL,	't'},
 		{"backend",		required_argument,	NULL,	'b'},
+		{"chip",		required_argument,	NULL,	'c'},
 		{"device",		required_argument,	NULL,	'd'},
-		{"slave-address",	required_argument,	NULL,	's'},
-		{"version",		no_argument,		NULL,	'V'},
 		{"help",		no_argument,		NULL,	'h'},
+		{"processor",		required_argument,	NULL,	'p'},
+		{"slave-address",	required_argument,	NULL,	's'},
+		{"thread",		required_argument,	NULL,	't'},
+		{"version",		no_argument,		NULL,	'V'},
+		{NULL,			0,			NULL,     0}
 	};
 
 	do {
-		c = getopt_long(argc, argv, "-p:c:t:b:d:s:haV", long_opts, NULL);
+		c = getopt_long(argc, argv, "-ab:c:d:hp:s:t:V", long_opts, NULL);
 		switch(c) {
 		case 1:
 			/* Positional argument */
