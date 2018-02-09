@@ -47,23 +47,6 @@
 
 #define THREADS_PER_CORE	8
 
-enum command { GETCFAM = 1, PUTCFAM, GETSCOM, PUTSCOM,	\
-	       GETMEM, PUTMEM, GETGPR, GETNIA, GETSPR,	\
-	       GETMSR, PUTGPR, PUTNIA, PUTSPR, PUTMSR,	\
-	       STOP, START, THREADSTATUS, STEP, PROBE,	\
-	       GETVMEM, SRESET, HTM_STOP, HTM_ANALYSE,  \
-	       HTM_START, HTM_DUMP, HTM_RESET, HTM_GO,  \
-	       HTM_TRACE, HTM_STATUS };
-
-#define MAX_CMD_ARGS 3
-enum command cmd = 0;
-static int cmd_arg_count = 0;
-static int cmd_min_arg_count = 0;
-static int cmd_max_arg_count = 0;
-
-/* At the moment all commands only take some kind of number */
-static uint64_t cmd_args[MAX_CMD_ARGS];
-
 enum backend { FSI, I2C, KERNEL, FAKE, HOST };
 static enum backend backend = KERNEL;
 
@@ -167,24 +150,6 @@ static void print_usage(char *pname)
 	printf("\thtm_dump\n");
 	printf("\thtm_trace\n");
 	printf("\thtm_analyse\n");
-}
-
-enum command parse_cmd(char *optarg)
-{
-	cmd_max_arg_count = 0;
-
-	if (strcmp(optarg, "getvmem") == 0) {
-		cmd = GETVMEM;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "probe") == 0) {
-		cmd = PROBE;
-		cmd_min_arg_count = 0;
-	}
-
-	if (cmd_min_arg_count && !cmd_max_arg_count)
-		cmd_max_arg_count = cmd_min_arg_count;
-
-	return cmd;
 }
 
 static bool parse_options(int argc, char *argv[])
@@ -306,43 +271,6 @@ static bool parse_options(int argc, char *argv[])
 	if (opt_error)
 		print_usage(argv[0]);
 
-	return opt_error;
-}
-
-static bool parse_command(int argc, char *argv[])
-{
-	int cmd_arg_idx = 0, i = optind;
-	bool opt_error = true;
-	char *endptr;
-
-	/*
-	 * In order to make the series changing this code cleaner,
-	 * this is going to happen gradually.
-	 * Eventually parse_command() will be deleted but so that this
-	 * can be done over multiple patches neatly remove the error
-	 * check here and print the usage later.
-	 * We'll just have a lie a bit for now.
-	 */
-	if (i >= argc || !parse_cmd(argv[i]))
-		return false;
-
-	i++;
-	while (i < argc && !opt_error) {
-		if (cmd_arg_idx >= MAX_CMD_ARGS ||
-			 (cmd && cmd_arg_idx >= cmd_max_arg_count))
-			opt_error = true;
-		else {
-			errno = 0;
-			cmd_args[cmd_arg_idx++] = strtoull(argv[i], &endptr, 0);
-			opt_error = (errno || *endptr != '\0');
-		}
-		i++;
-	}
-	opt_error |= cmd_arg_idx < cmd_min_arg_count;
-	if (opt_error)
-		print_usage(argv[0]);
-
-	cmd_arg_count = cmd_arg_idx;
 	return opt_error;
 }
 
@@ -552,7 +480,6 @@ static int handle_probe(int optind, int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	bool found = true;
 	int i, rc = 0;
 
 	if (parse_options(argc, argv))
@@ -569,24 +496,14 @@ int main(int argc, char *argv[])
 
 	pdbg_target_probe();
 
-	if (parse_command(argc, argv))
-		return -1;
-
-	switch(cmd) {
-	default:
-		found = false;
-		break;
-	}
-
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {
 		if (strcmp(argv[optind], actions[i].name) == 0) {
-			found = true;
 			rc = actions[i].fn(optind, argc, argv);
 			break;
 		}
 	}
 
-	if (!found) {
+	if (i == ARRAY_SIZE(actions)) {
 		PR_ERROR("Unsupported command: %s\n", argv[optind]);
 		print_usage(argv[0]);
 		return 1;
