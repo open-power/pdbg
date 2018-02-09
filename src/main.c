@@ -33,6 +33,7 @@
 #include "bitutils.h"
 #include "cfam.h"
 #include "scom.h"
+#include "reg.h"
 
 #undef PR_DEBUG
 #define PR_DEBUG(...)
@@ -485,73 +486,6 @@ static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t ind
 	printf("\np%01dt: 0 1 2 3 4 5 6 7\n", index);
 	return for_each_child_target("core", pib_target, print_core_thread_status, NULL, NULL);
 };
-
-#define REG_MEM -3
-#define REG_MSR -2
-#define REG_NIA -1
-#define REG_R31 31
-static void print_proc_reg(struct pdbg_target *target, uint64_t reg, uint64_t value, int rc)
-{
-	int proc_index, chip_index, thread_index;
-
-	thread_index = pdbg_target_index(target);
-	chip_index = pdbg_parent_index(target, "core");
-	proc_index = pdbg_parent_index(target, "pib");
-	printf("p%d:c%d:t%d:", proc_index, chip_index, thread_index);
-
-	if (reg == REG_MSR)
-		printf("msr: ");
-	else if (reg == REG_NIA)
-		printf("nia: ");
-	else if (reg > REG_R31)
-		printf("spr%03" PRIu64 ": ", reg - REG_R31);
-	else if (reg >= 0 && reg <= 31)
-		printf("gpr%02" PRIu64 ": ", reg);
-
-	if (rc == 1) {
-		printf("Check threadstatus - not all threads on this core are quiesced\n");
-	} else if (rc == 2)
-		printf("Thread in incorrect state\n");
-	else
-		printf("0x%016" PRIx64 "\n", value);
-}
-
-static int putprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *value)
-{
-	int rc;
-
-	if (*reg == REG_MSR)
-		rc = ram_putmsr(target, *value);
-	else if (*reg == REG_NIA)
-		rc = ram_putnia(target, *value);
-	else if (*reg > REG_R31)
-		rc = ram_putspr(target, *reg - REG_R31, *value);
-	else if (*reg >= 0 && *reg <= 31)
-		rc = ram_putgpr(target, *reg, *value);
-
-	print_proc_reg(target, *reg, *value, rc);
-
-	return 0;
-}
-
-static int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *unused)
-{
-	int rc;
-	uint64_t value;
-
-	if (*reg == REG_MSR)
-		rc = ram_getmsr(target, &value);
-	else if (*reg == REG_NIA)
-		rc = ram_getnia(target, &value);
-	else if (*reg > REG_R31)
-		rc = ram_getspr(target, *reg - REG_R31, &value);
-	else if (*reg >= 0 && *reg <= 31)
-		rc = ram_getgpr(target, *reg, &value);
-
-	print_proc_reg(target, *reg, value, rc);
-
-	return !rc;
-}
 
 #define PUTMEM_BUF_SIZE 1024
 static int putmem(uint64_t addr)
