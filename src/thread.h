@@ -17,7 +17,12 @@
 
 #include <target.h>
 
-/* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
-int for_each_child_target(char *class, struct pdbg_target *parent,
-				 int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *),
-				 uint64_t *arg1, uint64_t *arg2);
+int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
+
+int start_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
+
+int step_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1);
+
+int stop_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
+
+int sreset_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
