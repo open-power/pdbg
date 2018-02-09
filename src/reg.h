@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <inttypes.h>
 
-#define REG_MEM -3
-#define REG_MSR -2
-#define REG_NIA -1
-#define REG_R31 31
-
-int putprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *value);
-int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *unused);
+int handle_gpr(int optind, int argc, char *argv[]);
+int handle_nia(int optind, int argc, char *argv[]);
+int handle_spr(int optind, int argc, char *argv[]);
+int handle_msr(int optind, int argc, char *argv[]);

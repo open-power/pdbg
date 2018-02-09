@@ -90,6 +90,14 @@ static struct {
 	{ "putscom", "<address> <value> [<mask>]", "Write system scom", &handle_scoms },
 	{ "getmem",  "<address> <count>", "Read system memory", &handle_mem },
 	{ "putmem",  "<address>", "Write to system memory", &handle_mem },
+	{ "getgpr",  "<gpr>", "Read General Purpose Register (GPR)", &handle_gpr },
+	{ "putgpr",  "<gpr> <value>", "Write General Purpose Register (GPR)", &handle_gpr },
+	{ "getnia",  "", "Get Next Instruction Address (NIA)", &handle_nia },
+	{ "putnia",  "<value>", "Write Next Instrution Address (NIA)", &handle_nia },
+	{ "getspr",  "<spr>", "Get Special Purpose Register (SPR)", &handle_spr },
+	{ "putspr",  "<spr> <value>", "Write Special Purpose Register (SPR)", &handle_spr },
+	{ "getmsr",  "", "Get Machine State Register (MSR)", &handle_msr },
+	{ "putmsr",  "<value>", "Write Machine State Register (MSR)", &handle_msr },
 };
 
 static void print_usage(char *pname)
@@ -150,31 +158,7 @@ enum command parse_cmd(char *optarg)
 {
 	cmd_max_arg_count = 0;
 
-	if (strcmp(optarg, "getgpr") == 0) {
-		cmd = GETGPR;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "putgpr") == 0) {
-		cmd = PUTGPR;
-		cmd_min_arg_count = 2;
-	} else if (strcmp(optarg, "getnia") == 0) {
-		cmd = GETNIA;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "putnia") == 0) {
-		cmd = PUTNIA;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "getspr") == 0) {
-		cmd = GETSPR;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "putspr") == 0) {
-		cmd = PUTSPR;
-		cmd_min_arg_count = 2;
-	} else if (strcmp(optarg, "getmsr") == 0) {
-		cmd = GETMSR;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "putmsr") == 0) {
-		cmd = PUTMSR;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "getvmem") == 0) {
+	if (strcmp(optarg, "getvmem") == 0) {
 		cmd = GETVMEM;
 		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "start") == 0) {
@@ -602,38 +586,6 @@ int main(int argc, char *argv[])
 		return -1;
 
 	switch(cmd) {
-	case GETGPR:
-		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
-		break;
-	case PUTGPR:
-		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
-		break;
-	case GETNIA:
-		cmd_args[0] = REG_NIA;
-		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
-		break;
-	case PUTNIA:
-		cmd_args[1] = cmd_args[0];
-		cmd_args[0] = REG_NIA;
-		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
-		break;
-	case GETSPR:
-		cmd_args[0] += REG_R31;
-		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
-		break;
-	case PUTSPR:
-		cmd_args[0] += REG_R31;
-		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
-		break;
-	case GETMSR:
-		cmd_args[0] = REG_MSR;
-		rc = for_each_target("thread", getprocreg, &cmd_args[0], NULL);
-		break;
-	case PUTMSR:
-		cmd_args[1] = cmd_args[0];
-		cmd_args[0] = REG_MSR;
-		rc = for_each_target("thread", putprocreg, &cmd_args[0], &cmd_args[1]);
-		break;
 	case THREADSTATUS:
 		rc = for_each_target("pib", print_proc_thread_status, NULL, NULL);
 		break;

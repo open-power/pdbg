@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <target.h>
 #include <operations.h>
 
-#include "reg.h"
+#include "main.h"
+
+#define REG_MEM -3
+#define REG_MSR -2
+#define REG_NIA -1
+#define REG_R31 31
 
 static void print_proc_reg(struct pdbg_target *target, uint64_t reg, uint64_t value, int rc)
 {
@@ -47,7 +55,7 @@ static void print_proc_reg(struct pdbg_target *target, uint64_t reg, uint64_t va
 		printf("0x%016" PRIx64 "\n", value);
 }
 
-int putprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *value)
+static int putprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *value)
 {
 	int rc;
 
@@ -65,7 +73,7 @@ int putprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64
 	return 0;
 }
 
-int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *unused)
+static int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64_t *unused)
 {
 	int rc;
 	uint64_t value;
@@ -82,4 +90,145 @@ int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg, uint64
 	print_proc_reg(target, *reg, value, rc);
 
 	return !rc;
+}
+
+int handle_gpr(int optind, int argc, char *argv[])
+{
+	char *endptr;
+	uint64_t gpr;
+
+	if (optind + 1 >= argc) {
+		printf("%s: command '%s' requires a GPR\n", argv[0], argv[optind]);
+		return -1;
+	}
+
+	errno = 0;
+	gpr = strtoull(argv[optind + 1], &endptr, 0);
+	if (errno || *endptr != '\0') {
+		printf("%s: command '%s' couldn't parse GPR '%s'\n",
+				argv[0], argv[optind], argv[optind + 1]);
+		return -1;
+	}
+
+	if (gpr > 31) {
+		printf("A GPR must be between zero and 31 inclusive\n");
+		return -1;
+	}
+
+	if (strcmp(argv[optind], "putgpr") == 0) {
+		uint64_t data;
+
+		if (optind + 2 >= argc) {
+			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
+			return -1;
+		}
+
+		errno = 0;
+		data = strtoull(argv[optind + 2], &endptr, 0);
+		if (errno || *endptr != '\0') {
+			printf("%s: command '%s' couldn't parse data '%s'\n",
+				argv[0], argv[optind], argv[optind + 1]);
+			return -1;
+		}
+
+		return for_each_target("thread", putprocreg, &gpr, &data);
+	}
+
+	return for_each_target("thread", getprocreg, &gpr, NULL);
+}
+
+int handle_nia(int optind, int argc, char *argv[])
+{
+	uint64_t reg = REG_NIA;
+	char *endptr;
+
+	if (strcmp(argv[optind], "putnia") == 0) {
+		uint64_t data;
+
+		if (optind + 2 >= argc) {
+			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
+			return -1;
+		}
+
+		errno = 0;
+		data = strtoull(argv[optind + 2], &endptr, 0);
+		if (errno || *endptr != '\0') {
+			printf("%s: command '%s' couldn't parse data '%s'\n",
+				argv[0], argv[optind], argv[optind + 1]);
+			return -1;
+		}
+
+		return for_each_target("thread", putprocreg, &reg, &data);
+	}
+
+	return for_each_target("thread", getprocreg, &reg, NULL);
+}
+
+int handle_spr(int optind, int argc, char *argv[])
+{
+	char *endptr;
+	uint64_t spr;
+
+	if (optind + 1 >= argc) {
+		printf("%s: command '%s' requires a GPR\n", argv[0], argv[optind]);
+		return -1;
+	}
+
+	errno = 0;
+	spr = strtoull(argv[optind + 1], &endptr, 0);
+	if (errno || *endptr != '\0') {
+		printf("%s: command '%s' couldn't parse GPR '%s'\n",
+				argv[0], argv[optind], argv[optind + 1]);
+		return -1;
+	}
+
+	spr += REG_R31;
+
+	if (strcmp(argv[optind], "putspr") == 0) {
+		uint64_t data;
+
+		if (optind + 2 >= argc) {
+			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
+			return -1;
+		}
+
+		errno = 0;
+		data = strtoull(argv[optind + 2], &endptr, 0);
+		if (errno || *endptr != '\0') {
+			printf("%s: command '%s' couldn't parse data '%s'\n",
+				argv[0], argv[optind], argv[optind + 1]);
+			return -1;
+		}
+
+		return for_each_target("thread", putprocreg, &spr, &data);
+	}
+
+	return for_each_target("thread", getprocreg, &spr, NULL);
+}
+
+int handle_msr(int optind, int argc, char *argv[])
+{
+	uint64_t msr = REG_MSR;
+	char *endptr;
+
+	if (strcmp(argv[optind], "putmsr") == 0) {
+		uint64_t data;
+
+		if (optind + 2 >= argc) {
+			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
+			return -1;
+		}
+
+		errno = 0;
+		data = strtoull(argv[optind + 2], &endptr, 0);
+		if (errno || *endptr != '\0') {
+			printf("%s: command '%s' couldn't parse data '%s'\n",
+				argv[0], argv[optind], argv[optind + 1]);
+			return -1;
+		}
+
+		return for_each_target("thread", putprocreg, &msr, &data);
+	}
+
+	return for_each_target("thread", getprocreg, &msr, NULL);
 }
