@@ -78,6 +78,8 @@ static int **processorsel[MAX_PROCESSORS];
 static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
 static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
 
+static int handle_probe(int optind, int argc, char *argv[]);
+
 static struct {
 	const char *name;
 	const char *args;
@@ -110,6 +112,7 @@ static struct {
 	{ "htm_dump", "", "Dump HTM buffer to file", &run_htm_dump },
 	{ "htm_trace", "" , "Configure and start tracing with HTM", &run_htm_trace },
 	{ "htm_analyse", "", "Stop and dump buffer to file", &run_htm_analyse },
+	{ "probe", "", "", &handle_probe },
 };
 
 static void print_usage(char *pname)
@@ -535,9 +538,20 @@ void print_target(struct pdbg_target *target, int level)
 		print_target(next, level + 1);
 }
 
-int main(int argc, char *argv[])
+static int handle_probe(int optind, int argc, char *argv[])
 {
 	struct pdbg_target *target;
+
+	pdbg_for_each_class_target("pib", target)
+		print_target(target, 0);
+
+	printf("\nNote that only selected targets will be shown above. If none are shown\n"
+			"try adding '-a' to select all targets\n");
+	return 1;
+}
+
+int main(int argc, char *argv[])
+{
 	bool found = true;
 	int i, rc = 0;
 
@@ -559,14 +573,6 @@ int main(int argc, char *argv[])
 		return -1;
 
 	switch(cmd) {
-	case PROBE:
-		rc = 1;
-		pdbg_for_each_class_target("pib", target)
-			print_target(target, 0);
-
-		printf("\nNote that only selected targets will be shown above. If none are shown\n"
-		       "try adding '-a' to select all targets\n");
-		break;
 	default:
 		found = false;
 		break;
