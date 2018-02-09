@@ -17,12 +17,8 @@
 
 #include <target.h>
 
-int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
-
-int start_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
-
-int step_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1);
-
-int stop_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
-
-int sreset_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1);
+int thread_start(int optind, int argc, char *argv[]);
+int thread_step(int optind, int argc, char *argv[]);
+int thread_stop(int optind, int argc, char *argv[]);
+int thread_status_print(int optind, int argc, char *argv[]);
+int thread_sreset(int optind, int argc, char *argv[]);

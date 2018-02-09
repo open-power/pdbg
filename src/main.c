@@ -98,6 +98,11 @@ static struct {
 	{ "putspr",  "<spr> <value>", "Write Special Purpose Register (SPR)", &handle_spr },
 	{ "getmsr",  "", "Get Machine State Register (MSR)", &handle_msr },
 	{ "putmsr",  "<value>", "Write Machine State Register (MSR)", &handle_msr },
+	{ "start",   "", "Start thread", &thread_start },
+	{ "step",    "<count>", "Set a thread <count> instructions", &thread_step },
+	{ "stop",    "", "Stop thread", &thread_stop },
+	{ "threadstatus", "", "Print the status of a thread", &thread_status_print },
+	{ "sreset",  "", "Reset", &thread_sreset },
 };
 
 static void print_usage(char *pname)
@@ -161,21 +166,6 @@ enum command parse_cmd(char *optarg)
 	if (strcmp(optarg, "getvmem") == 0) {
 		cmd = GETVMEM;
 		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "start") == 0) {
-		cmd = START;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "step") == 0) {
-		cmd = STEP;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "stop") == 0) {
-		cmd = STOP;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "sreset") == 0) {
-		cmd = SRESET;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "threadstatus") == 0) {
-		cmd = THREADSTATUS;
-		cmd_min_arg_count = 0;
 	} else if (strcmp(optarg, "probe") == 0) {
 		cmd = PROBE;
 		cmd_min_arg_count = 0;
@@ -586,21 +576,6 @@ int main(int argc, char *argv[])
 		return -1;
 
 	switch(cmd) {
-	case THREADSTATUS:
-		rc = for_each_target("pib", print_proc_thread_status, NULL, NULL);
-		break;
-	case START:
-		rc = for_each_target("thread", start_thread, NULL, NULL);
-		break;
-	case STEP:
-		rc = for_each_target("thread", step_thread, &cmd_args[0], NULL);
-		break;
-	case STOP:
-		rc = for_each_target("thread", stop_thread, NULL, NULL);
-		break;
-	case SRESET:
-		rc = for_each_target("thread", sreset_thread, NULL, NULL);
-		break;
 	case PROBE:
 		rc = 1;
 		pdbg_for_each_class_target("pib", target)
