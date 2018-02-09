@@ -235,7 +235,7 @@ enum command parse_cmd(char *optarg)
 
 static bool parse_options(int argc, char *argv[])
 {
-	int c, cmd_arg_idx = 0;
+	int c;
 	bool opt_error = true;
 	static int current_processor = INT_MAX, current_chip = INT_MAX, current_thread = INT_MAX;
 	struct option long_opts[] = {
@@ -253,22 +253,11 @@ static bool parse_options(int argc, char *argv[])
 	char *endptr;
 
 	do {
-		c = getopt_long(argc, argv, "-ab:c:d:hp:s:t:V", long_opts, NULL);
-		switch(c) {
-		case 1:
-			/* Positional argument */
-			if (!cmd)
-				opt_error = !parse_cmd(optarg);
-			else if (cmd_arg_idx >= MAX_CMD_ARGS ||
-				 (cmd && cmd_arg_idx >= cmd_max_arg_count))
-				opt_error = true;
-			else {
-				errno = 0;
-				cmd_args[cmd_arg_idx++] = strtoull(optarg, &endptr, 0);
-				opt_error = (errno || *endptr != '\0');
-			}
+		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:V", long_opts, NULL);
+		if (c == -1)
 			break;
 
+		switch(c) {
 		case 'a':
 			opt_error = false;
 			for (current_processor = 0; current_processor < MAX_PROCESSORS; current_processor++) {
@@ -360,12 +349,37 @@ static bool parse_options(int argc, char *argv[])
 		}
 	} while (c != EOF && !opt_error);
 
+	if (opt_error)
+		print_usage(argv[0]);
+
+	return opt_error;
+}
+
+static bool parse_command(int argc, char *argv[])
+{
+	int cmd_arg_idx = 0, i = optind;
+	bool opt_error = true;
+	char *endptr;
+
+
+	opt_error = i == argc || !parse_cmd(argv[i]);
+	i++;
+	while (i < argc && !opt_error) {
+		if (cmd_arg_idx >= MAX_CMD_ARGS ||
+			 (cmd && cmd_arg_idx >= cmd_max_arg_count))
+			opt_error = true;
+		else {
+			errno = 0;
+			cmd_args[cmd_arg_idx++] = strtoull(argv[i], &endptr, 0);
+			opt_error = (errno || *endptr != '\0');
+		}
+		i++;
+	}
 	opt_error |= cmd_arg_idx < cmd_min_arg_count;
 	if (opt_error)
 		print_usage(argv[0]);
 
 	cmd_arg_count = cmd_arg_idx;
-
 	return opt_error;
 }
 
@@ -990,6 +1004,9 @@ int main(int argc, char *argv[])
 		return 1;
 
 	pdbg_target_probe();
+
+	if (parse_command(argc, argv))
+		return -1;
 
 	switch(cmd) {
 	case GETCFAM:
