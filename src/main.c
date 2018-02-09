@@ -32,6 +32,7 @@
 
 #include "bitutils.h"
 #include "cfam.h"
+#include "scom.h"
 
 #undef PR_DEBUG
 #define PR_DEBUG(...)
@@ -426,27 +427,6 @@ static int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t
 	}
 
 	return rc;
-}
-
-
-static int getscom(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
-{
-	uint64_t value;
-
-	if (pib_read(target, *addr, &value))
-		return 0;
-
-	printf("p%d:0x%" PRIx64 " = 0x%016" PRIx64 "\n", index, *addr, value);
-
-	return 1;
-}
-
-static int putscom(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *data)
-{
-	if (pib_write(target, *addr, *data))
-		return 0;
-
-	return 1;
 }
 
 static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *status, uint64_t *unused1)
