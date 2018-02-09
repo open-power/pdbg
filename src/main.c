@@ -86,6 +86,8 @@ static struct {
 } actions[] = {
 	{ "getcfam", "<address>", "Read system cfam", &handle_cfams },
 	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam", &handle_cfams },
+	{ "getscom", "<address>", "Read system scom", &handle_scoms },
+	{ "putscom", "<address> <value> [<mask>]", "Write system scom", &handle_scoms }
 };
 
 static void print_usage(char *pname)
@@ -146,17 +148,7 @@ enum command parse_cmd(char *optarg)
 {
 	cmd_max_arg_count = 0;
 
-	if (strcmp(optarg, "getscom") == 0) {
-		cmd = GETSCOM;
-		cmd_min_arg_count = 1;
-	} else if (strcmp(optarg, "putscom") == 0) {
-		cmd = PUTSCOM;
-		cmd_min_arg_count = 2;
-		cmd_max_arg_count = 3;
-
-		/* No mask by default */
-		cmd_args[2] = -1ULL;
-	} else if (strcmp(optarg, "getmem") == 0) {
+	if (strcmp(optarg, "getmem") == 0) {
 		cmd = GETMEM;
 		cmd_min_arg_count = 2;
 	} else if (strcmp(optarg, "putmem") == 0) {
@@ -615,12 +607,6 @@ int main(int argc, char *argv[])
 		return -1;
 
 	switch(cmd) {
-	case GETSCOM:
-		rc = for_each_target("pib", getscom, &cmd_args[0], NULL);
-		break;
-	case PUTSCOM:
-		rc = for_each_target("pib", putscom, &cmd_args[0], &cmd_args[1]);
-		break;
 	case GETMEM:
                 buf = malloc(cmd_args[1]);
                 assert(buf);
