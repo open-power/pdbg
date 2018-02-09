@@ -103,6 +103,13 @@ static struct {
 	{ "stop",    "", "Stop thread", &thread_stop },
 	{ "threadstatus", "", "Print the status of a thread", &thread_status_print },
 	{ "sreset",  "", "Reset", &thread_sreset },
+	{ "htm_start", "", "Start Nest HTM", &run_htm_start },
+	{ "htm_stop", "", "Stop Nest HTM", &run_htm_stop },
+	{ "htm_status", "", "Print the status of HTM", &run_htm_status },
+	{ "htm_reset", "", "Reset the HTM facility", &run_htm_reset },
+	{ "htm_dump", "", "Dump HTM buffer to file", &run_htm_dump },
+	{ "htm_trace", "" , "Configure and start tracing with HTM", &run_htm_trace },
+	{ "htm_analyse", "", "Stop and dump buffer to file", &run_htm_analyse },
 };
 
 static void print_usage(char *pname)
@@ -168,30 +175,6 @@ enum command parse_cmd(char *optarg)
 		cmd_min_arg_count = 1;
 	} else if (strcmp(optarg, "probe") == 0) {
 		cmd = PROBE;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_start") == 0) {
-		cmd = HTM_START;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_go") == 0) {
-		cmd = HTM_START;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_stop") == 0) {
-		cmd = HTM_STOP;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_status") == 0) {
-		cmd = HTM_STATUS;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_reset") == 0) {
-		cmd = HTM_RESET;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_dump") == 0) {
-		cmd = HTM_DUMP;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_trace") == 0) {
-		cmd = HTM_TRACE;
-		cmd_min_arg_count = 0;
-	} else if (strcmp(optarg, "htm_analyse") == 0) {
-		cmd = HTM_ANALYSE;
 		cmd_min_arg_count = 0;
 	}
 
@@ -583,28 +566,6 @@ int main(int argc, char *argv[])
 
 		printf("\nNote that only selected targets will be shown above. If none are shown\n"
 		       "try adding '-a' to select all targets\n");
-		break;
-	case HTM_GO:
-	case HTM_START:
-		rc = run_htm_start();
-		break;
-	case HTM_STOP:
-		rc = run_htm_stop();
-		break;
-	case HTM_STATUS:
-		rc = run_htm_status();
-		break;
-	case HTM_RESET:
-		rc = run_htm_reset();
-		break;
-	case HTM_DUMP:
-		rc = run_htm_dump();
-		break;
-	case HTM_TRACE:
-		rc = run_htm_trace();
-		break;
-	case HTM_ANALYSE:
-		rc = run_htm_analyse();
 		break;
 	default:
 		found = false;

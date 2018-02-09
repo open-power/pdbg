@@ -45,7 +45,7 @@ static char *get_htm_dump_filename(void)
 	return filename;
 }
 
-int run_htm_start(void)
+int run_htm_start(int optind, int argc, char *argv[])
 {
 	struct pdbg_target *target;
 	int rc = 0;
@@ -64,7 +64,7 @@ int run_htm_start(void)
 	return rc;
 }
 
-int run_htm_stop(void)
+int run_htm_stop(int optind, int argc, char *argv[])
 {
 	struct pdbg_target *target;
 	int rc = 0;
@@ -83,7 +83,7 @@ int run_htm_stop(void)
 	return rc;
 }
 
-int run_htm_status(void)
+int run_htm_status(int optind, int argc, char *argv[])
 {
 	struct pdbg_target *target;
 	int rc = 0;
@@ -103,7 +103,7 @@ int run_htm_status(void)
 	return rc;
 }
 
-int run_htm_reset(void)
+int run_htm_reset(int optind, int argc, char *argv[])
 {
 	uint64_t old_base = 0, base, size;
 	struct pdbg_target *target;
@@ -131,7 +131,7 @@ int run_htm_reset(void)
 	return rc;
 }
 
-int run_htm_dump(void)
+int run_htm_dump(int optind, int argc, char *argv[])
 {
 	struct pdbg_target *target;
 	char *filename;
@@ -158,7 +158,7 @@ int run_htm_dump(void)
 	return rc;
 }
 
-int run_htm_trace(void)
+int run_htm_trace(int optind, int argc, char *argv[])
 {
 	uint64_t old_base = 0, base, size;
 	struct pdbg_target *target;
@@ -201,7 +201,7 @@ int run_htm_trace(void)
 	return rc;
 }
 
-int run_htm_analyse(void)
+int run_htm_analyse(int optind, int argc, char *argv[])
 {
 	struct pdbg_target *target;
 	char *filename;
