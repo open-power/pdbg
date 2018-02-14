@@ -50,7 +50,7 @@ int run_htm_start(int optind, int argc, char *argv[])
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 
@@ -69,7 +69,7 @@ int run_htm_stop(int optind, int argc, char *argv[])
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 
@@ -88,7 +88,7 @@ int run_htm_status(int optind, int argc, char *argv[])
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 
@@ -109,7 +109,7 @@ int run_htm_reset(int optind, int argc, char *argv[])
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 
@@ -143,7 +143,7 @@ int run_htm_dump(int optind, int argc, char *argv[])
 
 	/* size = 0 will dump everything */
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 
@@ -164,7 +164,7 @@ int run_htm_trace(int optind, int argc, char *argv[])
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 
@@ -187,7 +187,7 @@ int run_htm_trace(int optind, int argc, char *argv[])
 		old_base = base;
 	}
 
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 
@@ -207,7 +207,7 @@ int run_htm_analyse(int optind, int argc, char *argv[])
 	char *filename;
 	int rc = 0;
 
-	pdbg_for_each_class_target("htm", target)
+	pdbg_for_each_class_target("nhtm", target)
 		htm_stop(target);
 
 	filename = get_htm_dump_filename();
@@ -215,7 +215,7 @@ int run_htm_analyse(int optind, int argc, char *argv[])
 		return 0;
 
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
-	pdbg_for_each_class_target("htm", target) {
+	pdbg_for_each_class_target("nhtm", target) {
 		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
 

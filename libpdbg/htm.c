@@ -168,7 +168,7 @@ struct htm_status {
 
 static struct htm *check_and_convert(struct pdbg_target *target)
 {
-	if (strcmp(target->class,"htm"))
+	if (strcmp(target->class, "nhtm"))
 		return NULL;
 
 	return target_to_htm(target);
@@ -580,7 +580,7 @@ static bool is_configured(struct htm *htm)
 	return true;
 }
 
-static int do_htm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
+static int do_nhtm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
 {
 	struct htm_status status;
 	uint64_t i, size, base, val;
@@ -673,12 +673,17 @@ static int do_htm_status(struct htm *htm)
 {
 	struct htm_status status;
 	uint64_t val, total;
-	int i;
+	int i, regs = 9;
+
+	if (dt_node_is_compatible(htm->target.dn, "ibm,power9-nhtm"))
+		regs++;
 
 	PR_DEBUG("HTM register dump:\n");
-	for (i = 0; i < 10; i++) {
-		if (HTM_ERR(pib_read(&htm->target, i, &val)))
+	for (i = 0; i < regs; i++) {
+		if (HTM_ERR(pib_read(&htm->target, i, &val))) {
 			PR_ERROR("Couldn't read HTM reg: %d\n", i);
+			continue;
+		}
 
 		PR_DEBUG(" %d: 0x%016" PRIx64 "\n", i, val);
 	}
@@ -827,7 +832,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 	return 1;
 }
 
-static int htm_probe(struct pdbg_target *target)
+static int nhtm_probe(struct pdbg_target *target)
 {
 	uint64_t val;
 
@@ -845,18 +850,18 @@ static int htm_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct htm htm = {
+struct htm nhtm = {
 	.target = {
-		.name =	"HTM",
-		.compatible = "ibm,htm",
-		.class = "htm",
-		.probe = htm_probe,
+		.name =	"Nest HTM",
+		.compatible = "ibm,power9-nhtm",
+		.class = "nhtm",
+		.probe = nhtm_probe,
 	},
 	.start = do_htm_start,
 	.stop = do_htm_stop,
-	.reset = do_htm_reset,
+	.reset = do_nhtm_reset,
 	.pause = do_htm_pause,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };
-DECLARE_HW_UNIT(htm);
+DECLARE_HW_UNIT(nhtm);
