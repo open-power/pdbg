@@ -272,24 +272,26 @@ c22: A A A A
 
 ### Hardware Trace Macro
 Expoitation of HTM is limited to POWER9 NestHTM from the powerpc host.
+POWER8 (core and nest( is currently experimental. The dump files
+should be correct but have not been confirmed to be.
 
 Using HTM requires a kernel built with both `CONFIG_PPC_MEMTRACE=y`
 (v4.14) and `CONFIG_SCOM_DEBUGFS=y`. debugfs should be mounted at
 `/sys/kernel/debug`.
 
-pdbg provides `htm_trace` which will configure the hardware and
-start tracing as well as `htm_analyse` which still stop the trace and
-dump the result to a file.
+pdbg provides a `htm` command with a variety of subcommands:
+ - `trace` will configure the hardware and start tracing
+ - `analyse` which still stop the trace and dump the result to a file
 
 ```
-./pdbg -b host -d p9 -a htm_trace
+./pdbg -b host -d p9 -a htm trace
 [allow test to run]
-./pdbg -b host -d p9 -a htm_analyse
+./pdbg -b host -d p9 -a htm analyse
 ```
-If you are running into a checkstop issue, `htm_trace` will print the
+If you are running into a checkstop issue, `htm trace` will print the
 physical address of the buffer it is tracing into and the BMC can be
 used to recover this memory after checkstop see `getmem`.
 
 pdbg also provides some of the basic functionality to use HTM, such as
-`htm_reset`, `htm_start` and `htm_stop` to perform each step manually
+`htm reset`, `htm start` and `htm stop` to perform each step manually
 if required.
