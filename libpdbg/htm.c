@@ -46,9 +46,9 @@
 #define HTM_COLLECTION_MODE		0
 #define	  HTM_MODE_ENABLE		PPC_BIT(0)
 #define	  HTM_MODE_CONTENT_SEL		PPC_BITMASK(1,2)
-#define   HTM_MODE_CAPTURE		PPC_BITMASK(4,12)
-#define     HTM_MODE_CAPTURE_PMISC	PPC_BIT(5)
-#define     HTM_MODE_CRESP_PRECISE	PPC_BIT(6)
+#define   NHTM_MODE_CAPTURE		PPC_BITMASK(4,12)
+#define     NHTM_MODE_CAPTURE_PMISC	PPC_BIT(5)
+#define     NHTM_MODE_CRESP_PRECISE	PPC_BIT(6)
 #define	  HTM_MODE_WRAP			PPC_BIT(13)
 #define HTM_MEMORY_CONF			1
 #define   HTM_MEM_ALLOC			PPC_BIT(0)
@@ -93,24 +93,24 @@
 #define   HTM_CTRL_TRIG			PPC_BITMASK(0,1)
 #define   HTM_CTRL_MASK			PPC_BITMASK(4,5)
 #define   HTM_CTRL_XSTOP_STOP		PPC_BIT(13)
-#define HTM_FILTER_CONTROL		6
-#define   HTM_FILTER_RCMD_SCOPE		PPC_BITMASK(17,19)
-#define   HTM_FILTER_RCMD_SOURCE	PPC_BITMASK(20,21)
-#define   HTM_FILTER_CRESP_PATTERN	PPC_BITMASK(27,31)
-#define   HTM_FILTER_MASK		PPC_BITMASK(32,54)
-#define   HTM_FILTER_CRESP_MASK		PPC_BITMASK(59,63)
-#define HTM_TTYPE_FILTER_CONTROL	7
-#define   HTM_TTYPE_TYPE_MASK		PPC_BITMASK(17,23)
-#define   HTM_TTYPE_SIZE_MASK		PPC_BITMASK(24,31)
-#define HTM_CONFIGURATION		8
-#define   HTM_CONF_HANG_DIV_RATIO	PPC_BITMASK(0,4)
-#define   HTM_CONF_RTY_DROP_COUNT	PPC_BITMASK(5,8)
-#define   HTM_CONF_DROP_PRIORITY_INC	PPC_BIT(9)
-#define   HTM_CONF_RETRY_BACKOFF	PPC_BIT(10)
-#define   HTM_CONF_OPERALIONAL_HANG	PPC_BIT(11)
-#define HTM_FLEX_MUX			9
-#define   HTM_FLEX_MUX_MASK		PPC_BITMASK(0,35)
-#define   HTM_FLEX_DEFAULT		0xCB3456129
+#define NHTM_FILTER_CONTROL		6
+#define   NHTM_FILTER_RCMD_SCOPE	PPC_BITMASK(17,19)
+#define   NHTM_FILTER_RCMD_SOURCE	PPC_BITMASK(20,21)
+#define   NHTM_FILTER_CRESP_PATTERN	PPC_BITMASK(27,31)
+#define   NHTM_FILTER_MASK		PPC_BITMASK(32,54)
+#define   NHTM_FILTER_CRESP_MASK	PPC_BITMASK(59,63)
+#define NHTM_TTYPE_FILTER_CONTROL	7
+#define   NHTM_TTYPE_TYPE_MASK		PPC_BITMASK(17,23)
+#define   NHTM_TTYPE_SIZE_MASK		PPC_BITMASK(24,31)
+#define NHTM_CONFIGURATION		8
+#define   NHTM_CONF_HANG_DIV_RATIO	PPC_BITMASK(0,4)
+#define   NHTM_CONF_RTY_DROP_COUNT	PPC_BITMASK(5,8)
+#define   NHTM_CONF_DROP_PRIORITY_INC	PPC_BIT(9)
+#define   NHTM_CONF_RETRY_BACKOFF	PPC_BIT(10)
+#define   NHTM_CONF_OPERALIONAL_HANG	PPC_BIT(11)
+#define NHTM_FLEX_MUX			9
+#define   NHTM_FLEX_MUX_MASK		PPC_BITMASK(0,35)
+#define   NHTM_FLEX_DEFAULT		0xCB3456129
 
 enum htm_state {
 	INIT,
@@ -416,7 +416,7 @@ static int do_setup(struct htm *htm)
 	 */
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
 					HTM_MODE_ENABLE |
-					HTM_MODE_CRESP_PRECISE |
+					NHTM_MODE_CRESP_PRECISE |
 					HTM_MODE_WRAP |
 					0xFFFF000000)))
 		return -1;
@@ -428,20 +428,20 @@ static int do_setup(struct htm *htm)
 	/*
 	 * These values are taken from a cronus booted system.
 	 */
-	if (HTM_ERR(pib_write(&htm->target, HTM_FILTER_CONTROL,
-			HTM_FILTER_MASK | /* no pattern matching */
-			HTM_FILTER_CRESP_MASK))) /* no pattern matching */
+	if (HTM_ERR(pib_write(&htm->target, NHTM_FILTER_CONTROL,
+			NHTM_FILTER_MASK | /* no pattern matching */
+			NHTM_FILTER_CRESP_MASK))) /* no pattern matching */
 		return -1;
 
-	if (HTM_ERR(pib_write(&htm->target, HTM_TTYPE_FILTER_CONTROL,
-			HTM_TTYPE_TYPE_MASK | /* no pattern matching */
-			HTM_TTYPE_SIZE_MASK ))) /* no pattern matching */
+	if (HTM_ERR(pib_write(&htm->target, NHTM_TTYPE_FILTER_CONTROL,
+			NHTM_TTYPE_TYPE_MASK | /* no pattern matching */
+			NHTM_TTYPE_SIZE_MASK ))) /* no pattern matching */
 		return -1;
 
-	if (HTM_ERR(pib_read(&htm->target, HTM_FLEX_MUX, &val)))
+	if (HTM_ERR(pib_read(&htm->target, NHTM_FLEX_MUX, &val)))
 		return -1;
 
-	if (GETFIELD(HTM_FLEX_MUX_MASK, val) != HTM_FLEX_DEFAULT) {
+	if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
 		PR_ERROR("The HTM Flex wasn't default value\n");
 		return -1;
 	}
@@ -841,8 +841,8 @@ static int nhtm_probe(struct pdbg_target *target)
 		return -1;
 	}
 
-	pib_read(target, HTM_FLEX_MUX, &val);
-	if (GETFIELD(HTM_FLEX_MUX_MASK, val) != HTM_FLEX_DEFAULT) {
+	pib_read(target, NHTM_FLEX_MUX, &val);
+	if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
 		PR_DEBUG("FLEX_MUX not default\n");
 		return -1;
 	}
