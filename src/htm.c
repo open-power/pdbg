@@ -304,41 +304,96 @@ int run_htm(int optind, int argc, char *argv[])
 }
 
 /*
- * These are all the old handlers that only worked with nest HTM.
- * I don't want to break the commands but we've gone with a more
- * flexible HTM command structure to better incorporate core HTM.
+ * Handle the deprecated commands by telling the user what the new
+ * command is.
  */
 int run_htm_start(int optind, int argc, char *argv[])
 {
-	return run_start(HTM_NEST, optind, argc, argv);
+	int i;
+
+	fprintf(stderr, "You're running a deprecated command!\n");
+	fprintf(stderr, "Please use:\n");
+	for (i = 0; i < optind; i++)
+		fprintf(stderr, "%s ", argv[i]);
+	fprintf(stderr, "htm nest start\n");
+
+	return 0;
 }
 
 int run_htm_stop(int optind, int argc, char *argv[])
 {
-	return run_stop(HTM_NEST, optind, argc, argv);
+	int i;
+
+	fprintf(stderr, "You're running a deprecated command!\n");
+	fprintf(stderr, "Please use:\n");
+	for (i = 0; i < optind; i++)
+		fprintf(stderr, "%s ", argv[i]);
+	fprintf(stderr, "htm nest stop\n");
+
+	return 0;
 }
 
 int run_htm_status(int optind, int argc, char *argv[])
 {
-	return run_status(HTM_NEST, optind, argc, argv);
+	int i;
+
+	fprintf(stderr, "You're running a deprecated command!\n");
+	fprintf(stderr, "Please use:\n");
+	for (i = 0; i < optind; i++)
+		fprintf(stderr, "%s ", argv[i]);
+	fprintf(stderr, "htm nest status\n");
+
+	return 0;
 }
 
 int run_htm_reset(int optind, int argc, char *argv[])
 {
-	return run_reset(HTM_NEST, optind, argc, argv);
+	int i;
+
+	fprintf(stderr, "You're running a deprecated command!\n");
+	fprintf(stderr, "Please use:\n");
+	for (i = 0; i < optind; i++)
+		fprintf(stderr, "%s ", argv[i]);
+	fprintf(stderr, "htm nest reset\n");
+
+	return 0;
 }
 
 int run_htm_dump(int optind, int argc, char *argv[])
 {
-	return run_dump(HTM_NEST, optind, argc, argv);;
+	int i;
+
+	fprintf(stderr, "You're running a deprecated command!\n");
+	fprintf(stderr, "Please use:\n");
+	for (i = 0; i < optind; i++)
+		fprintf(stderr, "%s ", argv[i]);
+	fprintf(stderr, "htm nest dump\n");
+
+	return 0;
 }
 
 int run_htm_trace(int optind, int argc, char *argv[])
 {
-	return run_trace(HTM_NEST, optind, argc, argv);
+	int i;
+
+	fprintf(stderr, "You're running a deprecated command!\n");
+	fprintf(stderr, "Please use:\n");
+	for (i = 0; i < optind; i++)
+		fprintf(stderr, "%s ", argv[i]);
+	fprintf(stderr, "htm nest trace\n");
+
+	return 0;
 }
 
 int run_htm_analyse(int optind, int argc, char *argv[])
 {
-	return run_analyse(HTM_NEST, optind, argc, argv);
+	int i;
+
+	fprintf(stderr, "You're running a deprecated command!\n");
+	fprintf(stderr, "Please use:\n");
+	for (i = 0; i < optind; i++)
+		fprintf(stderr, "%s ", argv[i]);
+	fprintf(stderr, "htm nest analyse\n");
+
+	return 0;
 }
