@@ -168,8 +168,10 @@ struct htm_status {
 
 static struct htm *check_and_convert(struct pdbg_target *target)
 {
-	if (strcmp(target->class, "nhtm"))
-		return NULL;
+
+	if (!pdbg_target_is_class(target, "nhtm") &&
+	    !pdbg_target_is_class(target, "chtm"))
+	    return NULL;
 
 	return target_to_htm(target);
 }
