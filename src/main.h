@@ -17,6 +17,11 @@
 
 #include <target.h>
 
+static inline bool target_is_disabled(struct pdbg_target *target)
+{
+	return pdbg_target_status(target) == PDBG_TARGET_DISABLED;
+}
+
 /* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
 int for_each_child_target(char *class, struct pdbg_target *parent,
 				 int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *),

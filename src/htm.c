@@ -23,6 +23,8 @@
 #include <target.h>
 #include <operations.h>
 
+#include "main.h"
+
 #define HTM_DUMP_BASENAME "htm.dump"
 
 static char *get_htm_dump_filename(void)
@@ -51,10 +53,14 @@ int run_htm_start(int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
+
+		if (target_is_disabled(target))
+			continue;
 
 		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
+		index = pdbg_target_index(target);
 		printf("Starting HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_start(target) != 1)
 			printf("Couldn't start HTM@%" PRIu64 "#%d\n", chip_id, index);
@@ -70,9 +76,13 @@ int run_htm_stop(int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
 
+		if (target_is_disabled(target))
+			continue;
+
+		index = pdbg_target_index(target);
 		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Stopping HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_stop(target) != 1)
@@ -89,9 +99,13 @@ int run_htm_status(int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
 
+		if (target_is_disabled(target))
+			continue;
+
+		index = pdbg_target_index(target);
 		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_status(target) != 1)
@@ -110,9 +124,13 @@ int run_htm_reset(int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
 
+		if (target_is_disabled(target))
+			continue;
+
+		index = pdbg_target_index(target);
 		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Resetting HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_reset(target, &base, &size) != 1)
@@ -144,9 +162,13 @@ int run_htm_dump(int optind, int argc, char *argv[])
 	/* size = 0 will dump everything */
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
 
+		if (target_is_disabled(target))
+			continue;
+
+		index = pdbg_target_index(target);
 		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Dumping HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_dump(target, 0, filename) == 1)
@@ -165,14 +187,19 @@ int run_htm_trace(int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
+
+		if (target_is_disabled(target))
+			continue;
+
+		index = pdbg_target_index(target);
+		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 
 		/*
 		 * Don't mind if stop fails, it will fail if it wasn't
 		 * running, if anything bad is happening reset will fail
 		 */
-		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		htm_stop(target);
 		printf("Resetting HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_reset(target, &base, &size) != 1)
@@ -188,9 +215,13 @@ int run_htm_trace(int optind, int argc, char *argv[])
 	}
 
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
 
+		if (target_is_disabled(target))
+			continue;
+
+		index = pdbg_target_index(target);
 		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Starting HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_start(target) != 1)
@@ -207,8 +238,12 @@ int run_htm_analyse(int optind, int argc, char *argv[])
 	char *filename;
 	int rc = 0;
 
-	pdbg_for_each_class_target("nhtm", target)
+	pdbg_for_each_class_target("nhtm", target) {
+		if (target_is_disabled(target))
+			continue;
+
 		htm_stop(target);
+	}
 
 	filename = get_htm_dump_filename();
 	if (!filename)
@@ -216,9 +251,13 @@ int run_htm_analyse(int optind, int argc, char *argv[])
 
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
 	pdbg_for_each_class_target("nhtm", target) {
-		uint32_t index = pdbg_target_index(target);
 		uint64_t chip_id;
+		uint32_t index;
 
+		if (target_is_disabled(target))
+			continue;
+
+		index = pdbg_target_index(target);
 		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
 		printf("Dumping HTM@%" PRIu64 "#%d\n", chip_id, index);
 		if (htm_dump(target, 0, filename) != 1)
