@@ -12,7 +12,8 @@ AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror
 
 pdbg_SOURCES = \
 	src/main.c src/cfam.c src/scom.c src/reg.c src/mem.c src/thread.c \
-	src/htm.c
+	src/htm.c src/options_@ARCH@.c
+
 pdbg_LDADD = fake.dtb.o p8-fsi.dtb.o p8-i2c.dtb.o p9w-fsi.dtb.o	p8-host.dtb.o \
 	p9z-fsi.dtb.o p9r-fsi.dtb.o p9-kernel.dtb.o libpdbg.la libfdt.la \
 	p9-host.dtb.o \

@@ -32,6 +32,7 @@
 
 #include <libpdbg.h>
 
+#include "main.h"
 #include "bitutils.h"
 #include "cfam.h"
 #include "scom.h"
@@ -39,6 +40,7 @@
 #include "mem.h"
 #include "thread.h"
 #include "htm.h"
+#include "options.h"
 
 #undef PR_DEBUG
 #define PR_DEBUG(...)
@@ -47,7 +49,6 @@
 
 #define THREADS_PER_CORE	8
 
-enum backend { FSI, I2C, KERNEL, FAKE, HOST };
 static enum backend backend = KERNEL;
 
 static char const *device_node;
@@ -332,11 +333,11 @@ static int target_select(void)
 		}
 		if (!strcmp(device_node, "p8"))
 			pdbg_targets_init(&_binary_p8_fsi_dtb_o_start);
-		else if (!strcmp(device_node, "p9w") || !strcmp(device_node, "witherspoon"))
+		else if (!strcmp(device_node, "p9w"))
 			pdbg_targets_init(&_binary_p9w_fsi_dtb_o_start);
-		else if (!strcmp(device_node, "p9r") || !strcmp(device_node, "romulus"))
+		else if (!strcmp(device_node, "p9r"))
 			pdbg_targets_init(&_binary_p9r_fsi_dtb_o_start);
-		else if (!strcmp(device_node, "p9z") || !strcmp(device_node, "zaius"))
+		else if (!strcmp(device_node, "p9z"))
 			pdbg_targets_init(&_binary_p9z_fsi_dtb_o_start);
 		else {
 			PR_ERROR("Invalid device type specified\n");
@@ -462,8 +463,26 @@ int main(int argc, char *argv[])
 {
 	int i, rc = 0;
 
+	backend = default_backend();
+	device_node = default_target(backend);
+
 	if (parse_options(argc, argv))
 		return 1;
+
+	if (!backend_is_possible(backend)) {
+		fprintf(stderr, "Backend not possible\n");
+		print_backends(stderr);
+		print_usage(argv[0]);
+		return 1;
+	}
+
+	if (!target_is_possible(backend, device_node)) {
+		fprintf(stderr, "Target %s not possible\n",
+			device_node ? device_node : "(none)");
+		print_targets(stderr);
+		print_usage(argv[0]);
+		return 1;
+	}
 
 	if (optind >= argc) {
 		print_usage(argv[0]);

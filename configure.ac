@@ -8,4 +8,12 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_LANG(C)
+
+case "$host" in
+	arm*-*-*)       ARCH="arm" ;;
+	powerpc*-*-*)   ARCH="ppc" ;;
+	*)              ARCH="def" ;;
+esac
+AC_SUBST([ARCH])
+
 AC_OUTPUT
