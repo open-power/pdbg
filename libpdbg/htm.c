@@ -40,7 +40,9 @@
 
 #define MIN(x,y) ((x < y) ? x : y)
 
-#define DEBUGFS_MEMTRACE "/sys/kernel/debug/powerpc/memtrace"
+#define DEBUGFS_POWERPC "/sys/kernel/debug/powerpc"
+#define DEBUGFS_SCOM DEBUGFS_POWERPC"/scom"
+#define DEBUGFS_MEMTRACE DEBUGFS_POWERPC"/memtrace"
 #define DEBUGFS_MEMTRACE_ENABLE DEBUGFS_MEMTRACE"/enable"
 
 #define HTM_COLLECTION_MODE		0
@@ -49,6 +51,7 @@
 #define   NHTM_MODE_CAPTURE		PPC_BITMASK(4,12)
 #define     NHTM_MODE_CAPTURE_PMISC	PPC_BIT(5)
 #define     NHTM_MODE_CRESP_PRECISE	PPC_BIT(6)
+#define     CHTM_MODE_NO_ASSERT_LLAT_L3 PPC_BIT(6)
 #define	  HTM_MODE_WRAP			PPC_BIT(13)
 #define HTM_MEMORY_CONF			1
 #define   HTM_MEM_ALLOC			PPC_BIT(0)
@@ -381,9 +384,35 @@ static int do_adu_magic(struct pdbg_target *target, uint32_t index, uint64_t *ar
 }
 #endif
 
-static int do_setup(struct htm *htm)
+/*
+ * This function doesn't do the update_mcs_regs() from the older p8
+ * only tool. Not clear what this actually does. Attempting to ignore
+ * the problem.
+ * The scoms it does use are:
+ * SCOM ADDRESS FOR MCS4
+ * #define MCS4_MCFGPQ 0x02011c00
+ * #define MCS4_MCMODE 0x02011c07
+ * #define MCS4_FIRMASK 0x02011c43
+ *
+ * SCOM ADDRESS FOR MCS5
+ * #define MCS5_MCFGPQ 0x02011c80
+ * #define MCS5_MCMODE 0x02011c87
+ * #define MCS5_FIRMASK 0x02011cc3
+ *
+ * SCOM ADDRESS FOR MCS6
+ * #define MCS6_MCFGPQ 0x02011d00
+ * #define MCS6_MCMODE 0x02011d07
+ * #define MCS6_FIRMASK 0x02011d43
+ *
+ * SCOM ADDRESS FOR MCS7
+ * #define MCS7_MCFGPQ 0x02011d80
+ * #define MCS7_MCMODE 0x02011d87
+ * #define MCS7_FIRMASK 0x02011dc3
+ */
+
+static int configure_debugfs_memtrace(struct htm *htm)
 {
-	uint64_t memtrace_size, val;
+	uint64_t memtrace_size;
 	FILE *file;
 
 	file = fopen(DEBUGFS_MEMTRACE_ENABLE, "r+");
@@ -411,6 +440,29 @@ static int do_setup(struct htm *htm)
 
 	}
 	fclose(file);
+
+	return 0;
+}
+
+static int configure_chtm(struct htm *htm)
+{
+	if (HTM_ERR(configure_debugfs_memtrace(htm)))
+		return -1;
+
+	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
+					HTM_MODE_ENABLE |
+					CHTM_MODE_NO_ASSERT_LLAT_L3)))
+		return -1;
+
+	return 0;
+}
+
+static int configure_nhtm(struct htm *htm)
+{
+	uint64_t val;
+
+	if (HTM_ERR(configure_debugfs_memtrace(htm)))
+		return -1;
 
 	/*
 	 * The constant is the VGTARGET field, taken from a cronus
@@ -440,12 +492,14 @@ static int do_setup(struct htm *htm)
 			NHTM_TTYPE_SIZE_MASK ))) /* no pattern matching */
 		return -1;
 
-	if (HTM_ERR(pib_read(&htm->target, NHTM_FLEX_MUX, &val)))
-		return -1;
+	if (dt_node_is_compatible(htm->target.dn, "ibm,power9-nhtm")) {
+		if (HTM_ERR(pib_read(&htm->target, NHTM_FLEX_MUX, &val)))
+			return -1;
 
-	if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
-		PR_ERROR("The HTM Flex wasn't default value\n");
-		return -1;
+		if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
+			PR_ERROR("The HTM Flex wasn't default value\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -581,22 +635,10 @@ static bool is_configured(struct htm *htm)
 
 	return true;
 }
-
-static int do_nhtm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
+static int configure_memory(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
 {
-	struct htm_status status;
 	uint64_t i, size, base, val;
 	uint16_t mem_size;
-
-	if (HTM_ERR(get_status(htm, &status)))
-		return -1;
-
-	if (!is_resetable(&status) || !is_configured(htm)) {
-		if (HTM_ERR(do_setup(htm))) {
-			PR_ERROR("Couldn't setup HTM during reset\n");
-			return -1;
-		}
-	}
 
 	if (HTM_ERR(get_trace_size(htm, &size)))
 		return -1;
@@ -649,6 +691,38 @@ static int do_nhtm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
 		*r_size = size;
 	if (r_base)
 		*r_base = base;
+
+	return 0;
+}
+
+static int do_htm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
+{
+	struct htm_status status;
+
+	if (HTM_ERR(get_status(htm, &status)))
+		return -1;
+
+	if (!is_resetable(&status) || !is_configured(htm)) {
+		if (pdbg_target_is_class(&htm->target, "nhtm")) {
+			if (HTM_ERR(configure_nhtm(htm))) {
+				PR_ERROR("Couldn't setup Nest HTM during reset\n");
+				return -1;
+			}
+		} else if (pdbg_target_is_class(&htm->target, "chtm")) {
+			if (HTM_ERR(configure_chtm(htm))) {
+				PR_ERROR("Couldn't setup Core HTM during reset\n");
+				return -1;
+			}
+		} else { /* Well... */
+			PR_ERROR("Unknown HTM class! %s\n",
+				pdbg_target_class_name(&htm->target));
+		}
+
+	}
+
+	if (HTM_ERR(configure_memory(htm, r_base, r_size)))
+		return -1;
+
 	return 1;
 }
 
@@ -834,36 +908,67 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 	return 1;
 }
 
+static bool is_debugfs_memtrace_ok(void)
+{
+	return access(DEBUGFS_MEMTRACE, F_OK) == 0;
+}
+
+static bool is_debugfs_scom_ok(void)
+{
+	return access(DEBUGFS_SCOM, F_OK) == 0;
+}
+
 static int nhtm_probe(struct pdbg_target *target)
 {
 	uint64_t val;
 
-	if (access(DEBUGFS_MEMTRACE, F_OK) != 0) {
-		PR_DEBUG("Couldn't open debugfs\n");
+	if (!is_debugfs_memtrace_ok() || !is_debugfs_scom_ok())
 		return -1;
-	}
 
-	pib_read(target, NHTM_FLEX_MUX, &val);
-	if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
-		PR_DEBUG("FLEX_MUX not default\n");
-		return -1;
+	if (dt_node_is_compatible(target->dn, "ibm,power9-nhtm")) {
+		pib_read(target, NHTM_FLEX_MUX, &val);
+		if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
+			PR_DEBUG("FLEX_MUX not default\n");
+			return -1;
+		}
 	}
 
 	return 0;
 }
 
+static int chtm_probe(struct pdbg_target *target)
+{
+	return is_debugfs_memtrace_ok() && is_debugfs_scom_ok() ? 0 : -1;
+}
+
 struct htm nhtm = {
 	.target = {
 		.name =	"Nest HTM",
-		.compatible = "ibm,power9-nhtm",
+		.compatible = "ibm,power8-nhtm", "ibm,power9-nhtm",
 		.class = "nhtm",
 		.probe = nhtm_probe,
 	},
 	.start = do_htm_start,
 	.stop = do_htm_stop,
-	.reset = do_nhtm_reset,
+	.reset = do_htm_reset,
 	.pause = do_htm_pause,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };
 DECLARE_HW_UNIT(nhtm);
+
+struct htm chtm = {
+	.target = {
+		.name = "POWER8 Core HTM",
+		.compatible = "ibm,power8-chtm",
+		.class = "chtm",
+		.probe = chtm_probe,
+	},
+	.start = do_htm_start,
+	.stop = do_htm_stop,
+	.reset = do_htm_reset,
+	.pause = do_htm_pause,
+	.status = do_htm_status,
+	.dump = do_htm_dump,
+};
+DECLARE_HW_UNIT(chtm);

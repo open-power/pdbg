@@ -7,6 +7,11 @@ define(`CORE', `core@CORE_BASE($1) {
 	compatible = "ibm,power8-core";
 	reg = <0x0 HEX(CORE_BASE($1)) 0xfffff>;
 	index = <0x$2>;
+	chtm@11000 {
+		compatible = "ibm,power8-chtm";
+		reg = <0x0 0x11000 0xB>;
+		index = <0x0>;
+	};
 
 	THREAD(0);
 	THREAD(1);
@@ -40,6 +45,12 @@ CORE(14, 11)')dnl
 adu@2020000 {
 	compatible = "ibm,power8-adu";
 	reg = <0x0 0x2020000 0x4>;
+};
+
+nhtm@2010880 {
+	compatible = "ibm,power8-nhtm";
+	reg = <0x0 0x2010880 0x8>;
+	index = <0x0>;
 };
 
 PROC_CORES;
