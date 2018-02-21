@@ -88,7 +88,6 @@ static int fsi2pib_getscom(struct pib *pib, uint64_t addr, uint64_t *value)
 
 	/* Get scom works by putting the address in FSI_CMD_REG and
 	 * reading the result from FST_DATA[01]_REG. */
-	CHECK_ERR(fsi_write(&pib->target, FSI_RESET_REG, FSI_RESET_CMD));
 	CHECK_ERR(fsi_write(&pib->target, FSI_CMD_REG, addr));
 	CHECK_ERR(fsi_read(&pib->target, FSI_DATA0_REG, &result));
 	*value = ((uint64_t) result) << 32;
@@ -102,10 +101,19 @@ static int fsi2pib_putscom(struct pib *pib, uint64_t addr, uint64_t value)
 {
 	usleep(FSI2PIB_RELAX);
 
-	CHECK_ERR(fsi_write(&pib->target, FSI_RESET_REG, FSI_RESET_CMD));
 	CHECK_ERR(fsi_write(&pib->target, FSI_DATA0_REG, (value >> 32) & 0xffffffff));
 	CHECK_ERR(fsi_write(&pib->target, FSI_DATA1_REG, value & 0xffffffff));
 	CHECK_ERR(fsi_write(&pib->target, FSI_CMD_REG, FSI_CMD_REG_WRITE | addr));
+
+	return 0;
+}
+
+static int fsi2pib_reset(struct pdbg_target *target)
+{
+	/* Reset the PIB master interface. We used to reset the entire FSI2PIB
+	 * engine but that had the unfortunate side effect of clearing existing
+	 * settings such as the true mask register (0xd) */
+	CHECK_ERR(fsi_write(target, FSI_SET_PIB_RESET_REG, FSI_SET_PIB_RESET));
 
 	return 0;
 }
@@ -115,6 +123,7 @@ struct pib fsi_pib = {
 		.name =	"POWER FSI2PIB",
 		.compatible = "ibm,fsi-pib",
 		.class = "pib",
+		.probe = fsi2pib_reset,
 	},
 	.read = fsi2pib_getscom,
 	.write = fsi2pib_putscom,
