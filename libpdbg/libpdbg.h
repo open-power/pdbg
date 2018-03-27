@@ -1,6 +1,10 @@
 #ifndef __LIBPDBG_H
 #define __LIBPDBG_H
 
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+
 extern bool pdbg_expert_mode;
 
 struct pdbg_target;
