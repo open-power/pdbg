@@ -601,7 +601,6 @@ int main(int argc, char *argv[])
 	if (!backend_is_possible(backend)) {
 		fprintf(stderr, "Backend not possible\nUse: ");
 		print_backends(stderr);
-		print_usage(argv[0]);
 		return 1;
 	}
 
@@ -609,7 +608,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Target %s not possible\n",
 			device_node ? device_node : "(none)");
 		print_targets(stderr);
-		print_usage(argv[0]);
 		return 1;
 	}
 
