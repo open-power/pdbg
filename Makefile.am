@@ -15,6 +15,8 @@ DT = fake.dts \
 DT_objects = $(DT:.dts=.dtb.o)
 DT_headers = $(DT:.dts=.dt.h)
 
+BUILT_SOURCES = $(DT_headers)
+
 pdbg_SOURCES = \
 	src/main.c src/cfam.c src/scom.c src/reg.c src/mem.c src/thread.c \
 	src/ring.c src/htm.c src/progress.c src/options_@ARCH@.c
@@ -89,4 +91,4 @@ p9z-fsi.dtb: p9z-fsi.dts p9-fsi.dtsi
 %.dtb.o: %.dtb
 	$(AM_V_CC)$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell echo $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
 
-MOSTLYCLEANFILES = *.dtb
+MOSTLYCLEANFILES = *.dtb *.dt.h

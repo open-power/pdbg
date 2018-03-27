@@ -48,6 +48,18 @@
 #define PR_ERROR(x, args...)					\
 	fprintf(stderr, "%s: " x, __FUNCTION__, ##args)
 
+#include "fake.dt.h"
+
+#include "p8-i2c.dt.h"
+#include "p8-fsi.dt.h"
+#include "p8-host.dt.h"
+
+#include "p9w-fsi.dt.h"
+#include "p9r-fsi.dt.h"
+#include "p9z-fsi.dt.h"
+#include "p9-kernel.dt.h"
+#include "p9-host.dt.h"
+
 #define THREADS_PER_CORE	8
 
 static enum backend backend = KERNEL;
@@ -363,26 +375,6 @@ void for_each_target_release(char *class)
 		pdbg_target_release(target);
 	}
 }
-
-/* TODO: It would be nice to have a more dynamic way of doing this */
-extern unsigned char _binary_p8_i2c_dtb_o_start;
-extern unsigned char _binary_p8_i2c_dtb_o_end;
-extern unsigned char _binary_p8_fsi_dtb_o_start;
-extern unsigned char _binary_p8_fsi_dtb_o_end;
-extern unsigned char _binary_p9w_fsi_dtb_o_start;
-extern unsigned char _binary_p9w_fsi_dtb_o_end;
-extern unsigned char _binary_p9r_fsi_dtb_o_start;
-extern unsigned char _binary_p9r_fsi_dtb_o_end;
-extern unsigned char _binary_p9z_fsi_dtb_o_start;
-extern unsigned char _binary_p9z_fsi_dtb_o_end;
-extern unsigned char _binary_p9_kernel_dtb_o_start;
-extern unsigned char _binary_p9_kernel_dtb_o_end;
-extern unsigned char _binary_fake_dtb_o_start;
-extern unsigned char _binary_fake_dtb_o_end;
-extern unsigned char _binary_p8_host_dtb_o_start;
-extern unsigned char _binary_p8_host_dtb_o_end;
-extern unsigned char _binary_p9_host_dtb_o_start;
-extern unsigned char _binary_p9_host_dtb_o_end;
 
 static int target_selection(void)
 {
