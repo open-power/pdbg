@@ -29,6 +29,7 @@
 #include "operations.h"
 #include "device.h"
 #include "target.h"
+#include "debug.h"
 
 #define GPIO_BASE	0x1e780000
 #define GPIO_DATA	0x0
@@ -311,7 +312,7 @@ static enum fsi_result fsi_read_resp(uint64_t *result, int len)
 	}
 
 	if (crc != 0) {
-		fprintf(stderr, "CRC error: 0x%" PRIx64 "\n", resp);
+		PR_ERROR("CRC error: 0x%" PRIx64 "\n", resp);
 		return FSI_MERR_C;
 	}
 

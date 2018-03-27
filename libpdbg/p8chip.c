@@ -24,6 +24,7 @@
 #include "target.h"
 #include "operations.h"
 #include "bitutils.h"
+#include "debug.h"
 
 #define RAS_STATUS_TIMEOUT	100
 

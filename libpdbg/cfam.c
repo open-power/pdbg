@@ -22,9 +22,7 @@
 #include "target.h"
 #include "bitutils.h"
 #include "operations.h"
-
-#undef PR_DEBUG
-#define PR_DEBUG(...)
+#include "debug.h"
 
 #define FSI_DATA0_REG	0x0
 #define FSI_DATA1_REG	0x1

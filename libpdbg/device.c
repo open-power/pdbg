@@ -24,8 +24,7 @@
 #include <ccan/str/str.h>
 #include <endian.h>
 
-#undef PR_DEBUG
-#define PR_DEBUG(...)
+#include "debug.h"
 
 #define zalloc(size) calloc(1, size)
 #define prerror printf

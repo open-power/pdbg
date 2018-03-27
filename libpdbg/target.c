@@ -8,9 +8,7 @@
 #include "target.h"
 #include "device.h"
 #include "operations.h"
-
-#undef PR_DEBUG
-#define PR_DEBUG(...)
+#include "debug.h"
 
 struct list_head empty_list = LIST_HEAD_INIT(empty_list);
 struct list_head target_classes = LIST_HEAD_INIT(target_classes);

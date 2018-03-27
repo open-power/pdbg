@@ -23,6 +23,7 @@
 #include "target.h"
 #include "operations.h"
 #include "bitutils.h"
+#include "debug.h"
 
 /*
  * NOTE!
