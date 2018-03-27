@@ -93,7 +93,7 @@ static struct action expert_actions[] = {
 	{ "htm_dump", "", "[deprecated use 'htm nest dump'] Dump HTM buffer to file", &run_htm_dump },
 	{ "htm_trace", "" , "[deprecated use 'htm nest trace'] Configure and start tracing with HTM", &run_htm_trace },
 	{ "htm_analyse", "", "[derepcated use 'htm nest analyse'] Stop and dump buffer to file", &run_htm_analyse },
-	{ "htm", "(core | nest) (start | stop | status | reset | dump | trace | analyse", "Hardware Trace Macro", &run_htm },
+	{ "htm", "core|nest start|stop|status|reset|dump|trace|analyse", "Hardware Trace Macro", &run_htm },
 	{ "release", "", "Should be called after pdbg work is finished, to release special wakeups and other resources.", &handle_release},
 };
 
