@@ -29,4 +29,7 @@ case "$host" in
 esac
 AC_SUBST([ARCH])
 
+AM_CONDITIONAL([TARGET_ARM], [test x"$ARCH" = "xarm"])
+AM_CONDITIONAL([TARGET_PPC], [test x"$ARCH" = "xppc"])
+
 AC_OUTPUT

@@ -50,15 +50,19 @@
 
 #include "fake.dt.h"
 
+#ifdef TARGET_ARM
 #include "p8-i2c.dt.h"
 #include "p8-fsi.dt.h"
-#include "p8-host.dt.h"
-
 #include "p9w-fsi.dt.h"
 #include "p9r-fsi.dt.h"
 #include "p9z-fsi.dt.h"
 #include "p9-kernel.dt.h"
+#endif
+
+#ifdef TARGET_PPC
+#include "p8-host.dt.h"
 #include "p9-host.dt.h"
+#endif
 
 #define THREADS_PER_CORE	8
 
@@ -381,6 +385,7 @@ static int target_selection(void)
 	struct pdbg_target *fsi, *pib, *chip, *thread;
 
 	switch (backend) {
+#ifdef TARGET_ARM
 	case I2C:
 		pdbg_targets_init(&_binary_p8_i2c_dtb_o_start);
 		break;
@@ -408,10 +413,9 @@ static int target_selection(void)
 		pdbg_targets_init(&_binary_p9_kernel_dtb_o_start);
 		break;
 
-	case FAKE:
-		pdbg_targets_init(&_binary_fake_dtb_o_start);
-		break;
+#endif
 
+#ifdef TARGET_PPC
 	case HOST:
 		if (device_node == NULL) {
 			PR_ERROR("Host backend requires a device type\n");
@@ -425,6 +429,11 @@ static int target_selection(void)
 			PR_ERROR("Unsupported device type for host backend\n");
 			return -1;
 		}
+		break;
+#endif
+
+	case FAKE:
+		pdbg_targets_init(&_binary_fake_dtb_o_start);
 		break;
 
 	default:

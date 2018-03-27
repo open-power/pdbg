@@ -8,9 +8,18 @@ bin_PROGRAMS = pdbg
 ACLOCAL_AMFLAGS = -Im4
 AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror -O2
 
-DT = fake.dts \
-      p8-fsi.dts p8-i2c.dts p8-host.dts \
-      p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts p9-host.dts
+if TARGET_ARM
+DT_ARM = p8-fsi.dts p8-i2c.dts \
+	 p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts
+ARCH_FLAGS="-DTARGET_ARM=1"
+endif
+
+if TARGET_PPC
+DT_PPC = p8-host.dts p9-host.dts
+ARCH_FLAGS="-DTARGET_PPC=1"
+endif
+
+DT = fake.dts $(DT_ARM) $(DT_PPC)
 
 DT_objects = $(DT:.dts=.dtb.o)
 DT_headers = $(DT:.dts=.dt.h)
@@ -25,7 +34,8 @@ pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la \
 	-L.libs
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
-pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\"
+pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\" \
+	      $(ARCH_FLAGS)
 
 lib_LTLIBRARIES = libpdbg.la libfdt.la
 
