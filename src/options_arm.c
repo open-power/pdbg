@@ -43,19 +43,7 @@ enum backend default_backend(void)
 
 void print_backends(FILE *stream)
 {
-	/*
-	 * "This should never be the default" - Apopple 2017
-	 */
-	fprintf(stream, "I2C KERNEL FSI\n");
-
-	if (default_backend() == FAKE) {
-		fprintf(stderr, "Couldn't locate a good backend.\n");
-		fprintf(stderr, "It is possible that the FSI backend will work.\n");
-		fprintf(stderr, "You will need to select this along with the correct\n");
-		fprintf(stderr, "target yourself on the commandline\n");
-		fprintf(stderr, "`pdbg -b fsi -d [p8 | p9w | p9r | p9z] ...`\n");
-	}
-
+	fprintf(stream, "Valid backends: i2c kernel fsi\n");
 }
 
 bool backend_is_possible(enum backend backend)
@@ -70,9 +58,9 @@ bool backend_is_possible(enum backend backend)
 
 void print_targets(FILE *stream)
 {
-	fprintf(stream, "KERNEL: No target is necessary\n");
-	fprintf(stream, "I2C: No target is necessary\n");
-	fprintf(stream, "FSI: p8 p9w p9r p9z\n");
+	fprintf(stream, "kernel: No target is necessary\n");
+	fprintf(stream, "i2c: No target is necessary\n");
+	fprintf(stream, "fsi: p8 p9w p9r p9z\n");
 }
 
 const char *default_target(enum backend backend)

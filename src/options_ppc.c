@@ -34,7 +34,7 @@ bool backend_is_possible(enum backend backend)
 
 void print_backends(FILE *stream)
 {
-	fprintf(stream, "HOST");
+	fprintf(stream, "Valid backends: host\n");
 }
 
 const char *default_target(enum backend backend)
@@ -74,7 +74,7 @@ const char *default_target(enum backend backend)
 
 void print_targets(FILE *stream)
 {
-	fprintf(stream, "HOST: p8 p9\n");
+	fprintf(stream, "host: p8 p9\n");
 }
 
 bool target_is_possible(enum backend backend, const char *target)
