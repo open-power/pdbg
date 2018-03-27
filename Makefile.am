@@ -13,6 +13,7 @@ DT = fake.dts \
       p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts p9-host.dts
 
 DT_objects = $(DT:.dts=.dtb.o)
+DT_headers = $(DT:.dts=.dt.h)
 
 pdbg_SOURCES = \
 	src/main.c src/cfam.c src/scom.c src/reg.c src/mem.c src/thread.c \
@@ -65,6 +66,10 @@ DTC_V = $(DTC_V_$(V))
 DTC_V_ = $(DTC_V_$(AM_DEFAULT_VERBOSITY))
 DTC_V_0	= @echo "  DTC     " $@;
 
+GEN_V = $(GEN_V_$(V))
+GEN_V_ = $(GEN_V_$(AM_DEFAULT_VERBOSITY))
+GEN_V_0 = @echo "  GEN     " $@;
+
 %.dts: %.dts.m4
 	$(M4_V)$(M4) -I$(dir $<) $< > $@
 
@@ -77,6 +82,9 @@ p9z-fsi.dtb: p9z-fsi.dts p9-fsi.dtsi
 
 %.dtb: %.dts
 	$(DTC_V)$(DTC) -q -i$(dir $@) -I dts $< -O dtb > $@
+
+%.dt.h: %.dtb
+	$(GEN_V)$(srcdir)/generate_dt_header.sh $< > $@
 
 %.dtb.o: %.dtb
 	$(AM_V_CC)$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell echo $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
