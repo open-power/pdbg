@@ -247,7 +247,7 @@ struct pdbg_target_class *get_target_class(const char *name)
 	assert(target_class);
 	target_class->name = strdup(name);
 	list_head_init(&target_class->targets);
-	list_add(&target_classes, &target_class->class_head_link);
+	list_add_tail(&target_classes, &target_class->class_head_link);
 	return target_class;
 }
 
