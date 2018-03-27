@@ -24,13 +24,6 @@
 #include "device.h"
 #include "libpdbg.h"
 
-#define PR_DEBUG(x, args...) \
-	fprintf(stderr, x, ##args)
-#define PR_INFO(x, args...) \
-	fprintf(stderr, x, ##args)
-#define PR_ERROR(x, args...) \
-	fprintf(stderr, "%s: " x, __FUNCTION__, ##args)
-
 enum chip_type {CHIP_UNKNOWN, CHIP_P8, CHIP_P8NV, CHIP_P9};
 
 struct pdbg_target_class {

@@ -28,15 +28,11 @@
 #include "operations.h"
 #include "bitutils.h"
 #include "target.h"
+#include "debug.h"
 
 #define HTM_ERR(x) ({int rc = x; if (rc) {PR_ERROR("HTM Error %d %s:%d\n", \
 			rc, __FILE__, __LINE__);} \
 			rc;})
-/*
- * #define PR_PERL(x, args...) \
- *	fprintf(stderr, x, ##args)
- */
-#define PR_PERL(...)
 
 #define MIN(x,y) ((x < y) ? x : y)
 
@@ -334,15 +330,15 @@ static int do_htm_stop(struct htm *htm)
 		return -1;
 
 	if (status.state == UNINITIALIZED) {
-		PR_PERL("* Skipping STOP trigger, HTM appears uninitialized\n");
+		PR_INFO("* Skipping STOP trigger, HTM appears uninitialized\n");
 		return -1;
 	}
 	if (status.state == TRACING) {
-		PR_PERL("* Sending STOP trigger to HTM\n");
+		PR_INFO("* Sending STOP trigger to HTM\n");
 		if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_STOP)))
 			return -1;
 	} else {
-		PR_PERL("* Skipping STOP trigger, HTM is not running\n");
+		PR_INFO("* Skipping STOP trigger, HTM is not running\n");
 	}
 	return 1;
 }
@@ -388,7 +384,7 @@ static int do_adu_magic(struct pdbg_target *target, uint32_t index, uint64_t *ar
 	} while (val != 0x2000000000000004 && i < 10);
 
 	if (val != 0x2000000000000004) {
-		PR_PERL("Unexpected status on HTM start trigger PMISC command: 0x%"
+		P_INFO("Unexpected status on HTM start trigger PMISC command: 0x%"
 				PRIx64 "\n", val);
 		return -1;
 	}
@@ -561,7 +557,7 @@ static int do_htm_start(struct htm *htm)
 		return -1;
 	}
 
-	PR_PERL("* Sending START trigger to HTM\n");
+	PR_INFO("* Sending START trigger to HTM\n");
 	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_MARK_VALID)))
 		return -1;
 
@@ -773,11 +769,11 @@ static int do_htm_pause(struct htm *htm)
 		return -1;
 
 	if (status.state == UNINITIALIZED) {
-		PR_PERL("* Skipping PAUSE trigger, HTM appears uninitialized\n");
+		PR_INFO("* Skipping PAUSE trigger, HTM appears uninitialized\n");
 		return 0;
 	}
 
-	PR_PERL("* Sending PAUSE trigger to HTM\n");
+	PR_INFO("* Sending PAUSE trigger to HTM\n");
 	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_PAUSE)))
 		return -1;
 
@@ -879,7 +875,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 		return -1;
 
 	if (status.state != COMPLETE) {
-		PR_PERL("* Skipping DUMP tigger, HTM is not in complete state\n");
+		PR_INFO("* Skipping DUMP tigger, HTM is not in complete state\n");
 		return -1;
 	}
 

@@ -24,6 +24,7 @@
 #include "target.h"
 #include "operations.h"
 #include "bitutils.h"
+#include "debug.h"
 
 static uint64_t mfspr(uint64_t reg, uint64_t spr)
 {
