@@ -4,6 +4,13 @@ AM_SILENT_RULES([yes])
 
 AC_PROG_CC
 AC_PROG_LIBTOOL
+
+AC_PATH_PROG([M4], [m4])
+if test x"$ac_cv_path_M4" = "x" ; then
+	AC_MSG_ERROR([Command 'm4' not found.])
+fi
+AC_SUBST([M4])
+
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])

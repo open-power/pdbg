@@ -63,10 +63,10 @@ DTC_V_ = $(DTC_V_$(AM_DEFAULT_VERBOSITY))
 DTC_V_0	= @echo "  DTC     " $@;
 
 %.dts: %.dts.m4
-	$(M4_V)m4 -I$(dir $<) $< > $@
+	$(M4_V)$(M4) -I$(dir $<) $< > $@
 
 %.dtsi: %.dtsi.m4
-	$(M4_V)m4 -I$(dir $<) $< > $@
+	$(M4_V)$(M4) -I$(dir $<) $< > $@
 
 p9w-fsi.dtb: p9w-fsi.dts p9-fsi.dtsi
 p9r-fsi.dtb: p9r-fsi.dts p9-fsi.dtsi
