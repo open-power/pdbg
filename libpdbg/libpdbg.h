@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 extern bool pdbg_expert_mode;
 
@@ -183,5 +184,17 @@ typedef void (*pdbg_progress_tick_t)(uint64_t cur, uint64_t end);
 
 void pdbg_set_progress_tick(pdbg_progress_tick_t fn);
 void pdbg_progress_tick(uint64_t cur, uint64_t end);
+
+#define PDBG_ERROR	0
+#define PDBG_WARNING	1
+#define PDBG_NOTICE	2
+#define PDBG_INFO	3
+#define PDBG_DEBUG	4
+
+typedef void (*pdbg_log_func_t)(int loglevel, const char *fmt, va_list ap);
+
+void pdbg_set_logfunc(pdbg_log_func_t fn);
+void pdbg_set_loglevel(int loglevel);
+void pdbg_log(int loglevel, const char *fmt, ...);
 
 #endif
