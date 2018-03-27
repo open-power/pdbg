@@ -32,3 +32,4 @@ ltmain.sh
 libtool
 m4
 *.dtsi
+*.dt.h
