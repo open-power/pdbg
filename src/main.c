@@ -144,11 +144,11 @@ static void print_usage(char *pname)
 	printf("\n");
 	printf(" Commands:\n");
 	for (i = 0; i < ARRAY_SIZE(actions); i++)
-		printf("\t%s %s\n", actions[i].name, actions[i].args);
+		printf("  %-15s %-27s  %s\n", actions[i].name, actions[i].args, actions[i].desc);
 	if (pdbg_expert_mode) {
 		printf(" Expert Commands:\n");
 		for (i = 0; i < ARRAY_SIZE(expert_actions); i++)
-			printf("\t%s %s\n", expert_actions[i].name, expert_actions[i].args);
+			printf("  %-15s %-27s  %s\n", expert_actions[i].name, expert_actions[i].args, expert_actions[i].desc);
 	}
 }
 
