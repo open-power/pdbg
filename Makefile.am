@@ -73,7 +73,7 @@ p9r-fsi.dtb: p9r-fsi.dts p9-fsi.dtsi
 p9z-fsi.dtb: p9z-fsi.dts p9-fsi.dtsi
 
 %.dtb: %.dts
-	$(DTC_V)dtc -q -i$(dir $@) -I dts $< -O dtb > $@
+	$(DTC_V)$(DTC) -q -i$(dir $@) -I dts $< -O dtb > $@
 
 %.dtb.o: %.dtb
 	$(AM_V_CC)$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell echo $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
