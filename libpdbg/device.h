@@ -62,16 +62,6 @@ struct dt_node *dt_new_root(const char *name);
 /* Graft a root node into this tree. */
 bool dt_attach_root(struct dt_node *parent, struct dt_node *root);
 
-/* Add a child node. */
-struct dt_node *dt_new(struct dt_node *parent, const char *name);
-struct dt_node *dt_new_addr(struct dt_node *parent, const char *name,
-			    uint64_t unit_addr);
-struct dt_node *dt_new_2addr(struct dt_node *parent, const char *name,
-			     uint64_t unit_addr0, uint64_t unit_addr1);
-
-/* Copy node to new parent, including properties and subnodes */
-struct dt_node *dt_copy(struct dt_node *node, struct dt_node *parent);
-
 /* Add a property node, various forms. */
 struct dt_property *dt_add_property(struct dt_node *node,
 				    const char *name,
@@ -177,9 +167,6 @@ struct dt_node *dt_find_by_path(struct dt_node *root, const char *path);
 
 /* Find a child node by name */
 struct dt_node *dt_find_by_name(struct dt_node *root, const char *name);
-
-/* Find a node by phandle */
-struct dt_node *dt_find_by_phandle(struct dt_node *root, u32 phandle);
 
 /* Find a property by name. */
 struct dt_property *dt_find_property(const struct dt_node *node,\

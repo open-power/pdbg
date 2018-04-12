@@ -150,102 +150,6 @@ static inline void dt_destroy(struct dt_node *dn)
 	free(dn);
 }
 
-struct dt_node *dt_new(struct dt_node *parent, const char *name)
-{
-	struct dt_node *new;
-	assert(parent);
-
-	new = new_node(name);
-	if (!dt_attach_root(parent, new)) {
-		dt_destroy(new);
-		return NULL;
-	}
-	return new;
-}
-
-struct dt_node *dt_new_addr(struct dt_node *parent, const char *name,
-			    uint64_t addr)
-{
-	char *lname;
-	struct dt_node *new;
-	size_t len;
-
-	assert(parent);
-	len = strlen(name) + STR_MAX_CHARS(addr) + 2;
-	lname = malloc(len);
-	if (!lname)
-		return NULL;
-	snprintf(lname, len, "%s@%llx", name, (long long)addr);
-	new = new_node(lname);
-	free(lname);
-	if (!dt_attach_root(parent, new)) {
-		dt_destroy(new);
-		return NULL;
-	}
-	return new;
-}
-
-struct dt_node *dt_new_2addr(struct dt_node *parent, const char *name,
-			     uint64_t addr0, uint64_t addr1)
-{
-	char *lname;
-	struct dt_node *new;
-	size_t len;
-	assert(parent);
-
-	len = strlen(name) + 2*STR_MAX_CHARS(addr0) + 3;
-	lname = malloc(len);
-	if (!lname)
-		return NULL;
-	snprintf(lname, len, "%s@%llx,%llx",
-		 name, (long long)addr0, (long long)addr1);
-	new = new_node(lname);
-	free(lname);
-	if (!dt_attach_root(parent, new)) {
-		dt_destroy(new);
-		return NULL;
-	}
-	return new;
-}
-
-static struct dt_node *__dt_copy(struct dt_node *node, struct dt_node *parent,
-		bool root)
-{
-	struct dt_property *prop, *new_prop;
-	struct dt_node *new_node, *child;
-
-	new_node = dt_new(parent, node->name);
-	if (!new_node)
-		return NULL;
-
-	list_for_each(&node->properties, prop, list) {
-		new_prop = dt_add_property(new_node, prop->name, prop->prop,
-				prop->len);
-		if (!new_prop)
-			goto fail;
-	}
-
-	list_for_each(&node->children, child, list) {
-		child = __dt_copy(child, new_node, false);
-		if (!child)
-			goto fail;
-	}
-
-	return new_node;
-
-fail:
-	/* dt_free will recurse for us, so only free when we unwind to the
-	 * top-level failure */
-	if (root)
-		dt_free(new_node);
-	return NULL;
-}
-
-struct dt_node *dt_copy(struct dt_node *node, struct dt_node *parent)
-{
-	return __dt_copy(node, parent, true);
-}
-
 char *dt_get_path(const struct dt_node *node)
 {
 	unsigned int len = 0;
@@ -357,16 +261,6 @@ struct dt_node *dt_find_by_name(struct dt_node *root, const char *name)
 			return match;
 	}
 
-	return NULL;
-}
-
-struct dt_node *dt_find_by_phandle(struct dt_node *root, u32 phandle)
-{
-	struct dt_node *node;
-
-	dt_for_each_node(root, node)
-		if (node->phandle == phandle)
-			return node;
 	return NULL;
 }
 
