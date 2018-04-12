@@ -264,7 +264,9 @@ static void print_usage(enum htm_type type)
 
 int run_htm(int optind, int argc, char *argv[])
 {
+	struct pdbg_target *target;
 	enum htm_type type;
+	struct pdbg_target *core_target = NULL;
 	int i, rc = 0;
 
 	if (argc - optind < 2) {
@@ -283,8 +285,48 @@ int run_htm(int optind, int argc, char *argv[])
 		return 0;
 	}
 
-	if (type == HTM_CORE)
+	if (type == HTM_CORE) {
 		fprintf(stderr, "Warning: Core HTM is currently experimental\n");
+
+		pdbg_for_each_class_target("core", target) {
+			if (target_selected(target)) {
+				if (!core_target) {
+					core_target = target;
+				} else {
+					fprintf(stderr, "It doesn't make sense to core trace on"
+						" multiple cores at once.\n");
+					fprintf(stderr, "What you probably want is -p 0 -c x\n");
+					return 0;
+				}
+			}
+		}
+
+		if (!core_target) {
+			fprintf(stderr, "You haven't selected any HTM Cores\n");
+			return 0;
+		}
+
+		/*
+		 * Check that powersave is off.
+		 *
+		 * This is as easy as checking that every single
+		 * thread is "ACTIVE" and hasn't gone into any sleep
+		 * state.
+		 */
+		pdbg_for_each_class_target("thread", target) {
+			pdbg_target_probe(target);
+
+			if (pdbg_target_status(target) == PDBG_TARGET_NONEXISTENT)
+				continue;
+
+			if ((thread_status(target) & THREAD_STATUS_ACTIVE) != THREAD_STATUS_ACTIVE) {
+				fprintf(stderr, "It appears powersave is on 0x%"  PRIx64 "%p\n", thread_status(target), target);
+				fprintf(stderr, "core HTM needs to run with powersave off\n");
+				fprintf(stderr, "Hint: put powersave=off on the kernel commandline\n");
+				return 0;
+			}
+		}
+	}
 
 	optind++;
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {

@@ -267,7 +267,7 @@ static void target_unselect(struct pdbg_target *target)
 	pdbg_target_priv_set(target, NULL);
 }
 
-static bool target_selected(struct pdbg_target *target)
+bool target_selected(struct pdbg_target *target)
 {
 	return (bool) pdbg_target_priv(target);
 }
