@@ -45,6 +45,24 @@
 #define DEBUGFS_MEMTRACE DEBUGFS_POWERPC"/memtrace"
 #define DEBUGFS_MEMTRACE_ENABLE DEBUGFS_MEMTRACE"/enable"
 
+/*
+ * This is a CORE register not a HTM register, don't pass the HTM
+ * target to it.
+ */
+#define HID0_REGISTER			0x1329C
+#define  HID0_ONE_PER_GROUP		PPC_BIT(0)
+#define  HID0_DO_SINGLE			PPC_BIT(1)
+#define  HID0_SINGLE_DECODE		PPC_BIT(4)
+#define  HID0_EN_INST_TRACE		PPC_BIT(17)
+#define  HID0_TRACE_EN			PPC_BIT(23)
+
+/*
+ * This is a CORE register not a HTM register, don't pass the HTM
+ * target to it.
+ */
+#define NCU_MODE_REGISTER		0x10C0A
+#define NCU_MODE_HTM_ENABLE		PPC_BIT(0)
+
 #define HTM_COLLECTION_MODE		0
 #define	  HTM_MODE_ENABLE		PPC_BIT(0)
 #define	  HTM_MODE_CONTENT_SEL		PPC_BITMASK(1,2)
@@ -446,12 +464,33 @@ static int configure_debugfs_memtrace(struct htm *htm)
 
 static int configure_chtm(struct htm *htm)
 {
+	uint64_t hid0, ncu;
+
 	if (HTM_ERR(configure_debugfs_memtrace(htm)))
 		return -1;
 
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
-					HTM_MODE_ENABLE |
-					CHTM_MODE_NO_ASSERT_LLAT_L3)))
+		HTM_MODE_ENABLE | HTM_MODE_WRAP)))
+		return -1;
+	/* Not great to assume the core is the parent of the htm. */
+	if (HTM_ERR(pib_read(htm->target.parent, HID0_REGISTER, &hid0)))
+		return -1;
+
+	hid0 |= (HID0_DO_SINGLE | HID0_SINGLE_DECODE | HID0_EN_INST_TRACE |
+		 HID0_TRACE_EN | HID0_ONE_PER_GROUP);
+
+	/* Not great to assume the core is the parent of the htm. */
+	if (HTM_ERR(pib_write(htm->target.parent, HID0_REGISTER, hid0)))
+		return -1;
+
+	/* Not great to assume the core is the parent of the htm. */
+	if (HTM_ERR(pib_read(htm->target.parent, NCU_MODE_REGISTER, &ncu)))
+		return -1;
+
+	ncu |= NCU_MODE_HTM_ENABLE;
+
+	/* Not great to assume the core is the parent of the htm. */
+	if (HTM_ERR(pib_write(htm->target.parent, NCU_MODE_REGISTER, ncu)))
 		return -1;
 
 	return 0;
