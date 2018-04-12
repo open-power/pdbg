@@ -8,7 +8,7 @@ include libfdt/Makefile.libfdt
 bin_PROGRAMS = pdbg
 
 ACLOCAL_AMFLAGS = -Im4
-AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror
+AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror -O2
 
 pdbg_SOURCES = \
 	src/main.c src/cfam.c src/scom.c src/reg.c src/mem.c src/thread.c \

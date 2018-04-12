@@ -254,7 +254,7 @@ struct hw_unit_info *find_compatible_target(const char *compat)
 	struct pdbg_target *target;
 
 	for (p = &__start_hw_units; p < (struct hw_unit_info **) &__stop_hw_units; p++) {
-		target = (*p)->hw_unit + (*p)->struct_target_offset;
+		target = (*p)->hw_unit;
 		if (!strcmp(target->compatible, compat))
 			return *p;
 	}
@@ -268,7 +268,6 @@ void pdbg_targets_init(void *fdt)
 	const struct dt_property *p;
 	struct pdbg_target_class *target_class;
 	struct hw_unit_info *hw_unit_info;
-	void *new_hw_unit;
 	struct pdbg_target *new_target;
 	uint32_t index;
 
@@ -283,10 +282,9 @@ void pdbg_targets_init(void *fdt)
 		hw_unit_info = find_compatible_target(p->prop);
 		if (hw_unit_info) {
 			/* We need to allocate a new target */
-			new_hw_unit = malloc(hw_unit_info->size);
-			assert(new_hw_unit);
-			memcpy(new_hw_unit, hw_unit_info->hw_unit, hw_unit_info->size);
-			new_target = new_hw_unit + hw_unit_info->struct_target_offset;
+			new_target = malloc(hw_unit_info->size);
+			assert(new_target);
+			memcpy(new_target, hw_unit_info->hw_unit, hw_unit_info->size);
 			new_target->dn = dn;
 			dn->target = new_target;
 			index = dt_prop_get_u32_def(dn, "index", -1);
