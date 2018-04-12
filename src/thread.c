@@ -27,7 +27,7 @@
 
 static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *status, uint64_t *unused1)
 {
-	*status = SETFIELD(0xf << (index * 4), *status, thread_status(target) & 0xf);
+	*status = SETFIELD(0xffULL << (index * 8), *status, thread_status(target) & 0xffULL);
 	return 1;
 }
 
@@ -38,8 +38,8 @@ static int print_core_thread_status(struct pdbg_target *core_target, uint32_t in
 
 	printf("c%02d:", index);
 	rc = for_each_child_target("thread", core_target, print_thread_status, &status, NULL);
-	for (i = 0; i < 8; i++)
-		switch ((status >> (i * 4)) & 0xf) {
+	for (i = 0; i < 8; i++) {
+		switch ((status >> (i * 8)) & 0xf) {
 		case THREAD_STATUS_ACTIVE:
 			printf(" A");
 			break;
@@ -71,6 +71,7 @@ static int print_core_thread_status(struct pdbg_target *core_target, uint32_t in
 			printf(" U");
 			break;
 		}
+	}
 	printf("\n");
 
 	return rc;

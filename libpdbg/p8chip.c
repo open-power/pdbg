@@ -42,6 +42,7 @@
 #define  RAS_STATUS_TS_QUIESCE		PPC_BIT(49)
 #define POW_STATUS_REG			0x4
 #define  PMC_POW_STATE			PPC_BITMASK(4, 5)
+#define  PMC_POW_SMT			PPC_BITMASK(6, 8)
 #define  CORE_POW_STATE			PPC_BITMASK(23, 25)
 #define THREAD_ACTIVE_REG      		0x1310e
 #define  THREAD_ACTIVE			PPC_BITMASK(0, 7)
@@ -124,7 +125,7 @@ static uint64_t get_thread_status(struct thread *thread)
 	/* Read POW status */
 	CHECK_ERR(pib_read(&thread->target, POW_STATUS_REG, &val));
 	thread_status = SETFIELD(THREAD_STATUS_STATE, thread_status, GETFIELD(PMC_POW_STATE, val));
-
+	thread_status = SETFIELD(THREAD_STATUS_SMT, thread_status, GETFIELD(PMC_POW_SMT, val));
 	/* Clear debug mode */
 	mode_reg &= ~MR_THREAD_IN_DEBUG;
 	CHECK_ERR(pib_write(&thread->target, RAS_MODE_REG, mode_reg));

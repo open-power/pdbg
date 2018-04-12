@@ -73,6 +73,12 @@ uint64_t thread_status(struct pdbg_target *target);
 #define THREAD_STATUS_NAP  PPC_BIT(61)
 #define THREAD_STATUS_SLEEP        PPC_BITMASK(61, 62)
 #define THREAD_STATUS_QUIESCE      PPC_BIT(60)
+#define THREAD_STATUS_SMT	PPC_BITMASK(57, 59)
+#define THREAD_STATUS_SMT_1	PPC_BIT(59)
+#define THREAD_STATUS_SMT_2SH	PPC_BIT(58)
+#define THREAD_STATUS_SMT_2SP	(PPC_BIT(58) | PPC_BIT(59))
+#define THREAD_STATUS_SMT_4	PPC_BIT(57)
+#define THREAD_STATUS_SMT_8	(PPC_BIT(57) | PPC_BIT(59))
 
 int htm_start(struct pdbg_target *target);
 int htm_stop(struct pdbg_target *target);

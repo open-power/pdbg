@@ -16,6 +16,7 @@
 #ifndef __OPERATIONS_H
 #define __OPERATIONS_H
 
+#include "bitutils.h"
 #include "target.h"
 
 /* Error codes */
@@ -42,6 +43,13 @@ int adu_putmem(struct pdbg_target *target, uint64_t start_addr, uint8_t *input, 
 #define THREAD_STATUS_NAP	PPC_BIT(61)
 #define THREAD_STATUS_SLEEP	PPC_BITMASK(61, 62)
 #define THREAD_STATUS_QUIESCE	PPC_BIT(60)
+#define THREAD_STATUS_SMT	PPC_BITMASK(57, 59)
+#define THREAD_STATUS_SMT_1	PPC_BIT(59)
+#define THREAD_STATUS_SMT_2SH	PPC_BIT(58)
+#define THREAD_STATUS_SMT_2SP	(PPC_BIT(58) | PPC_BIT(59))
+#define THREAD_STATUS_SMT_4	PPC_BIT(57)
+#define THREAD_STATUS_SMT_8	(PPC_BIT(57) | PPC_BIT(59))
+
 
 /* Opcodes for instruction ramming */
 #define OPCODE_MASK  0xfc0003ffUL
