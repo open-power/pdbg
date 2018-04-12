@@ -46,6 +46,14 @@ enum htm_type {
 	HTM_NEST,
 };
 
+static inline void print_htm_address(enum htm_type type,
+	struct pdbg_target *target)
+{
+	if (type == HTM_CORE)
+		printf("%d#", pdbg_parent_index(target, "core"));
+	printf("%d\n", pdbg_target_index(target));
+}
+
 static char *get_htm_dump_filename(void)
 {
 	char *filename;
@@ -72,17 +80,15 @@ static int run_start(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		uint64_t chip_id;
-		uint32_t index;
-
 		if (target_is_disabled(target))
 			continue;
 
-		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
-		index = pdbg_target_index(target);
-		printf("Starting HTM@%" PRIu64 "#%d\n", chip_id, index);
-		if (htm_start(target) != 1)
-			printf("Couldn't start HTM@%" PRIu64 "#%d\n", chip_id, index);
+		printf("Starting HTM@");
+		print_htm_address(type, target);
+		if (htm_start(target) != 1) {
+			printf("Couldn't start HTM@");
+			print_htm_address(type, target);
+		}
 		rc++;
 	}
 
@@ -95,17 +101,15 @@ static int run_stop(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		uint64_t chip_id;
-		uint32_t index;
-
 		if (target_is_disabled(target))
 			continue;
 
-		index = pdbg_target_index(target);
-		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
-		printf("Stopping HTM@%" PRIu64 "#%d\n", chip_id, index);
-		if (htm_stop(target) != 1)
-			printf("Couldn't stop HTM@%" PRIu64 "#%d\n", chip_id, index);
+		printf("Stopping HTM@");
+		print_htm_address(type, target);
+		if (htm_stop(target) != 1) {
+			printf("Couldn't stop HTM@");
+			print_htm_address(type, target);
+		}
 		rc++;
 	}
 
@@ -118,17 +122,15 @@ static int run_status(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		uint64_t chip_id;
-		uint32_t index;
-
 		if (target_is_disabled(target))
 			continue;
 
-		index = pdbg_target_index(target);
-		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
-		printf("HTM@%" PRIu64 "#%d\n", chip_id, index);
-		if (htm_status(target) != 1)
-			printf("Couldn't get HTM@%" PRIu64 "#%d status\n", chip_id, index);
+		printf("HTM@");
+		print_htm_address(type, target);
+		if (htm_status(target) != 1) {
+			printf("Couldn't get HTM@");
+			print_htm_address(type, target);
+		}
 		rc++;
 		printf("\n\n");
 	}
@@ -143,17 +145,15 @@ static int run_reset(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		uint64_t chip_id;
-		uint32_t index;
-
 		if (target_is_disabled(target))
 			continue;
 
-		index = pdbg_target_index(target);
-		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
-		printf("Resetting HTM@%" PRIu64 "#%d\n", chip_id, index);
-		if (htm_reset(target, &base, &size) != 1)
-			printf("Couldn't reset HTM@%" PRIu64 "#%d\n", chip_id, index);
+		printf("Resetting HTM@");
+		print_htm_address(type, target);
+		if (htm_reset(target, &base, &size) != 1) {
+			printf("Couldn't reset HTM@");
+			print_htm_address(type, target);
+		}
 		if (old_base != base) {
 			printf("The kernel has initialised HTM memory at:\n");
 			printf("base: 0x%016" PRIx64 " for 0x%016" PRIx64 " size\n",
@@ -181,17 +181,15 @@ static int run_dump(enum htm_type type, int optind, int argc, char *argv[])
 	/* size = 0 will dump everything */
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		uint64_t chip_id;
-		uint32_t index;
-
 		if (target_is_disabled(target))
 			continue;
 
-		index = pdbg_target_index(target);
-		assert(!pdbg_get_u64_property(target, "chip-id", &chip_id));
-		printf("Dumping HTM@%" PRIu64 "#%d\n", chip_id, index);
-		if (htm_dump(target, 0, filename) == 1)
-			printf("Couldn't dump HTM@%" PRIu64 "#%d\n", chip_id, index);
+		printf("Dumping HTM@");
+		print_htm_address(type, target);
+		if (htm_dump(target, 0, filename) == 1) {
+			printf("Couldn't dump HTM@");
+			print_htm_address(type, target);
+		}
 		rc++;
 	}
 	free(filename);
