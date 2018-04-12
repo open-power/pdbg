@@ -15,6 +15,16 @@ generated using autoreconf. This can be done by running `./bootstrap.sh` in the
 top level directory. Static linking is supported and can be performed by adding
 `CFLAGS=-static` to the command line passed to configure.
 
+### Cross compiling for BMC (ARM)
+
+```
+apt-get install gcc-arm-linux-gnueabi
+./bootstrap.sh
+./configure --host=arm-linux-gnueabi CFLAGS="-static"
+make
+rsync pdbg root@bmc:/usr/local/bin
+```
+
 ## Usage
 
 Several backends are supported depending on which system you are using and are
