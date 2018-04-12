@@ -87,7 +87,7 @@ static int assert_special_wakeup(struct core *chip)
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
 			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", chip->target.name,
-				 dt_get_address(chip->target.dn, 0, NULL));
+				 dt_get_address(&chip->target, 0, NULL));
 			return -1;
 		}
 	} while (!(gp0 & SPECIAL_WKUP_DONE));
@@ -163,7 +163,7 @@ static int p8_thread_stop(struct thread *thread)
 {
 	int i = 0;
 	uint64_t val;
-	struct core *chip = target_to_core(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.parent);
 
 	do {
 		/* Quiese active thread */
@@ -201,7 +201,7 @@ static int p8_thread_stop(struct thread *thread)
 static int p8_thread_start(struct thread *thread)
 {
 	uint64_t val;
-	struct core *chip = target_to_core(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.parent);
 
 	/* Activate thread */
 	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));
@@ -217,15 +217,15 @@ static int p8_thread_start(struct thread *thread)
 
 static int p8_ram_setup(struct thread *thread)
 {
-	struct dt_node *dn;
-	struct core *chip = target_to_core(thread->target.dn->parent->target);
+	struct pdbg_target *target;
+	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t ram_mode, val;
 
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
-	dt_for_each_compatible(chip->target.dn, dn, "ibm,power8-thread") {
+	dt_for_each_compatible(&chip->target, target, "ibm,power8-thread") {
 		struct thread *tmp;
-		tmp = target_to_thread(dn->target);
+		tmp = target_to_thread(target);
 		if (!(get_thread_status(tmp) & THREAD_STATUS_QUIESCE))
 			return 1;
 	}
@@ -250,7 +250,7 @@ static int p8_ram_setup(struct thread *thread)
 
 static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
 {
-	struct core *chip = target_to_core(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t val;
 
 	CHECK_ERR(pib_write(&chip->target, SCR0_REG, *scratch));
@@ -282,7 +282,7 @@ static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 
 static int p8_ram_destroy(struct thread *thread)
 {
-	struct core *chip = target_to_core(thread->target.dn->parent->target);
+	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t ram_mode;
 
 	/* Disable RAM mode */
@@ -300,7 +300,7 @@ static int p8_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
 
-	thread->id = (dt_get_address(target->dn, 0, NULL) >> 4) & 0xf;
+	thread->id = (dt_get_address(target, 0, NULL) >> 4) & 0xf;
 	thread->status = get_thread_status(thread);
 
 	return 0;

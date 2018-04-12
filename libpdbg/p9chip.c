@@ -74,7 +74,7 @@ static int p9_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
 
-	thread->id = dt_prop_get_u32(target->dn, "tid");
+	thread->id = dt_prop_get_u32(target, "tid");
 	thread->status = p9_get_thread_status(thread);
 
 	return 0;
@@ -125,18 +125,18 @@ static int p9_thread_sreset(struct thread *thread)
 
 static int p9_ram_setup(struct thread *thread)
 {
-	struct dt_node *dn;
-	struct core *chip = target_to_core(thread->target.dn->parent->target);
+	struct pdbg_target *target;
+	struct core *chip = target_to_core(thread->target.parent);
 
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
-	dt_for_each_compatible(chip->target.dn, dn, "ibm,power9-thread") {
+	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
 		struct thread *tmp;
 
 		/* If this thread wasn't enabled it may not yet have been probed
 		   so do that now. This will also update the thread status */
-		p9_thread_probe(dn->target);
-		tmp = target_to_thread(dn->target);
+		p9_thread_probe(target);
+		tmp = target_to_thread(target);
 		if (tmp->status != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE))
 			return 1;
 	}
@@ -233,7 +233,7 @@ static int p9_core_probe(struct pdbg_target *target)
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
 			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", target->name,
-				 dt_get_address(target->dn, 0, NULL));
+				 dt_get_address(target, 0, NULL));
 			break;
 		}
 	} while (!(value & SPECIAL_WKUP_DONE));

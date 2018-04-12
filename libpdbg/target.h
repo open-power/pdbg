@@ -45,13 +45,19 @@ struct pdbg_target {
 	char *class;
 	int (*probe)(struct pdbg_target *target);
 	int index;
-	struct dt_node *dn;
+	const char *dn_name;
+	struct list_node list;
+	struct list_head properties;
+	struct list_head children;
+	struct pdbg_target *parent;
+	u32 phandle;
 	struct list_node class_link;
 };
 
 struct pdbg_target *require_target_parent(struct pdbg_target *target);
 struct pdbg_target_class *find_target_class(const char *name);
 struct pdbg_target_class *require_target_class(const char *name);
+struct pdbg_target_class *get_target_class(const char *name);
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 
 extern struct list_head empty_list;
@@ -62,6 +68,7 @@ struct hw_unit_info {
 	void *hw_unit;
 	size_t size;
 };
+struct hw_unit_info *find_compatible_target(const char *compat);
 
 /* We can't pack the structs themselves directly into a special
  * section because there doesn't seem to be any standard way of doing

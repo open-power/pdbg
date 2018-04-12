@@ -91,7 +91,10 @@ static int host_pib_probe(struct pdbg_target *target)
 	if (!fd)
 		return -1;
 
-	chip_id = dt_prop_get_u32(target->dn, "chip-id");
+	chip_id = dt_get_chip_id(target);
+	if (chip_id == -1)
+		goto out;
+
 	if (asprintf(&access_fn, "%s/%08d/access", XSCOM_BASE_PATH, chip_id) < 0)
 		goto out;
 

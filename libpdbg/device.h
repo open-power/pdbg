@@ -38,38 +38,28 @@ struct dt_property {
 	char prop[/* len */];
 };
 
-struct dt_node {
-	const char *name;
-	struct list_node list;
-	struct list_head properties;
-	struct list_head children;
-	struct dt_node *parent;
-	u32 phandle;
-	struct pdbg_target *target;
-};
-
 /* This is shared with device_tree.c .. make it static when
  * the latter is gone (hopefully soon)
  */
 extern u32 last_phandle;
 
-extern struct dt_node *dt_root;
-extern struct dt_node *dt_chosen;
+extern struct pdbg_target *dt_root;
+extern struct pdbg_target *dt_chosen;
 
 /* Create a root node: ie. a parentless one. */
-struct dt_node *dt_new_root(const char *name);
+struct pdbg_target *dt_new_root(const char *name, const void *fdt, int offset);
 
 /* Graft a root node into this tree. */
-bool dt_attach_root(struct dt_node *parent, struct dt_node *root);
+bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root);
 
 /* Add a property node, various forms. */
-struct dt_property *dt_add_property(struct dt_node *node,
+struct dt_property *dt_add_property(struct pdbg_target *node,
 				    const char *name,
 				    const void *val, size_t size);
-struct dt_property *dt_add_property_string(struct dt_node *node,
+struct dt_property *dt_add_property_string(struct pdbg_target *node,
 					   const char *name,
 					   const char *value);
-struct dt_property *dt_add_property_nstr(struct dt_node *node,
+struct dt_property *dt_add_property_nstr(struct pdbg_target *node,
 					 const char *name,
 					 const char *value, unsigned int vlen);
 
@@ -79,7 +69,7 @@ struct dt_property *dt_add_property_nstr(struct dt_node *node,
 			    sizeof((const char *[]) { __VA_ARGS__ })/sizeof(const char *), \
 			    __VA_ARGS__)
 
-struct dt_property *__dt_add_property_strings(struct dt_node *node,
+struct dt_property *__dt_add_property_strings(struct pdbg_target *node,
 					      const char *name,
 					      int count, ...);
 
@@ -89,7 +79,7 @@ struct dt_property *__dt_add_property_strings(struct dt_node *node,
 			    sizeof((u32[]) { __VA_ARGS__ })/sizeof(u32), \
 			    __VA_ARGS__)
 
-struct dt_property *__dt_add_property_cells(struct dt_node *node,
+struct dt_property *__dt_add_property_cells(struct pdbg_target *node,
 					    const char *name,
 					    int count, ...);
 
@@ -98,19 +88,19 @@ struct dt_property *__dt_add_property_cells(struct dt_node *node,
 			       sizeof((u64[]) { __VA_ARGS__ })/sizeof(u64), \
 			       __VA_ARGS__)
 
-struct dt_property *__dt_add_property_u64s(struct dt_node *node,
+struct dt_property *__dt_add_property_u64s(struct pdbg_target *node,
 					   const char *name,
 					   int count, ...);
 
-static inline struct dt_property *dt_add_property_u64(struct dt_node *node,
+static inline struct dt_property *dt_add_property_u64(struct pdbg_target *node,
 						      const char *name, u64 val)
 {
 	return dt_add_property_cells(node, name, (u32)(val >> 32), (u32)val);
 }
 
-void dt_del_property(struct dt_node *node, struct dt_property *prop);
+void dt_del_property(struct pdbg_target *node, struct dt_property *prop);
 
-void dt_check_del_prop(struct dt_node *node, const char *name);
+void dt_check_del_prop(struct pdbg_target *node, const char *name);
 
 /* Warning: moves *prop! */
 void dt_resize_property(struct dt_property **prop, size_t len);
@@ -118,10 +108,10 @@ void dt_resize_property(struct dt_property **prop, size_t len);
 u32 dt_property_get_cell(const struct dt_property *prop, u32 index);
 
 /* First child of this node. */
-struct dt_node *dt_first(const struct dt_node *root);
+struct pdbg_target *dt_first(const struct pdbg_target *root);
 
 /* Return next node, or NULL. */
-struct dt_node *dt_next(const struct dt_node *root, const struct dt_node *prev);
+struct pdbg_target *dt_next(const struct pdbg_target *root, const struct pdbg_target *prev);
 
 /* Iterate nodes */
 #define dt_for_each_node(root, node) \
@@ -134,19 +124,19 @@ struct dt_node *dt_next(const struct dt_node *root, const struct dt_node *prev);
 bool dt_prop_find_string(const struct dt_property *p, const char *s);
 
 /* Check a compatible property */
-bool dt_node_is_compatible(const struct dt_node *node, const char *compat);
+bool dt_node_is_compatible(const struct pdbg_target *node, const char *compat);
 
 /* Find a node based on compatible property */
-struct dt_node *dt_find_compatible_node(struct dt_node *root,
-					struct dt_node *prev,
+struct pdbg_target *dt_find_compatible_node(struct pdbg_target *root,
+					struct pdbg_target *prev,
 					const char *compat);
 
 #define dt_for_each_compatible(root, node, compat)	\
 	for (node = NULL; 			        \
 	     (node = dt_find_compatible_node(root, node, compat)) != NULL;)
 
-struct dt_node *dt_find_compatible_node_on_chip(struct dt_node *root,
-						struct dt_node *prev,
+struct pdbg_target *dt_find_compatible_node_on_chip(struct pdbg_target *root,
+						struct pdbg_target *prev,
 						const char *compat,
 						uint32_t chip_id);
 
@@ -155,71 +145,71 @@ struct dt_node *dt_find_compatible_node_on_chip(struct dt_node *root,
 	     (node = dt_find_compatible_node_on_chip(root, node,\
 						     compat, chip_id)) != NULL;)
 /* Check status property */
-bool dt_node_is_enabled(struct dt_node *node);
+bool dt_node_is_enabled(struct pdbg_target *node);
 
 /* Build the full path for a node. Return a new block of memory, caller
  * shall free() it
  */
-char *dt_get_path(const struct dt_node *node);
+char *dt_get_path(const struct pdbg_target *node);
 
 /* Find a node by path */
-struct dt_node *dt_find_by_path(struct dt_node *root, const char *path);
+struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char *path);
 
 /* Find a child node by name */
-struct dt_node *dt_find_by_name(struct dt_node *root, const char *name);
+struct pdbg_target *dt_find_by_name(struct pdbg_target *root, const char *name);
 
 /* Find a property by name. */
-struct dt_property *dt_find_property(const struct dt_node *node,\
+struct dt_property *dt_find_property(const struct pdbg_target *node,\
 				     const char *name);
-const struct dt_property *dt_require_property(const struct dt_node *node,
+const struct dt_property *dt_require_property(const struct pdbg_target *node,
 					      const char *name, int wanted_len);
 
 /* non-const variant */
-struct dt_property *__dt_find_property(struct dt_node *node, const char *name);
+struct dt_property *__dt_find_property(struct pdbg_target *node, const char *name);
 
 /* Find a property by name, check if it's the same as val. */
-bool dt_has_node_property(const struct dt_node *node,
+bool dt_has_node_property(const struct pdbg_target *node,
 			  const char *name, const char *val);
 
 /* Free a node (and any children). */
-void dt_free(struct dt_node *node);
+void dt_free(struct pdbg_target *node);
 
 /* Parse an initial fdt */
 void dt_expand(const void *fdt);
-int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node) __warn_unused_result;
+int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node) __warn_unused_result;
 
 /* Simplified accessors */
-u64 dt_prop_get_u64(const struct dt_node *node, const char *prop);
-u64 dt_prop_get_u64_def(const struct dt_node *node, const char *prop, u64 def);
-u32 dt_prop_get_u32(const struct dt_node *node, const char *prop);
-u32 dt_prop_get_u32_def(const struct dt_node *node, const char *prop, u32 def);
-u32 dt_prop_get_u32_index(const struct dt_node *node, const char *prop, u32 index);
-const void *dt_prop_get(const struct dt_node *node, const char *prop);
-const void *dt_prop_get_def(const struct dt_node *node, const char *prop,
+u64 dt_prop_get_u64(const struct pdbg_target *node, const char *prop);
+u64 dt_prop_get_u64_def(const struct pdbg_target *node, const char *prop, u64 def);
+u32 dt_prop_get_u32(const struct pdbg_target *node, const char *prop);
+u32 dt_prop_get_u32_def(const struct pdbg_target *node, const char *prop, u32 def);
+u32 dt_prop_get_u32_index(const struct pdbg_target *node, const char *prop, u32 index);
+const void *dt_prop_get(const struct pdbg_target *node, const char *prop);
+const void *dt_prop_get_def(const struct pdbg_target *node, const char *prop,
 			    void *def);
-const void *dt_prop_get_def_size(const struct dt_node *node, const char *prop,
+const void *dt_prop_get_def_size(const struct pdbg_target *node, const char *prop,
 				void *def, size_t *len);
-u32 dt_prop_get_cell(const struct dt_node *node, const char *prop, u32 cell);
-u32 dt_prop_get_cell_def(const struct dt_node *node, const char *prop, u32 cell, u32 def);
+u32 dt_prop_get_cell(const struct pdbg_target *node, const char *prop, u32 cell);
+u32 dt_prop_get_cell_def(const struct pdbg_target *node, const char *prop, u32 cell, u32 def);
 
 /* Parsing helpers */
-u32 dt_n_address_cells(const struct dt_node *node);
-u32 dt_n_size_cells(const struct dt_node *node);
+u32 dt_n_address_cells(const struct pdbg_target *node);
+u32 dt_n_size_cells(const struct pdbg_target *node);
 u64 dt_get_number(const void *pdata, unsigned int cells);
 
 /* Find an chip-id property in this node; if not found, walk up the parent
  * nodes. Returns -1 if no chip-id property exists. */
-u32 dt_get_chip_id(const struct dt_node *node);
+u32 dt_get_chip_id(const struct pdbg_target *node);
 
 /* Address accessors ("reg" properties parsing). No translation,
  * only support "simple" address forms (1 or 2 cells). Asserts
  * if address doesn't exist
  */
-u64 dt_get_address(const struct dt_node *node, unsigned int index,
+u64 dt_get_address(const struct pdbg_target *node, unsigned int index,
 		   u64 *out_size);
 
 /* Count "reg" property entries */
-unsigned int dt_count_addresses(const struct dt_node *node);
+unsigned int dt_count_addresses(const struct pdbg_target *node);
 
 /* Address translation
  *
@@ -227,12 +217,12 @@ unsigned int dt_count_addresses(const struct dt_node *node);
  * handle complex address formats with address space indicators
  * nor will it handle "ranges" translations yet... (XX TODO)
  */
-u64 dt_translate_address(const struct dt_node *node, unsigned int index,
+u64 dt_translate_address(const struct pdbg_target *node, unsigned int index,
 			 u64 *out_size);
 
 /* compare function used to sort child nodes by name when added to the
  * tree. This is mainly here for testing.
  */
-int dt_cmp_subnodes(const struct dt_node *a,  const struct dt_node *b);
+int dt_cmp_subnodes(const struct pdbg_target *a,  const struct pdbg_target *b);
 
 #endif /* __DEVICE_H */

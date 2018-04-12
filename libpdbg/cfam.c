@@ -296,18 +296,18 @@ DECLARE_HW_UNIT(p8_opb_hmfsi);
 
 static int cfam_hmfsi_read(struct fsi *fsi, uint32_t addr, uint32_t *data)
 {
-	struct pdbg_target *parent_fsi = fsi->target.dn->parent->target;
+	struct pdbg_target *parent_fsi = fsi->target.parent;
 
-	addr += dt_get_address(fsi->target.dn, 0, NULL);
+	addr += dt_get_address(&fsi->target, 0, NULL);
 
 	return fsi_read(parent_fsi, addr, data);
 }
 
 static int cfam_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
 {
-	struct pdbg_target *parent_fsi = fsi->target.dn->parent->target;
+	struct pdbg_target *parent_fsi = fsi->target.parent;
 
-	addr += dt_get_address(fsi->target.dn, 0, NULL);
+	addr += dt_get_address(&fsi->target, 0, NULL);
 
 	return fsi_write(parent_fsi, addr, data);
 }
@@ -315,12 +315,12 @@ static int cfam_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
 static int cfam_hmfsi_probe(struct pdbg_target *target)
 {
 	struct fsi *fsi = target_to_fsi(target);
-	struct pdbg_target *fsi_parent = target->dn->parent->target;
+	struct pdbg_target *fsi_parent = target->parent;
 	uint32_t value, port;
 	int rc;
 
 	/* Enable the port in the upstream control register */
-	port = dt_prop_get_u32(target->dn, "port");
+	port = dt_prop_get_u32(target, "port");
 	fsi_read(fsi_parent, 0x3404, &value);
 	value |= 1 << (31 - port);
 	if ((rc = fsi_write(fsi_parent, 0x3404, value))) {

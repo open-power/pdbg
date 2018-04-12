@@ -17,22 +17,21 @@ struct list_head target_classes = LIST_HEAD_INIT(target_classes);
 
 /* Work out the address to access based on the current target and
  * final class name */
-static struct dt_node *get_class_target_addr(struct dt_node *dn, const char *name, uint64_t *addr)
+static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, const char *name, uint64_t *addr)
 {
 	/* Check class */
-	while (strcmp(dn->target->class, name)) {
+	while (strcmp(target->class, name)) {
 		/* Keep walking the tree translating addresses */
-		*addr += dt_get_address(dn, 0, NULL);
-		dn = dn->parent;
+		*addr += dt_get_address(target, 0, NULL);
+		target = target->parent;
 
 		/* The should always be a parent. If there isn't it
 		 * means we traversed up the whole device tree and
 		 * didn't find a parent matching the given class. */
-		assert(dn);
-		assert(dn->target);
+		assert(target);
 	}
 
-	return dn;
+	return target;
 }
 
 /* The indirect access code was largely stolen from hw/xscom.c in skiboot */
@@ -115,11 +114,9 @@ static int pib_indirect_write(struct pib *pib, uint64_t addr, uint64_t data)
 int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 {
 	struct pib *pib;
-	struct dt_node *dn = pib_dt->dn;
 	int rc;
 
-	dn = get_class_target_addr(dn, "pib", &addr);
-	pib_dt = dn->target;
+	pib_dt = get_class_target_addr(pib_dt, "pib", &addr);
 	pib = target_to_pib(pib_dt);
 	if (addr & PPC_BIT(0))
 		rc = pib_indirect_read(pib, addr, data);
@@ -131,11 +128,9 @@ int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 {
 	struct pib *pib;
-	struct dt_node *dn = pib_dt->dn;
 	int rc;
 
-	dn = get_class_target_addr(dn, "pib", &addr);
-	pib_dt = dn->target;
+	pib_dt = get_class_target_addr(pib_dt, "pib", &addr);
 	pib = target_to_pib(pib_dt);
 	if (addr & PPC_BIT(0))
 		rc = pib_indirect_write(pib, addr, data);
@@ -147,11 +142,9 @@ int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 int opb_read(struct pdbg_target *opb_dt, uint32_t addr, uint32_t *data)
 {
 	struct opb *opb;
-	struct dt_node *dn = opb_dt->dn;
 	uint64_t addr64 = addr;
 
-	dn = get_class_target_addr(dn, "opb", &addr64);
-	opb_dt = dn->target;
+	opb_dt = get_class_target_addr(opb_dt, "opb", &addr64);
 	opb = target_to_opb(opb_dt);
 	return opb->read(opb, addr64, data);
 }
@@ -159,11 +152,9 @@ int opb_read(struct pdbg_target *opb_dt, uint32_t addr, uint32_t *data)
 int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data)
 {
 	struct opb *opb;
-	struct dt_node *dn = opb_dt->dn;
 	uint64_t addr64 = addr;
 
-	dn = get_class_target_addr(dn, "opb", &addr64);
-	opb_dt = dn->target;
+	opb_dt = get_class_target_addr(opb_dt, "opb", &addr64);
 	opb = target_to_opb(opb_dt);
 
 	return opb->write(opb, addr64, data);
@@ -172,11 +163,9 @@ int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data)
 int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 {
 	struct fsi *fsi;
-	struct dt_node *dn = fsi_dt->dn;
 	uint64_t addr64 = addr;
 
-	dn = get_class_target_addr(dn, "fsi", &addr64);
-	fsi_dt = dn->target;
+	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
 	fsi = target_to_fsi(fsi_dt);
 	return fsi->read(fsi, addr64, data);
 }
@@ -184,11 +173,9 @@ int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 {
 	struct fsi *fsi;
-	struct dt_node *dn = fsi_dt->dn;
 	uint64_t addr64 = addr;
 
-	dn = get_class_target_addr(dn, "fsi", &addr64);
-	fsi_dt = dn->target;
+	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
 	fsi = target_to_fsi(fsi_dt);
 
 	return fsi->write(fsi, addr64, data);
@@ -196,10 +183,8 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 
 struct pdbg_target *require_target_parent(struct pdbg_target *target)
 {
-	struct dt_node *dn;
-
-	assert((dn = target->dn));
-	return dn->parent->target;
+	assert(target->parent);
+	return target->parent;
 }
 
 /* Finds the given class. Returns NULL if not found. */
@@ -229,7 +214,7 @@ struct pdbg_target_class *require_target_class(const char *name)
 }
 
 /* Returns the existing class or allocates space for a new one */
-static struct pdbg_target_class *get_target_class(const char *name)
+struct pdbg_target_class *get_target_class(const char *name)
 {
 	struct pdbg_target_class *target_class;
 
@@ -264,73 +249,44 @@ struct hw_unit_info *find_compatible_target(const char *compat)
 
 void pdbg_targets_init(void *fdt)
 {
-	struct dt_node *dn;
-	const struct dt_property *p;
-	struct pdbg_target_class *target_class;
-	struct hw_unit_info *hw_unit_info;
-	struct pdbg_target *new_target;
-	uint32_t index;
-
-	dt_root = dt_new_root("");
+	dt_root = dt_new_root("", NULL, 0);
 	dt_expand(fdt);
-
-	/* Now we need to walk the device-tree, assign struct pdbg_targets
-	 * to each of the nodes and add them to the appropriate target
-	 * classes */
-	dt_for_each_node(dt_root, dn) {
-		p = dt_require_property(dn, "compatible", -1);
-		hw_unit_info = find_compatible_target(p->prop);
-		if (hw_unit_info) {
-			/* We need to allocate a new target */
-			new_target = malloc(hw_unit_info->size);
-			assert(new_target);
-			memcpy(new_target, hw_unit_info->hw_unit, hw_unit_info->size);
-			new_target->dn = dn;
-			dn->target = new_target;
-			index = dt_prop_get_u32_def(dn, "index", -1);
-			dn->target->index = index;
-			target_class = get_target_class(new_target->class);
-			list_add(&target_class->targets, &new_target->class_link);
-			PR_DEBUG("Found target %s for %s\n", new_target->name, dn->name);
-		} else
-			PR_DEBUG("No target found for %s\n", dn->name);
-	}
 }
 
 /* Disable a node and all it's children */
-static void disable_node(struct dt_node *dn)
+static void disable_node(struct pdbg_target *target)
 {
-	struct dt_node *next;
+	struct pdbg_target *t;
 	struct dt_property *p;
 
-	p = dt_find_property(dn, "status");
+	p = dt_find_property(target, "status");
 	if (p)
-		dt_del_property(dn, p);
+		dt_del_property(target, p);
 
-	dt_add_property_string(dn, "status", "disabled");
-	dt_for_each_child(dn, next)
-		disable_node(next);
+	dt_add_property_string(target, "status", "disabled");
+	dt_for_each_child(target, t)
+		disable_node(t);
 }
 
-static void _target_probe(struct dt_node *dn)
+static void _target_probe(struct pdbg_target *target)
 {
 	int rc = 0;
 	struct dt_property *p;
 
-	PR_DEBUG("Probe %s - ", dn->name);
-	if (!dn->target) {
+	PR_DEBUG("Probe %s - ", target->dn_name);
+	if (!target->class) {
 		PR_DEBUG("target not found\n");
 		return;
 	}
 
-	p = dt_find_property(dn, "status");
-	if ((p && !strcmp(p->prop, "disabled")) || (dn->target->probe && (rc = dn->target->probe(dn->target)))) {
+	p = dt_find_property(target, "status");
+	if ((p && !strcmp(p->prop, "disabled")) || (target->probe && (rc = target->probe(target)))) {
 		if (rc)
 			PR_DEBUG("not found\n");
 		else
 			PR_DEBUG("disabled\n");
 
-		disable_node(dn);
+		disable_node(target);
 	} else {
 		PR_DEBUG("success\n");
 	}
@@ -340,10 +296,10 @@ static void _target_probe(struct dt_node *dn)
  * exist but don't */
 void pdbg_target_probe(void)
 {
-	struct dt_node *dn;
+	struct pdbg_target *target;
 
-	dt_for_each_node(dt_root, dn)
-		_target_probe(dn);
+	dt_for_each_node(dt_root, target)
+		_target_probe(target);
 }
 
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class)

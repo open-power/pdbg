@@ -458,17 +458,17 @@ int bmcfsi_probe(struct pdbg_target *target)
 	}
 
 	if (!gpio_reg) {
-		gpio_pins[GPIO_FSI_CLK].offset = dt_prop_get_u32_index(target->dn, "fsi_clk", 0);
-		gpio_pins[GPIO_FSI_CLK].bit = dt_prop_get_u32_index(target->dn, "fsi_clk", 1);
-		gpio_pins[GPIO_FSI_DAT].offset = dt_prop_get_u32_index(target->dn, "fsi_dat", 0);
-		gpio_pins[GPIO_FSI_DAT].bit = dt_prop_get_u32_index(target->dn, "fsi_dat", 1);
-		gpio_pins[GPIO_FSI_DAT_EN].offset = dt_prop_get_u32_index(target->dn, "fsi_dat_en", 0);
-		gpio_pins[GPIO_FSI_DAT_EN].bit = dt_prop_get_u32_index(target->dn, "fsi_dat_en", 1);
-		gpio_pins[GPIO_FSI_ENABLE].offset = dt_prop_get_u32_index(target->dn, "fsi_enable", 0);
-		gpio_pins[GPIO_FSI_ENABLE].bit = dt_prop_get_u32_index(target->dn, "fsi_enable", 1);
-		gpio_pins[GPIO_CRONUS_SEL].offset = dt_prop_get_u32_index(target->dn, "cronus_sel", 0);
-		gpio_pins[GPIO_CRONUS_SEL].bit = dt_prop_get_u32_index(target->dn, "cronus_sel", 1);
-		clock_delay = dt_prop_get_u32(target->dn, "clock_delay");
+		gpio_pins[GPIO_FSI_CLK].offset = dt_prop_get_u32_index(target, "fsi_clk", 0);
+		gpio_pins[GPIO_FSI_CLK].bit = dt_prop_get_u32_index(target, "fsi_clk", 1);
+		gpio_pins[GPIO_FSI_DAT].offset = dt_prop_get_u32_index(target, "fsi_dat", 0);
+		gpio_pins[GPIO_FSI_DAT].bit = dt_prop_get_u32_index(target, "fsi_dat", 1);
+		gpio_pins[GPIO_FSI_DAT_EN].offset = dt_prop_get_u32_index(target, "fsi_dat_en", 0);
+		gpio_pins[GPIO_FSI_DAT_EN].bit = dt_prop_get_u32_index(target, "fsi_dat_en", 1);
+		gpio_pins[GPIO_FSI_ENABLE].offset = dt_prop_get_u32_index(target, "fsi_enable", 0);
+		gpio_pins[GPIO_FSI_ENABLE].bit = dt_prop_get_u32_index(target, "fsi_enable", 1);
+		gpio_pins[GPIO_CRONUS_SEL].offset = dt_prop_get_u32_index(target, "cronus_sel", 0);
+		gpio_pins[GPIO_CRONUS_SEL].bit = dt_prop_get_u32_index(target, "cronus_sel", 1);
+		clock_delay = dt_prop_get_u32(target, "clock_delay");
 
 		/* We only have to do this init once per backend */
 		gpio_reg = mmap(NULL, getpagesize(),

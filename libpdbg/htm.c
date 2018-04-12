@@ -492,7 +492,7 @@ static int configure_nhtm(struct htm *htm)
 			NHTM_TTYPE_SIZE_MASK ))) /* no pattern matching */
 		return -1;
 
-	if (dt_node_is_compatible(htm->target.dn, "ibm,power9-nhtm")) {
+	if (dt_node_is_compatible(&htm->target, "ibm,power9-nhtm")) {
 		if (HTM_ERR(pib_read(&htm->target, NHTM_FLEX_MUX, &val)))
 			return -1;
 
@@ -532,7 +532,7 @@ static int do_htm_start(struct htm *htm)
 	/*
 	 * Instead of the HTM_TRIG_START, this is where you might want
 	 * to call do_adu_magic()
-	 * for_each_child_target("adu", htm->target.dn->parent->target, do_adu_magic, NULL, NULL);
+	 * for_each_child_target("adu", &htm->target.parent, do_adu_magic, NULL, NULL);
 	 * see what I mean?
 	 */
 
@@ -544,7 +544,7 @@ static char *get_debugfs_file(struct htm *htm, const char *file)
 	uint32_t chip_id;
 	char *filename;
 
-	chip_id = dt_get_chip_id(htm->target.dn);
+	chip_id = dt_get_chip_id(&htm->target);
 	if (chip_id == -1) {
 		PR_ERROR("Couldn't find a chip id\n");
 		return NULL;
@@ -751,7 +751,7 @@ static int do_htm_status(struct htm *htm)
 	uint64_t val, total;
 	int i, regs = 9;
 
-	if (dt_node_is_compatible(htm->target.dn, "ibm,power9-nhtm"))
+	if (dt_node_is_compatible(&htm->target, "ibm,power9-nhtm"))
 		regs++;
 
 	PR_DEBUG("HTM register dump:\n");
@@ -844,7 +844,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 		return -1;
 	}
 
-	chip_id = dt_get_chip_id(htm->target.dn);
+	chip_id = dt_get_chip_id(&htm->target);
 	if (chip_id == -1)
 		return -1;
 
@@ -925,7 +925,7 @@ static int nhtm_probe(struct pdbg_target *target)
 	if (!is_debugfs_memtrace_ok() || !is_debugfs_scom_ok())
 		return -1;
 
-	if (dt_node_is_compatible(target->dn, "ibm,power9-nhtm")) {
+	if (dt_node_is_compatible(target, "ibm,power9-nhtm")) {
 		pib_read(target, NHTM_FLEX_MUX, &val);
 		if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
 			PR_DEBUG("FLEX_MUX not default\n");
