@@ -470,7 +470,7 @@ int main(int argc, char *argv[])
 		return 1;
 
 	if (!backend_is_possible(backend)) {
-		fprintf(stderr, "Backend not possible\n");
+		fprintf(stderr, "Backend not possible\nUse: ");
 		print_backends(stderr);
 		print_usage(argv[0]);
 		return 1;

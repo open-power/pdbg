@@ -25,6 +25,7 @@
 static const char witherspoon[] = "p9w";
 static const char romulus[] = "p9r";
 static const char zaius[] = "p9z";
+static const char p8[] = "p8";
 
 enum backend default_backend(void)
 {
@@ -37,20 +38,24 @@ enum backend default_backend(void)
 	if (rc == 0) /* Kernel interface. OpenBMC */
 		return KERNEL;
 
-	/*
-	 * "This should never be the default" - Apopple 2017
-	 */
-	fprintf(stderr, "Couldn't locate a good backend.\n");
-	fprintf(stderr, "It is possible that the FSI backend will work.\n");
-	fprintf(stderr, "You will need to select this along with the correct\n");
-	fprintf(stderr, "target yourself on the commandline\n");
-	fprintf(stderr, "`pdbg -b fsi -d [p8 | p9w | p9r | p9z] ...`\n");
 	return FAKE;
 }
 
 void print_backends(FILE *stream)
 {
-	fprintf(stream, "I2C KERNEL FSI");
+	/*
+	 * "This should never be the default" - Apopple 2017
+	 */
+	fprintf(stream, "I2C KERNEL FSI\n");
+
+	if (default_backend() == FAKE) {
+		fprintf(stderr, "Couldn't locate a good backend.\n");
+		fprintf(stderr, "It is possible that the FSI backend will work.\n");
+		fprintf(stderr, "You will need to select this along with the correct\n");
+		fprintf(stderr, "target yourself on the commandline\n");
+		fprintf(stderr, "`pdbg -b fsi -d [p8 | p9w | p9r | p9z] ...`\n");
+	}
+
 }
 
 bool backend_is_possible(enum backend backend)
@@ -96,6 +101,9 @@ const char *default_target(enum backend backend)
 
 	if (strstr(line, "zaius"))
 		return zaius;
+
+	if (strstr(line, "palmetto"))
+		return p8;
 
 	return NULL;
 }
