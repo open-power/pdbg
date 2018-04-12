@@ -92,19 +92,20 @@ static int host_pib_probe(struct pdbg_target *target)
 		return -1;
 
 	chip_id = dt_prop_get_u32(target->dn, "chip-id");
-	if (asprintf(&access_fn, "%s/%08d/access", XSCOM_BASE_PATH, chip_id) < 0) {
-		free(fd);
-		return -1;
-	}
+	if (asprintf(&access_fn, "%s/%08d/access", XSCOM_BASE_PATH, chip_id) < 0)
+		goto out;
 
 	*fd = open(access_fn, O_RDWR);
 	free(access_fn);
-	if (fd < 0)
-		return -1;
+	if (*fd < 0)
+		goto out;
 
 	pib->priv = fd;
 
 	return 0;
+out:
+	free(fd);
+	return -1;
 }
 
 struct pib host_pib = {
