@@ -253,53 +253,63 @@ void pdbg_targets_init(void *fdt)
 	dt_expand(fdt);
 }
 
-/* Disable a node and all it's children */
-static void disable_node(struct pdbg_target *target)
-{
-	struct pdbg_target *t;
-	struct dt_property *p;
-
-	p = dt_find_property(target, "status");
-	if (p)
-		dt_del_property(target, p);
-
-	dt_add_property_string(target, "status", "disabled");
-	dt_for_each_child(target, t)
-		disable_node(t);
-}
-
-static void _target_probe(struct pdbg_target *target)
-{
-	int rc = 0;
-	struct dt_property *p;
-
-	PR_DEBUG("Probe %s - ", target->dn_name);
-	if (!target->class) {
-		PR_DEBUG("target not found\n");
-		return;
-	}
-
-	p = dt_find_property(target, "status");
-	if ((p && !strcmp(p->prop, "disabled")) || (target->probe && (rc = target->probe(target)))) {
-		if (rc)
-			PR_DEBUG("not found\n");
-		else
-			PR_DEBUG("disabled\n");
-
-		disable_node(target);
-	} else {
-		PR_DEBUG("success\n");
-	}
-}
-
 /* We walk the tree root down disabling targets which might/should
  * exist but don't */
-void pdbg_target_probe(void)
+enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 {
-	struct pdbg_target *target;
+	struct pdbg_target *parent;
+	enum pdbg_target_status status;
 
-	dt_for_each_node(dt_root, target)
-		_target_probe(target);
+	assert(target);
+
+	status = pdbg_target_status(target);
+	if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_NONEXISTENT
+	    || status == PDBG_TARGET_ENABLED)
+		/* We've already tried probing this target and by assumption
+		 * it's status won't have changed */
+		   return status;
+
+	parent = target->parent;
+	if (parent) {
+		/* Recurse up the tree to probe and set parent target status */
+		pdbg_target_probe(parent);
+		status = pdbg_target_status(parent);
+		switch(status) {
+		case PDBG_TARGET_NONEXISTENT:
+			/* The parent doesn't exist neither does it's
+			 * children */
+			target->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+
+		case PDBG_TARGET_DISABLED:
+			/* The parent is disabled, we know nothing of the child
+			 * so leave it in it's current state unless it must
+			 * exist.
+			 * TODO: Must exist error reporting */
+			assert(pdbg_target_status(target) != PDBG_TARGET_MUSTEXIST);
+			return pdbg_target_status(target);
+
+		case PDBG_TARGET_MUSTEXIST:
+		case PDBG_TARGET_UNKNOWN:
+			/* We must know by now if the parent exists or not */
+			assert(0);
+			break;
+
+		case PDBG_TARGET_ENABLED:
+			break;
+		}
+	}
+
+	/* At this point any parents must exist and have already been probed */
+	if (target->probe && target->probe(target)) {
+		/* Could not find the target */
+		assert(pdbg_target_status(target) != PDBG_TARGET_MUSTEXIST);
+		target->status = PDBG_TARGET_NONEXISTENT;
+		return PDBG_TARGET_NONEXISTENT;
+	}
+
+	target->status = PDBG_TARGET_ENABLED;
+	return PDBG_TARGET_ENABLED;
 }
 
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class)
@@ -308,4 +318,3 @@ bool pdbg_target_is_class(struct pdbg_target *target, const char *class)
 		return false;
 	return strcmp(target->class, class) == 0;
 }
-

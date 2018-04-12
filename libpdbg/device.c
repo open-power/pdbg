@@ -712,6 +712,28 @@ void dt_free(struct pdbg_target *node)
 	dt_destroy(node);
 }
 
+enum pdbg_target_status str_to_status(const char *status)
+{
+	if (!strcmp(status, "enabled")) {
+		/* There isn't really a use case for this at the moment except
+		 * perhaps as some kind of expert mode which bypasses the usual
+		 * probing process. However simply marking a top-level node as
+		 * enabled would not be enough to make parent nodes enabled so
+		 * this wouldn't work as expected anyway. */
+		assert(0);
+		return PDBG_TARGET_ENABLED;
+	} else if (!strcmp(status, "disabled"))
+		return PDBG_TARGET_DISABLED;
+	else if (!strcmp(status, "mustexist"))
+		return PDBG_TARGET_MUSTEXIST;
+	else if (!strcmp(status, "nonexistent"))
+		return PDBG_TARGET_NONEXISTENT;
+	else if (!strcmp(status, "unknown"))
+		return PDBG_TARGET_UNKNOWN;
+	else
+		assert(0);
+}
+
 int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node)
 {
 	const struct fdt_property *prop;
@@ -741,6 +763,10 @@ int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node)
 				memcpy(&data, prop->data, sizeof(data));
 				node->index = fdt32_to_cpu(data);
 			}
+
+			if (strcmp("status", name) == 0)
+				node->status = str_to_status(prop->data);
+
 			dt_add_property(node, name, prop->data,
 					fdt32_to_cpu(prop->len));
 			break;

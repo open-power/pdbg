@@ -12,7 +12,7 @@
 		bus = "/dev/i2c4";
 		reg = <0x50>;
 		index = <0x0>;
-		status = "hidden";
+		status = "mustexist";
 		include(p8-pib.dts.m4)dnl
 
 		opb@20010 {

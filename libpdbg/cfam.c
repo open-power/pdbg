@@ -114,7 +114,6 @@ static int fsi2pib_reset(struct pdbg_target *target)
 	 * engine but that had the unfortunate side effect of clearing existing
 	 * settings such as the true mask register (0xd) */
 	CHECK_ERR(fsi_write(target, FSI_SET_PIB_RESET_REG, FSI_SET_PIB_RESET));
-
 	return 0;
 }
 

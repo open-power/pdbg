@@ -34,6 +34,9 @@ static int getmem(uint64_t addr, uint64_t size)
 	buf = malloc(size);
 	assert(buf);
 	pdbg_for_each_class_target("adu", target) {
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			continue;
+
 		if (!adu_getmem(target, addr, buf, size)) {
 			if (write(STDOUT_FILENO, buf, size) < 0)
 				PR_ERROR("Unable to write stdout.\n");

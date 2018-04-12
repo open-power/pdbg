@@ -268,8 +268,9 @@ int for_each_child_target(char *class, struct pdbg_target *parent,
 	pdbg_for_each_target(class, parent, target) {
 		index = pdbg_target_index(target);
 		assert(index != -1);
+		pdbg_target_probe(target);
 		status = pdbg_target_status(target);
-		if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_HIDDEN)
+		if (status != PDBG_TARGET_ENABLED)
 			continue;
 
 		rc += cb(target, index, arg1, arg2);
@@ -288,8 +289,9 @@ int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint6
 	pdbg_for_each_class_target(class, target) {
 		index = pdbg_target_index(target);
 		assert(index != -1);
+		pdbg_target_probe(target);
 		status = pdbg_target_status(target);
-		if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_HIDDEN)
+		if (status != PDBG_TARGET_ENABLED)
 			continue;
 
 		rc += cb(target, index, arg1, arg2);
@@ -317,6 +319,7 @@ extern unsigned char _binary_p8_host_dtb_o_start;
 extern unsigned char _binary_p8_host_dtb_o_end;
 extern unsigned char _binary_p9_host_dtb_o_start;
 extern unsigned char _binary_p9_host_dtb_o_end;
+
 static int target_select(void)
 {
 	struct pdbg_target *fsi, *pib, *chip, *thread;
@@ -383,31 +386,25 @@ static int target_select(void)
 			pdbg_set_target_property(pib, "bus", device_node, strlen(device_node) + 1);
 
 		if (processorsel[proc_index]) {
-			pdbg_enable_target(pib);
 			pdbg_for_each_target("core", pib, chip) {
 				int chip_index = pdbg_target_index(chip);
 				if (chipsel[proc_index][chip_index]) {
-					pdbg_enable_target(chip);
 					pdbg_for_each_target("thread", chip, thread) {
 						int thread_index = pdbg_target_index(thread);
-						if (threadsel[proc_index][chip_index][thread_index])
-							pdbg_enable_target(thread);
-						else
-							pdbg_disable_target(thread);
+						if (!threadsel[proc_index][chip_index][thread_index])
+							pdbg_target_status_set(thread, PDBG_TARGET_DISABLED);
 					}
 				} else
-					pdbg_disable_target(chip);
+					pdbg_target_status_set(chip, PDBG_TARGET_DISABLED);
 			}
 		} else
-			pdbg_disable_target(pib);
+			pdbg_target_status_set(pib, PDBG_TARGET_DISABLED);
 	}
 
 	pdbg_for_each_class_target("fsi", fsi) {
 		int index = pdbg_target_index(fsi);
-		if (processorsel[index])
-			pdbg_enable_target(fsi);
-		else
-			pdbg_disable_target(fsi);
+		if (!processorsel[index] && pdbg_target_status(fsi) != PDBG_TARGET_MUSTEXIST)
+			pdbg_target_status_set(fsi, PDBG_TARGET_DISABLED);
 	}
 
 	return 0;
@@ -419,32 +416,32 @@ void print_target(struct pdbg_target *target, int level)
 	struct pdbg_target *next;
 	enum pdbg_target_status status;
 
+	pdbg_target_probe(target);
 	status = pdbg_target_status(target);
-	if (status == PDBG_TARGET_DISABLED)
+	if (status != PDBG_TARGET_ENABLED)
 		return;
 
-	if (status == PDBG_TARGET_ENABLED) {
-		for (i = 0; i < level; i++)
-			printf("    ");
+	for (i = 0; i < level; i++)
+		printf("    ");
 
-		if (target) {
-			char c = 0;
-			if (!strcmp(pdbg_target_class_name(target), "pib"))
-				c = 'p';
-			else if (!strcmp(pdbg_target_class_name(target), "core"))
-				c = 'c';
-			else if (!strcmp(pdbg_target_class_name(target), "thread"))
-				c = 't';
+	if (target) {
+		char c = 0;
+		if (!strcmp(pdbg_target_class_name(target), "pib"))
+			c = 'p';
+		else if (!strcmp(pdbg_target_class_name(target), "core"))
+			c = 'c';
+		else if (!strcmp(pdbg_target_class_name(target), "thread"))
+			c = 't';
 
-			if (c)
-				printf("%c%d: %s\n", c, pdbg_target_index(target), pdbg_target_name(target));
-			else
-				printf("%s\n", pdbg_target_name(target));
-		}
+		if (c)
+			printf("%c%d: %s\n", c, pdbg_target_index(target), pdbg_target_name(target));
+		else
+			printf("%s\n", pdbg_target_name(target));
 	}
 
-	pdbg_for_each_child_target(target, next)
+	pdbg_for_each_child_target(target, next) {
 		print_target(next, level + 1);
+	}
 }
 
 static int handle_probe(int optind, int argc, char *argv[])
@@ -492,8 +489,6 @@ int main(int argc, char *argv[])
 	/* Disable unselected targets */
 	if (target_select())
 		return 1;
-
-	pdbg_target_probe();
 
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {
 		if (strcmp(argv[optind], actions[i].name) == 0) {

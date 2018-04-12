@@ -19,7 +19,7 @@
 		clock_delay = <0x14>;
 
 		index = <0x0>;
-		status = "hidden";
+		status = "mustexist";
 
 		pib@1000 {
 			#address-cells = <0x2>;

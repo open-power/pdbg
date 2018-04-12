@@ -10,7 +10,7 @@
 		reg = <0x0 0x0 0x0>;
 
 		index = <0x0>;
-		status = "hidden";
+		status = "mustexist";
 
 		pib@1000 {
 			 reg = <0x0 0x1000 0x7>;

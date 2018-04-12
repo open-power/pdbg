@@ -80,6 +80,7 @@ static int run_start(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
 
@@ -101,6 +102,7 @@ static int run_stop(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
 
@@ -122,6 +124,7 @@ static int run_status(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
 
@@ -145,6 +148,7 @@ static int run_reset(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
 
@@ -181,6 +185,7 @@ static int run_dump(enum htm_type type, int optind, int argc, char *argv[])
 	/* size = 0 will dump everything */
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
 

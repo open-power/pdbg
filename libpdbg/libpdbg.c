@@ -57,46 +57,16 @@ struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct 
 
 enum pdbg_target_status pdbg_target_status(struct pdbg_target *target)
 {
-	struct dt_property *p;
-
-	p = dt_find_property(target, "status");
-	if (!p)
-		return PDBG_TARGET_ENABLED;
-
-	if (!strcmp(p->prop, "enabled"))
-		return PDBG_TARGET_ENABLED;
-	else if (!strcmp(p->prop, "disabled"))
-		return PDBG_TARGET_DISABLED;
-	else if (!strcmp(p->prop, "hidden"))
-		return PDBG_TARGET_HIDDEN;
-	else
-		assert(0);
+	return target->status;
 }
 
-void pdbg_enable_target(struct pdbg_target *target)
+void pdbg_target_status_set(struct pdbg_target *target, enum pdbg_target_status status)
 {
-	struct dt_property *p;
-	enum pdbg_target_status status = pdbg_target_status(target);
+	/* It's a programming error for user code to attempt anything else so
+	 * blow up obviously if this happens */
+	assert(status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_MUSTEXIST);
 
-	if (status == PDBG_TARGET_ENABLED)
-		return;
-
-	p = dt_find_property(target, "status");
-	dt_del_property(target, p);
-}
-
-void pdbg_disable_target(struct pdbg_target *target)
-{
-	struct dt_property *p;
-
-	p = dt_find_property(target, "status");
-	if (p)
-		/* We don't override hard-coded device tree
-		 * status. This is needed to avoid disabling that
-		 * backend. */
-		return;
-
-	dt_add_property_string(target, "status", "disabled");
+	target->status = status;
 }
 
 /* Searches up the tree and returns the first valid index found */

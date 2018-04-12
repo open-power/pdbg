@@ -45,12 +45,14 @@ struct pdbg_target {
 	char *class;
 	int (*probe)(struct pdbg_target *target);
 	int index;
+	enum pdbg_target_status status;
 	const char *dn_name;
 	struct list_node list;
 	struct list_head properties;
 	struct list_head children;
 	struct pdbg_target *parent;
 	u32 phandle;
+	bool probed;
 	struct list_node class_link;
 };
 

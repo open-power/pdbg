@@ -21,7 +21,8 @@ enum backend { FSI, I2C, KERNEL, FAKE, HOST };
 
 static inline bool target_is_disabled(struct pdbg_target *target)
 {
-	return pdbg_target_status(target) == PDBG_TARGET_DISABLED;
+	return pdbg_target_status(target) == PDBG_TARGET_DISABLED ||
+		pdbg_target_status(target) == PDBG_TARGET_NONEXISTENT;
 }
 
 /* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
