@@ -191,7 +191,7 @@ static int run_dump(enum htm_type type, int optind, int argc, char *argv[])
 
 		printf("Dumping HTM@");
 		print_htm_address(type, target);
-		if (htm_dump(target, 0, filename) == 1) {
+		if (htm_dump(target, 0, filename) != 1) {
 			printf("Couldn't dump HTM@");
 			print_htm_address(type, target);
 		}
