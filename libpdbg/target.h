@@ -54,6 +54,7 @@ struct pdbg_target {
 	u32 phandle;
 	bool probed;
 	struct list_node class_link;
+	void *priv;
 };
 
 struct pdbg_target *require_target_parent(struct pdbg_target *target);
