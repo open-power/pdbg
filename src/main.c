@@ -255,6 +255,23 @@ static bool parse_options(int argc, char *argv[])
 	return opt_error;
 }
 
+static void target_select(struct pdbg_target *target)
+{
+	/* We abuse the private data pointer atm to indicate the target is
+	 * selected */
+	pdbg_target_priv_set(target, (void *) 1);
+}
+
+static void target_unselect(struct pdbg_target *target)
+{
+	pdbg_target_priv_set(target, NULL);
+}
+
+static bool target_selected(struct pdbg_target *target)
+{
+	return (bool) pdbg_target_priv(target);
+}
+
 /* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
 int for_each_child_target(char *class, struct pdbg_target *parent,
 				 int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *),
@@ -266,6 +283,9 @@ int for_each_child_target(char *class, struct pdbg_target *parent,
 	enum pdbg_target_status status;
 
 	pdbg_for_each_target(class, parent, target) {
+		if (!target_selected(target))
+			continue;
+
 		index = pdbg_target_index(target);
 		assert(index != -1);
 		pdbg_target_probe(target);
@@ -287,6 +307,9 @@ int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint6
 	int rc = 0;
 
 	pdbg_for_each_class_target(class, target) {
+		if (!target_selected(target))
+			continue;
+
 		index = pdbg_target_index(target);
 		assert(index != -1);
 		pdbg_target_probe(target);
@@ -320,7 +343,7 @@ extern unsigned char _binary_p8_host_dtb_o_end;
 extern unsigned char _binary_p9_host_dtb_o_start;
 extern unsigned char _binary_p9_host_dtb_o_end;
 
-static int target_select(void)
+static int target_selection(void)
 {
 	struct pdbg_target *fsi, *pib, *chip, *thread;
 
@@ -386,25 +409,30 @@ static int target_select(void)
 			pdbg_set_target_property(pib, "bus", device_node, strlen(device_node) + 1);
 
 		if (processorsel[proc_index]) {
+			target_select(pib);
 			pdbg_for_each_target("core", pib, chip) {
 				int chip_index = pdbg_target_index(chip);
+				target_select(chip);
 				if (chipsel[proc_index][chip_index]) {
 					pdbg_for_each_target("thread", chip, thread) {
 						int thread_index = pdbg_target_index(thread);
+						target_select(thread);
 						if (!threadsel[proc_index][chip_index][thread_index])
-							pdbg_target_status_set(thread, PDBG_TARGET_DISABLED);
+							target_unselect(thread);
 					}
 				} else
-					pdbg_target_status_set(chip, PDBG_TARGET_DISABLED);
+					target_unselect(chip);
 			}
 		} else
-			pdbg_target_status_set(pib, PDBG_TARGET_DISABLED);
+			target_unselect(pib);
 	}
 
 	pdbg_for_each_class_target("fsi", fsi) {
 		int index = pdbg_target_index(fsi);
-		if (!processorsel[index] && pdbg_target_status(fsi) != PDBG_TARGET_MUSTEXIST)
-			pdbg_target_status_set(fsi, PDBG_TARGET_DISABLED);
+		if (processorsel[index])
+			target_select(fsi);
+		else
+			target_unselect(fsi);
 	}
 
 	return 0;
@@ -416,7 +444,13 @@ void print_target(struct pdbg_target *target, int level)
 	struct pdbg_target *next;
 	enum pdbg_target_status status;
 
+	/* Did we want to probe this target? */
+	if (!target_selected(target))
+		return;
+
 	pdbg_target_probe(target);
+
+	/* Does this target actually exist? */
 	status = pdbg_target_status(target);
 	if (status != PDBG_TARGET_ENABLED)
 		return;
@@ -487,7 +521,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Disable unselected targets */
-	if (target_select())
+	if (target_selection())
 		return 1;
 
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {

@@ -318,3 +318,13 @@ bool pdbg_target_is_class(struct pdbg_target *target, const char *class)
 		return false;
 	return strcmp(target->class, class) == 0;
 }
+
+void *pdbg_target_priv(struct pdbg_target *target)
+{
+	return target->priv;
+}
+
+void pdbg_target_priv_set(struct pdbg_target *target, void *priv)
+{
+	target->priv = priv;
+}
