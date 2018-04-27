@@ -139,6 +139,28 @@ int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 	return rc;
 }
 
+/* Wait for a SCOM register addr to match value & mask == data */
+int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t data)
+{
+	struct pib *pib;
+	uint64_t tmp;
+	int rc;
+
+	pib_dt = get_class_target_addr(pib_dt, "pib", &addr);
+	pib = target_to_pib(pib_dt);
+
+	do {
+		if (addr & PPC_BIT(0))
+			rc = pib_indirect_read(pib, addr, &tmp);
+		else
+			rc = pib->read(pib, addr, &tmp);
+		if (rc)
+			return rc;
+	} while ((tmp & mask) != data);
+
+	return 0;
+}
+
 int opb_read(struct pdbg_target *opb_dt, uint32_t addr, uint32_t *data)
 {
 	struct opb *opb;

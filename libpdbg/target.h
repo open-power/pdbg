@@ -157,5 +157,7 @@ struct thread {
 /* Place holder for chiplets which we just want translation for */
 struct chiplet {
         struct pdbg_target target;
+	int (*getring)(struct chiplet *, uint64_t, int64_t, uint32_t[]);
 };
+#define target_to_chiplet(x) container_of(x, struct chiplet, target)
 #endif

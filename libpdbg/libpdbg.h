@@ -78,6 +78,7 @@ int fsi_write(struct pdbg_target *target, uint32_t addr, uint32_t val);
 
 int pib_read(struct pdbg_target *target, uint64_t addr, uint64_t *val);
 int pib_write(struct pdbg_target *target, uint64_t addr, uint64_t val);
+int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t data);
 
 int ram_putmsr(struct pdbg_target *target, uint64_t val);
 int ram_putnia(struct pdbg_target *target, uint64_t val);
@@ -92,6 +93,7 @@ int ram_step_thread(struct pdbg_target *target, int steps);
 int ram_stop_thread(struct pdbg_target *target);
 int ram_sreset_thread(struct pdbg_target *target);
 uint64_t thread_status(struct pdbg_target *target);
+int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
 
 #define THREAD_STATUS_DISABLED  PPC_BIT(0)
 #define THREAD_STATUS_ACTIVE       PPC_BIT(63)

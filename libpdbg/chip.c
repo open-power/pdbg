@@ -272,3 +272,15 @@ int ram_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value)
 	*value = results[3];
 	return 0;
 }
+
+/*
+ * Read the given ring from the given chiplet. Result must be large enough to hold ring_len bits.
+ */
+int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[])
+{
+	struct chiplet *chiplet;
+
+	assert(!strcmp(chiplet_target->class, "chiplet"));
+	chiplet = target_to_chiplet(chiplet_target);
+	return chiplet->getring(chiplet, ring_addr, ring_len, result);
+}

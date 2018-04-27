@@ -37,6 +37,7 @@
 #include "cfam.h"
 #include "scom.h"
 #include "reg.h"
+#include "ring.h"
 #include "mem.h"
 #include "thread.h"
 #include "htm.h"
@@ -84,6 +85,7 @@ static struct {
 	{ "putspr",  "<spr> <value>", "Write Special Purpose Register (SPR)", &handle_spr },
 	{ "getmsr",  "", "Get Machine State Register (MSR)", &handle_msr },
 	{ "putmsr",  "<value>", "Write Machine State Register (MSR)", &handle_msr },
+	{ "getring", "<addr> <len>", "Read a ring. Length must be correct", &handle_getring },
 	{ "start",   "", "Start thread", &thread_start },
 	{ "step",    "<count>", "Set a thread <count> instructions", &thread_step },
 	{ "stop",    "", "Stop thread", &thread_stop },
@@ -420,6 +422,18 @@ static int target_selection(void)
 						if (!threadsel[proc_index][chip_index][thread_index])
 							target_unselect(thread);
 					}
+				} else
+					target_unselect(chip);
+			}
+
+			/* This is kinda broken as we're overloading what '-c'
+			 * means - it's now up to each command to select targets
+			 * based on core/chiplet. We really need a better
+			 * solution to target selection. */
+			pdbg_for_each_target("chiplet", pib, chip) {
+				int chip_index = pdbg_target_index(chip);
+				if (chipsel[proc_index][chip_index]) {
+					target_select(chip);
 				} else
 					target_unselect(chip);
 			}
