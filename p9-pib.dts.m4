@@ -1,17 +1,23 @@
 define(`CONCAT', `$1$2')dnl
 define(`HEX', `CONCAT(0x, $1)')dnl
 define(`CORE_BASE', `eval(0x20000000 + $1 * 0x1000000, 16)')dnl
-define(`CORE', `core@CORE_BASE($1) {
-#address-cells = <0x1>;
-#size-cells = <0x0>;
-compatible = "ibm,power9-core";
-reg = <0x0 HEX(CORE_BASE($1)) 0xfffff>;
+define(`CORE', `chiplet@CORE_BASE($1) {
+compatible = "ibm,power9-chiplet";
 index = <HEX(eval($2, 16))>;
+reg = <0x0 HEX(CORE_BASE($1)) 0xfffff>;
 
-THREAD(0);
-THREAD(1);
-THREAD(2);
-THREAD(3);
+core@0 {
+       #address-cells = <0x1>;
+       #size-cells = <0x0>;
+       compatible = "ibm,power9-core";
+       index = <HEX(eval($2, 16))>;
+       reg = <0x0 0x0 0xfffff>;
+
+       THREAD(0);
+       THREAD(1);
+       THREAD(2);
+       THREAD(3);
+};
 }')dnl
 define(`THREAD_BASE', `eval($1, 16)')dnl
 define(`THREAD',`thread@THREAD_BASE($1) {
@@ -19,6 +25,12 @@ compatible = "ibm,power9-thread";
 reg = <0x0>;
 tid = <HEX(eval($1, 16))>;
 index = <HEX(eval($1, 16))>;
+}')dnl
+define(`CHIPLET_BASE', `eval(0x1000000 * $1, 16)')dnl
+define(`CHIPLET', `chiplet@CHIPLET_BASE($1) {
+compatible = "ibm,power9-chiplet";
+index = <HEX(eval($1, 16))>;
+reg = <0x0 HEX(CHIPLET_BASE($1)) 0xfffff>;
 }')dnl
 
 #address-cells = <0x2>;
@@ -65,3 +77,23 @@ CORE(20, 20);
 CORE(21, 21);
 CORE(22, 22);
 CORE(23, 23);
+
+CHIPLET(1);
+CHIPLET(2);
+CHIPLET(3);
+CHIPLET(4);
+CHIPLET(5);
+CHIPLET(6);
+CHIPLET(7);
+CHIPLET(8);
+CHIPLET(9);
+CHIPLET(12);
+CHIPLET(13);
+CHIPLET(14);
+CHIPLET(15);
+CHIPLET(16);
+CHIPLET(17);
+CHIPLET(18);
+CHIPLET(19);
+CHIPLET(20);
+CHIPLET(21);
