@@ -80,6 +80,8 @@ static int run_start(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		if (!target_selected(target))
+			continue;
 		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
@@ -102,6 +104,8 @@ static int run_stop(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		if (!target_selected(target))
+			continue;
 		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
@@ -124,6 +128,8 @@ static int run_status(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		if (!target_selected(target))
+			continue;
 		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
@@ -148,6 +154,8 @@ static int run_reset(enum htm_type type, int optind, int argc, char *argv[])
 	int rc = 0;
 
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		if (!target_selected(target))
+			continue;
 		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
@@ -185,6 +193,8 @@ static int run_dump(enum htm_type type, int optind, int argc, char *argv[])
 	/* size = 0 will dump everything */
 	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		if (!target_selected(target))
+			continue;
 		pdbg_target_probe(target);
 		if (target_is_disabled(target))
 			continue;
@@ -324,6 +334,14 @@ int run_htm(int optind, int argc, char *argv[])
 				fprintf(stderr, "core HTM needs to run with powersave off\n");
 				fprintf(stderr, "Hint: put powersave=off on the kernel commandline\n");
 				return 0;
+			}
+		}
+
+		/* Select the correct chtm target */
+		pdbg_for_each_child_target(core_target, target) {
+			if (!strcmp(pdbg_target_class_name(target), "chtm")) {
+				target_select(target);
+				pdbg_target_probe(target);
 			}
 		}
 	}

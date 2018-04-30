@@ -257,14 +257,14 @@ static bool parse_options(int argc, char *argv[])
 	return opt_error;
 }
 
-static void target_select(struct pdbg_target *target)
+void target_select(struct pdbg_target *target)
 {
 	/* We abuse the private data pointer atm to indicate the target is
 	 * selected */
 	pdbg_target_priv_set(target, (void *) 1);
 }
 
-static void target_unselect(struct pdbg_target *target)
+void target_unselect(struct pdbg_target *target)
 {
 	pdbg_target_priv_set(target, NULL);
 }
