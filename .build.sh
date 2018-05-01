@@ -5,7 +5,7 @@ set -e
 CONTAINER=pdbg-build
 
 Dockerfile=$(cat << EOF
-FROM ubuntu:17.04
+FROM ubuntu:18.04
 RUN apt-get update && apt-get install --no-install-recommends -yy \
 	make \
 	gcc-arm-linux-gnueabi \
@@ -22,7 +22,7 @@ RUN /bin/bash
 EOF
 )
 
-docker pull ubuntu:17.04
+docker pull ubuntu:18.04
 docker build -t ${CONTAINER} - <<< "${Dockerfile}"
 
 RUN="docker run --rm=true --user=${USER} -w ${PWD} -v ${HOME}:${HOME} -t ${CONTAINER}"
