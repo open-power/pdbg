@@ -209,6 +209,7 @@ static int p9_ram_setup(struct thread *thread)
 static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
 {
 	uint64_t predecode, value;
+	int rc;
 
 	switch(opcode & OPCODE_MASK) {
 	case MTNIA_OPCODE:
@@ -236,14 +237,35 @@ static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 	value = SETFIELD(PPC_BITMASK(2, 5), value, predecode);
 	value = SETFIELD(PPC_BITMASK(8, 39), value, opcode);
 	CHECK_ERR(thread_write(thread, P9_RAM_CTRL, value));
-	do {
-		CHECK_ERR(thread_read(thread, P9_RAM_STATUS, &value));
-		if (((value & PPC_BIT(0)) || (value & PPC_BIT(2))))
-			return 1;
-	} while (!(value & PPC_BIT(1) && !(value & PPC_BIT(3))));
-	CHECK_ERR(thread_read(thread, P9_SCR0_REG, scratch));
 
-	return 0;
+	CHECK_ERR(thread_read(thread, P9_RAM_STATUS, &value));
+
+	rc = 0;
+	if (value & PPC_BIT(0)) {
+		printf("Error RAMing opcode=%" PRIx64 " attempting to RAM while in recovery (status=%" PRIx64")\n", opcode, value);
+		rc = 1;
+		goto out;
+	}
+	if (value & PPC_BIT(2)) {
+		printf("Error RAMing opcode=%" PRIx64 " exception or interrupt (status=%" PRIx64")\n", opcode, value);
+		rc = 1;
+		goto out;
+	}
+	if (!(value & PPC_BIT(1))) {
+		printf("Warning RAMing opcode=%" PRIx64 " unexpected status=%" PRIx64"\n", opcode, value);
+	}
+
+out:
+	if ((opcode & OPCODE_MASK) == LD_OPCODE) {
+		while (!(value & PPC_BIT(3))) {
+			CHECK_ERR(thread_read(thread, P9_RAM_STATUS, &value));
+		}
+	}
+
+	if (!rc)
+		CHECK_ERR(thread_read(thread, P9_SCR0_REG, scratch));
+
+	return rc;
 }
 
 static int p9_ram_destroy(struct thread *thread)
