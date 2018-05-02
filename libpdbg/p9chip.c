@@ -166,6 +166,7 @@ static int p9_ram_setup(struct thread *thread)
 {
 	struct pdbg_target *target;
 	struct core *chip = target_to_core(thread->target.parent);
+	uint64_t value;
 
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
@@ -180,12 +181,27 @@ static int p9_ram_setup(struct thread *thread)
 			return 1;
 	}
 
+	/* Wait for NEST_ACTIVE to clear */
+	do {
+		thread_read(thread, P9_RAS_STATUS, &value);
+	} while (value & PPC_BIT(32));
+
+	/* Wait for THREAD_ACTION_IN_PROGRESS to clear */
+	do {
+		thread_read(thread, P9_THREAD_INFO, &value);
+	} while (value & PPC_BIT(23));
+
+	/* Activate thread for ramming */
+	CHECK_ERR(thread_write(thread, P9_THREAD_INFO, PPC_BIT(18 + thread->id)));
+
  	/* Enable ram mode */
 	CHECK_ERR(thread_write(thread, P9_RAM_MODEREG, PPC_BIT(0)));
 
 	/* Setup SPRC to use SPRD */
 	CHECK_ERR(thread_write(thread, P9_SPR_MODE, 0x00000ff000000000));
 	CHECK_ERR(thread_write(thread, P9_SCOMC, 0x0));
+
+	thread->status = p9_get_thread_status(thread);
 
 	return 0;
 }
@@ -234,6 +250,11 @@ static int p9_ram_destroy(struct thread *thread)
 {
 	/* Disable ram mode */
 	CHECK_ERR(thread_write(thread, P9_RAM_MODEREG, 0));
+
+	/* Deactivate thread for ramming */
+	CHECK_ERR(thread_write(thread, P9_THREAD_INFO, 0));
+
+	thread->status = p9_get_thread_status(thread);
 
 	return 0;
 }
