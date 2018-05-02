@@ -107,7 +107,6 @@ static int p9_thread_probe(struct pdbg_target *target)
 static int p9_thread_start(struct thread *thread)
 {
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(6 + 8*thread->id));
-	thread_write(thread, P9_RAS_MODEREG, 0);
 
 	return 0;
 }
@@ -124,10 +123,6 @@ static int p9_thread_stop(struct thread *thread)
 			break;
 		}
 	}
-
-	/* Fence interrupts. We can't do a read-modify-write here due to an
-	 * errata */
-	thread_write(thread, P9_RAS_MODEREG, PPC_BIT(57));
 
 	return 0;
 }
