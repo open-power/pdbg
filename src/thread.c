@@ -27,60 +27,84 @@
 
 static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *status, uint64_t *unused1)
 {
-	*status = SETFIELD(0xffULL << (index * 8), *status, thread_status(target) & 0xffULL);
+	status[index] = thread_status(target);
 	return 1;
 }
 
-static int print_core_thread_status(struct pdbg_target *core_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int print_core_thread_status(struct pdbg_target *core_target, uint32_t index, uint64_t *maxindex, uint64_t *unused1)
 {
-	uint64_t status = -1UL;
+	uint64_t status[8];
 	int i, rc;
 
-	printf("c%02d:", index);
-	rc = for_each_child_target("thread", core_target, print_thread_status, &status, NULL);
-	for (i = 0; i < 8; i++) {
-		switch ((status >> (i * 8)) & 0xf) {
-		case THREAD_STATUS_ACTIVE:
-			printf(" A");
-			break;
+	memset(status, 0xff, sizeof(status));
 
-		case THREAD_STATUS_DOZE:
-		case THREAD_STATUS_QUIESCE | THREAD_STATUS_DOZE:
-			printf(" D");
-			break;
-
-		case THREAD_STATUS_NAP:
-		case THREAD_STATUS_QUIESCE | THREAD_STATUS_NAP:
-			printf(" N");
-			break;
-
-		case THREAD_STATUS_SLEEP:
-		case THREAD_STATUS_QUIESCE | THREAD_STATUS_SLEEP:
-			printf(" S");
-			break;
-
-		case THREAD_STATUS_ACTIVE | THREAD_STATUS_QUIESCE:
-			printf(" Q");
-			break;
-
-		case 0xf:
-			printf("  ");
-			break;
-
-		default:
-			printf(" U");
-			break;
+	printf("c%02d: ", index);
+	rc = for_each_child_target("thread", core_target, print_thread_status, &status[0], NULL);
+	for (i = 0; i <= *maxindex; i++) {
+		if (status[i] == -1ULL) {
+			printf("    ");
+			continue;
 		}
+		if (status[i] & ~(THREAD_STATUS_ACTIVE|THREAD_STATUS_DOZE|
+				  THREAD_STATUS_NAP|THREAD_STATUS_SLEEP|
+				  THREAD_STATUS_STOP|THREAD_STATUS_QUIESCE)) {
+			printf("%" PRIx64 " ", status[i]);
+			continue;
+		}
+
+		if (status[i] & THREAD_STATUS_ACTIVE)
+			printf("A");
+		else
+			printf(".");
+
+		if (status[i] & THREAD_STATUS_DOZE)
+			printf("D");
+		else if (status[i] & THREAD_STATUS_NAP)
+			printf("N");
+		else if (status[i] & THREAD_STATUS_SLEEP)
+			printf("S");
+		else if (status[i] & THREAD_STATUS_STOP)
+			printf("S");
+		else
+			printf(".");
+
+		if (status[i] & THREAD_STATUS_QUIESCE)
+			printf("Q");
+		else
+			printf(".");
+		printf(" ");
+
 	}
 	printf("\n");
 
 	return rc;
 }
 
+static int get_thread_max_index(struct pdbg_target *target, uint32_t index, uint64_t *maxindex, uint64_t *unused)
+{
+	if (index > *maxindex)
+		*maxindex = index;
+	return 1;
+}
+
+static int get_core_max_threads(struct pdbg_target *core_target, uint32_t index, uint64_t *maxindex, uint64_t *unused1)
+{
+	return for_each_child_target("thread", core_target, get_thread_max_index, maxindex, NULL);
+}
+
 static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
 {
-	printf("\np%01dt: 0 1 2 3 4 5 6 7\n", index);
-	return for_each_child_target("core", pib_target, print_core_thread_status, NULL, NULL);
+	int i;
+	uint64_t maxindex = 0;
+
+	for_each_child_target("core", pib_target, get_core_max_threads, &maxindex, NULL);
+
+	printf("\np%01dt:", index);
+	for (i = 0; i <= maxindex; i++)
+		printf("   %d", i);
+	printf("\n");
+
+	return for_each_child_target("core", pib_target, print_core_thread_status, &maxindex, NULL);
 };
 
 static int start_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
