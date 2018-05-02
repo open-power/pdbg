@@ -206,7 +206,9 @@ static int p9_ram_setup(struct thread *thread)
 	return 0;
 }
 
-static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
+
+
+static int __p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
 {
 	uint64_t predecode, value;
 	int rc;
@@ -266,6 +268,21 @@ out:
 		CHECK_ERR(thread_read(thread, P9_SCR0_REG, scratch));
 
 	return rc;
+}
+
+static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
+{
+	if ((opcode & OPCODE_MASK) == LD_OPCODE) {
+		/*
+		 * Loads must be rammed twice, the value of the second used.
+		 * A fault should still be returned though. Unfortunately
+		 * any load fault seems to be a checkstop.
+		 */
+		int rc = __p9_ram_instruction(thread, opcode, scratch);
+		if (rc)
+			return rc;
+	}
+	return __p9_ram_instruction(thread, opcode, scratch);
 }
 
 static int p9_ram_destroy(struct thread *thread)
