@@ -65,8 +65,8 @@
 #define PPM_SPWKUP_OTR	0xf010a
 #define  SPECIAL_WKUP_DONE PPC_BIT(1)
 
-#define RAS_STATUS_TIMEOUT	100
-#define SPECIAL_WKUP_TIMEOUT	10
+#define RAS_STATUS_TIMEOUT	100 /* 100ms */
+#define SPECIAL_WKUP_TIMEOUT	100 /* 100ms */
 
 static uint64_t thread_read(struct thread *thread, uint64_t addr, uint64_t *data)
 {
@@ -116,7 +116,8 @@ static int p9_thread_stop(struct thread *thread)
 	int i = 0;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(7 + 8*thread->id));
-	while(!(p9_get_thread_status(thread) & THREAD_STATUS_QUIESCE)) {
+	while (!(p9_get_thread_status(thread) & THREAD_STATUS_QUIESCE)) {
+		usleep(1000);
 		if (i++ > RAS_STATUS_TIMEOUT) {
 			PR_ERROR("Unable to quiesce thread\n");
 			break;
@@ -318,7 +319,7 @@ static int p9_core_probe(struct pdbg_target *target)
 
 	CHECK_ERR(pib_write(target, PPM_SPWKUP_OTR, PPC_BIT(0)));
 	do {
-		usleep(1);
+		usleep(1000);
 		CHECK_ERR(pib_read(target, PPM_GPMMR, &value));
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
