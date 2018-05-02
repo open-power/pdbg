@@ -63,6 +63,7 @@
 #define NET_CTRL0_WOR	0xf0042
 #define PPM_GPMMR	0xf0100
 #define PPM_SPWKUP_OTR	0xf010a
+#define PPM_SSHOTR	0xf0113
 #define  SPECIAL_WKUP_DONE PPC_BIT(1)
 
 #define RAS_STATUS_TIMEOUT	100 /* 100ms */
@@ -315,7 +316,7 @@ static int p9_core_probe(struct pdbg_target *target)
 	CHECK_ERR(pib_write(target, PPM_SPWKUP_OTR, PPC_BIT(0)));
 	do {
 		usleep(1000);
-		CHECK_ERR(pib_read(target, PPM_GPMMR, &value));
+		CHECK_ERR(pib_read(target, PPM_SSHOTR, &value));
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
 			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", target->name,
