@@ -115,7 +115,17 @@ static int p9_thread_probe(struct pdbg_target *target)
 
 static int p9_thread_start(struct thread *thread)
 {
-	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(6 + 8*thread->id));
+	if (!(thread->status & THREAD_STATUS_QUIESCE))
+		return 1;
+
+	if ((!(thread->status & THREAD_STATUS_ACTIVE)) ||
+	    (thread->status & THREAD_STATUS_STOP)) {
+		/* Inactive or active ad stopped: Clear Maint */
+		thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(3 + 8*thread->id));
+	} else {
+		/* Active and not stopped: Start */
+		thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(6 + 8*thread->id));
+	}
 
 	return 0;
 }
