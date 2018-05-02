@@ -71,6 +71,7 @@ uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size);
 
 /* Misc. */
 void pdbg_targets_init(void *fdt);
+void pdbg_target_probe_all(struct pdbg_target *parent);
 enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target);
 void pdbg_target_release(struct pdbg_target *target);
 enum pdbg_target_status pdbg_target_status(struct pdbg_target *target);

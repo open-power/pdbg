@@ -376,6 +376,22 @@ void pdbg_target_release(struct pdbg_target *target)
 	}
 }
 
+/*
+ * Probe all targets in the device tree.
+ */
+void pdbg_target_probe_all(struct pdbg_target *parent)
+{
+	struct pdbg_target *child;
+
+	if (!parent)
+		parent = dt_root;
+
+	pdbg_for_each_child_target(parent, child) {
+		pdbg_target_probe_all(child);
+		pdbg_target_probe(child);
+	}
+}
+
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class)
 {
 	if (!target || !target->class || !class)
