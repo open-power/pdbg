@@ -149,9 +149,46 @@ static int p9_thread_stop(struct thread *thread)
 	return 0;
 }
 
+static int p9_thread_step(struct thread *thread, int count)
+{
+	uint64_t value;
+	int i;
+
+	/* Can only step if a thread is quiesced */
+	if (!(thread->status & THREAD_STATUS_QUIESCE))
+		return 1;
+
+	/* Core must be active to step */
+	if (!(thread->status & THREAD_STATUS_ACTIVE))
+		return 1;
+
+	/* Stepping a stop instruction doesn't really work */
+	if (thread->status & THREAD_STATUS_STOP)
+		return 1;
+
+	/* Fence interrupts. */
+	thread_write(thread, P9_RAS_MODEREG, PPC_BIT(57));
+
+	/* Step the core */
+	for (i = 0; i < count; i++) {
+		/* Step */
+		thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(5 + 8*thread->id));
+
+		/* Poll PPC complete */
+		do {
+			thread_read(thread, P9_RAS_STATUS, &value);
+		} while (!(value & PPC_BIT(4 + 8*thread->id)));
+	}
+
+	/* Un-fence */
+	thread_write(thread, P9_RAS_MODEREG, 0);
+
+	return 0;
+}
+
 static int p9_thread_sreset(struct thread *thread)
 {
-	/* Can only sreset if a thread is inactive */
+	/* Can only sreset if a thread is quiesced */
 	if (!(thread->status & THREAD_STATUS_QUIESCE))
 		return 1;
 
@@ -307,6 +344,7 @@ struct thread p9_thread = {
 	},
 	.start = p9_thread_start,
 	.stop = p9_thread_stop,
+	.step = p9_thread_step,
 	.sreset = p9_thread_sreset,
 	.ram_setup = p9_ram_setup,
 	.ram_instruction = p9_ram_instruction,
