@@ -127,6 +127,8 @@ static int p9_thread_start(struct thread *thread)
 		thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(6 + 8*thread->id));
 	}
 
+	thread->status = p9_get_thread_status(thread);
+
 	return 0;
 }
 
@@ -142,6 +144,7 @@ static int p9_thread_stop(struct thread *thread)
 			break;
 		}
 	}
+	thread->status = p9_get_thread_status(thread);
 
 	return 0;
 }
@@ -149,10 +152,12 @@ static int p9_thread_stop(struct thread *thread)
 static int p9_thread_sreset(struct thread *thread)
 {
 	/* Can only sreset if a thread is inactive */
-	if (!(p9_get_thread_status(thread) & THREAD_STATUS_QUIESCE))
+	if (!(thread->status & THREAD_STATUS_QUIESCE))
 		return 1;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(4 + 8*thread->id));
+
+	thread->status = p9_get_thread_status(thread);
 
 	return 0;
 }
