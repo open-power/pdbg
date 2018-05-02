@@ -168,7 +168,11 @@ static int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes
 			opcode = mfspr(1, 277);
 		}
 
-		CHECK_ERR(thread->ram_instruction(thread, opcode, &scratch));
+		if (thread->ram_instruction(thread, opcode, &scratch)) {
+			PR_DEBUG("%s: %d\n", __FUNCTION__, __LINE__);
+			exception = 1;
+			break;
+		}
 
 		if (i == -2)
 			r1 = scratch;
