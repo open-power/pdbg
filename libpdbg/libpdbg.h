@@ -95,19 +95,24 @@ int ram_sreset_thread(struct pdbg_target *target);
 uint64_t thread_status(struct pdbg_target *target);
 int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
 
-#define THREAD_STATUS_DISABLED  PPC_BIT(0)
-#define THREAD_STATUS_ACTIVE       PPC_BIT(63)
-#define THREAD_STATUS_STATE        PPC_BITMASK(61, 62)
-#define THREAD_STATUS_DOZE PPC_BIT(62)
-#define THREAD_STATUS_NAP  PPC_BIT(61)
-#define THREAD_STATUS_SLEEP        PPC_BITMASK(61, 62)
-#define THREAD_STATUS_QUIESCE      PPC_BIT(60)
+#define THREAD_STATUS_DISABLED	PPC_BIT(0)
+#define THREAD_STATUS_ACTIVE	PPC_BIT(63)
+
+#define THREAD_STATUS_STATE	PPC_BITMASK(61, 62)
+#define THREAD_STATUS_DOZE	PPC_BIT(62)
+#define THREAD_STATUS_NAP	PPC_BIT(61)
+#define THREAD_STATUS_SLEEP	PPC_BITMASK(61, 62)
+
+#define THREAD_STATUS_QUIESCE	PPC_BIT(60)
+
 #define THREAD_STATUS_SMT	PPC_BITMASK(57, 59)
 #define THREAD_STATUS_SMT_1	PPC_BIT(59)
 #define THREAD_STATUS_SMT_2SH	PPC_BIT(58)
 #define THREAD_STATUS_SMT_2SP	(PPC_BIT(58) | PPC_BIT(59))
 #define THREAD_STATUS_SMT_4	PPC_BIT(57)
 #define THREAD_STATUS_SMT_8	(PPC_BIT(57) | PPC_BIT(59))
+
+#define THREAD_STATUS_STOP	PPC_BIT(56)
 
 int htm_start(struct pdbg_target *target);
 int htm_stop(struct pdbg_target *target);

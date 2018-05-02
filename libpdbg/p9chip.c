@@ -25,6 +25,7 @@
 #include "bitutils.h"
 
 #define P9_RAS_STATUS 0x10a02
+#define P9_CORE_THREAD_STATE 0x10ab3
 #define P9_THREAD_INFO 0x10a9b
 #define P9_DIRECT_CONTROL 0x10a9c
 #define P9_RAS_MODEREG 0x10a9d
@@ -85,11 +86,19 @@ static uint64_t thread_write(struct thread *thread, uint64_t addr, uint64_t data
 
 static uint64_t p9_get_thread_status(struct thread *thread)
 {
-	uint64_t value, status = THREAD_STATUS_ACTIVE;
+	uint64_t value, status = 0;
 
 	thread_read(thread, P9_RAS_STATUS, &value);
 	if (GETFIELD(PPC_BITMASK(8*thread->id, 3 + 8*thread->id), value) == 0xf)
 		status |= THREAD_STATUS_QUIESCE;
+
+	thread_read(thread, P9_THREAD_INFO, &value);
+	if (value & PPC_BIT(thread->id))
+		status |= THREAD_STATUS_ACTIVE;
+
+	thread_read(thread, P9_CORE_THREAD_STATE, &value);
+	if (value & PPC_BIT(56 + thread->id))
+		status |= THREAD_STATUS_STOP;
 
 	return status;
 }
@@ -129,8 +138,8 @@ static int p9_thread_stop(struct thread *thread)
 
 static int p9_thread_sreset(struct thread *thread)
 {
-	/* Can only sreset if a thread is inactive, at least on DD1 */
-	if (p9_get_thread_status(thread) != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE))
+	/* Can only sreset if a thread is inactive */
+	if (!(p9_get_thread_status(thread) & THREAD_STATUS_QUIESCE))
 		return 1;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(4 + 8*thread->id));
@@ -152,7 +161,7 @@ static int p9_ram_setup(struct thread *thread)
 		   so do that now. This will also update the thread status */
 		p9_thread_probe(target);
 		tmp = target_to_thread(target);
-		if (tmp->status != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE))
+		if (!(tmp->status & THREAD_STATUS_QUIESCE))
 			return 1;
 	}
 

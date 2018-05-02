@@ -322,6 +322,8 @@ int run_htm(int optind, int argc, char *argv[])
 		 * This is as easy as checking that every single
 		 * thread is "ACTIVE" and hasn't gone into any sleep
 		 * state.
+		 *
+		 * On P9 it requires checking for THREAD_STATUS_STOP
 		 */
 		pdbg_for_each_class_target("thread", target) {
 			pdbg_target_probe(target);
@@ -329,7 +331,8 @@ int run_htm(int optind, int argc, char *argv[])
 			if (pdbg_target_status(target) == PDBG_TARGET_NONEXISTENT)
 				continue;
 
-			if ((thread_status(target) & THREAD_STATUS_ACTIVE) != THREAD_STATUS_ACTIVE) {
+			if ((!(thread_status(target) & THREAD_STATUS_ACTIVE)) ||
+			    (thread_status(target) & THREAD_STATUS_STOP)) {
 				fprintf(stderr, "It appears powersave is on 0x%"  PRIx64 "%p\n", thread_status(target), target);
 				fprintf(stderr, "core HTM needs to run with powersave off\n");
 				fprintf(stderr, "Hint: put powersave=off on the kernel commandline\n");
