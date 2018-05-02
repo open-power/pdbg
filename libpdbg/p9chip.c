@@ -137,11 +137,6 @@ static int p9_thread_sreset(struct thread *thread)
 	if (p9_get_thread_status(thread) != (THREAD_STATUS_QUIESCE | THREAD_STATUS_ACTIVE))
 		return 1;
 
-	/* This will force SRR1[46:47] == 0b00 which means the kernel should
-	 * enter xmon. However it will hide the fact we may have come from a
-	 * powersave state in which register contents were lost. We need a
-	 * kernel side fix for that. */
-	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(32 + 8*thread->id));
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(4 + 8*thread->id));
 
 	return 0;
