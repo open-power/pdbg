@@ -24,6 +24,13 @@
 #include "operations.h"
 #include "bitutils.h"
 
+/*
+ * NOTE!
+ * All timeouts and scom procedures in general through the file should be kept
+ * in synch with skiboot (e.g., core/direct-controls.c) as far as possible.
+ * If you fix a bug here, fix it in skiboot, and vice versa.
+ */
+
 #define P9_RAS_STATUS 0x10a02
 #define P9_CORE_THREAD_STATE 0x10ab3
 #define P9_THREAD_INFO 0x10a9b
@@ -450,12 +457,20 @@ static int p9_core_probe(struct pdbg_target *target)
 	return 0;
 }
 
+static void p9_core_release(struct pdbg_target *target)
+{
+	usleep(1); /* enforce small delay before and after it is cleared */
+	pib_write(target, PPM_SPWKUP_OTR, 0);
+	usleep(10000);
+}
+
 static struct core p9_core = {
 	.target = {
 		.name = "POWER9 Core",
 		.compatible = "ibm,power9-core",
 		.class = "core",
 		.probe = p9_core_probe,
+		.release = p9_core_release,
 	},
 };
 DECLARE_HW_UNIT(p9_core);
