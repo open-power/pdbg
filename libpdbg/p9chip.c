@@ -214,12 +214,52 @@ static int p9_thread_sreset(struct thread *thread)
 	return 0;
 }
 
+static void ram_nonexpert_cleanup(struct thread *thread)
+{
+	struct pdbg_target *target;
+	struct core *chip = target_to_core(thread->target.parent);
+
+	if (pdbg_expert_mode)
+		return;
+
+	/* We can only ram a thread if all the threads on the core/chip are
+	 * quiesced */
+	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
+		struct thread *tmp;
+
+		tmp = target_to_thread(target);
+		if (tmp->ram_did_quiesce) {
+			p9_thread_start(tmp);
+			tmp->ram_did_quiesce = false;
+		}
+	}
+}
+
 static int p9_ram_setup(struct thread *thread)
 {
 	struct pdbg_target *target;
 	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t value;
 
+	if (pdbg_expert_mode)
+		goto expert;
+
+	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
+		struct thread *tmp;
+
+		p9_thread_probe(target);
+		tmp = target_to_thread(target);
+		/* Something already quiesced it, fail*/
+		if (tmp->status & THREAD_STATUS_QUIESCE)
+			goto out_fail;
+		if (!(tmp->status & THREAD_STATUS_QUIESCE)) {
+			if (p9_thread_stop(tmp))
+				goto out_fail;
+			tmp->ram_did_quiesce = true;
+		}
+	}
+
+expert:
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
 	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
@@ -230,7 +270,7 @@ static int p9_ram_setup(struct thread *thread)
 		p9_thread_probe(target);
 		tmp = target_to_thread(target);
 		if (!(tmp->status & THREAD_STATUS_QUIESCE))
-			return 1;
+			goto out_fail;
 	}
 
 	/* Wait for NEST_ACTIVE to clear */
@@ -244,18 +284,26 @@ static int p9_ram_setup(struct thread *thread)
 	} while (value & PPC_BIT(23));
 
 	/* Activate thread for ramming */
-	CHECK_ERR(thread_write(thread, P9_THREAD_INFO, PPC_BIT(18 + thread->id)));
+	CHECK_ERR_GOTO(out_fail,
+		thread_write(thread, P9_THREAD_INFO, PPC_BIT(18 + thread->id)));
 
  	/* Enable ram mode */
-	CHECK_ERR(thread_write(thread, P9_RAM_MODEREG, PPC_BIT(0)));
+	CHECK_ERR_GOTO(out_fail,
+		thread_write(thread, P9_RAM_MODEREG, PPC_BIT(0)));
 
 	/* Setup SPRC to use SPRD */
-	CHECK_ERR(thread_write(thread, P9_SPR_MODE, 0x00000ff000000000));
-	CHECK_ERR(thread_write(thread, P9_SCOMC, 0x0));
+	CHECK_ERR_GOTO(out_fail,
+		thread_write(thread, P9_SPR_MODE, 0x00000ff000000000));
+	CHECK_ERR_GOTO(out_fail,
+		thread_write(thread, P9_SCOMC, 0x0));
 
 	thread->status = p9_get_thread_status(thread);
 
 	return 0;
+
+out_fail:
+	ram_nonexpert_cleanup(thread);
+	return 1;
 }
 
 
@@ -351,6 +399,8 @@ static int p9_ram_destroy(struct thread *thread)
 	CHECK_ERR(thread_write(thread, P9_THREAD_INFO, 0));
 
 	thread->status = p9_get_thread_status(thread);
+
+	ram_nonexpert_cleanup(thread);
 
 	return 0;
 }

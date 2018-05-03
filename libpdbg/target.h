@@ -151,6 +151,8 @@ struct thread {
 	int (*stop)(struct thread *);
 	int (*sreset)(struct thread *);
 
+	bool ram_did_quiesce; /* was the thread quiesced by ram mode */
+
 	/* ram_setup() should be called prior to using ram_instruction() to
 	 * actually ram the instruction and return the result. ram_destroy()
 	 * should be called at completion to clean-up. */

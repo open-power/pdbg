@@ -22,10 +22,18 @@
 /* Error codes */
 #define EFSI 1
 
+#define PRINT_ERR PR_DEBUG("%s: %d\n", __FUNCTION__, __LINE__)
 #define CHECK_ERR(x) do {					\
 	if (x) {	       					\
-		PR_DEBUG("%s: %d\n", __FUNCTION__, __LINE__);	\
+		PRINT_ERR;					\
 		return x;					\
+	}							\
+	} while(0)
+
+#define CHECK_ERR_GOTO(label, x) do {				\
+	if (x) {	       					\
+		PRINT_ERR;					\
+		goto label;					\
 	}							\
 	} while(0)
 
