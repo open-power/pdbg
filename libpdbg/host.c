@@ -111,7 +111,7 @@ out:
 	return -1;
 }
 
-struct pib host_pib = {
+static struct pib host_pib = {
 	.target = {
 		.name = "Host based debugfs SCOM",
 		.compatible  = "ibm,host-pib",

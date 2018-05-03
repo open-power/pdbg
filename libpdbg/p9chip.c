@@ -340,7 +340,7 @@ static int p9_ram_destroy(struct thread *thread)
 	return 0;
 }
 
-struct thread p9_thread = {
+static struct thread p9_thread = {
 	.target = {
 		.name = "POWER9 Thread",
 		.compatible = "ibm,power9-thread",
@@ -450,7 +450,7 @@ static int p9_core_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct core p9_core = {
+static struct core p9_core = {
 	.target = {
 		.name = "POWER9 Core",
 		.compatible = "ibm,power9-core",
@@ -473,7 +473,7 @@ static int p9_chiplet_probe(struct pdbg_target *target)
         return 0;
 }
 
-struct chiplet p9_chiplet = {
+static struct chiplet p9_chiplet = {
         .target = {
                 .name = "POWER9 Chiplet",
                 .compatible = "ibm,power9-chiplet",

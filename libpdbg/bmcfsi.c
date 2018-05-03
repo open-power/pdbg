@@ -491,7 +491,7 @@ int bmcfsi_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct fsi bmcfsi = {
+static struct fsi bmcfsi = {
 	.target = {
 		.name = "BMC GPIO bit-banging FSI master",
 		.compatible = "ibm,bmcfsi",

@@ -30,7 +30,7 @@ static int fake_fsi_write(struct fsi *fsi, uint32_t addr, uint32_t value)
 	return 0;
 }
 
-struct fsi fake_fsi = {
+static struct fsi fake_fsi = {
 	.target = {
 		.name =	"Fake FSI",
 		.compatible = "ibm,fake-fsi",
@@ -54,7 +54,7 @@ static int fake_pib_write(struct pib *pib, uint64_t addr, uint64_t value)
 	return 0;
 }
 
-struct pib fake_pib = {
+static struct pib fake_pib = {
 	.target = {
 		.name =	"Fake PIB",
 		.compatible = "ibm,fake-pib",

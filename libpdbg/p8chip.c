@@ -307,7 +307,7 @@ static int p8_thread_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct thread p8_thread = {
+static struct thread p8_thread = {
 	.target = {
 		.name = "POWER8 Thread",
 		.compatible = "ibm,power8-thread",
@@ -341,7 +341,7 @@ static int p8_core_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct core p8_core = {
+static struct core p8_core = {
 	.target = {
 		.name = "POWER8 Core",
 		.compatible = "ibm,power8-core",

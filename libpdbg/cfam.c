@@ -117,7 +117,7 @@ static int fsi2pib_reset(struct pdbg_target *target)
 	return 0;
 }
 
-struct pib fsi_pib = {
+static struct pib fsi_pib = {
 	.target = {
 		.name =	"POWER FSI2PIB",
 		.compatible = "ibm,fsi-pib",
@@ -228,7 +228,7 @@ static int p8_opb_write(struct opb *opb, uint32_t addr, uint32_t data)
 	return opb_poll(opb, NULL);
 }
 
-struct opb p8_opb = {
+static struct opb p8_opb = {
 	.target = {
 		.name = "POWER8 OPB",
 		.compatible = "ibm,power8-opb",
@@ -281,7 +281,7 @@ static int p8_hmfsi_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct fsi p8_opb_hmfsi = {
+static struct fsi p8_opb_hmfsi = {
 	.target = {
 		.name = "POWER8 OPB attached hMFSI",
 		.compatible = "ibm,power8-opb-hmfsi",
@@ -339,7 +339,7 @@ static int cfam_hmfsi_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct fsi cfam_hmfsi = {
+static struct fsi cfam_hmfsi = {
 	.target = {
 		.name = "CFAM hMFSI Port",
 		.compatible = "ibm,fsi-hmfsi",

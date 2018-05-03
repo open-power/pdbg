@@ -384,7 +384,7 @@ retry:
 	return 0;
 }
 
-struct adu p8_adu = {
+static struct adu p8_adu = {
 	.target = {
 		.name =	"POWER8 ADU",
 		.compatible = "ibm,power8-adu",
@@ -395,7 +395,7 @@ struct adu p8_adu = {
 };
 DECLARE_HW_UNIT(p8_adu);
 
-struct adu p9_adu = {
+static struct adu p9_adu = {
 	.target = {
 		.name =	"POWER9 ADU",
 		.compatible = "ibm,power9-adu",

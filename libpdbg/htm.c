@@ -980,7 +980,7 @@ static int chtm_probe(struct pdbg_target *target)
 	return is_debugfs_memtrace_ok() && is_debugfs_scom_ok() ? 0 : -1;
 }
 
-struct htm nhtm = {
+static struct htm nhtm = {
 	.target = {
 		.name =	"Nest HTM",
 		.compatible = "ibm,power8-nhtm", "ibm,power9-nhtm",
@@ -996,7 +996,7 @@ struct htm nhtm = {
 };
 DECLARE_HW_UNIT(nhtm);
 
-struct htm chtm = {
+static struct htm chtm = {
 	.target = {
 		.name = "POWER8 Core HTM",
 		.compatible = "ibm,power8-chtm",

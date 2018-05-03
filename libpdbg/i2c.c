@@ -152,7 +152,7 @@ int i2c_target_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct pib p8_i2c_pib = {
+static struct pib p8_i2c_pib = {
 	.target = {
 		.name =	"POWER8 I2C Slave",
 		.compatible = "ibm,power8-i2c-slave",

@@ -133,7 +133,7 @@ int kernel_fsi_probe(struct pdbg_target *target)
 	return -1;
 }
 
-struct fsi kernel_fsi = {
+static struct fsi kernel_fsi = {
 	.target = {
 		.name = "Kernel based FSI master",
 		.compatible = "ibm,kernel-fsi",
