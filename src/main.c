@@ -86,7 +86,6 @@ static struct action expert_actions[] = {
 	{ "start",   "", "Start thread", &thread_start },
 	{ "step",    "<count>", "Set a thread <count> instructions", &thread_step },
 	{ "stop",    "", "Stop thread", &thread_stop },
-	{ "sreset",  "", "Reset", &thread_sreset },
 	{ "htm_start", "", "[deprecated use 'htm nest start'] Start Nest HTM", &run_htm_start },
 	{ "htm_stop", "", "[deprecated use 'htm nest stop'] Stop Nest HTM", &run_htm_stop },
 	{ "htm_status", "", "[deprecated use 'htm nest status'] Print the status of HTM", &run_htm_status },
@@ -107,6 +106,7 @@ static struct action actions[] = {
 	{ "getmem",  "<address> <count>", "Read system memory", &handle_mem },
 	{ "putmem",  "<address>", "Write to system memory", &handle_mem },
 	{ "threadstatus", "", "Print the status of a thread", &thread_status_print },
+	{ "sreset",  "", "Reset", &thread_sreset },
 };
 
 

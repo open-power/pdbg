@@ -195,6 +195,14 @@ static int p9_thread_step(struct thread *thread, int count)
 
 static int p9_thread_sreset(struct thread *thread)
 {
+	if (!pdbg_expert_mode) {
+		/* Something already quiesced it, fail*/
+		if (thread->status & THREAD_STATUS_QUIESCE)
+			return 1;
+		if (p9_thread_stop(thread))
+			return 1;
+	}
+
 	/* Can only sreset if a thread is quiesced */
 	if (!(thread->status & THREAD_STATUS_QUIESCE))
 		return 1;
