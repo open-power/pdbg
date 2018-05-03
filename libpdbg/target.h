@@ -44,6 +44,7 @@ struct pdbg_target {
 	char *compatible;
 	char *class;
 	int (*probe)(struct pdbg_target *target);
+	void (*release)(struct pdbg_target *target);
 	int index;
 	enum pdbg_target_status status;
 	const char *dn_name;
@@ -64,8 +65,13 @@ struct pdbg_target_class *get_target_class(const char *name);
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 
 extern struct list_head empty_list;
+extern struct list_head target_classes;
+
 #define for_each_class_target(class_name, target)			\
 	list_for_each((find_target_class(class_name) ? &require_target_class(class_name)->targets : &empty_list), target, class_link)
+
+#define for_each_target_class(target_class)			\
+	list_for_each(&target_classes, target_class, class_head_link)
 
 struct hw_unit_info {
 	void *hw_unit;

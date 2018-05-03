@@ -285,6 +285,9 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 	assert(target);
 
 	status = pdbg_target_status(target);
+	assert(status != PDBG_TARGET_RELEASED);
+	assert(status != PDBG_TARGET_PENDING_RELEASE);
+
 	if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_NONEXISTENT
 	    || status == PDBG_TARGET_ENABLED)
 		/* We've already tried probing this target and by assumption
@@ -311,6 +314,8 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 			assert(pdbg_target_status(target) != PDBG_TARGET_MUSTEXIST);
 			return pdbg_target_status(target);
 
+		case PDBG_TARGET_RELEASED:
+		case PDBG_TARGET_PENDING_RELEASE:
 		case PDBG_TARGET_MUSTEXIST:
 		case PDBG_TARGET_UNKNOWN:
 			/* We must know by now if the parent exists or not */
@@ -332,6 +337,43 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 
 	target->status = PDBG_TARGET_ENABLED;
 	return PDBG_TARGET_ENABLED;
+}
+
+/*
+ * Walk back up, releasing.
+ */
+void pdbg_target_release(struct pdbg_target *target)
+{
+	struct pdbg_target *parent;
+	struct pdbg_target *child;
+
+	assert(target);
+
+	/* If it's not enabled, the parent wasn't enabled. */
+	if ((pdbg_target_status(target) != PDBG_TARGET_ENABLED) &&
+	    (pdbg_target_status(target) != PDBG_TARGET_PENDING_RELEASE))
+		return;
+
+	target->status = PDBG_TARGET_PENDING_RELEASE;
+
+	pdbg_for_each_child_target(target, child) {
+		/* Not all children released yet, stop here. */
+		if (pdbg_target_status(child) == PDBG_TARGET_ENABLED)
+			return;
+		if (pdbg_target_status(child) == PDBG_TARGET_PENDING_RELEASE)
+			return;
+	}
+
+	/* At this point any parents must exist and have already been probed */
+	if (target->release)
+		target->release(target);
+	target->status = PDBG_TARGET_RELEASED;
+
+	parent = target->parent;
+	if (parent) {
+		/* Recurse up the tree to release parents */
+		pdbg_target_release(parent);
+	}
 }
 
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class)

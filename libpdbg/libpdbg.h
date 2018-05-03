@@ -13,7 +13,8 @@ struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct 
 /*
  * Each target has a status associated with it. This is what each status means:
  *
- * enabled     - the target exists and has been probed.
+ * enabled     - the target exists and has been probed, will be released by
+ *               the release call.
  *
  * disabled    - the target has not been probed and will never be probed. Target
  *               selection code may use this to prevent probing of certain
@@ -28,6 +29,10 @@ struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct 
  *               it does not exist as it is required for correct operation.
  *               Selection code may set this.
  *
+ * released    - the target was enabled and has now been released.
+ * pending release - the target was released but some children still enabled
+ *               so the ->release method hasn't been called yet.
+ *
  * Initially these properties are read from the device tree. This allows the
  * client application to select which targets it does not care about to avoid
  * unneccessary probing by marking them disabled. If no status property exists
@@ -35,7 +40,8 @@ struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct 
  */
 enum pdbg_target_status {PDBG_TARGET_UNKNOWN = 0, PDBG_TARGET_ENABLED,
 			 PDBG_TARGET_DISABLED, PDBG_TARGET_MUSTEXIST,
-			 PDBG_TARGET_NONEXISTENT};
+			 PDBG_TARGET_NONEXISTENT, PDBG_TARGET_RELEASED,
+			 PDBG_TARGET_PENDING_RELEASE };
 
 #define pdbg_for_each_target(class, parent, target)			\
 	for (target = __pdbg_next_target(class, parent, NULL);		\
@@ -63,6 +69,7 @@ uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size);
 /* Misc. */
 void pdbg_targets_init(void *fdt);
 enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target);
+void pdbg_target_release(struct pdbg_target *target);
 enum pdbg_target_status pdbg_target_status(struct pdbg_target *target);
 void pdbg_target_status_set(struct pdbg_target *target, enum pdbg_target_status status);
 uint32_t pdbg_target_index(struct pdbg_target *target);
