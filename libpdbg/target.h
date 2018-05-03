@@ -156,6 +156,7 @@ struct thread {
 	/* ram_setup() should be called prior to using ram_instruction() to
 	 * actually ram the instruction and return the result. ram_destroy()
 	 * should be called at completion to clean-up. */
+	bool ram_is_setup;
 	int (*ram_setup)(struct thread *);
 	int (*ram_instruction)(struct thread *, uint64_t opcode, uint64_t *scratch);
 	int (*ram_destroy)(struct thread *);

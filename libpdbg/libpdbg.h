@@ -90,6 +90,43 @@ int pib_read(struct pdbg_target *target, uint64_t addr, uint64_t *val);
 int pib_write(struct pdbg_target *target, uint64_t addr, uint64_t val);
 int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t data);
 
+struct thread_regs {
+	uint64_t nia;
+	uint64_t msr;
+	uint64_t cfar;
+	uint64_t lr;
+	uint64_t ctr;
+	uint64_t tar;
+	uint32_t cr;
+	uint32_t xer;
+	uint64_t gprs[32];
+
+	uint64_t lpcr;
+	uint64_t ptcr;
+	uint64_t lpidr;
+	uint64_t pidr;
+	uint64_t hfscr;
+	uint32_t hdsisr;
+	uint64_t hdar;
+	uint64_t hsrr0;
+	uint64_t hsrr1;
+	uint64_t hdec;
+	uint64_t hsprg0;
+	uint64_t hsprg1;
+	uint64_t fscr;
+	uint32_t dsisr;
+	uint64_t dar;
+	uint64_t srr0;
+	uint64_t srr1;
+	uint64_t dec;
+	uint64_t tb;
+	uint64_t sprg0;
+	uint64_t sprg1;
+	uint64_t sprg2;
+	uint64_t sprg3;
+	uint64_t ppr;
+};
+
 int ram_putmsr(struct pdbg_target *target, uint64_t val);
 int ram_putnia(struct pdbg_target *target, uint64_t val);
 int ram_putspr(struct pdbg_target *target, int spr, uint64_t val);
@@ -102,6 +139,7 @@ int ram_start_thread(struct pdbg_target *target);
 int ram_step_thread(struct pdbg_target *target, int steps);
 int ram_stop_thread(struct pdbg_target *target);
 int ram_sreset_thread(struct pdbg_target *target);
+int ram_state_thread(struct pdbg_target *target, struct thread_regs *regs);
 uint64_t thread_status(struct pdbg_target *target);
 int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
 

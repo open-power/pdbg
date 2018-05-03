@@ -127,6 +127,13 @@ static int sreset_thread(struct pdbg_target *thread_target, uint32_t index, uint
 	return ram_sreset_thread(thread_target) ? 0 : 1;
 }
 
+static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+{
+	struct thread_regs regs;
+
+	return ram_state_thread(thread_target, &regs) ? 0 : 1;
+}
+
 int thread_start(int optind, int argc, char *argv[])
 {
 	return for_each_target("thread", start_thread, NULL, NULL);
@@ -166,4 +173,15 @@ int thread_status_print(int optind, int argc, char *argv[])
 int thread_sreset(int optind, int argc, char *argv[])
 {
 	return for_each_target("thread", sreset_thread, NULL, NULL);
+}
+
+int thread_state(int optind, int argc, char *argv[])
+{
+	int err;
+
+	err = for_each_target("thread", state_thread, NULL, NULL);
+
+	for_each_target_release("thread");
+
+	return err;
 }

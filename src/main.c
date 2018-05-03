@@ -107,6 +107,7 @@ static struct action actions[] = {
 	{ "putmem",  "<address>", "Write to system memory", &handle_mem },
 	{ "threadstatus", "", "Print the status of a thread", &thread_status_print },
 	{ "sreset",  "", "Reset", &thread_sreset },
+	{ "regs",  "", "State", &thread_state },
 };
 
 

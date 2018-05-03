@@ -67,7 +67,12 @@ int adu_putmem(struct pdbg_target *target, uint64_t start_addr, uint8_t *input, 
 #define MTMSR_OPCODE 0x7c000124UL
 #define MFSPR_OPCODE 0x7c0002a6UL
 #define MTSPR_OPCODE 0x7c0003a6UL
+#define MFOCRF_OPCODE 0x7c100026UL
+#define MFSPR_MASK (MFSPR_OPCODE | ((0x1f) << 16) | ((0x3e0) << 6))
+#define MFXER_OPCODE (MFSPR_OPCODE | ((1 & 0x1f) << 16) | ((1 & 0x3e0) << 6))
 #define LD_OPCODE 0xe8000000UL
+
+#define MFSPR_SPR(opcode) (((opcode >> 16) & 0x1f) | ((opcode >> 6) & 0x3e0))
 
 /* GDB server functionality */
 int gdbserver_start(uint16_t port);

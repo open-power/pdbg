@@ -241,6 +241,9 @@ static int p9_ram_setup(struct thread *thread)
 	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t value;
 
+	if (thread->ram_is_setup)
+		return 1;
+
 	if (pdbg_expert_mode)
 		goto expert;
 
@@ -299,6 +302,8 @@ expert:
 
 	thread->status = p9_get_thread_status(thread);
 
+	thread->ram_is_setup = true;
+
 	return 0;
 
 out_fail:
@@ -312,6 +317,9 @@ static int __p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t
 {
 	uint64_t predecode, value;
 	int rc;
+
+	if (!thread->ram_is_setup)
+		return 1;
 
 	switch(opcode & OPCODE_MASK) {
 	case MTNIA_OPCODE:
@@ -328,6 +336,17 @@ static int __p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t
 
 	case MTMSR_OPCODE:
 		predecode = 8;
+		break;
+
+	case MFSPR_OPCODE:
+		switch(MFSPR_SPR(opcode)) {
+		case 1: /* XER */
+			predecode = 4;
+			break;
+		default:
+			predecode = 0;
+			break;
+		}
 		break;
 
 	default:
@@ -392,6 +411,9 @@ static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 
 static int p9_ram_destroy(struct thread *thread)
 {
+	if (!thread->ram_is_setup)
+		return 1;
+
 	/* Disable ram mode */
 	CHECK_ERR(thread_write(thread, P9_RAM_MODEREG, 0));
 
@@ -401,6 +423,8 @@ static int p9_ram_destroy(struct thread *thread)
 	thread->status = p9_get_thread_status(thread);
 
 	ram_nonexpert_cleanup(thread);
+
+	thread->ram_is_setup = false;
 
 	return 0;
 }

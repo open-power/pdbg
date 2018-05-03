@@ -222,6 +222,9 @@ static int p8_ram_setup(struct thread *thread)
 	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t ram_mode, val;
 
+	if (thread->ram_is_setup)
+		return 1;
+
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
 	dt_for_each_compatible(&chip->target, target, "ibm,power8-thread") {
@@ -246,6 +249,8 @@ static int p8_ram_setup(struct thread *thread)
 	CHECK_ERR(pib_write(&chip->target, SPR_MODE_REG, val));
 	CHECK_ERR(pib_write(&chip->target, L0_SCOM_SPRC_REG, SCOM_SPRC_SCRATCH_SPR));
 
+	thread->ram_is_setup = true;
+
 	return 0;
 }
 
@@ -253,6 +258,9 @@ static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 {
 	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t val;
+
+	if (!thread->ram_is_setup)
+		return 1;
 
 	CHECK_ERR(pib_write(&chip->target, SCR0_REG, *scratch));
 
@@ -290,6 +298,8 @@ static int p8_ram_destroy(struct thread *thread)
 	CHECK_ERR(pib_read(&chip->target, RAM_MODE_REG, &ram_mode));
 	ram_mode &= ~RAM_MODE_ENABLE;
 	CHECK_ERR(pib_write(&chip->target, RAM_MODE_REG, ram_mode));
+
+	thread->ram_is_setup = false;
 
 	return 0;
 }

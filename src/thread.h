@@ -22,3 +22,4 @@ int thread_step(int optind, int argc, char *argv[]);
 int thread_stop(int optind, int argc, char *argv[]);
 int thread_status_print(int optind, int argc, char *argv[]);
 int thread_sreset(int optind, int argc, char *argv[]);
+int thread_state(int optind, int argc, char *argv[]);
