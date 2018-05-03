@@ -310,6 +310,11 @@ out:
 static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
 {
 	if ((opcode & OPCODE_MASK) == LD_OPCODE) {
+		printf("RAM LSU opcodes are disabled for POWER9 because exceptions will checkstop. Use ADU instead.\n");
+		return 1;
+	}
+
+	if ((opcode & OPCODE_MASK) == LD_OPCODE) {
 		/*
 		 * Loads must be rammed twice, the value of the second used.
 		 * A fault should still be returned though. Unfortunately
