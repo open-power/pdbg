@@ -1,8 +1,11 @@
 #ifndef __LIBPDBG_H
 #define __LIBPDBG_H
 
+extern bool pdbg_expert_mode;
+
 struct pdbg_target;
 struct pdbg_target_class;
+
 
 struct pdbg_taget *pdbg_root_target;
 

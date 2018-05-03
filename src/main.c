@@ -66,18 +66,14 @@ static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
 static int handle_probe(int optind, int argc, char *argv[]);
 static int handle_release(int optind, int argc, char *argv[]);
 
-static struct {
+struct action {
 	const char *name;
 	const char *args;
 	const char *desc;
 	int (*fn)(int, int, char **);
-} actions[] = {
-	{ "getcfam", "<address>", "Read system cfam", &handle_cfams },
-	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam", &handle_cfams },
-	{ "getscom", "<address>", "Read system scom", &handle_scoms },
-	{ "putscom", "<address> <value> [<mask>]", "Write system scom", &handle_scoms },
-	{ "getmem",  "<address> <count>", "Read system memory", &handle_mem },
-	{ "putmem",  "<address>", "Write to system memory", &handle_mem },
+};
+
+static struct action expert_actions[] = {
 	{ "getgpr",  "<gpr>", "Read General Purpose Register (GPR)", &handle_gpr },
 	{ "putgpr",  "<gpr> <value>", "Write General Purpose Register (GPR)", &handle_gpr },
 	{ "getnia",  "", "Get Next Instruction Address (NIA)", &handle_nia },
@@ -90,7 +86,6 @@ static struct {
 	{ "start",   "", "Start thread", &thread_start },
 	{ "step",    "<count>", "Set a thread <count> instructions", &thread_step },
 	{ "stop",    "", "Stop thread", &thread_stop },
-	{ "threadstatus", "", "Print the status of a thread", &thread_status_print },
 	{ "sreset",  "", "Reset", &thread_sreset },
 	{ "htm_start", "", "[deprecated use 'htm nest start'] Start Nest HTM", &run_htm_start },
 	{ "htm_stop", "", "[deprecated use 'htm nest stop'] Stop Nest HTM", &run_htm_stop },
@@ -100,9 +95,20 @@ static struct {
 	{ "htm_trace", "" , "[deprecated use 'htm nest trace'] Configure and start tracing with HTM", &run_htm_trace },
 	{ "htm_analyse", "", "[derepcated use 'htm nest analyse'] Stop and dump buffer to file", &run_htm_analyse },
 	{ "htm", "(core | nest) (start | stop | status | reset | dump | trace | analyse", "Hardware Trace Macro", &run_htm },
-	{ "probe", "", "", &handle_probe },
 	{ "release", "", "Should be called after pdbg work is finished, to release special wakeups and other resources.", &handle_release},
 };
+
+static struct action actions[] = {
+	{ "probe", "", "", &handle_probe },
+	{ "getcfam", "<address>", "Read system cfam", &handle_cfams },
+	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam", &handle_cfams },
+	{ "getscom", "<address>", "Read system scom", &handle_scoms },
+	{ "putscom", "<address> <value> [<mask>]", "Write system scom", &handle_scoms },
+	{ "getmem",  "<address> <count>", "Read system memory", &handle_mem },
+	{ "putmem",  "<address>", "Write to system memory", &handle_mem },
+	{ "threadstatus", "", "Print the status of a thread", &thread_status_print },
+};
+
 
 static void print_usage(char *pname)
 {
@@ -129,12 +135,18 @@ static void print_usage(char *pname)
 	printf("\t-s, --slave-address=backend device address\n");
 	printf("\t\tDevice slave address to use for the backend. Not used by FSI\n");
 	printf("\t\tand defaults to 0x50 for I2C\n");
+	printf("\t--expert\n");
 	printf("\t-V, --version\n");
 	printf("\t-h, --help\n");
 	printf("\n");
 	printf(" Commands:\n");
 	for (i = 0; i < ARRAY_SIZE(actions); i++)
 		printf("\t%s %s\n", actions[i].name, actions[i].args);
+	if (pdbg_expert_mode) {
+		printf(" Expert Commands:\n");
+		for (i = 0; i < ARRAY_SIZE(expert_actions); i++)
+			printf("\t%s %s\n", expert_actions[i].name, expert_actions[i].args);
+	}
 }
 
 static bool parse_options(int argc, char *argv[])
@@ -152,12 +164,13 @@ static bool parse_options(int argc, char *argv[])
 		{"slave-address",	required_argument,	NULL,	's'},
 		{"thread",		required_argument,	NULL,	't'},
 		{"version",		no_argument,		NULL,	'V'},
+		{"expert",		no_argument,		NULL,	'E'},
 		{NULL,			0,			NULL,     0}
 	};
 	char *endptr;
 
 	do {
-		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:V", long_opts, NULL);
+		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:VE", long_opts, NULL);
 		if (c == -1)
 			break;
 
@@ -241,9 +254,13 @@ static bool parse_options(int argc, char *argv[])
 			break;
 
 		case 'V':
-			errno = 0;
 			printf("%s (commit %s)\n", PACKAGE_STRING, GIT_SHA1);
 			exit(1);
+			break;
+
+		case 'E':
+			opt_error = false;
+			pdbg_expert_mode = true;
 			break;
 
 		case '?':
@@ -548,6 +565,14 @@ static int handle_probe(int optind, int argc, char *argv[])
 	return 1;
 }
 
+/*
+ * Release handler for !pdbg_expert_mode
+ */
+static void atexit_release(void)
+{
+	do_release();
+}
+
 static int handle_release(int optind, int argc, char *argv[])
 {
 	do_release();
@@ -589,19 +614,29 @@ int main(int argc, char *argv[])
 	if (target_selection())
 		return 1;
 
+	if (!pdbg_expert_mode)
+		atexit(atexit_release);
+
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {
 		if (strcmp(argv[optind], actions[i].name) == 0) {
 			rc = actions[i].fn(optind, argc, argv);
-			break;
+			goto found_action;
+		}
+	}
+	if (pdbg_expert_mode) {
+		for (i = 0; i < ARRAY_SIZE(expert_actions); i++) {
+			if (strcmp(argv[optind], expert_actions[i].name) == 0) {
+				rc = expert_actions[i].fn(optind, argc, argv);
+				goto found_action;
+			}
 		}
 	}
 
-	if (i == ARRAY_SIZE(actions)) {
-		PR_ERROR("Unsupported command: %s\n", argv[optind]);
-		print_usage(argv[0]);
-		return 1;
-	}
+	PR_ERROR("Unsupported command: %s\n", argv[optind]);
+	print_usage(argv[0]);
+	return 1;
 
+found_action:
 	if (rc <= 0) {
                 printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
                 printf("Alternatively run %s -a probe to get a list of all valid targets\n", argv[0]);
