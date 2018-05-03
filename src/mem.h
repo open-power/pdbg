@@ -14,5 +14,7 @@
  * limitations under the License.
  */
 #include <inttypes.h>
+#include <libpdbg.h>
 
+int dump_stack(struct thread_regs *regs);
 int handle_mem(int optind, int argc, char *argv[]);

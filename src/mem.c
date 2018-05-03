@@ -87,6 +87,57 @@ static int putmem(uint64_t addr, int ci)
 	return rc;
 }
 
+static bool is_real_address(struct thread_regs *regs, uint64_t addr)
+{
+	return true;
+	if ((addr & 0xf000000000000000ULL) == 0xc000000000000000ULL)
+		return true;
+	return false;
+}
+
+static int load8(struct pdbg_target *target, uint64_t addr, uint64_t *value)
+{
+	if (adu_getmem(target, addr, (uint8_t *)value, 8, false)) {
+		PR_ERROR("Unable to read memory address=%016" PRIx64 ".\n", addr);
+		return 0;
+	}
+
+	return 1;
+}
+
+int dump_stack(struct thread_regs *regs)
+{
+	struct pdbg_target *target;
+	uint64_t sp = regs->gprs[1];
+	uint64_t pc;
+
+	pdbg_for_each_class_target("adu", target) {
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			continue;
+		break;
+	}
+
+	printf("STACK:\n");
+	if (!target)
+		PR_ERROR("Unable to read memory (no ADU found)\n");
+
+	if (sp && is_real_address(regs, sp)) {
+		if (!load8(target, sp, &sp))
+			return 1;
+		while (sp && is_real_address(regs, sp)) {
+			if (!load8(target, sp + 16, &pc))
+				return 1;
+
+			printf(" 0x%016" PRIx64 " 0x%16" PRIx64 "\n", sp, pc);
+
+			if (!load8(target, sp, &sp))
+				return 1;
+		}
+	}
+
+	return 0;
+}
+
 int handle_mem(int optind, int argc, char *argv[])
 {
 	uint64_t addr;

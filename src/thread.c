@@ -24,6 +24,7 @@
 #include <operations.h>
 
 #include "main.h"
+#include "mem.h"
 
 static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *status, uint64_t *unused1)
 {
@@ -131,7 +132,12 @@ static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint6
 {
 	struct thread_regs regs;
 
-	return ram_state_thread(thread_target, &regs) ? 0 : 1;
+	if (ram_state_thread(thread_target, &regs))
+		return 0;
+
+	dump_stack(&regs);
+
+	return 1;
 }
 
 int thread_start(int optind, int argc, char *argv[])
