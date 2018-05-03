@@ -64,6 +64,7 @@ static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
 static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
 
 static int handle_probe(int optind, int argc, char *argv[]);
+static int handle_release(int optind, int argc, char *argv[]);
 
 static struct {
 	const char *name;
@@ -100,6 +101,7 @@ static struct {
 	{ "htm_analyse", "", "[derepcated use 'htm nest analyse'] Stop and dump buffer to file", &run_htm_analyse },
 	{ "htm", "(core | nest) (start | stop | status | reset | dump | trace | analyse", "Hardware Trace Macro", &run_htm },
 	{ "probe", "", "", &handle_probe },
+	{ "release", "", "Should be called after pdbg work is finished, to release special wakeups and other resources.", &handle_release},
 };
 
 static void print_usage(char *pname)
@@ -325,6 +327,18 @@ int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint6
 	return rc;
 }
 
+void for_each_target_release(char *class)
+{
+	struct pdbg_target *target;
+
+	pdbg_for_each_class_target(class, target) {
+		if (!target_selected(target))
+			continue;
+
+		pdbg_target_release(target);
+	}
+}
+
 /* TODO: It would be nice to have a more dynamic way of doing this */
 extern unsigned char _binary_p8_i2c_dtb_o_start;
 extern unsigned char _binary_p8_i2c_dtb_o_end;
@@ -452,6 +466,35 @@ static int target_selection(void)
 	return 0;
 }
 
+static void release_target(struct pdbg_target *target)
+{
+	struct pdbg_target *child;
+
+	/* !selected targets may get selected in other ways */
+
+	/* Does this target actually exist? */
+	if ((pdbg_target_status(target) != PDBG_TARGET_ENABLED) &&
+	    (pdbg_target_status(target) != PDBG_TARGET_PENDING_RELEASE))
+		return;
+
+	pdbg_for_each_child_target(target, child)
+		release_target(child);
+
+	pdbg_target_release(target);
+}
+
+static void do_release(void)
+{
+	struct pdbg_target_class *target_class;
+
+	for_each_target_class(target_class) {
+		struct pdbg_target *target;
+
+		pdbg_for_each_class_target(target_class->name, target)
+			release_target(target);
+	}
+}
+
 void print_target(struct pdbg_target *target, int level)
 {
 	int i;
@@ -501,6 +544,14 @@ static int handle_probe(int optind, int argc, char *argv[])
 
 	printf("\nNote that only selected targets will be shown above. If none are shown\n"
 			"try adding '-a' to select all targets\n");
+
+	return 1;
+}
+
+static int handle_release(int optind, int argc, char *argv[])
+{
+	do_release();
+
 	return 1;
 }
 
