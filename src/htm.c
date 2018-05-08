@@ -279,7 +279,14 @@ int run_htm(int optind, int argc, char *argv[])
 	struct pdbg_target *core_target = NULL;
 	int i, rc = 0;
 
-	if (argc - optind < 2) {
+	/*
+	 * As the index of the last argument is one less than argc, the difference
+	 * between optind and argc will always be at least 1. Here optind is pointing
+	 * to the 'htm' arg and we need at least 2 more following arguments, eg:
+	 * htm <nest/core> <start/stop/etc>
+	 * so argc-optind >= 3 to proceed.
+	 */
+	if (argc - optind < 3) {
 		fprintf(stderr, "Expecting one of 'core' or 'nest' with a command\n");
 		return 0;
 	}
