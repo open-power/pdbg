@@ -60,6 +60,9 @@ static int putmem(uint64_t addr)
 	pdbg_for_each_class_target("adu", adu_target)
 		break;
 
+	if (pdbg_target_probe(adu_target) != PDBG_TARGET_ENABLED)
+		return 0;
+
 	buf = malloc(PUTMEM_BUF_SIZE);
 	assert(buf);
 	do {
