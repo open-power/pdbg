@@ -280,6 +280,55 @@ p0t: 0 1 2 3 4 5 6 7
 c22: A A A A
 ```
 
+### Write to memory through processor 1
+```
+$ echo hello | sudo ./pdbg -p 1 putmem 0x250000001
+Wrote 6 bytes starting at 0x0000000250000001
+```
+
+### Read 6 bytes from memory through processor 1
+```
+$ sudo ./pdbg -p 1 getmem 0x250000001 6 | hexdump -C
+00000000  68 65 6c 6c 6f 0a                                 |hello.|
+00000006
+```
+
+### Write to cache-inhibited memory through processor 1
+```
+$ echo hello | sudo ./pdbg -p 1 putmem -ci 0x3fe88202
+Wrote 6 bytes starting at 0x000000003fe88202
+```
+
+### Read from cache-inhibited memory through processor 1
+```
+$ sudo ./pdbg -p 1 getmem -ci 0x3fe88202 6 | hexdump -C
+00000000  68 65 6c 6c 6f 0a                                 |hello.|
+00000006
+```
+
+### Read 4 bytes from the hardware RNG
+```
+$ lsprop /proc/device-tree/hwrng@3ffff40000000/
+ibm,chip-id      00000000
+compatible       "ibm,power-rng"
+reg              0003ffff 40000000 00000000 00001000
+phandle          100003bd (268436413)
+name             "hwrng"
+
+$ sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+00000000  01 c0 d1 79                                       |...y|
+00000004
+$  sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+00000000  77 9b ab ce                                       |w...|
+00000004
+$  sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+00000000  66 8d fb 42                                       |f..B|
+00000004
+$  sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+00000000  fa 9b e3 44                                       |...D|
+00000004
+```
+
 ### Hardware Trace Macro
 Expoitation of HTM is limited to POWER9 NestHTM from the powerpc host.
 POWER8 (core and nest( is currently experimental. The dump files
