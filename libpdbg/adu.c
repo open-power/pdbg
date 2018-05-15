@@ -46,6 +46,10 @@
 #define P9_TTYPE_TREAD 	       		PPC_BIT(5)
 #define P9_TTYPE_TWRITE 		0
 #define P9_FBC_ALTD_TTYPE		PPC_BITMASK(25, 31)
+
+#define P9_TTYPE_CI_PARTIAL_WRITE	0b110111
+#define P9_TTYPE_CI_PARTIAL_OOO_WRITE	0b110110
+#define P9_TTYPE_CI_PARTIAL_READ 	0b110100
 #define P9_TTYPE_DMA_PARTIAL_READ	0b000110
 #define P9_TTYPE_DMA_PARTIAL_WRITE	0b100110
 #define P9_FBC_ALTD_TSIZE		PPC_BITMASK(32, 39)
@@ -79,7 +83,7 @@
 #define FBC_ALTD_DATA_DONE	PPC_BIT(3)
 #define FBC_ALTD_PBINIT_MISSING PPC_BIT(18)
 
-int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *output, uint64_t size)
+int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *output, uint64_t size, int ci)
 {
 	struct adu *adu;
 	int rc = 0;
@@ -92,7 +96,7 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *out
 	for (addr = 8*(start_addr / 8); addr < start_addr + size; addr += 8) {
 		uint64_t data;
 
-		if (adu->getmem(adu, addr, &data))
+		if (adu->getmem(adu, addr, &data, ci))
 			return -1;
 
 		/* ADU returns data in big-endian form in the register */
@@ -112,7 +116,7 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *out
 	return rc;
 }
 
-int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *input, uint64_t size)
+int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *input, uint64_t size, int ci)
 {
 	struct adu *adu;
 	int rc = 0, tsize;
@@ -135,7 +139,7 @@ int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *inp
 			data = __builtin_bswap64(data);
 		}
 
-		adu->putmem(adu, addr, data, tsize);
+		adu->putmem(adu, addr, data, tsize, ci);
 	}
 
 	return rc;
@@ -184,14 +188,18 @@ static int adu_reset(struct adu *adu)
 	return 0;
 }
 
-static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data)
+static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data, int ci)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
 
 	CHECK_ERR(adu_lock(adu));
 
 	ctrl_reg = P8_TTYPE_TREAD;
-	ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_READ);
+	if (ci)
+		/* Do cache inhibited access */
+		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_CI_PARTIAL_READ);
+	else
+		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_READ);
 	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, 8);
 
 	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
@@ -235,15 +243,18 @@ retry:
 	return 0;
 }
 
-int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size)
+int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size, int ci)
 {
 	int rc = 0;
 	uint64_t cmd_reg, ctrl_reg, val;
-
 	CHECK_ERR(adu_lock(adu));
 
 	ctrl_reg = P8_TTYPE_TWRITE;
-	ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_WRITE);
+	if (ci)
+		/* Do cache inhibited access */
+		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_CI_PARTIAL_WRITE);
+	else
+		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_WRITE);
 	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, size);
 
 	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
@@ -288,12 +299,16 @@ retry:
 	return rc;
 }
 
-static int p9_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data)
+static int p9_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data, int ci)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
 
 	cmd_reg = P9_TTYPE_TREAD;
-	cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_READ);
+	if (ci)
+		/* Do cache inhibited access */
+		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_CI_PARTIAL_READ);
+	else
+		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_READ);
 
 	/* For a read size is apparently always 0 */
 	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, 0);
@@ -335,7 +350,7 @@ retry:
 	return 0;
 }
 
-static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size)
+static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size, int ci)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
 
@@ -344,7 +359,11 @@ static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size
 	size <<= 1;
 
 	cmd_reg = P9_TTYPE_TWRITE;
-	cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_WRITE);
+	if (ci)
+		/* Do cache inhibited access */
+		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_CI_PARTIAL_WRITE);
+	else
+		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_WRITE);
 	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, size);
  	cmd_reg |= FBC_ALTD_START_OP;
 	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_REMOTE);

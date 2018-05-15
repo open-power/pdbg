@@ -26,7 +26,7 @@
 #include "main.h"
 
 #define PUTMEM_BUF_SIZE 1024
-static int getmem(uint64_t addr, uint64_t size)
+static int getmem(uint64_t addr, uint64_t size, int ci)
 {
 	struct pdbg_target *target;
 	uint8_t *buf;
@@ -37,7 +37,7 @@ static int getmem(uint64_t addr, uint64_t size)
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		if (!adu_getmem(target, addr, buf, size)) {
+		if (!adu_getmem(target, addr, buf, size, ci)) {
 			if (write(STDOUT_FILENO, buf, size) < 0)
 				PR_ERROR("Unable to write stdout.\n");
 			else
@@ -51,7 +51,7 @@ static int getmem(uint64_t addr, uint64_t size)
 	return rc;
 
 }
-static int putmem(uint64_t addr)
+static int putmem(uint64_t addr, int ci)
 {
 	uint8_t *buf;
 	int read_size, rc = 0;
@@ -67,7 +67,7 @@ static int putmem(uint64_t addr)
 	assert(buf);
 	do {
 		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
-		if (adu_putmem(adu_target, addr, buf, read_size)) {
+		if (adu_putmem(adu_target, addr, buf, read_size, ci)) {
 			rc = 0;
 			printf("Unable to write memory.\n");
 			break;
@@ -84,6 +84,7 @@ int handle_mem(int optind, int argc, char *argv[])
 {
 	uint64_t addr;
 	char *endptr;
+	int ci = 0;
 
 	if (optind + 1 >= argc) {
 		printf("%s: command '%s' requires an address\n", argv[0], argv[optind]);
@@ -91,31 +92,37 @@ int handle_mem(int optind, int argc, char *argv[])
 	}
 
 	errno = 0;
-	addr = strtoull(argv[optind + 1], &endptr, 0);
+
+	if (strcmp(argv[optind +1], "-ci") == 0) {
+		/* Set cache-inhibited flag */
+		ci = 1;
+	}
+
+	addr = strtoull(argv[optind + 1 + ci], &endptr, 0);
 	if (errno || *endptr != '\0') {
 		printf("%s: command '%s' couldn't parse address '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
+				argv[0], argv[optind], argv[optind + 1 + ci]);
 		return -1;
 	}
 
 	if (strcmp(argv[optind], "getmem") == 0) {
 		uint64_t size;
 
-		if (optind + 2 >= argc) {
+		if (optind + 2 + ci >= argc) {
 			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
 			return -1;
 		}
 
 		errno = 0;
-		size = strtoull(argv[optind + 2], &endptr, 0);
+		size = strtoull(argv[optind + 2 + ci], &endptr, 0);
 		if (errno || *endptr != '\0') {
 			printf("%s: command '%s' couldn't parse data '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
+				argv[0], argv[optind], argv[optind + 1 + ci]);
 			return -1;
 		}
 
-		return getmem(addr, size);
+		return getmem(addr, size, ci);
 	}
 
-	return putmem(addr);
+	return putmem(addr, ci);
 }
