@@ -136,6 +136,8 @@ static void print_usage(char *pname)
 	printf("\t-s, --slave-address=backend device address\n");
 	printf("\t\tDevice slave address to use for the backend. Not used by FSI\n");
 	printf("\t\tand defaults to 0x50 for I2C\n");
+	printf("\t-D, --debug=<debug level>\n");
+	printf("\t\t0:error (default) 1:warning 2:notice 3:info 4:debug\n");
 	printf("\t--expert\n");
 	printf("\t-V, --version\n");
 	printf("\t-h, --help\n");
@@ -164,6 +166,7 @@ static bool parse_options(int argc, char *argv[])
 		{"processor",		required_argument,	NULL,	'p'},
 		{"slave-address",	required_argument,	NULL,	's'},
 		{"thread",		required_argument,	NULL,	't'},
+		{"debug",		required_argument,	NULL,	'V'},
 		{"version",		no_argument,		NULL,	'V'},
 		{"expert",		no_argument,		NULL,	'E'},
 		{NULL,			0,			NULL,     0}
@@ -171,7 +174,7 @@ static bool parse_options(int argc, char *argv[])
 	char *endptr;
 
 	do {
-		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:VE", long_opts, NULL);
+		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:VE", long_opts, NULL);
 		if (c == -1)
 			break;
 
@@ -252,6 +255,10 @@ static bool parse_options(int argc, char *argv[])
 			errno = 0;
 			i2c_addr = strtoull(optarg, &endptr, 0);
 			opt_error = (errno || *endptr != '\0');
+			break;
+
+		case 'D':
+			pdbg_set_loglevel(atoi(optarg));
 			break;
 
 		case 'V':
