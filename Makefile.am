@@ -12,7 +12,7 @@ AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror -O2
 
 pdbg_SOURCES = \
 	src/main.c src/cfam.c src/scom.c src/reg.c src/mem.c src/thread.c \
-	src/ring.c src/htm.c src/options_@ARCH@.c
+	src/ring.c src/htm.c src/progress.c src/options_@ARCH@.c
 
 pdbg_LDADD = fake.dtb.o p8-fsi.dtb.o p8-i2c.dtb.o p9w-fsi.dtb.o	p8-host.dtb.o \
 	p9z-fsi.dtb.o p9r-fsi.dtb.o p9-kernel.dtb.o libpdbg.la libfdt.la \
@@ -52,7 +52,6 @@ libpdbg_la_SOURCES = \
 	libpdbg/adu.c \
 	libpdbg/device.c \
 	libpdbg/target.c \
-	libpdbg/progress.c \
 	libpdbg/htm.c
 
 M4_V = $(M4_V_$(V))

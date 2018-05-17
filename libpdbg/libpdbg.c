@@ -4,6 +4,8 @@
 #include "device.h"
 #include "libpdbg.h"
 
+static pdbg_progress_tick_t progress_tick;
+
 struct pdbg_target *__pdbg_next_target(const char *class, struct pdbg_target *parent, struct pdbg_target *last)
 {
 	struct pdbg_target *next, *tmp;
@@ -166,4 +168,15 @@ int pdbg_get_u64_property(struct pdbg_target *target, const char *name, uint64_t
 	}
 
 	return -1;
+}
+
+void pdbg_progress_tick(uint64_t cur, uint64_t end)
+{
+	if (progress_tick)
+		progress_tick(cur, end);
+}
+
+void pdbg_set_progress_tick(pdbg_progress_tick_t fn)
+{
+	progress_tick = fn;
 }

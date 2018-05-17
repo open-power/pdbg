@@ -22,7 +22,6 @@
 
 #include "progress.h"
 
-static uint64_t progress_max;
 static uint64_t progress_pcent;
 static uint64_t progress_n_upd;
 static time_t progress_prevsec;
@@ -30,11 +29,10 @@ static struct timespec progress_start;
 
 #define PROGRESS_CHARS	50
 
-void progress_init(uint64_t count)
+void progress_init(void)
 {
 	unsigned int i;
 
-	progress_max = count;
 	progress_pcent = 0;
 	progress_n_upd = ULONG_MAX;
 	progress_prevsec = ULONG_MAX;
@@ -46,16 +44,16 @@ void progress_init(uint64_t count)
 	fflush(stderr);
 	clock_gettime(CLOCK_MONOTONIC, &progress_start);}
 
-void progress_tick(uint64_t cur)
+void progress_tick(uint64_t cur, uint64_t end)
 {
 	unsigned int i, pos;
 	struct timespec now;
 	uint64_t pcent;
 	double sec;
 
-	pcent = (cur * 100) / progress_max;
+	pcent = (cur * 100) / end;
 	if (progress_pcent == pcent && cur < progress_n_upd &&
-	    cur < progress_max)
+	    cur < end)
 		return;
 	progress_pcent = pcent;
 	pos = (pcent * PROGRESS_CHARS) / 101;
