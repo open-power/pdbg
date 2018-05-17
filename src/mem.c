@@ -24,6 +24,7 @@
 #include <target.h>
 
 #include "main.h"
+#include "progress.h"
 
 #define PUTMEM_BUF_SIZE 1024
 static int getmem(uint64_t addr, uint64_t size, int ci)
@@ -37,6 +38,8 @@ static int getmem(uint64_t addr, uint64_t size, int ci)
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
 
+		pdbg_set_progress_tick(progress_tick);
+		progress_init();
 		if (!adu_getmem(target, addr, buf, size, ci)) {
 			if (write(STDOUT_FILENO, buf, size) < 0)
 				PR_ERROR("Unable to write stdout.\n");
@@ -45,6 +48,7 @@ static int getmem(uint64_t addr, uint64_t size, int ci)
 		} else
 			PR_ERROR("Unable to read memory.\n");
 			/* We only ever care about getting memory from a single processor */
+		progress_end();
 		break;
 	}
 	free(buf);
@@ -65,6 +69,8 @@ static int putmem(uint64_t addr, int ci)
 
 	buf = malloc(PUTMEM_BUF_SIZE);
 	assert(buf);
+	pdbg_set_progress_tick(progress_tick);
+	progress_init();
 	do {
 		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
 		if (adu_putmem(adu_target, addr, buf, read_size, ci)) {
@@ -74,6 +80,7 @@ static int putmem(uint64_t addr, int ci)
 		}
 		rc += read_size;
 	} while (read_size > 0);
+	progress_end();
 
 	printf("Wrote %d bytes starting at 0x%016" PRIx64 "\n", rc, addr);
 	free(buf);

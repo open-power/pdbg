@@ -99,6 +99,8 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *out
 		if (adu->getmem(adu, addr, &data, ci))
 			return -1;
 
+		pdbg_progress_tick(addr - start_addr, size);
+
 		/* ADU returns data in big-endian form in the register */
 		data = __builtin_bswap64(data);
 
@@ -112,6 +114,8 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *out
 			output += 8;
 		}
 	}
+
+	pdbg_progress_tick(size, size);
 
 	return rc;
 }
@@ -140,7 +144,10 @@ int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *inp
 		}
 
 		adu->putmem(adu, addr, data, tsize, ci);
+		pdbg_progress_tick(addr - start_addr, size);
 	}
+
+	pdbg_progress_tick(size, size);
 
 	return rc;
 }
