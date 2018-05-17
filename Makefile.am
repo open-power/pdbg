@@ -52,6 +52,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/adu.c \
 	libpdbg/device.c \
 	libpdbg/target.c \
+	libpdbg/progress.c \
 	libpdbg/htm.c
 
 M4_V = $(M4_V_$(V))
