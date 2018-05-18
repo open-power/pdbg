@@ -124,6 +124,7 @@ static struct pib fsi_pib = {
 	},
 	.read = fsi2pib_getscom,
 	.write = fsi2pib_putscom,
+	.fd = -1,
 };
 DECLARE_HW_UNIT(fsi_pib);
 

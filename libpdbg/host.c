@@ -55,7 +55,7 @@ static uint64_t xscom_mangle_addr(uint64_t addr)
 static int xscom_read(struct pib *pib, uint64_t addr, uint64_t *val)
 {
 	int rc;
-	int fd = *(int *) pib->priv;
+	int fd = pib->fd;
 
 	addr = xscom_mangle_addr(addr);
 	lseek64(fd, addr, SEEK_SET);
@@ -69,7 +69,7 @@ static int xscom_read(struct pib *pib, uint64_t addr, uint64_t *val)
 static int xscom_write(struct pib *pib, uint64_t addr, uint64_t val)
 {
 	int rc;
-	int fd = *(int *) pib->priv;
+	int fd = pib->fd;
 
 	addr = xscom_mangle_addr(addr);
 	lseek64(fd, addr, SEEK_SET);
@@ -83,13 +83,9 @@ static int xscom_write(struct pib *pib, uint64_t addr, uint64_t val)
 static int host_pib_probe(struct pdbg_target *target)
 {
 	struct pib *pib = target_to_pib(target);
-	int *fd;
+	int fd;
 	char *access_fn;
 	uint32_t index;
-
-	fd = malloc(sizeof(fd));
-	if (!fd)
-		return -1;
 
 	index = pdbg_target_index(target);
 
@@ -102,19 +98,16 @@ static int host_pib_probe(struct pdbg_target *target)
 	}
 
 	if (asprintf(&access_fn, "%s/%08x/access", XSCOM_BASE_PATH, index) < 0)
-		goto out;
+		return -1;
 
-	*fd = open(access_fn, O_RDWR);
+	fd = open(access_fn, O_RDWR);
 	free(access_fn);
-	if (*fd < 0)
-		goto out;
+	if (fd < 0)
+		return -1;
 
-	pib->priv = fd;
+	pib->fd = fd;
 
 	return 0;
-out:
-	free(fd);
-	return -1;
 }
 
 static struct pib host_pib = {
@@ -126,6 +119,7 @@ static struct pib host_pib = {
 	},
 	.read = xscom_read,
 	.write = xscom_write,
+	.fd = -1,
 };
 DECLARE_HW_UNIT(host_pib);
 

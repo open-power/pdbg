@@ -65,6 +65,7 @@ static struct pib fake_pib = {
 	},
 	.read = fake_pib_read,
 	.write = fake_pib_write,
+	.fd = -1,
 };
 DECLARE_HW_UNIT(fake_pib);
 

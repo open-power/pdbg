@@ -166,6 +166,7 @@ static struct pib p8_i2c_pib = {
 	},
 	.read = i2c_getscom,
 	.write = i2c_putscom,
+	.fd = -1,
 };
 DECLARE_HW_UNIT(p8_i2c_pib);
 
