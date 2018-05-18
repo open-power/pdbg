@@ -40,10 +40,6 @@
 
 #define FSI2PIB_BASE	0x1000
 
-/* Alter display unit functions */
-int adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, int ci);
-int adu_putmem(struct pdbg_target *target, uint64_t start_addr, uint8_t *input, uint64_t size, int ci);
-
 /* Functions to ram instructions */
 #define THREAD_STATUS_DISABLED  PPC_BIT(0)
 #define THREAD_STATUS_ACTIVE	PPC_BIT(63)
