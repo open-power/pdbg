@@ -84,7 +84,20 @@
 #define FBC_ALTD_DATA_DONE	PPC_BIT(3)
 #define FBC_ALTD_PBINIT_MISSING PPC_BIT(18)
 
-int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *output, uint64_t size, bool ci)
+int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
+	       uint8_t *output, uint64_t size)
+{
+	return __adu_getmem(adu_target, start_addr, output, size, false);
+}
+
+int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
+		  uint8_t *output, uint64_t size)
+{
+	return __adu_getmem(adu_target, start_addr, output, size, true);
+}
+
+int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
+		 uint8_t *output, uint64_t size, bool ci)
 {
 	struct adu *adu;
 	int rc = 0;
@@ -121,7 +134,20 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *out
 	return rc;
 }
 
-int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr, uint8_t *input, uint64_t size, bool ci)
+int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
+	       uint8_t *output, uint64_t size)
+{
+	return __adu_putmem(adu_target, start_addr, output, size, false);
+}
+
+int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
+		  uint8_t *output, uint64_t size)
+{
+	return __adu_putmem(adu_target, start_addr, output, size, true);
+}
+
+int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
+		 uint8_t *input, uint64_t size, bool ci)
 {
 	struct adu *adu;
 	int rc = 0, tsize;

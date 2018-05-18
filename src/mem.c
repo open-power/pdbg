@@ -43,7 +43,7 @@ static int getmem(uint64_t addr, uint64_t size, bool ci)
 
 		pdbg_set_progress_tick(progress_tick);
 		progress_init();
-		if (!adu_getmem(target, addr, buf, size, ci)) {
+		if (!__adu_getmem(target, addr, buf, size, ci)) {
 			if (write(STDOUT_FILENO, buf, size) < 0)
 				PR_ERROR("Unable to write stdout.\n");
 			else
@@ -76,7 +76,7 @@ static int putmem(uint64_t addr, bool ci)
 	progress_init();
 	do {
 		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
-		if (adu_putmem(adu_target, addr, buf, read_size, ci)) {
+		if (__adu_putmem(adu_target, addr, buf, read_size, ci)) {
 			rc = 0;
 			printf("Unable to write memory.\n");
 			break;
@@ -100,7 +100,7 @@ static bool is_real_address(struct thread_regs *regs, uint64_t addr)
 
 static int load8(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 {
-	if (adu_getmem(target, addr, (uint8_t *)value, 8, false)) {
+	if (adu_getmem(target, addr, (uint8_t *)value, 8)) {
 		PR_ERROR("Unable to read memory address=%016" PRIx64 ".\n", addr);
 		return 0;
 	}
