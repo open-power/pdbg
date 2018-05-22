@@ -31,7 +31,7 @@ pdbg_SOURCES = \
 	src/ring.c src/htm.c src/progress.c src/options_@ARCH@.c
 
 pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la \
-	-L.libs
+	-L.libs -lrt
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\" \
