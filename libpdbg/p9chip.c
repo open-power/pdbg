@@ -92,23 +92,27 @@ static uint64_t thread_write(struct thread *thread, uint64_t addr, uint64_t data
 	return pib_write(chip, addr, data);
 }
 
-static uint64_t p9_get_thread_status(struct thread *thread)
+static struct thread_state p9_get_thread_status(struct thread *thread)
 {
-	uint64_t value, status = 0;
+	uint64_t value;
+	struct thread_state thread_state;
 
 	thread_read(thread, P9_RAS_STATUS, &value);
-	if (GETFIELD(PPC_BITMASK(8*thread->id, 3 + 8*thread->id), value) == 0xf)
-		status |= THREAD_STATUS_QUIESCE;
+
+	thread_state.quiesced = (GETFIELD(PPC_BITMASK(8*thread->id, 3 + 8*thread->id), value) == 0xf);
 
 	thread_read(thread, P9_THREAD_INFO, &value);
-	if (value & PPC_BIT(thread->id))
-		status |= THREAD_STATUS_ACTIVE;
+	thread_state.active = !!(value & PPC_BIT(thread->id));
 
 	thread_read(thread, P9_CORE_THREAD_STATE, &value);
 	if (value & PPC_BIT(56 + thread->id))
-		status |= THREAD_STATUS_STOP;
+		thread_state.sleep_state = PDBG_THREAD_STATE_STOP;
+	else
+		thread_state.sleep_state = PDBG_THREAD_STATE_RUN;
 
-	return status;
+	thread_state.smt_state = PDBG_SMT_UNKNOWN;
+
+	return thread_state;
 }
 
 static int p9_thread_probe(struct pdbg_target *target)
@@ -123,11 +127,11 @@ static int p9_thread_probe(struct pdbg_target *target)
 
 static int p9_thread_start(struct thread *thread)
 {
-	if (!(thread->status & THREAD_STATUS_QUIESCE))
+	if (!(thread->status.quiesced))
 		return 1;
 
-	if ((!(thread->status & THREAD_STATUS_ACTIVE)) ||
-	    (thread->status & THREAD_STATUS_STOP)) {
+	if ((!(thread->status.active)) ||
+	    (thread->status.sleep_state == PDBG_THREAD_STATE_STOP)) {
 		/* Inactive or active ad stopped: Clear Maint */
 		thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(3 + 8*thread->id));
 	} else {
@@ -145,7 +149,7 @@ static int p9_thread_stop(struct thread *thread)
 	int i = 0;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(7 + 8*thread->id));
-	while (!(p9_get_thread_status(thread) & THREAD_STATUS_QUIESCE)) {
+	while (!(p9_get_thread_status(thread).quiesced)) {
 		usleep(1000);
 		if (i++ > RAS_STATUS_TIMEOUT) {
 			PR_ERROR("Unable to quiesce thread\n");
@@ -163,15 +167,15 @@ static int p9_thread_step(struct thread *thread, int count)
 	int i;
 
 	/* Can only step if a thread is quiesced */
-	if (!(thread->status & THREAD_STATUS_QUIESCE))
+	if (!(thread->status.quiesced))
 		return 1;
 
 	/* Core must be active to step */
-	if (!(thread->status & THREAD_STATUS_ACTIVE))
+	if (!(thread->status.active))
 		return 1;
 
 	/* Stepping a stop instruction doesn't really work */
-	if (thread->status & THREAD_STATUS_STOP)
+	if (thread->status.sleep_state == PDBG_THREAD_STATE_STOP)
 		return 1;
 
 	/* Fence interrupts. */
@@ -198,14 +202,14 @@ static int p9_thread_sreset(struct thread *thread)
 {
 	if (!pdbg_expert_mode) {
 		/* Something already quiesced it, fail*/
-		if (thread->status & THREAD_STATUS_QUIESCE)
+		if (thread->status.quiesced)
 			return 1;
 		if (p9_thread_stop(thread))
 			return 1;
 	}
 
 	/* Can only sreset if a thread is quiesced */
-	if (!(thread->status & THREAD_STATUS_QUIESCE))
+	if (!(thread->status.quiesced))
 		return 1;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(4 + 8*thread->id));
@@ -254,9 +258,9 @@ static int p9_ram_setup(struct thread *thread)
 		p9_thread_probe(target);
 		tmp = target_to_thread(target);
 		/* Something already quiesced it, fail*/
-		if (tmp->status & THREAD_STATUS_QUIESCE)
+		if (tmp->status.quiesced)
 			goto out_fail;
-		if (!(tmp->status & THREAD_STATUS_QUIESCE)) {
+		if (!(tmp->status.quiesced)) {
 			if (p9_thread_stop(tmp))
 				goto out_fail;
 			tmp->ram_did_quiesce = true;
@@ -273,7 +277,7 @@ expert:
 		   so do that now. This will also update the thread status */
 		p9_thread_probe(target);
 		tmp = target_to_thread(target);
-		if (!(tmp->status & THREAD_STATUS_QUIESCE))
+		if (!(tmp->status.quiesced))
 			goto out_fail;
 	}
 

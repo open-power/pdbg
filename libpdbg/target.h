@@ -137,7 +137,7 @@ struct core {
 
 struct thread {
 	struct pdbg_target target;
-	uint64_t status;
+	struct thread_state status;
 	int id;
 	int (*step)(struct thread *, int);
 	int (*start)(struct thread *);

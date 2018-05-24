@@ -338,9 +338,10 @@ int run_htm(int optind, int argc, char *argv[])
 			if (pdbg_target_status(target) == PDBG_TARGET_NONEXISTENT)
 				continue;
 
-			if ((!(thread_status(target) & THREAD_STATUS_ACTIVE)) ||
-			    (thread_status(target) & THREAD_STATUS_STOP)) {
-				fprintf(stderr, "It appears powersave is on 0x%"  PRIx64 "%p\n", thread_status(target), target);
+			if ((!(thread_status(target).active)) ||
+			    (thread_status(target).sleep_state != PDBG_THREAD_STATE_RUN)) {
+				fprintf(stderr, "It appears powersave is on on %s@%d\n",
+					pdbg_target_name(target), pdbg_target_index(target));
 				fprintf(stderr, "core HTM needs to run with powersave off\n");
 				fprintf(stderr, "Hint: put powersave=off on the kernel commandline\n");
 				return 0;

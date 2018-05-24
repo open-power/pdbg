@@ -18,58 +18,58 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <bitutils.h>
-
-#include <target.h>
-#include <operations.h>
+#include <libpdbg.h>
 
 #include "main.h"
 #include "mem.h"
 
-static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *status, uint64_t *unused1)
+static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *arg, uint64_t *unused1)
 {
+	struct thread_state *status = (struct thread_state *) arg;
+
 	status[index] = thread_status(target);
 	return 1;
 }
 
 static int print_core_thread_status(struct pdbg_target *core_target, uint32_t index, uint64_t *maxindex, uint64_t *unused1)
 {
-	uint64_t status[8];
+	struct thread_state status[8];
 	int i, rc;
 
-	memset(status, 0xff, sizeof(status));
+	printf("c%02d:  ", index);
 
-	printf("c%02d: ", index);
-	rc = for_each_child_target("thread", core_target, print_thread_status, &status[0], NULL);
+	/* TODO: This cast is gross. Need to rewrite for_each_child_target as an iterator. */
+	rc = for_each_child_target("thread", core_target, print_thread_status, (uint64_t *) &status[0], NULL);
 	for (i = 0; i <= *maxindex; i++) {
-		if (status[i] == -1ULL) {
-			printf("    ");
-			continue;
-		}
-		if (status[i] & ~(THREAD_STATUS_ACTIVE|THREAD_STATUS_DOZE|
-				  THREAD_STATUS_NAP|THREAD_STATUS_SLEEP|
-				  THREAD_STATUS_STOP|THREAD_STATUS_QUIESCE)) {
-			printf("%" PRIx64 " ", status[i]);
-			continue;
-		}
 
-		if (status[i] & THREAD_STATUS_ACTIVE)
+		if (status[i].active)
 			printf("A");
 		else
 			printf(".");
 
-		if (status[i] & THREAD_STATUS_DOZE)
+		switch (status[i].sleep_state) {
+		case PDBG_THREAD_STATE_DOZE:
 			printf("D");
-		else if (status[i] & THREAD_STATUS_NAP)
-			printf("N");
-		else if (status[i] & THREAD_STATUS_SLEEP)
-			printf("S");
-		else if (status[i] & THREAD_STATUS_STOP)
-			printf("S");
-		else
-			printf(".");
+			break;
 
-		if (status[i] & THREAD_STATUS_QUIESCE)
+		case PDBG_THREAD_STATE_NAP:
+			printf("N");
+			break;
+
+		case PDBG_THREAD_STATE_SLEEP:
+			printf("Z");
+			break;
+
+		case PDBG_THREAD_STATE_STOP:
+			printf("S");
+			break;
+
+		default:
+			printf(".");
+			break;
+		}
+
+		if (status[i].quiesced)
 			printf("Q");
 		else
 			printf(".");

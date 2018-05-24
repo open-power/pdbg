@@ -92,7 +92,7 @@ static uint64_t ld(uint64_t rt, uint64_t ds, uint64_t ra)
 	return LD_OPCODE | (rt << 21) | (ra << 16) | (ds << 2);
 }
 
-uint64_t thread_status(struct pdbg_target *target)
+struct thread_state thread_status(struct pdbg_target *target)
 {
 	struct thread *thread;
 

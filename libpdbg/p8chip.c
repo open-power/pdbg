@@ -43,7 +43,19 @@
 #define  RAS_STATUS_TS_QUIESCE		PPC_BIT(49)
 #define POW_STATUS_REG			0x4
 #define  PMC_POW_STATE			PPC_BITMASK(4, 5)
+#define   PMC_POW_STATE_RUN		0x0
+#define   PMC_POW_STATE_DOZE		0x1
+#define   PMC_POW_STATE_NAP		0x2
+#define   PMC_POW_STATE_SLEEP		0x3
 #define  PMC_POW_SMT			PPC_BITMASK(6, 8)
+#define   PMC_POW_SMT_0			0x0
+#define   PMC_POW_SMT_1			0x1
+#define   PMC_POW_SMT_2SH		0x2
+#define   PMC_POW_SMT_2SP		0x3
+#define   PMC_POW_SMT_4_3		0x4
+#define   PMC_POW_SMT_4_4		0x6
+#define   PMC_POW_SMT_8_5		0x5
+#define   PMC_POW_SMT_8_8		0x7
 #define  CORE_POW_STATE			PPC_BITMASK(23, 25)
 #define THREAD_ACTIVE_REG      		0x1310e
 #define  THREAD_ACTIVE			PPC_BITMASK(0, 7)
@@ -108,28 +120,82 @@ static int deassert_special_wakeup(struct core *chip)
 }
 #endif
 
-static uint64_t get_thread_status(struct thread *thread)
+static struct thread_state get_thread_status(struct thread *thread)
 {
-	uint64_t val, mode_reg, thread_status = thread->status;
+	uint64_t val, mode_reg;
+	struct thread_state thread_status;
 
 	/* Need to activete debug mode to get complete status */
-	CHECK_ERR(pib_read(&thread->target, RAS_MODE_REG, &mode_reg));
+	pib_read(&thread->target, RAS_MODE_REG, &mode_reg);
 	mode_reg |= MR_THREAD_IN_DEBUG;
-	CHECK_ERR(pib_write(&thread->target, RAS_MODE_REG, mode_reg));
+	pib_write(&thread->target, RAS_MODE_REG, mode_reg);
 
 	/* Read status */
-	CHECK_ERR(pib_read(&thread->target, RAS_STATUS_REG, &val));
+	pib_read(&thread->target, RAS_STATUS_REG, &val);
 
-	thread_status = SETFIELD(THREAD_STATUS_ACTIVE, thread_status, !!(val & RAS_STATUS_THREAD_ACTIVE));
-	thread_status = SETFIELD(THREAD_STATUS_QUIESCE, thread_status, !!(val & RAS_STATUS_TS_QUIESCE));
+	thread_status.active = !!(val & RAS_STATUS_THREAD_ACTIVE);
+	thread_status.quiesced = !!(val & RAS_STATUS_TS_QUIESCE);
 
 	/* Read POW status */
-	CHECK_ERR(pib_read(&thread->target, POW_STATUS_REG, &val));
-	thread_status = SETFIELD(THREAD_STATUS_STATE, thread_status, GETFIELD(PMC_POW_STATE, val));
-	thread_status = SETFIELD(THREAD_STATUS_SMT, thread_status, GETFIELD(PMC_POW_SMT, val));
+	pib_read(&thread->target, POW_STATUS_REG, &val);
+
+	switch (GETFIELD(PMC_POW_STATE, val)) {
+	case PMC_POW_STATE_RUN:
+		thread_status.sleep_state = PDBG_THREAD_STATE_RUN;
+		break;
+
+	case PMC_POW_STATE_DOZE:
+		thread_status.sleep_state = PDBG_THREAD_STATE_DOZE;
+		break;
+
+	case PMC_POW_STATE_NAP:
+		thread_status.sleep_state = PDBG_THREAD_STATE_NAP;
+		break;
+
+	case PMC_POW_STATE_SLEEP:
+		thread_status.sleep_state = PDBG_THREAD_STATE_SLEEP;
+		break;
+
+	default:
+		/* PMC_POW_STATE is a 2-bit field and we test all values so it
+		 * should be impossible to get here. */
+		assert(0);
+	}
+
+	switch (GETFIELD(PMC_POW_SMT, val)) {
+	case PMC_POW_SMT_0:
+		thread_status.smt_state = PDBG_SMT_UNKNOWN;
+		break;
+
+	case PMC_POW_SMT_1:
+		thread_status.smt_state = PDBG_SMT_1;
+		break;
+
+	case PMC_POW_SMT_2SH:
+	case PMC_POW_SMT_2SP:
+		thread_status.smt_state = PDBG_SMT_2;
+		break;
+
+	/* It's unclear from the documentation what the difference between these
+	 * two are. */
+	case PMC_POW_SMT_4_3:
+	case PMC_POW_SMT_4_4:
+		thread_status.smt_state = PDBG_SMT_4;
+		break;
+
+	/* Ditto */
+	case PMC_POW_SMT_8_5:
+	case PMC_POW_SMT_8_8:
+		thread_status.smt_state = PDBG_SMT_8;
+		break;
+
+	default:
+		assert(0);
+	}
+
 	/* Clear debug mode */
 	mode_reg &= ~MR_THREAD_IN_DEBUG;
-	CHECK_ERR(pib_write(&thread->target, RAS_MODE_REG, mode_reg));
+	pib_write(&thread->target, RAS_MODE_REG, mode_reg);
 
 	return thread_status;
 }
@@ -231,11 +297,11 @@ static int p8_ram_setup(struct thread *thread)
 	dt_for_each_compatible(&chip->target, target, "ibm,power8-thread") {
 		struct thread *tmp;
 		tmp = target_to_thread(target);
-		if (!(get_thread_status(tmp) & THREAD_STATUS_QUIESCE))
+		if (!(get_thread_status(tmp).quiesced))
 			return 1;
 	}
 
-	if (!(thread->status & THREAD_STATUS_ACTIVE))
+	if (!(thread->status.active))
 		return 2;
 
 	/* Activate RAM mode */
