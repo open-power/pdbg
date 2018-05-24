@@ -22,6 +22,8 @@
 			compatible = "ibm,power8-opb";
 
 			hmfsi@100000 {
+				#address-cells = <0x2>;
+				#size-cells = <0x1>;
 				compatible = "ibm,power8-opb-hmfsi";
 				reg = <0x100000 0x80000>;
 				port = <0x1>;

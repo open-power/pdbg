@@ -31,6 +31,8 @@
 		};
 
 		hmfsi@100000 {
+			#address-cells = <0x2>;
+			#size-cells = <0x1>;
 			compatible = "ibm,fsi-hmfsi";
 			reg = <0x0 0x100000 0x8000>;
 			port = <0x1>;

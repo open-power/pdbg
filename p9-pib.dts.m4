@@ -2,6 +2,8 @@ define(`CONCAT', `$1$2')dnl
 define(`HEX', `CONCAT(0x, $1)')dnl
 define(`CORE_BASE', `eval(0x20000000 + $1 * 0x1000000, 16)')dnl
 define(`CORE', `chiplet@CORE_BASE($1) {
+#address-cells = <0x2>;
+#size-cells = <0x1>;
 compatible = "ibm,power9-chiplet";
 index = <HEX(eval($2, 16))>;
 reg = <0x0 HEX(CORE_BASE($1)) 0xfffff>;
@@ -33,8 +35,6 @@ index = <HEX(eval($1, 16))>;
 reg = <0x0 HEX(CHIPLET_BASE($1)) 0xfffff>;
 }')dnl
 
-#address-cells = <0x2>;
-#size-cells = <0x1>;
 
 adu@90000 {
 	  compatible = "ibm,power9-adu";
