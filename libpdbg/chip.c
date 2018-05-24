@@ -364,9 +364,12 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 	}
 	printf("CR    : 0x%08" PRIx32 "\n", regs->cr);
 
+#if 0
+	/* TODO: Disabling because reading SPR 0x1 reliably checkstops a P8 */
 	ram_getspr(thread, 0x1, &value);
 	regs->xer = value;
 	printf("XER   : 0x%08" PRIx32 "\n", regs->xer);
+#endif
 
 	printf("GPRS  :\n");
 	for (i = 0; i < 32; i++) {
