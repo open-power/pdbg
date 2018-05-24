@@ -83,7 +83,7 @@ GEN_V_ = $(GEN_V_$(AM_DEFAULT_VERBOSITY))
 GEN_V_0 = @echo "  GEN     " $@;
 
 %.dts: %.dts.m4
-	$(M4_V)$(M4) -I$(dir $<) $< | $(DTC) -q -I dts -O dts > $@
+	$(M4_V)$(M4) -I$(dir $<) $< | $(DTC) -I dts -O dts > $@
 
 %.dtsi: %.dtsi.m4
 	$(M4_V)$(M4) -I$(dir $<) $< > $@
@@ -93,7 +93,7 @@ p9r-fsi.dts: p9r-fsi.dts.m4 p9-fsi.dtsi
 p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
 
 %.dtb: %.dts
-	$(DTC_V)$(DTC) -q -i$(dir $@) -I dts $< -O dtb > $@
+	$(DTC_V)$(DTC) -i$(dir $@) -I dts $< -O dtb > $@
 
 %.dt.h: %.dtb
 	$(GEN_V)$(srcdir)/generate_dt_header.sh $< > $@
