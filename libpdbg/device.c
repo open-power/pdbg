@@ -96,7 +96,7 @@ static struct pdbg_target *new_node(const char *name, const void *fdt, int node_
 		 * above DECLARE_HW_UNIT). */
 		memcpy(node, hw_info->hw_unit, size);
 		target_class = get_target_class(node->class);
-		list_add(&target_class->targets, &node->class_link);
+		list_add_tail(&target_class->targets, &node->class_link);
 	}
 
 	node->dn_name = take_name(name);
