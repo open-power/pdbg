@@ -295,7 +295,7 @@ static bool parse_options(int argc, char *argv[])
 	if (opt_error)
 		print_usage(argv[0]);
 
-	return opt_error;
+	return !opt_error;
 }
 
 void target_select(struct pdbg_target *target)
@@ -598,7 +598,7 @@ int main(int argc, char *argv[])
 	backend = default_backend();
 	device_node = default_target(backend);
 
-	if (parse_options(argc, argv))
+	if (!parse_options(argc, argv))
 		return 1;
 
 	if (!backend_is_possible(backend)) {
