@@ -15,6 +15,4 @@
  */
 #include <inttypes.h>
 
-#include <target.h>
-
 int handle_scoms(int optind, int argc, char *argv[]);

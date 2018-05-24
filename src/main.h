@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <inttypes.h>
 
-#include <target.h>
+#include <inttypes.h>
+#include <stdbool.h>
+
+#include <libpdbg.h>
 
 enum backend { FSI, I2C, KERNEL, FAKE, HOST };
 

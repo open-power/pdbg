@@ -19,8 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <target.h>
-#include <operations.h>
+#include <libpdbg.h>
 
 #include "main.h"
 

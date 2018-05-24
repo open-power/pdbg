@@ -19,9 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
-#include <operations.h>
-#include <target.h>
+#include <libpdbg.h>
 
 #include "main.h"
 #include "progress.h"

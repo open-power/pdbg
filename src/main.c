@@ -31,9 +31,9 @@
 #include <config.h>
 
 #include <libpdbg.h>
+#include <target.h>
 
 #include "main.h"
-#include "bitutils.h"
 #include "cfam.h"
 #include "scom.h"
 #include "reg.h"

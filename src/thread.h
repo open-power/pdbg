@@ -15,8 +15,6 @@
  */
 #include <inttypes.h>
 
-#include <target.h>
-
 int thread_start(int optind, int argc, char *argv[]);
 int thread_step(int optind, int argc, char *argv[]);
 int thread_stop(int optind, int argc, char *argv[]);

@@ -19,7 +19,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include <target.h>
+#include <libpdbg.h>
 
 #include "main.h"
 

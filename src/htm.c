@@ -29,11 +29,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <ccan/array_size/array_size.h>
 
-#include <target.h>
-#include <operations.h>
+#include <libpdbg.h>
+#include <bitutils.h>
 
 #include "main.h"
 
