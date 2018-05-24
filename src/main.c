@@ -152,7 +152,7 @@ static void print_usage(char *pname)
 	printf("\t\tand defaults to 0x50 for I2C\n");
 	printf("\t-D, --debug=<debug level>\n");
 	printf("\t\t0:error (default) 1:warning 2:notice 3:info 4:debug\n");
-	printf("\t--expert\n");
+	printf("\t-E, --expert\n");
 	printf("\t-V, --version\n");
 	printf("\t-h, --help\n");
 	printf("\n");
