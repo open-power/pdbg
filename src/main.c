@@ -293,7 +293,7 @@ static bool parse_options(int argc, char *argv[])
 	} while (c != EOF && !opt_error);
 
 	if (opt_error)
-		print_usage(argv[0]);
+		print_usage(basename(argv[0]));
 
 	return !opt_error;
 }
@@ -615,7 +615,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind >= argc) {
-		print_usage(argv[0]);
+		print_usage(basename(argv[0]));
 		return 1;
 	}
 
@@ -642,13 +642,14 @@ int main(int argc, char *argv[])
 	}
 
 	PR_ERROR("Unsupported command: %s\n", argv[optind]);
-	print_usage(argv[0]);
+	print_usage(basename(argv[0]));
 	return 1;
 
 found_action:
 	if (rc <= 0) {
                 printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
-                printf("Alternatively run %s -a probe to get a list of all valid targets\n", argv[0]);
+                printf("Alternatively run '%s -a probe' to get a list of all valid targets\n",
+		       basename(argv[0]));
 		rc = 1;
 	} else
 		rc = 0;
