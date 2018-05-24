@@ -144,13 +144,13 @@ int handle_nia(int optind, int argc, char *argv[])
 	if (strcmp(argv[optind], "putnia") == 0) {
 		uint64_t data;
 
-		if (optind + 2 >= argc) {
+		if (optind + 1 >= argc) {
 			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
 			return -1;
 		}
 
 		errno = 0;
-		data = strtoull(argv[optind + 2], &endptr, 0);
+		data = strtoull(argv[optind + 1], &endptr, 0);
 		if (errno || *endptr != '\0') {
 			printf("%s: command '%s' couldn't parse data '%s'\n",
 				argv[0], argv[optind], argv[optind + 1]);
@@ -213,13 +213,13 @@ int handle_msr(int optind, int argc, char *argv[])
 	if (strcmp(argv[optind], "putmsr") == 0) {
 		uint64_t data;
 
-		if (optind + 2 >= argc) {
+		if (optind + 1 >= argc) {
 			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
 			return -1;
 		}
 
 		errno = 0;
-		data = strtoull(argv[optind + 2], &endptr, 0);
+		data = strtoull(argv[optind + 1], &endptr, 0);
 		if (errno || *endptr != '\0') {
 			printf("%s: command '%s' couldn't parse data '%s'\n",
 				argv[0], argv[optind], argv[optind + 1]);
