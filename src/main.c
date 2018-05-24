@@ -277,7 +277,7 @@ static bool parse_options(int argc, char *argv[])
 
 		case 'V':
 			printf("%s (commit %s)\n", PACKAGE_STRING, GIT_SHA1);
-			exit(1);
+			exit(0);
 			break;
 
 		case 'E':
