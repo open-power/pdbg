@@ -41,6 +41,9 @@
 
 #define HTM_ENUM_TO_STRING(e) ((e == HTM_NEST) ? "nhtm" : "chtm")
 
+#define PR_ERROR(x, args...) \
+	pdbg_log(PDBG_ERROR, x, ##args)
+
 enum htm_type {
 	HTM_CORE,
 	HTM_NEST,

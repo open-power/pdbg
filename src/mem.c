@@ -26,6 +26,9 @@
 #include "main.h"
 #include "progress.h"
 
+#define PR_ERROR(x, args...) \
+	pdbg_log(PDBG_ERROR, x, ##args)
+
 #define PUTMEM_BUF_SIZE 1024
 static int getmem(uint64_t addr, uint64_t size, int ci)
 {

@@ -43,10 +43,8 @@
 #include "htm.h"
 #include "options.h"
 
-#undef PR_DEBUG
-#define PR_DEBUG(...)
-#define PR_ERROR(x, args...)					\
-	fprintf(stderr, "%s: " x, __FUNCTION__, ##args)
+#define PR_ERROR(x, args...) \
+	pdbg_log(PDBG_ERROR, x, ##args)
 
 #include "fake.dt.h"
 
