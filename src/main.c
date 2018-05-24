@@ -180,7 +180,7 @@ static bool parse_options(int argc, char *argv[])
 		{"processor",		required_argument,	NULL,	'p'},
 		{"slave-address",	required_argument,	NULL,	's'},
 		{"thread",		required_argument,	NULL,	't'},
-		{"debug",		required_argument,	NULL,	'V'},
+		{"debug",		required_argument,	NULL,	'D'},
 		{"version",		no_argument,		NULL,	'V'},
 		{"expert",		no_argument,		NULL,	'E'},
 		{NULL,			0,			NULL,     0}
