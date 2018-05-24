@@ -454,12 +454,16 @@ static int target_selection(void)
 			target_select(pib);
 			pdbg_for_each_target("core", pib, chip) {
 				int chip_index = pdbg_target_index(chip);
-				target_select(chip);
+				if (pdbg_parent_index(chip, "pib") != proc_index)
+					continue;
+
 				if (chipsel[proc_index][chip_index]) {
+					target_select(chip);
 					pdbg_for_each_target("thread", chip, thread) {
 						int thread_index = pdbg_target_index(thread);
-						target_select(thread);
-						if (!threadsel[proc_index][chip_index][thread_index])
+						if (threadsel[proc_index][chip_index][thread_index])
+							target_select(thread);
+						else
 							target_unselect(thread);
 					}
 				} else
