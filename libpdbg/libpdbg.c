@@ -6,8 +6,6 @@
 
 static pdbg_progress_tick_t progress_tick;
 
-bool pdbg_expert_mode = false;
-
 struct pdbg_target *__pdbg_next_target(const char *class, struct pdbg_target *parent, struct pdbg_target *last)
 {
 	struct pdbg_target *next, *tmp;

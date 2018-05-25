@@ -200,14 +200,6 @@ static int p9_thread_step(struct thread *thread, int count)
 
 static int p9_thread_sreset(struct thread *thread)
 {
-	if (!pdbg_expert_mode) {
-		/* Something already quiesced it, fail*/
-		if (thread->status.quiesced)
-			return 1;
-		if (p9_thread_stop(thread))
-			return 1;
-	}
-
 	/* Can only sreset if a thread is quiesced */
 	if (!(thread->status.quiesced))
 		return 1;
@@ -219,55 +211,12 @@ static int p9_thread_sreset(struct thread *thread)
 	return 0;
 }
 
-static void ram_nonexpert_cleanup(struct thread *thread)
-{
-	struct pdbg_target *target;
-	struct core *chip = target_to_core(thread->target.parent);
-
-	if (pdbg_expert_mode)
-		return;
-
-	/* We can only ram a thread if all the threads on the core/chip are
-	 * quiesced */
-	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
-		struct thread *tmp;
-
-		tmp = target_to_thread(target);
-		if (tmp->ram_did_quiesce) {
-			p9_thread_start(tmp);
-			tmp->ram_did_quiesce = false;
-		}
-	}
-}
-
 static int p9_ram_setup(struct thread *thread)
 {
 	struct pdbg_target *target;
 	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t value;
 
-	if (thread->ram_is_setup)
-		return 1;
-
-	if (pdbg_expert_mode)
-		goto expert;
-
-	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
-		struct thread *tmp;
-
-		p9_thread_probe(target);
-		tmp = target_to_thread(target);
-		/* Something already quiesced it, fail*/
-		if (tmp->status.quiesced)
-			goto out_fail;
-		if (!(tmp->status.quiesced)) {
-			if (p9_thread_stop(tmp))
-				goto out_fail;
-			tmp->ram_did_quiesce = true;
-		}
-	}
-
-expert:
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
 	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
@@ -307,12 +256,9 @@ expert:
 
 	thread->status = p9_get_thread_status(thread);
 
-	thread->ram_is_setup = true;
-
 	return 0;
 
 out_fail:
-	ram_nonexpert_cleanup(thread);
 	return 1;
 }
 
@@ -416,9 +362,6 @@ static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 
 static int p9_ram_destroy(struct thread *thread)
 {
-	if (!thread->ram_is_setup)
-		return 1;
-
 	/* Disable ram mode */
 	CHECK_ERR(thread_write(thread, P9_RAM_MODEREG, 0));
 
@@ -426,10 +369,6 @@ static int p9_ram_destroy(struct thread *thread)
 	CHECK_ERR(thread_write(thread, P9_THREAD_INFO, 0));
 
 	thread->status = p9_get_thread_status(thread);
-
-	ram_nonexpert_cleanup(thread);
-
-	thread->ram_is_setup = false;
 
 	return 0;
 }

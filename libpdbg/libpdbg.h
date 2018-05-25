@@ -8,8 +8,6 @@
 
 #include <stdbool.h>
 
-extern bool pdbg_expert_mode;
-
 struct pdbg_target;
 struct pdbg_target_class;
 

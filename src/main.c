@@ -87,7 +87,7 @@ struct action {
 	int (*fn)(int, int, char **);
 };
 
-static struct action expert_actions[] = {
+static struct action actions[] = {
 	{ "getgpr",  "<gpr>", "Read General Purpose Register (GPR)", &handle_gpr },
 	{ "putgpr",  "<gpr> <value>", "Write General Purpose Register (GPR)", &handle_gpr },
 	{ "getnia",  "", "Get Next Instruction Address (NIA)", &handle_nia },
@@ -109,9 +109,6 @@ static struct action expert_actions[] = {
 	{ "htm_analyse", "", "[derepcated use 'htm nest analyse'] Stop and dump buffer to file", &run_htm_analyse },
 	{ "htm", "core|nest start|stop|status|reset|dump|trace|analyse", "Hardware Trace Macro", &run_htm },
 	{ "release", "", "Should be called after pdbg work is finished, to release special wakeups and other resources.", &handle_release},
-};
-
-static struct action actions[] = {
 	{ "probe", "", "", &handle_probe },
 	{ "getcfam", "<address>", "Read system cfam", &handle_cfams },
 	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam", &handle_cfams },
@@ -152,18 +149,12 @@ static void print_usage(char *pname)
 	printf("\t\tand defaults to 0x50 for I2C\n");
 	printf("\t-D, --debug=<debug level>\n");
 	printf("\t\t0:error (default) 1:warning 2:notice 3:info 4:debug\n");
-	printf("\t-E, --expert\n");
 	printf("\t-V, --version\n");
 	printf("\t-h, --help\n");
 	printf("\n");
 	printf(" Commands:\n");
 	for (i = 0; i < ARRAY_SIZE(actions); i++)
 		printf("  %-15s %-27s  %s\n", actions[i].name, actions[i].args, actions[i].desc);
-	if (pdbg_expert_mode) {
-		printf(" Expert Commands:\n");
-		for (i = 0; i < ARRAY_SIZE(expert_actions); i++)
-			printf("  %-15s %-27s  %s\n", expert_actions[i].name, expert_actions[i].args, expert_actions[i].desc);
-	}
 }
 
 static bool parse_options(int argc, char *argv[])
@@ -182,13 +173,12 @@ static bool parse_options(int argc, char *argv[])
 		{"thread",		required_argument,	NULL,	't'},
 		{"debug",		required_argument,	NULL,	'D'},
 		{"version",		no_argument,		NULL,	'V'},
-		{"expert",		no_argument,		NULL,	'E'},
 		{NULL,			0,			NULL,     0}
 	};
 	char *endptr;
 
 	do {
-		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:VE", long_opts, NULL);
+		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:V", long_opts, NULL);
 		if (c == -1)
 			break;
 
@@ -278,11 +268,6 @@ static bool parse_options(int argc, char *argv[])
 		case 'V':
 			printf("%s (commit %s)\n", PACKAGE_STRING, GIT_SHA1);
 			exit(0);
-			break;
-
-		case 'E':
-			opt_error = false;
-			pdbg_expert_mode = true;
 			break;
 
 		case '?':
@@ -577,7 +562,7 @@ static int handle_probe(int optind, int argc, char *argv[])
 }
 
 /*
- * Release handler for !pdbg_expert_mode
+ * Release handler.
  */
 static void atexit_release(void)
 {
@@ -623,21 +608,12 @@ int main(int argc, char *argv[])
 	if (target_selection())
 		return 1;
 
-	if (!pdbg_expert_mode)
-		atexit(atexit_release);
+	atexit(atexit_release);
 
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {
 		if (strcmp(argv[optind], actions[i].name) == 0) {
 			rc = actions[i].fn(optind, argc, argv);
 			goto found_action;
-		}
-	}
-	if (pdbg_expert_mode) {
-		for (i = 0; i < ARRAY_SIZE(expert_actions); i++) {
-			if (strcmp(argv[optind], expert_actions[i].name) == 0) {
-				rc = expert_actions[i].fn(optind, argc, argv);
-				goto found_action;
-			}
 		}
 	}
 
