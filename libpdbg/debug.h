@@ -18,6 +18,8 @@
 
 #include "libpdbg.h"
 
+void pdbg_log(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
 #define PR_WARNING(x, args...) \

@@ -143,7 +143,7 @@ static uint64_t opb_poll(struct opb *opb, uint32_t *read_data)
 			PR_ERROR("XSCOM error %" PRId64 " read OPB STAT\n", rc);
 			return -1;
 		}
-		PR_DEBUG("  STAT=0x%16llx...\n", sval);
+		PR_DEBUG("  STAT=0x%16" PRIx64 "...\n", sval);
 
 		stat = sval >> 32;
 
@@ -193,7 +193,7 @@ static int p8_opb_read(struct opb *opb, uint32_t addr, uint32_t *data)
 	opb_cmd |= addr;
 	opb_cmd <<= 32;
 
-	PR_DEBUG("MFSI_OPB_READ: Writing 0x%16llx\n", opb_cmd);
+	PR_DEBUG("MFSI_OPB_READ: Writing 0x%16" PRIx64 "\n", opb_cmd);
 
 	rc = pib_write(&opb->target, PIB2OPB_REG_CMD, opb_cmd);
 	if (rc) {
@@ -216,7 +216,7 @@ static int p8_opb_write(struct opb *opb, uint32_t addr, uint32_t data)
 	opb_cmd <<= 32;
 	opb_cmd |= data;
 
-	PR_DEBUG("MFSI_OPB_WRITE: Writing 0x%16llx\n", opb_cmd);
+	PR_DEBUG("MFSI_OPB_WRITE: Writing 0x%16" PRIx64 "\n", opb_cmd);
 
 	rc = pib_write(&opb->target, PIB2OPB_REG_CMD, opb_cmd);
 	if (rc) {
