@@ -6,7 +6,7 @@ define(`CORE', `core@CORE_BASE($1) {
 	#size-cells = <0x1>;
 	compatible = "ibm,power8-core";
 	reg = <0x0 HEX(CORE_BASE($1)) 0xfffff>;
-	index = <0x$2>;
+	index = <HEX(eval($2, 16))>;
 	chtm@11000 {
 		compatible = "ibm,power8-chtm";
 		reg = <0x0 0x11000 0xB>;
@@ -29,18 +29,18 @@ define(`THREAD',`thread@THREAD_BASE($1) {
 	index = <HEX(eval($1, 16))>;
 	}')dnl
 dnl
-define(`PROC_CORES', `CORE(1, 0);
-CORE(2, 1);
-CORE(3, 2);
-CORE(4, 3);
-CORE(5, 4);
-CORE(6, 5);
-CORE(9, 6);
-CORE(10, 7);
-CORE(11, 8);
-CORE(12, 9);
-CORE(13, 10);
-CORE(14, 11)')dnl
+define(`PROC_CORES', `CORE(1, 1);
+CORE(2, 2);
+CORE(3, 3);
+CORE(4, 4);
+CORE(5, 5);
+CORE(6, 6);
+CORE(9, 9);
+CORE(10, 10);
+CORE(11, 11);
+CORE(12, 12);
+CORE(13, 13);
+CORE(14, 14)')dnl
 
 adu@2020000 {
 	compatible = "ibm,power8-adu";
