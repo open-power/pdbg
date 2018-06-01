@@ -64,3 +64,21 @@ static struct pib fake_pib = {
 	.write = fake_pib_write,
 };
 DECLARE_HW_UNIT(fake_pib);
+
+static struct core fake_core = {
+	.target = {
+		.name =	"Fake Core",
+		.compatible = "ibm,fake-core",
+		.class = "core",
+	},
+};
+DECLARE_HW_UNIT(fake_core);
+
+static struct thread fake_thread = {
+	.target = {
+		.name =	"Fake Thread",
+		.compatible = "ibm,fake-thread",
+		.class = "thread",
+	},
+};
+DECLARE_HW_UNIT(fake_thread);
