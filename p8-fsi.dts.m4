@@ -50,8 +50,10 @@
 		};
 
 		hmfsi@180000 {
+			#address-cells = <0x2>;
+			#size-cells = <0x1>;
 			compatible = "ibm,power8-opb-hmfsi";
-			reg = <0x180000 0x80000>;
+			reg = <0x0 0x180000 0x80000>;
 			port = <0x2>;
 			index = <0x2>;
 
