@@ -729,7 +729,6 @@ int main(int argc, char *argv[])
 	}
 
 	PR_ERROR("Unsupported command: %s\n", argv[optind]);
-	print_usage(basename(argv[0]));
 	return 1;
 
 found_action:
