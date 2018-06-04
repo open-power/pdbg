@@ -128,9 +128,9 @@ static void print_usage(char *pname)
 
 	printf("Usage: %s [options] command ...\n\n", pname);
 	printf(" Options:\n");
-	printf("\t-p, --processor=processor-id\n");
-	printf("\t-c, --chip=core-id\n");
-	printf("\t-t, --thread=thread\n");
+	printf("\t-p, --processor=<0-%d>|<range>|<list>\n", MAX_PROCESSORS-1);
+	printf("\t-c, --chip=<0-%d>|<range>|<list>\n", MAX_CHIPS-1);
+	printf("\t-t, --thread=<0-%d>|<range>|<list>\n", MAX_THREADS-1);
 	printf("\t-a, --all\n");
 	printf("\t\tRun command on all possible processors/chips/threads (default)\n");
 	printf("\t-b, --backend=backend\n");
@@ -157,11 +157,92 @@ static void print_usage(char *pname)
 		printf("  %-15s %-27s  %s\n", actions[i].name, actions[i].args, actions[i].desc);
 }
 
+/* Parse argument of the form 0-5,7,9-11,15,17 */
+static bool parse_list(const char *arg, int max, int *list, int *count)
+{
+	char str[strlen(arg)+1];
+	char *tok, *tmp, *saveptr = NULL;
+	int i;
+
+	assert(max < INT_MAX);
+
+	strcpy(str, arg);
+
+	for (i = 0; i < max; i++) {
+		list[i] = 0;
+	}
+
+	tmp = str;
+	while ((tok = strtok_r(tmp, ",", &saveptr)) != NULL) {
+		char *a, *b, *endptr, *saveptr2 = NULL;
+		unsigned long int from, to;
+
+		a = strtok_r(tok, "-", &saveptr2);
+		if (a == NULL) {
+			return false;
+		} else {
+			endptr = NULL;
+			from = strtoul(a, &endptr, 0);
+			if (*endptr != '\0') {
+				fprintf(stderr, "Invalid value %s\n", a);
+				return false;
+			}
+			if (from >= max) {
+				fprintf(stderr, "Value %s larger than max %d\n", a, max-1);
+				return false;
+			}
+		}
+
+		b = strtok_r(NULL, "-", &saveptr2);
+		if (b == NULL) {
+			to = from;
+		} else {
+			endptr = NULL;
+			to = strtoul(b, &endptr, 0);
+			if (*endptr != '\0') {
+				fprintf(stderr, "Invalid value %s\n", b);
+				return false;
+			}
+			if (to >= max) {
+				fprintf(stderr, "Value %s larger than max %d\n", b, max-1);
+				return false;
+			}
+		}
+
+		if (from > to) {
+			fprintf(stderr, "Invalid range %s-%s\n", a, b);
+			return false;
+		}
+
+		for (i = from; i <= to; i++)
+			list[i] = 1;
+
+		tmp = NULL;
+	};
+
+	if (count != NULL) {
+		int n = 0;
+
+		for (i = 0; i < max; i++) {
+			if (list[i] == 1)
+				n++;
+		}
+
+		*count = n;
+	}
+
+	return true;
+}
+
 static bool parse_options(int argc, char *argv[])
 {
 	int c;
 	bool opt_error = true;
-	static int current_processor = INT_MAX, current_chip = INT_MAX, current_thread = INT_MAX;
+	int p_list[MAX_PROCESSORS];
+	int c_list[MAX_CHIPS];
+	int t_list[MAX_THREADS];
+	int p_count = 0, c_count = 0, t_count = 0;
+	int i, j, k;
 	struct option long_opts[] = {
 		{"all",			no_argument,		NULL,	'a'},
 		{"backend",		required_argument,	NULL,	'b'},
@@ -185,50 +266,45 @@ static bool parse_options(int argc, char *argv[])
 		switch(c) {
 		case 'a':
 			opt_error = false;
-			for (current_processor = 0; current_processor < MAX_PROCESSORS; current_processor++) {
-				processorsel[current_processor] = &chipsel[current_processor][0];
-				for (current_chip = 0; current_chip < MAX_CHIPS; current_chip++) {
-					chipsel[current_processor][current_chip] = &threadsel[current_processor][current_chip][0];
-					for (current_thread = 0; current_thread < MAX_THREADS; current_thread++)
-						threadsel[current_processor][current_chip][current_thread] = 1;
-				}
+
+			if (p_count == 0) {
+				p_count = MAX_PROCESSORS;
+				for (i = 0; i < MAX_PROCESSORS; i++)
+					p_list[i] = 1;
+			}
+
+			if (c_count == 0) {
+				c_count = MAX_CHIPS;
+				for (i = 0; i < MAX_CHIPS; i++)
+					c_list[i] = 1;
+			}
+
+			if (t_count == 0) {
+				t_count = MAX_THREADS;
+				for (i = 0; i < MAX_THREADS; i++)
+					t_list[i] = 1;
 			}
 			break;
 
 		case 'p':
-			errno = 0;
-			current_processor = strtoul(optarg, &endptr, 0);
-			opt_error = (errno || *endptr != '\0');
-			if (!opt_error) {
-				if (current_processor >= MAX_PROCESSORS)
-					opt_error = true;
-				else
-					processorsel[current_processor] = &chipsel[current_processor][0];
-			}
+			if (!parse_list(optarg, MAX_PROCESSORS, p_list, &p_count))
+				fprintf(stderr, "Failed to parse '-p %s'\n", optarg);
+			else
+				opt_error = false;
 			break;
 
 		case 'c':
-			errno = 0;
-			current_chip = strtoul(optarg, &endptr, 0);
-			opt_error = (errno || *endptr != '\0');
-			if (!opt_error) {
-				if (current_chip >= MAX_CHIPS)
-					opt_error = true;
-				else
-					chipsel[current_processor][current_chip] = &threadsel[current_processor][current_chip][0];
-			}
+			if (!parse_list(optarg, MAX_CHIPS, c_list, &c_count))
+				fprintf(stderr, "Failed to parse '-c %s'\n", optarg);
+			else
+				opt_error = false;
 			break;
 
 		case 't':
-			errno = 0;
-			current_thread = strtoul(optarg, &endptr, 0);
-			opt_error = (errno || *endptr != '\0');
-			if (!opt_error) {
-				if (current_thread >= MAX_THREADS)
-					opt_error = true;
-				else
-					threadsel[current_processor][current_chip][current_thread] = 1;
-			}
+			if (!parse_list(optarg, MAX_THREADS, t_list, &t_count))
+				fprintf(stderr, "Failed to parse '-t %s'\n", optarg);
+			else
+				opt_error = false;
 			break;
 
 		case 'b':
@@ -277,10 +353,45 @@ static bool parse_options(int argc, char *argv[])
 		}
 	} while (c != EOF && !opt_error);
 
-	if (opt_error)
+	if (opt_error) {
 		print_usage(basename(argv[0]));
+		return false;
+	}
 
-	return !opt_error;
+	if ((c_count > 0 || t_count > 0) && p_count == 0) {
+		fprintf(stderr, "No processor(s) selected\n");
+		fprintf(stderr, "Use -p or -a to select processor(s)\n");
+		return false;
+	}
+
+	if (t_count > 0 && c_count == 0)  {
+		fprintf(stderr, "No chip(s) selected\n");
+		fprintf(stderr, "Use -c or -a to select chip(s)\n");
+		return false;
+	}
+
+	for (i = 0; i < MAX_PROCESSORS; i++) {
+		if (p_list[i] == 0)
+			continue;
+
+		processorsel[i] = &chipsel[i][0];
+
+		for (j = 0; j < MAX_CHIPS; j++) {
+			if (c_list[j] == 0)
+				continue;
+
+			chipsel[i][j] = &threadsel[i][j][0];
+
+			for (k = 0; k < MAX_THREADS; k++) {
+				if (t_list[k] == 0)
+					continue;
+
+				threadsel[i][j][k] = 1;
+			}
+		}
+	}
+
+	return true;
 }
 
 void target_select(struct pdbg_target *target)
