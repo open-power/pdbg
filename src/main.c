@@ -237,7 +237,7 @@ static bool parse_list(const char *arg, int max, int *list, int *count)
 static bool parse_options(int argc, char *argv[])
 {
 	int c;
-	bool opt_error = true;
+	bool opt_error = false;
 	int p_list[MAX_PROCESSORS];
 	int c_list[MAX_CHIPS];
 	int t_list[MAX_THREADS];
@@ -265,8 +265,6 @@ static bool parse_options(int argc, char *argv[])
 
 		switch(c) {
 		case 'a':
-			opt_error = false;
-
 			if (p_count == 0) {
 				p_count = MAX_PROCESSORS;
 				for (i = 0; i < MAX_PROCESSORS; i++)
@@ -287,28 +285,27 @@ static bool parse_options(int argc, char *argv[])
 			break;
 
 		case 'p':
-			if (!parse_list(optarg, MAX_PROCESSORS, p_list, &p_count))
+			if (!parse_list(optarg, MAX_PROCESSORS, p_list, &p_count)) {
 				fprintf(stderr, "Failed to parse '-p %s'\n", optarg);
-			else
-				opt_error = false;
+				opt_error = true;
+			}
 			break;
 
 		case 'c':
-			if (!parse_list(optarg, MAX_CHIPS, c_list, &c_count))
+			if (!parse_list(optarg, MAX_CHIPS, c_list, &c_count)) {
 				fprintf(stderr, "Failed to parse '-c %s'\n", optarg);
-			else
-				opt_error = false;
+				opt_error = true;
+			}
 			break;
 
 		case 't':
-			if (!parse_list(optarg, MAX_THREADS, t_list, &t_count))
+			if (!parse_list(optarg, MAX_THREADS, t_list, &t_count)) {
 				fprintf(stderr, "Failed to parse '-t %s'\n", optarg);
-			else
-				opt_error = false;
+				opt_error = true;
+			}
 			break;
 
 		case 'b':
-			opt_error = false;
 			if (strcmp(optarg, "fsi") == 0) {
 				backend = FSI;
 				device_node = "p9w";
@@ -322,12 +319,13 @@ static bool parse_options(int argc, char *argv[])
 				backend = FAKE;
 			} else if (strcmp(optarg, "host") == 0) {
 				backend = HOST;
-			} else
+			} else {
+				fprintf(stderr, "Invalid backend '%s'\n", optarg);
 				opt_error = true;
+			}
 			break;
 
 		case 'd':
-			opt_error = false;
 			device_node = optarg;
 			break;
 
@@ -335,6 +333,8 @@ static bool parse_options(int argc, char *argv[])
 			errno = 0;
 			i2c_addr = strtoull(optarg, &endptr, 0);
 			opt_error = (errno || *endptr != '\0');
+			if (opt_error)
+				fprintf(stderr, "Invalid slave address '%s'\n", optarg);
 			break;
 
 		case 'D':
@@ -349,12 +349,12 @@ static bool parse_options(int argc, char *argv[])
 		case '?':
 		case 'h':
 			opt_error = true;
+			print_usage(basename(argv[0]));
 			break;
 		}
 	} while (c != EOF && !opt_error);
 
 	if (opt_error) {
-		print_usage(basename(argv[0]));
 		return false;
 	}
 
