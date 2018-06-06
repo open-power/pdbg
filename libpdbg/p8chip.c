@@ -283,6 +283,12 @@ static int p8_thread_start(struct thread *thread)
 	return 0;
 }
 
+static int p8_thread_sreset(struct thread *thread)
+{
+	/* Broken on p8 */
+	return 1;
+}
+
 static int p8_ram_setup(struct thread *thread)
 {
 	struct pdbg_target *target;
@@ -394,6 +400,7 @@ static struct thread p8_thread = {
 	.step = p8_thread_step,
 	.start = p8_thread_start,
 	.stop = p8_thread_stop,
+	.sreset = p8_thread_sreset,
 	.ram_setup = p8_ram_setup,
 	.ram_instruction = p8_ram_instruction,
 	.ram_destroy = p8_ram_destroy,
