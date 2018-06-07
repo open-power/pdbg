@@ -141,14 +141,13 @@ static int run_status(enum htm_type type, int optind, int argc, char *argv[])
 		if (target_is_disabled(target))
 			continue;
 
-		printf("HTM@");
+		printf("Status HTM@");
 		print_htm_address(type, target);
 		if (htm_status(target) != 1) {
 			printf("Couldn't get HTM@");
 			print_htm_address(type, target);
 		}
 		rc++;
-		printf("\n\n");
 	}
 
 	return rc;

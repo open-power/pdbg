@@ -789,18 +789,16 @@ static int do_htm_status(struct htm *htm)
 	if (dt_node_is_compatible(&htm->target, "ibm,power9-nhtm"))
 		regs++;
 
-	PR_DEBUG("HTM register dump:\n");
+	PR_INFO("HTM register dump:\n");
 	for (i = 0; i < regs; i++) {
 		if (HTM_ERR(pib_read(&htm->target, i, &val))) {
 			PR_ERROR("Couldn't read HTM reg: %d\n", i);
 			continue;
 		}
 
-		PR_DEBUG(" %d: 0x%016" PRIx64 "\n", i, val);
+		PR_INFO(" %d: 0x%016" PRIx64 "\n", i, val);
 	}
-	putchar('\n');
 
-	PR_INFO("* Checking HTM status...\n");
 	if (HTM_ERR(get_status(htm, &status)))
 		return -1;
 
@@ -815,47 +813,48 @@ static int do_htm_status(struct htm *htm)
 	}
 
 	PR_DEBUG("HTM status : 0x%016" PRIx64 "\n", status.raw);
-	PR_INFO("State: ");
+	printf("State: ");
 	switch (status.state) {
 	case INIT:
-		PR_INFO("INIT");
+		printf("INIT");
 		break;
 	case PREREQ:
-		PR_INFO("PREREQ");
+		printf("PREREQ");
 		break;
 	case READY:
-		PR_INFO("READY");
+		printf("READY");
 		break;
 	case TRACING:
-		PR_INFO("TRACING");
+		printf("TRACING");
 		break;
 	case PAUSED:
-		PR_INFO("PAUSED");
+		printf("PAUSED");
 		break;
 	case FLUSH:
-		PR_INFO("FLUSH");
+		printf("FLUSH");
 		break;
 	case COMPLETE:
-		PR_INFO("COMPLETE");
+		printf("COMPLETE");
 		break;
 	case ENABLE:
-		PR_INFO("ENABLE");
+		printf("ENABLE");
 		break;
 	case STAMP:
-		PR_INFO("STAMP");
+		printf("STAMP");
 		break;
 	default:
-		PR_INFO("UNINITIALIZED");
+		printf("UNINITIALIZED");
 	}
-	PR_INFO("\n");
+	printf("\n");
 
-	PR_INFO("HTM base addr : 0x%016" PRIx64 ", size: 0x%016" PRIx64 " ",
-			status.mem_base, total << 20);
+	printf("addr:0x%016" PRIx64 "\n", status.mem_base);
+	printf("size:0x%016" PRIx64 " ", total << 20);
 	if (total > 512)
-		PR_INFO("[ %" PRIu64 "GB ]", total >> 10);
+		printf("[ %" PRIu64 "GB ]", total >> 10);
 	else
-		PR_INFO("[ %" PRIu64 "MB ]", total);
-	PR_INFO("\n");
+		printf("[ %" PRIu64 "MB ]", total);
+	printf("\n");
+	printf("curr:0x%016" PRIx64 "\n", status.mem_last);
 	return 1;
 }
 
