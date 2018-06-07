@@ -221,7 +221,7 @@ int htm_status(struct pdbg_target *target)
 	return htm ? htm->status(htm) : -1;
 }
 
-int htm_dump(struct pdbg_target *target, uint64_t size, const char *filename)
+int htm_dump(struct pdbg_target *target, uint64_t size, char *filename)
 {
 	struct htm *htm = check_and_convert(target);
 
@@ -834,16 +834,16 @@ static int do_htm_status(struct htm *htm)
 	return 1;
 }
 
-static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
+static int do_htm_dump(struct htm *htm, uint64_t size, char *filename)
 {
-	char *trace_file, *dump_file;
+	char *trace_file;
 	struct htm_status status;
 	uint64_t trace[0x1000];
 	int trace_fd, dump_fd;
 	uint32_t chip_id;
 	size_t r;
 
-	if (!basename)
+	if (!filename)
 		return -1;
 
 	if (HTM_ERR(get_status(htm, &status)))
@@ -880,15 +880,10 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 		return -1;
 	}
 
-	if (asprintf(&dump_file, "%d.%d-%s", chip_id, htm->target.index, basename) == -1) {
-		free(trace_file);
-		close(trace_fd);
-		return -1;
-	}
-	dump_fd = open(dump_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+	dump_fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (dump_fd == -1) {
-		PR_ERROR("Failed to open %s: %m\n", dump_file);
-		free(dump_file);
+		PR_ERROR("Failed to open %s: %m\n", filename);
+		free(filename);
 		free(trace_file);
 		close(trace_fd);
 		return -1;
@@ -899,7 +894,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 		if (r == -1) {
 			PR_ERROR("Failed to read from %s: %m\n", trace_file);
 			free(trace_file);
-			free(dump_file);
+			free(filename);
 			close(trace_fd);
 			close(dump_fd);
 			return -1;
@@ -912,7 +907,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, const char *basename)
 	}
 
 	free(trace_file);
-	free(dump_file);
+	free(filename);
 	close(trace_fd);
 	close(dump_fd);
 	return 1;

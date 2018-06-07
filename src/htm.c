@@ -39,8 +39,6 @@
 
 #include "main.h"
 
-#define HTM_DUMP_BASENAME "htm.dump"
-
 #define HTM_ENUM_TO_STRING(e) ((e == HTM_NEST) ? "nhtm" : "chtm")
 
 #define PR_ERROR(x, args...) \
@@ -61,22 +59,17 @@ static inline void print_htm_address(enum htm_type type,
 	printf("t%d\n", pdbg_target_index(target));
 }
 
-static char *get_htm_dump_filename(void)
+static char *get_htm_dump_filename(struct pdbg_target *target)
 {
 	char *filename;
-	int i;
+	int rc;
 
-	filename = strdup(HTM_DUMP_BASENAME);
-	if (!filename)
+	rc = asprintf(&filename, "htm-p%d-c%d-t%d.dump",
+		      pdbg_parent_index(target, "pib"),
+		      pdbg_parent_index(target, "core"),
+		      pdbg_target_index(target));
+	if (rc == -1)
 		return NULL;
-
-	i = 0;
-	while (access(filename, F_OK) == 0) {
-		free(filename);
-		if (asprintf(&filename, "%s.%d", HTM_DUMP_BASENAME, i) == -1)
-			return NULL;
-		i++;
-	}
 
 	return filename;
 }
@@ -192,12 +185,6 @@ static int run_dump(enum htm_type type)
 	char *filename;
 	int rc = 0;
 
-	filename = get_htm_dump_filename();
-	if (!filename)
-		return 0;
-
-	/* size = 0 will dump everything */
-	printf("Dumping HTM trace to file [chip].[#]%s\n", filename);
 	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
 		if (!target_selected(target))
 			continue;
@@ -205,15 +192,21 @@ static int run_dump(enum htm_type type)
 		if (target_is_disabled(target))
 			continue;
 
+		filename = get_htm_dump_filename(target);
+		if (!filename)
+			return 0;
+
+		/* size = 0 will dump everything */
 		printf("Dumping HTM@");
 		print_htm_address(type, target);
+		printf("File: %s\n", filename);
 		if (htm_dump(target, 0, filename) != 1) {
 			printf("Couldn't dump HTM@");
 			print_htm_address(type, target);
 		}
 		rc++;
+		free(filename);
 	}
-	free(filename);
 
 	return rc;
 }
