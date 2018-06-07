@@ -276,6 +276,27 @@ static void print_usage(enum htm_type type)
 	}
 }
 
+static bool is_smt1(struct pdbg_target *target)
+{
+	/* primary thread */
+	if (pdbg_target_index(target) == 0) {
+		if (((thread_status(target).active)) &&
+		    (thread_status(target).sleep_state == PDBG_THREAD_STATE_RUN))
+			return true;
+		goto fail;
+	}
+
+	/* secondary thread */
+	if (thread_status(target).quiesced)
+		return true;
+
+fail:
+	fprintf(stderr, "Error: core HTM needs to run in SMT1 with no powersave. Try\n");
+	fprintf(stderr, "  ppc64_cpu --smt=1\n");
+	fprintf(stderr, "  for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable;do echo 1 > $i;done\n");
+	return false;
+}
+
 int run_htm(int optind, int argc, char *argv[])
 {
 	struct pdbg_target *target;
@@ -342,14 +363,9 @@ int run_htm(int optind, int argc, char *argv[])
 			if (pdbg_target_status(target) == PDBG_TARGET_NONEXISTENT)
 				continue;
 
-			if ((!(thread_status(target).active)) ||
-			    (thread_status(target).sleep_state != PDBG_THREAD_STATE_RUN)) {
-				fprintf(stderr, "It appears powersave is on on %s@%d\n",
-					pdbg_target_name(target), pdbg_target_index(target));
-				fprintf(stderr, "core HTM needs to run with powersave off\n");
-				fprintf(stderr, "Hint: put powersave=off on the kernel commandline\n");
+			if (!is_smt1(target))
 				return 0;
-			}
+
 		}
 
 		/* Select the correct chtm target */
