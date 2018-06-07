@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <assert.h>
 #include <ccan/list/list.h>
 #include <libfdt/libfdt.h>
@@ -112,28 +113,34 @@ static int pib_indirect_write(struct pib *pib, uint64_t addr, uint64_t data)
 int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 {
 	struct pib *pib;
+	uint64_t target_addr = addr;
 	int rc;
 
-	pib_dt = get_class_target_addr(pib_dt, "pib", &addr);
+	pib_dt = get_class_target_addr(pib_dt, "pib", &target_addr);
 	pib = target_to_pib(pib_dt);
-	if (addr & PPC_BIT(0))
-		rc = pib_indirect_read(pib, addr, data);
+	if (target_addr & PPC_BIT(0))
+		rc = pib_indirect_read(pib, target_addr, data);
 	else
-		rc = pib->read(pib, addr, data);
+		rc = pib->read(pib, target_addr, data);
+	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
+		 target_addr, *data);
 	return rc;
 }
 
 int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 {
 	struct pib *pib;
+	uint64_t target_addr = addr;
 	int rc;
 
-	pib_dt = get_class_target_addr(pib_dt, "pib", &addr);
+	pib_dt = get_class_target_addr(pib_dt, "pib", &target_addr);
 	pib = target_to_pib(pib_dt);
-	if (addr & PPC_BIT(0))
-		rc = pib_indirect_write(pib, addr, data);
+	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
+		 target_addr, data);
+	if (target_addr & PPC_BIT(0))
+		rc = pib_indirect_write(pib, target_addr, data);
 	else
-		rc = pib->write(pib, addr, data);
+		rc = pib->write(pib, target_addr, data);
 	return rc;
 }
 
