@@ -732,16 +732,11 @@ int main(int argc, char *argv[])
 	return 1;
 
 found_action:
-	if (rc <= 0) {
-                printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
-                printf("Alternatively run '%s -a probe' to get a list of all valid targets\n",
-		       basename(argv[0]));
-		rc = 1;
-	} else
-		rc = 0;
+	if (rc > 0)
+		return 0;
 
-	//if (backend == FSI)
-		//fsi_destroy(NULL);
-
-	return rc;
+	printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
+	printf("Alternatively run '%s -a probe' to get a list of all valid targets\n",
+	       basename(argv[0]));
+	return 1;
 }
