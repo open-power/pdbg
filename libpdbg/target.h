@@ -94,7 +94,6 @@ struct htm {
 	int (*start)(struct htm *);
 	int (*stop)(struct htm *);
 	int (*reset)(struct htm *, uint64_t *, uint64_t *);
-	int (*pause)(struct htm *);
 	int (*status)(struct htm *);
 	int (*dump)(struct htm *, uint64_t, const char *);
 };

@@ -214,13 +214,6 @@ int htm_reset(struct pdbg_target *target, uint64_t *base, uint64_t *size)
 	return htm ? htm->reset(htm, base, size) : -1;
 }
 
-int htm_pause(struct pdbg_target *target)
-{
-	struct htm *htm = check_and_convert(target);
-
-	return htm ? htm->pause(htm) : -1;
-}
-
 int htm_status(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
@@ -645,7 +638,9 @@ static int get_trace_base(struct htm *htm, uint64_t *base)
 
 static bool is_resetable(struct htm_status *status)
 {
-	return status->state == COMPLETE || status->state == REPAIR || status->state == INIT;
+	return status->state == COMPLETE ||
+		status->state == REPAIR ||
+		status->state == INIT;
 }
 
 static bool is_configured(struct htm *htm)
@@ -759,25 +754,6 @@ static int do_htm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
 		return -1;
 
 	return 1;
-}
-
-static int do_htm_pause(struct htm *htm)
-{
-	struct htm_status status;
-
-	if (HTM_ERR(get_status(htm, &status)))
-		return -1;
-
-	if (status.state == UNINITIALIZED) {
-		PR_INFO("* Skipping PAUSE trigger, HTM appears uninitialized\n");
-		return 0;
-	}
-
-	PR_INFO("* Sending PAUSE trigger to HTM\n");
-	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_PAUSE)))
-		return -1;
-
-	return 0;
 }
 
 static int do_htm_status(struct htm *htm)
@@ -985,7 +961,6 @@ static struct htm nhtm = {
 	.start = do_htm_start,
 	.stop = do_htm_stop,
 	.reset = do_htm_reset,
-	.pause = do_htm_pause,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };
@@ -1001,7 +976,6 @@ static struct htm chtm = {
 	.start = do_htm_start,
 	.stop = do_htm_stop,
 	.reset = do_htm_reset,
-	.pause = do_htm_pause,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };

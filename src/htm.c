@@ -81,7 +81,7 @@ static char *get_htm_dump_filename(void)
 	return filename;
 }
 
-static int run_start(enum htm_type type, int optind, int argc, char *argv[])
+static int run_start(enum htm_type type)
 {
 	struct pdbg_target *target;
 	int rc = 0;
@@ -105,7 +105,7 @@ static int run_start(enum htm_type type, int optind, int argc, char *argv[])
 	return rc;
 }
 
-static int run_stop(enum htm_type type, int optind, int argc, char *argv[])
+static int run_stop(enum htm_type type)
 {
 	struct pdbg_target *target;
 	int rc = 0;
@@ -129,7 +129,7 @@ static int run_stop(enum htm_type type, int optind, int argc, char *argv[])
 	return rc;
 }
 
-static int run_status(enum htm_type type, int optind, int argc, char *argv[])
+static int run_status(enum htm_type type)
 {
 	struct pdbg_target *target;
 	int rc = 0;
@@ -153,7 +153,7 @@ static int run_status(enum htm_type type, int optind, int argc, char *argv[])
 	return rc;
 }
 
-static int run_reset(enum htm_type type, int optind, int argc, char *argv[])
+static int run_reset(enum htm_type type)
 {
 	uint64_t old_base = 0, base, size;
 	struct pdbg_target *target;
@@ -186,7 +186,7 @@ static int run_reset(enum htm_type type, int optind, int argc, char *argv[])
 	return rc;
 }
 
-static int run_dump(enum htm_type type, int optind, int argc, char *argv[])
+static int run_dump(enum htm_type type)
 {
 	struct pdbg_target *target;
 	char *filename;
@@ -218,34 +218,34 @@ static int run_dump(enum htm_type type, int optind, int argc, char *argv[])
 	return rc;
 }
 
-static int run_trace(enum htm_type type, int optind, int argc, char *argv[])
+static int run_trace(enum htm_type type)
 {
 	int rc;
 
-	rc = run_reset(type, optind, argc, argv);
+	rc = run_reset(type);
 	if (rc == 0) {
 		printf("No HTM units were reset.\n");
 		printf("It is unlikely anything will start... trying anyway\n");
 	}
 
-	rc = run_start(type, optind, argc, argv);
+	rc = run_start(type);
 	if (rc == 0)
 		printf("No HTM units were started\n");
 
 	return rc;
 }
 
-static int run_analyse(enum htm_type type, int optind, int argc, char *argv[])
+static int run_analyse(enum htm_type type)
 {
 	int rc;
 
-	rc = run_stop(type, optind, argc, argv);
+	rc = run_stop(type);
 	if (rc == 0) {
 		printf("No HTM units were stopped.\n");
 		printf("It is unlikely anything will dump... trying anyway\n");
 	}
 
-	rc = run_dump(type, optind, argc, argv);
+	rc = run_dump(type);
 	if (rc == 0)
 		printf("No HTM buffers were dumped to file\n");
 
@@ -256,7 +256,7 @@ static struct {
 	const char *name;
 	const char *args;
 	const char *desc;
-	int (*fn)(enum htm_type, int, int, char **);
+	int (*fn)(enum htm_type);
 } actions[] = {
 	{ "start",  "", "Start %s HTM",               &run_start  },
 	{ "stop",   "", "Stop %s HTM",                &run_stop   },
@@ -382,7 +382,7 @@ int run_htm(int optind, int argc, char *argv[])
 	optind++;
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {
 		if (strcmp(argv[optind], actions[i].name) == 0) {
-			rc = actions[i].fn(type, optind, argc, argv);
+			rc = actions[i].fn(type);
 			break;
 		}
 	}
