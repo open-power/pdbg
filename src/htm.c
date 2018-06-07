@@ -34,6 +34,7 @@
 #include <ccan/array_size/array_size.h>
 
 #include <libpdbg.h>
+#include <device.h>
 #include <bitutils.h>
 
 #include "main.h"
@@ -53,9 +54,11 @@ enum htm_type {
 static inline void print_htm_address(enum htm_type type,
 	struct pdbg_target *target)
 {
-	if (type == HTM_CORE)
-		printf("%d#", pdbg_parent_index(target, "core"));
-	printf("%d\n", pdbg_target_index(target));
+	if (type == HTM_CORE) {
+		printf("p%d:", pdbg_parent_index(target, "pib"));
+		printf("c%d:", pdbg_parent_index(target, "core"));
+	}
+	printf("t%d\n", pdbg_target_index(target));
 }
 
 static char *get_htm_dump_filename(void)
