@@ -16,12 +16,4 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-int run_htm_start(int optind, int argc, char *argv[]);
-int run_htm_stop(int optind, int argc, char *argv[]);
-int run_htm_status(int optind, int argc, char *argv[]);
-int run_htm_reset(int optind, int argc, char *argv[]);
-int run_htm_dump(int optind, int argc, char *argv[]);
-int run_htm_trace(int optind, int argc, char *argv[]);
-int run_htm_analyse(int optind, int argc, char *argv[]);
-
 int run_htm(int optind, int argc, char *argv[]);
