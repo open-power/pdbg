@@ -69,7 +69,7 @@ static enum backend backend = KERNEL;
 static char const *device_node;
 static int i2c_addr = 0x50;
 
-#define MAX_PROCESSORS 16
+#define MAX_PROCESSORS 64
 #define MAX_CHIPS 24
 #define MAX_THREADS THREADS_PER_CORE
 
