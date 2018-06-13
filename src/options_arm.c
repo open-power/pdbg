@@ -48,7 +48,7 @@ void print_backends(FILE *stream)
 
 bool backend_is_possible(enum backend backend)
 {
-	if (backend == I2C && access(AMI_BMC, F_OK) == 0)
+	if (backend == I2C)
 		return true;
 	if (backend == KERNEL && access(OPENFSI_BMC, F_OK) == 0)
 		return true;
