@@ -207,11 +207,11 @@ int htm_stop(struct pdbg_target *target)
 	return htm ? htm->stop(htm) : -1;
 }
 
-int htm_reset(struct pdbg_target *target, uint64_t *base, uint64_t *size)
+int htm_reset(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
-	return htm ? htm->reset(htm, base, size) : -1;
+	return htm ? htm->reset(htm) : -1;
 }
 
 int htm_status(struct pdbg_target *target)
@@ -615,7 +615,7 @@ static bool is_configured(struct htm *htm)
 
 	return true;
 }
-static int configure_memory(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
+static int configure_memory(struct htm *htm)
 {
 	uint64_t i, size, base, val;
 	uint16_t mem_size;
@@ -667,15 +667,10 @@ static int configure_memory(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
 	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_RESET)))
 		return -1;
 
-	if (r_size)
-		*r_size = size;
-	if (r_base)
-		*r_base = base;
-
 	return 0;
 }
 
-static int do_htm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
+static int do_htm_reset(struct htm *htm)
 {
 	struct htm_status status;
 
@@ -700,7 +695,7 @@ static int do_htm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
 
 	}
 
-	if (HTM_ERR(configure_memory(htm, r_base, r_size)))
+	if (HTM_ERR(configure_memory(htm)))
 		return -1;
 
 	return 1;

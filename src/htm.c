@@ -148,7 +148,6 @@ static int run_status(enum htm_type type)
 
 static int run_reset(enum htm_type type)
 {
-	uint64_t old_base = 0, base, size;
 	struct pdbg_target *target;
 	int rc = 0;
 
@@ -161,17 +160,9 @@ static int run_reset(enum htm_type type)
 
 		printf("Resetting HTM@");
 		print_htm_address(type, target);
-		if (htm_reset(target, &base, &size) != 1) {
+		if (htm_reset(target) != 1) {
 			printf("Couldn't reset HTM@");
 			print_htm_address(type, target);
-		}
-		if (old_base != base) {
-			printf("The kernel has initialised HTM memory at:\n");
-			printf("base: 0x%016" PRIx64 " for 0x%016" PRIx64 " size\n",
-				base, size);
-			printf("In case of system crash/xstop use the following to dump the trace on the BMC:\n");
-			printf("./pdbg getmem 0x%016" PRIx64 " 0x%016" PRIx64 " > htm.dump\n",
-					base, size);
 		}
 		rc++;
 	}
