@@ -315,27 +315,6 @@ static int get_status(struct htm *htm, struct htm_status *status)
 	return 0;
 }
 
-static int do_htm_stop(struct htm *htm)
-{
-	struct htm_status status;
-	get_status(htm, &status);
-	if (HTM_ERR(get_status(htm, &status)))
-		return -1;
-
-	if (status.state == UNINITIALIZED) {
-		PR_INFO("* Skipping STOP trigger, HTM appears uninitialized\n");
-		return -1;
-	}
-	if (status.state == TRACING) {
-		PR_INFO("* Sending STOP trigger to HTM\n");
-		if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_STOP)))
-			return -1;
-	} else {
-		PR_INFO("* Skipping STOP trigger, HTM is not running\n");
-	}
-	return 1;
-}
-
 /*
  * This sequence will trigger all HTM to start at "roughly" the same
  * time.
@@ -538,35 +517,6 @@ static int is_startable(struct htm_status *status)
 	return (status->state == READY || status->state == PAUSED);
 }
 
-static int do_htm_start(struct htm *htm)
-{
-	struct htm_status status;
-
-	if (HTM_ERR(get_status(htm, &status)))
-		return -1;
-
-	if (!is_startable(&status)) {
-		PR_ERROR("HTM not in a startable state!\n");
-		return -1;
-	}
-
-	PR_INFO("* Sending START trigger to HTM\n");
-	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_MARK_VALID)))
-		return -1;
-
-	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_START)))
-		return -1;
-
-	/*
-	 * Instead of the HTM_TRIG_START, this is where you might want
-	 * to call do_adu_magic()
-	 * for_each_child_target("adu", &htm->target.parent, do_adu_magic, NULL, NULL);
-	 * see what I mean?
-	 */
-
-	return 1;
-}
-
 static char *get_debugfs_file(struct htm *htm, const char *file)
 {
 	uint32_t chip_id;
@@ -753,6 +703,56 @@ static int do_htm_reset(struct htm *htm, uint64_t *r_base, uint64_t *r_size)
 	if (HTM_ERR(configure_memory(htm, r_base, r_size)))
 		return -1;
 
+	return 1;
+}
+
+static int do_htm_start(struct htm *htm)
+{
+	struct htm_status status;
+
+	if (HTM_ERR(get_status(htm, &status)))
+		return -1;
+
+	if (!is_startable(&status)) {
+		PR_ERROR("HTM not in a startable state!\n");
+		return -1;
+	}
+
+	PR_INFO("* Sending START trigger to HTM\n");
+	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_MARK_VALID)))
+		return -1;
+
+	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_START)))
+		return -1;
+
+	/*
+	 * Instead of the HTM_TRIG_START, this is where you might want
+	 * to call do_adu_magic()
+	 * for_each_child_target("adu", &htm->target.parent, do_adu_magic, NULL, NULL);
+	 * see what I mean?
+	 */
+
+	return 1;
+}
+
+static int do_htm_stop(struct htm *htm)
+{
+	struct htm_status status;
+	get_status(htm, &status);
+	if (HTM_ERR(get_status(htm, &status)))
+		return -1;
+
+	if (status.state == UNINITIALIZED) {
+		PR_INFO("* Skipping STOP trigger, HTM appears uninitialized\n");
+		return -1;
+	}
+	if (status.state == TRACING) {
+		PR_INFO("* Sending STOP trigger to HTM\n");
+		if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_STOP)))
+			return -1;
+	} else {
+		PR_INFO("* Skipping STOP trigger, HTM is not running\n");
+	}
 	return 1;
 }
 
