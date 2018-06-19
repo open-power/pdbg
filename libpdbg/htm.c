@@ -807,6 +807,24 @@ static int do_htm_stop(struct htm *htm)
 	return 1;
 }
 
+static uint64_t htm_trace_size(struct htm_status *status)
+{
+	uint64_t size;
+	uint64_t mem_size = status->mem_size;
+
+	if (status->mem_size_select)
+		size = 16;
+	else
+		size = 512;
+
+	while (mem_size) {
+		size <<= 1;
+		mem_size >>= 1;
+	}
+
+	return size << 20;
+}
+
 static int do_htm_status(struct htm *htm)
 {
 	struct htm_status status;
@@ -829,15 +847,7 @@ static int do_htm_status(struct htm *htm)
 	if (HTM_ERR(get_status(htm, &status)))
 		return -1;
 
-	if (status.mem_size_select)
-		total = 16;
-	else
-		total = 512;
-
-	while (status.mem_size) {
-		total <<= 1;
-		status.mem_size >>= 1;
-	}
+	total = htm_trace_size(&status);
 
 	PR_DEBUG("HTM status : 0x%016" PRIx64 "\n", status.raw);
 	printf("State: ");
@@ -875,13 +885,14 @@ static int do_htm_status(struct htm *htm)
 	printf("\n");
 
 	printf("addr:0x%016" PRIx64 "\n", status.mem_base);
-	printf("size:0x%016" PRIx64 " ", total << 20);
-	if (total > 512)
-		printf("[ %" PRIu64 "GB ]", total >> 10);
+	printf("size:0x%016" PRIx64 " ", total);
+	if (total >= 0x20000000)
+		printf("[ %" PRIu64 "GB ]", total >> 30);
 	else
-		printf("[ %" PRIu64 "MB ]", total);
+		printf("[ %" PRIu64 "MB ]", total >> 20);
 	printf("\n");
 	printf("curr:0x%016" PRIx64 "\n", status.mem_last);
+
 	return 1;
 }
 
