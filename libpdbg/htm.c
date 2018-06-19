@@ -720,6 +720,31 @@ static int do_htm_reset(struct htm *htm)
 	return 1;
 }
 
+/* Stolen from p8chip.c */
+#define RAS_MODE_REG			0x1
+#define  MR_THREAD_IN_DEBUG		PPC_BIT(43)
+static int htm_toggle_debug_bit(struct htm *htm)
+{
+	struct pdbg_target *target;
+	uint64_t reg;
+
+	/* FIXME: this is a hack for P8 */
+	if (!dt_node_is_compatible(htm->target.parent, "ibm,power8-core")) {
+		PR_ERROR("HTM is POWER8 only currently\n");
+		return -1;
+	}
+
+	pdbg_for_each_target("thread", htm->target.parent, target) {
+		if (pdbg_target_index(target) == 0) {
+			/* Need to set this bit to ensure HTM starts */
+			pib_read (target, RAS_MODE_REG, &reg);
+			pib_write(target, RAS_MODE_REG, reg | MR_THREAD_IN_DEBUG);
+			pib_write(target, RAS_MODE_REG, reg);
+		}
+	}
+	return 0;
+}
+
 static int do_htm_start(struct htm *htm)
 {
 	struct htm_status status;
@@ -740,6 +765,9 @@ static int do_htm_start(struct htm *htm)
 		return -1;
 
 	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_START)))
+		return -1;
+
+	if (htm_toggle_debug_bit(htm))
 		return -1;
 
 	/*
