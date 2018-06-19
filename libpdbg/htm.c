@@ -452,6 +452,34 @@ static int configure_chtm(struct htm *htm)
 	return 0;
 }
 
+static int deconfigure_chtm(struct htm *htm)
+{
+	uint64_t hid0, ncu;
+
+	if (!pdbg_target_is_class(&htm->target, "chtm"))
+		return 0;
+
+	if (HTM_ERR(pib_read(htm->target.parent, NCU_MODE_REGISTER, &ncu)))
+		return -1;
+	ncu &= ~NCU_MODE_HTM_ENABLE;
+	if (HTM_ERR(pib_write(htm->target.parent, NCU_MODE_REGISTER, ncu)))
+		return -1;
+
+	if (HTM_ERR(pib_read(htm->target.parent, HID0_REGISTER, &hid0)))
+		return -1;
+	hid0 &= ~(HID0_TRACE_BITS);
+	if (HTM_ERR(pib_write(htm->target.parent, HID0_REGISTER, hid0)))
+		return -1;
+
+	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,0)))
+		return -1;
+
+//	FIXME this needs kernel work to happen
+//	if (HTM_ERR(deconfigure_debugfs_memtrace(htm)))
+//		return -1;
+	return 0;
+}
+
 static int configure_nhtm(struct htm *htm)
 {
 	uint64_t val;
@@ -497,6 +525,14 @@ static int configure_nhtm(struct htm *htm)
 		}
 	}
 
+	return 0;
+}
+
+static int deconfigure_nhtm(struct htm *htm)
+{
+	if (!pdbg_target_is_class(&htm->target, "nhtm"))
+		return 0;
+	// FIXME: write and test this
 	return 0;
 }
 
@@ -739,6 +775,12 @@ static int do_htm_stop(struct htm *htm)
 	} else {
 		PR_INFO("* Skipping STOP trigger, HTM is not running\n");
 	}
+
+	if (deconfigure_chtm(htm) < 0)
+		return -1;
+	if (deconfigure_nhtm(htm) < 0)
+		return -1;
+
 	return 1;
 }
 
