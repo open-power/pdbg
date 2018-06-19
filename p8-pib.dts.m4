@@ -10,7 +10,6 @@ define(`CORE', `core@CORE_BASE($1) {
 	chtm@11000 {
 		compatible = "ibm,power8-chtm";
 		reg = <0x0 0x11000 0xB>;
-		index = <0x0>;
 	};
 
 	THREAD(0);
