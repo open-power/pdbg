@@ -430,6 +430,9 @@ static int configure_chtm(struct htm *htm)
 {
 	uint64_t hid0, ncu;
 
+	if (!pdbg_target_is_class(&htm->target, "chtm"))
+		return 0;
+
 	if (HTM_ERR(configure_debugfs_memtrace(htm)))
 		return -1;
 
@@ -483,6 +486,9 @@ static int deconfigure_chtm(struct htm *htm)
 static int configure_nhtm(struct htm *htm)
 {
 	uint64_t val;
+
+	if (!pdbg_target_is_class(&htm->target, "nhtm"))
+		return 0;
 
 	if (HTM_ERR(configure_debugfs_memtrace(htm)))
 		return -1;
@@ -702,21 +708,10 @@ static int do_htm_reset(struct htm *htm)
 		return -1;
 
 	if (!is_resetable(&status) || !is_configured(htm)) {
-		if (pdbg_target_is_class(&htm->target, "nhtm")) {
-			if (HTM_ERR(configure_nhtm(htm))) {
-				PR_ERROR("Couldn't setup Nest HTM during reset\n");
-				return -1;
-			}
-		} else if (pdbg_target_is_class(&htm->target, "chtm")) {
-			if (HTM_ERR(configure_chtm(htm))) {
-				PR_ERROR("Couldn't setup Core HTM during reset\n");
-				return -1;
-			}
-		} else { /* Well... */
-			PR_ERROR("Unknown HTM class! %s\n",
-				pdbg_target_class_name(&htm->target));
-		}
-
+		if (configure_nhtm(htm) < 0)
+			return -1;
+		if (configure_chtm(htm) < 0)
+			return -1;
 	}
 
 	if (HTM_ERR(configure_memory(htm)))
