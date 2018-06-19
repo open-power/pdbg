@@ -30,7 +30,7 @@
 #include "target.h"
 #include "debug.h"
 
-#define HTM_ERR(x) ({int rc = x; if (rc) {PR_ERROR("HTM Error %d %s:%d\n", \
+#define HTM_ERR(x) ({int rc = (x); if (rc) {PR_ERROR("HTM Error %d %s:%d\n", \
 			rc, __FILE__, __LINE__);} \
 			rc;})
 
