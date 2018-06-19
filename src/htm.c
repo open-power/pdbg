@@ -86,7 +86,7 @@ static int run_start(enum htm_type type)
 		if (target_is_disabled(target))
 			continue;
 
-		printf("Starting HTM@");
+		printf("Starting with buffer wrapping HTM@");
 		print_htm_address(type, target);
 		if (htm_start(target) != 1) {
 			printf("Couldn't start HTM@");
@@ -195,7 +195,7 @@ static int run_record(enum htm_type type)
 			return 0;
 
 		/* size = 0 will dump everything */
-		printf("Recording HTM@");
+		printf("Recording till buffer wraps HTM@");
 		print_htm_address(type, target);
 		if (htm_record(target, filename) != 1) {
 			printf("Couldn't record HTM@");

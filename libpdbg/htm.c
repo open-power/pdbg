@@ -436,9 +436,9 @@ static int configure_debugfs_memtrace(struct htm *htm)
 	return 0;
 }
 
-static int configure_chtm(struct htm *htm)
+static int configure_chtm(struct htm *htm, bool wrap)
 {
-	uint64_t hid0, ncu;
+	uint64_t hid0, ncu, val;
 
 	if (!pdbg_target_is_class(&htm->target, "chtm"))
 		return 0;
@@ -446,8 +446,9 @@ static int configure_chtm(struct htm *htm)
 	if (HTM_ERR(configure_debugfs_memtrace(htm)))
 		return -1;
 
+	val = wrap ? HTM_MODE_WRAP : 0;
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
-		HTM_MODE_ENABLE)))
+		HTM_MODE_ENABLE | val)))
 		return -1;
 
 	if (HTM_ERR(pib_read(htm->target.parent, HID0_REGISTER, &hid0)))
@@ -493,7 +494,7 @@ static int deconfigure_chtm(struct htm *htm)
 	return 0;
 }
 
-static int configure_nhtm(struct htm *htm)
+static int configure_nhtm(struct htm *htm, bool wrap)
 {
 	uint64_t val;
 
@@ -507,10 +508,11 @@ static int configure_nhtm(struct htm *htm)
 	 * The constant is the VGTARGET field, taken from a cronus
 	 * booted system which presumably set it up correctly
 	 */
+	val = wrap ? HTM_MODE_WRAP : 0;
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
 					HTM_MODE_ENABLE |
 					NHTM_MODE_CRESP_PRECISE |
-					HTM_MODE_WRAP |
+					val |
 					0xFFFF000000)))
 		return -1;
 
@@ -710,7 +712,7 @@ static int configure_memory(struct htm *htm)
 	return 0;
 }
 
-static int do_htm_reset(struct htm *htm)
+static int do_htm_reset(struct htm *htm, bool wrap)
 {
 	struct htm_status status;
 
@@ -718,9 +720,9 @@ static int do_htm_reset(struct htm *htm)
 		return -1;
 
 	if (!is_resetable(&status) || !is_configured(htm)) {
-		if (configure_nhtm(htm) < 0)
+		if (configure_nhtm(htm, wrap) < 0)
 			return -1;
-		if (configure_chtm(htm) < 0)
+		if (configure_chtm(htm, wrap) < 0)
 			return -1;
 	}
 
@@ -755,11 +757,11 @@ static int htm_toggle_debug_bit(struct htm *htm)
 	return 0;
 }
 
-static int do_htm_start(struct htm *htm)
+static int __do_htm_start(struct htm *htm, bool wrap)
 {
 	struct htm_status status;
 
-	if (do_htm_reset(htm) < 0)
+	if (do_htm_reset(htm, wrap) < 0)
 		return -1;
 
 	if (HTM_ERR(get_status(htm, &status)))
@@ -788,6 +790,11 @@ static int do_htm_start(struct htm *htm)
 	 */
 
 	return 1;
+}
+
+static int do_htm_start(struct htm *htm)
+{
+	return __do_htm_start(htm, true);
 }
 
 static int do_htm_stop(struct htm *htm)
@@ -926,6 +933,10 @@ static int do_htm_status(struct htm *htm)
 	return 1;
 }
 
+/*
+ * FIXME:
+ *   Look for eyecatcher 0xacef_f000 at start, otherwise assume wrapping
+ */
 static int do_htm_dump(struct htm *htm, uint64_t size, char *filename)
 {
 	char *trace_file;
@@ -1008,7 +1019,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, char *filename)
 
 static int do_htm_record(struct htm *htm, char *filename)
 {
-	if (do_htm_start(htm) < 0)
+	if (__do_htm_start(htm, false) < 0)
 		return -1;
 
 	if (htm_wait_complete(htm))
