@@ -51,6 +51,9 @@
 #define  HID0_SINGLE_DECODE		PPC_BIT(4)
 #define  HID0_EN_INST_TRACE		PPC_BIT(17)
 #define  HID0_TRACE_EN			PPC_BIT(23)
+#define  HID0_TRACE_BITS (HID0_ONE_PER_GROUP | HID0_DO_SINGLE |\
+			  HID0_SINGLE_DECODE | HID0_EN_INST_TRACE |\
+			  HID0_TRACE_EN)
 
 /*
  * This is a CORE register not a HTM register, don't pass the HTM
@@ -431,26 +434,18 @@ static int configure_chtm(struct htm *htm)
 		return -1;
 
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
-		HTM_MODE_ENABLE | HTM_MODE_WRAP)))
+		HTM_MODE_ENABLE)))
 		return -1;
-	/* Not great to assume the core is the parent of the htm. */
+
 	if (HTM_ERR(pib_read(htm->target.parent, HID0_REGISTER, &hid0)))
 		return -1;
-
-	hid0 |= (HID0_DO_SINGLE | HID0_SINGLE_DECODE | HID0_EN_INST_TRACE |
-		 HID0_TRACE_EN | HID0_ONE_PER_GROUP);
-
-	/* Not great to assume the core is the parent of the htm. */
+	hid0 |= HID0_TRACE_BITS;
 	if (HTM_ERR(pib_write(htm->target.parent, HID0_REGISTER, hid0)))
 		return -1;
 
-	/* Not great to assume the core is the parent of the htm. */
 	if (HTM_ERR(pib_read(htm->target.parent, NCU_MODE_REGISTER, &ncu)))
 		return -1;
-
 	ncu |= NCU_MODE_HTM_ENABLE;
-
-	/* Not great to assume the core is the parent of the htm. */
 	if (HTM_ERR(pib_write(htm->target.parent, NCU_MODE_REGISTER, ncu)))
 		return -1;
 
