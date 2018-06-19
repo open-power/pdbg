@@ -211,40 +211,6 @@ static int run_dump(enum htm_type type)
 	return rc;
 }
 
-static int run_trace(enum htm_type type)
-{
-	int rc;
-
-	rc = run_reset(type);
-	if (rc == 0) {
-		printf("No HTM units were reset.\n");
-		printf("It is unlikely anything will start... trying anyway\n");
-	}
-
-	rc = run_start(type);
-	if (rc == 0)
-		printf("No HTM units were started\n");
-
-	return rc;
-}
-
-static int run_analyse(enum htm_type type)
-{
-	int rc;
-
-	rc = run_stop(type);
-	if (rc == 0) {
-		printf("No HTM units were stopped.\n");
-		printf("It is unlikely anything will dump... trying anyway\n");
-	}
-
-	rc = run_dump(type);
-	if (rc == 0)
-		printf("No HTM buffers were dumped to file\n");
-
-	return rc;
-}
-
 static struct {
 	const char *name;
 	const char *args;
@@ -256,8 +222,6 @@ static struct {
 	{ "status", "", "Get %s HTM status",          &run_status },
 	{ "reset",  "", "Reset %s HTM",               &run_reset  },
 	{ "dump",   "", "Dump %s HTM buffer to file", &run_dump   },
-	{ "trace",  "", "Configure and start %s HTM", &run_trace  },
-	{ "analyse","", "Stop and dump %s HTM",       &run_analyse},
 };
 
 static void print_usage(enum htm_type type)
