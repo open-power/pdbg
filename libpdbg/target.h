@@ -93,7 +93,6 @@ struct htm {
 	struct pdbg_target target;
 	int (*start)(struct htm *);
 	int (*stop)(struct htm *);
-	int (*reset)(struct htm *);
 	int (*status)(struct htm *);
 	int (*dump)(struct htm *, uint64_t, char *);
 };

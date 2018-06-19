@@ -207,13 +207,6 @@ int htm_stop(struct pdbg_target *target)
 	return htm ? htm->stop(htm) : -1;
 }
 
-int htm_reset(struct pdbg_target *target)
-{
-	struct htm *htm = check_and_convert(target);
-
-	return htm ? htm->reset(htm) : -1;
-}
-
 int htm_status(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
@@ -705,6 +698,9 @@ static int do_htm_start(struct htm *htm)
 {
 	struct htm_status status;
 
+	if (do_htm_reset(htm) < 0)
+		return -1;
+
 	if (HTM_ERR(get_status(htm, &status)))
 		return -1;
 
@@ -950,7 +946,6 @@ static struct htm nhtm = {
 	},
 	.start = do_htm_start,
 	.stop = do_htm_stop,
-	.reset = do_htm_reset,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };
@@ -965,7 +960,6 @@ static struct htm chtm = {
 	},
 	.start = do_htm_start,
 	.stop = do_htm_stop,
-	.reset = do_htm_reset,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };

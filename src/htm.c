@@ -146,30 +146,6 @@ static int run_status(enum htm_type type)
 	return rc;
 }
 
-static int run_reset(enum htm_type type)
-{
-	struct pdbg_target *target;
-	int rc = 0;
-
-	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		if (!target_selected(target))
-			continue;
-		pdbg_target_probe(target);
-		if (target_is_disabled(target))
-			continue;
-
-		printf("Resetting HTM@");
-		print_htm_address(type, target);
-		if (htm_reset(target) != 1) {
-			printf("Couldn't reset HTM@");
-			print_htm_address(type, target);
-		}
-		rc++;
-	}
-
-	return rc;
-}
-
 static int run_dump(enum htm_type type)
 {
 	struct pdbg_target *target;
@@ -211,7 +187,6 @@ static struct {
 	{ "start",  "", "Start %s HTM",               &run_start  },
 	{ "stop",   "", "Stop %s HTM",                &run_stop   },
 	{ "status", "", "Get %s HTM status",          &run_status },
-	{ "reset",  "", "Reset %s HTM",               &run_reset  },
 	{ "dump",   "", "Dump %s HTM buffer to file", &run_dump   },
 };
 

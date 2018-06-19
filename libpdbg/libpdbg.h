@@ -165,7 +165,6 @@ struct thread_state {
 int htm_start(struct pdbg_target *target);
 int htm_stop(struct pdbg_target *target);
 int htm_status(struct pdbg_target *target);
-int htm_reset(struct pdbg_target *target);
 int htm_dump(struct pdbg_target *target, uint64_t size, char *filename);
 
 int adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *ouput, uint64_t size);
