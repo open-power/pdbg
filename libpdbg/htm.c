@@ -924,6 +924,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, char *filename)
 	if (size == 0)
 		size = status.mem_last - status.mem_base;
 
+	printf("Dumping %" PRIi64 "i MB to %s\n", size >> 20, filename);
 	if (status.mem_last - status.mem_base > size) {
 		PR_INFO("Requested size is larger than trace 0x%" PRIx64" vs 0x%" PRIx64 "\n",
 				size, status.mem_last - status.mem_base);

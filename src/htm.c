@@ -166,7 +166,6 @@ static int run_dump(enum htm_type type)
 		/* size = 0 will dump everything */
 		printf("Dumping HTM@");
 		print_htm_address(type, target);
-		printf("File: %s\n", filename);
 		if (htm_dump(target, 0, filename) != 1) {
 			printf("Couldn't dump HTM@");
 			print_htm_address(type, target);
