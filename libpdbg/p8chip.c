@@ -127,8 +127,7 @@ static struct thread_state get_thread_status(struct thread *thread)
 
 	/* Need to activete debug mode to get complete status */
 	pib_read(&thread->target, RAS_MODE_REG, &mode_reg);
-	mode_reg |= MR_THREAD_IN_DEBUG;
-	pib_write(&thread->target, RAS_MODE_REG, mode_reg);
+	pib_write(&thread->target, RAS_MODE_REG, mode_reg | MR_THREAD_IN_DEBUG);
 
 	/* Read status */
 	pib_read(&thread->target, RAS_STATUS_REG, &val);
@@ -194,7 +193,6 @@ static struct thread_state get_thread_status(struct thread *thread)
 	}
 
 	/* Clear debug mode */
-	mode_reg &= ~MR_THREAD_IN_DEBUG;
 	pib_write(&thread->target, RAS_MODE_REG, mode_reg);
 
 	return thread_status;
