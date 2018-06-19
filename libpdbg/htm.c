@@ -227,6 +227,16 @@ int htm_dump(struct pdbg_target *target, uint64_t size, char *filename)
 	return htm->dump(htm, 0, filename);
 }
 
+int htm_record(struct pdbg_target *target, char *filename)
+{
+	struct htm *htm = check_and_convert(target);
+
+	if (!htm || !filename)
+		return -1;
+
+	return htm->record(htm, filename);
+}
+
 static int get_status(struct htm *htm, struct htm_status *status)
 {
 	uint64_t val;
@@ -825,6 +835,26 @@ static uint64_t htm_trace_size(struct htm_status *status)
 	return size << 20;
 }
 
+static bool htm_complete(struct htm_status *status)
+{
+	return (status->state == COMPLETE);
+}
+
+static int htm_wait_complete(struct htm *htm)
+{
+	struct htm_status status;
+
+	while (1) {
+		if (HTM_ERR(get_status(htm, &status)))
+			return -1;
+		PR_DEBUG("loop curr:0x%016" PRIx64 "\n", status.mem_last);
+		if (htm_complete(&status))
+			break;
+		usleep(100000);
+	}
+	return 0;
+}
+
 static int do_htm_status(struct htm *htm)
 {
 	struct htm_status status;
@@ -976,6 +1006,24 @@ static int do_htm_dump(struct htm *htm, uint64_t size, char *filename)
 	return 1;
 }
 
+static int do_htm_record(struct htm *htm, char *filename)
+{
+	if (do_htm_start(htm) < 0)
+		return -1;
+
+	if (htm_wait_complete(htm))
+		return -1;
+
+	if (do_htm_stop(htm) < 0)
+		return -1;
+
+	if (do_htm_dump(htm, 0, filename) < 0)
+		return -1;
+
+
+	return 1;
+}
+
 static bool is_debugfs_memtrace_ok(void)
 {
 	return access(DEBUGFS_MEMTRACE, F_OK) == 0;
@@ -1018,6 +1066,7 @@ static struct htm nhtm = {
 	},
 	.start = do_htm_start,
 	.stop = do_htm_stop,
+	.record = do_htm_record,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };
@@ -1032,6 +1081,7 @@ static struct htm chtm = {
 	},
 	.start = do_htm_start,
 	.stop = do_htm_stop,
+	.record = do_htm_record,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };

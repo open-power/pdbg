@@ -177,6 +177,37 @@ static int run_dump(enum htm_type type)
 	return rc;
 }
 
+static int run_record(enum htm_type type)
+{
+	struct pdbg_target *target;
+	char *filename;
+	int rc = 0;
+
+	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
+		if (!target_selected(target))
+			continue;
+		pdbg_target_probe(target);
+		if (target_is_disabled(target))
+			continue;
+
+		filename = get_htm_dump_filename(target);
+		if (!filename)
+			return 0;
+
+		/* size = 0 will dump everything */
+		printf("Recording HTM@");
+		print_htm_address(type, target);
+		if (htm_record(target, filename) != 1) {
+			printf("Couldn't record HTM@");
+			print_htm_address(type, target);
+		}
+		rc++;
+		free(filename);
+	}
+
+	return rc;
+}
+
 static struct {
 	const char *name;
 	const char *args;
@@ -187,6 +218,7 @@ static struct {
 	{ "stop",   "", "Stop %s HTM",                &run_stop   },
 	{ "status", "", "Get %s HTM status",          &run_status },
 	{ "dump",   "", "Dump %s HTM buffer to file", &run_dump   },
+	{ "record", "", "Start, wait & dump %s HTM",  &run_record },
 };
 
 static void print_usage(enum htm_type type)
