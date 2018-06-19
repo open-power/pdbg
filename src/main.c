@@ -618,10 +618,6 @@ void print_target(struct pdbg_target *target, int level)
 	struct pdbg_target *next;
 	enum pdbg_target_status status;
 
-	/* Did we want to probe this target? */
-	if (!target_selected(target))
-		return;
-
 	pdbg_target_probe(target);
 
 	/* Does this target actually exist? */
