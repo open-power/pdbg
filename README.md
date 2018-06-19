@@ -330,27 +330,25 @@ $  sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
 ```
 
 ### Hardware Trace Macro
+
 Expoitation of HTM is limited to POWER9 NestHTM from the powerpc host.
-POWER8 (core and nest( is currently experimental. The dump files
-should be correct but have not been confirmed to be.
+POWER8 (core and nest).
 
-Using HTM requires a kernel built with both `CONFIG_PPC_MEMTRACE=y`
-(v4.14) and `CONFIG_SCOM_DEBUGFS=y`. debugfs should be mounted at
-`/sys/kernel/debug`.
-
-pdbg provides a `htm` command with a variety of subcommands:
- - `trace` will configure the hardware and start tracing
- - `analyse` which still stop the trace and dump the result to a file
-
+pdbg provides a `htm` command with a variety of subcommands the most
+useful command is `record` which will start the trace, wait for buffer
+to fill (~1 sec), stop and then dump (~5 sec). eg.
 ```
-./pdbg -b host -d p9 -a htm trace
-[allow test to run]
-./pdbg -b host -d p9 -a htm analyse
+pdbg -p0 -c4 core htm record
 ```
-If you are running into a checkstop issue, `htm trace` will print the
+There are also low level commands which can also be used:
+ - `start` will configure the hardware and start tracing in wrapping mode.
+ - `stop` will still stop the trace and deconfigure the hardware
+ - `dump` will dump the trace to a file
+
+If you are running into a checkstop issue, `htm status` will print the
 physical address of the buffer it is tracing into and the BMC can be
 used to recover this memory after checkstop see `getmem`.
 
-pdbg also provides some of the basic functionality to use HTM, such as
-`htm reset`, `htm start` and `htm stop` to perform each step manually
-if required.
+Using HTM requires a kernel built with both `CONFIG_PPC_MEMTRACE=y`
+(v4.14) and `CONFIG_SCOM_DEBUGFS=y`. debugfs should be mounted at
+`/sys/kernel/debug`. Ubuntu 18.04 has this by default.
