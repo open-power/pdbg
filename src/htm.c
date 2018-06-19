@@ -323,8 +323,6 @@ int run_htm(int optind, int argc, char *argv[])
 	}
 
 	if (type == HTM_CORE) {
-		fprintf(stderr, "Warning: Core HTM is currently experimental\n");
-
 		pdbg_for_each_class_target("core", target) {
 			if (target_selected(target)) {
 				if (!core_target) {
@@ -343,15 +341,7 @@ int run_htm(int optind, int argc, char *argv[])
 			return 0;
 		}
 
-		/*
-		 * Check that powersave is off.
-		 *
-		 * This is as easy as checking that every single
-		 * thread is "ACTIVE" and hasn't gone into any sleep
-		 * state.
-		 *
-		 * On P9 it requires checking for THREAD_STATUS_STOP
-		 */
+		/* Check that powersave is off */
 		pdbg_for_each_class_target("thread", target) {
 			pdbg_target_probe(target);
 
@@ -360,7 +350,6 @@ int run_htm(int optind, int argc, char *argv[])
 
 			if (!is_smt1(target))
 				return 0;
-
 		}
 
 		/* Select the correct chtm target */
