@@ -18,11 +18,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
-#include <target.h>
-#include <operations.h>
+#include <libpdbg.h>
 
 #include "main.h"
+#include "optcmd.h"
 
 static int pdbg_getring(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *len)
 {
@@ -51,31 +52,8 @@ static int pdbg_getring(struct pdbg_target *target, uint32_t index, uint64_t *ad
 	return 1;
 }
 
-int handle_getring(int optind, int argc, char *argv[])
+static int _getring(uint64_t ring_addr, uint64_t ring_len)
 {
-	uint64_t ring_addr, ring_len;
-	char *endptr;
-
-	if (optind + 2 >= argc) {
-		printf("%s: command '%s' requires two arguments (address and length)\n",
-		       argv[0], argv[optind]);
-		return -1;
-	}
-
-	errno = 0;
-	ring_addr = strtoull(argv[optind + 1], &endptr, 0);
-	if (errno || *endptr != '\0') {
-		printf("%s: command '%s' couldn't parse ring address '%s'\n",
-		       argv[0], argv[optind], argv[optind + 1]);
-		return -1;
-	}
-
-	ring_len = strtoull(argv[optind + 2], &endptr, 0);
-	if (errno || *endptr != '\0') {
-		printf("%s: command '%s' couldn't parse ring length '%s'\n",
-		       argv[0], argv[optind], argv[optind + 2]);
-		return -1;
-	}
-
 	return for_each_target("chiplet", pdbg_getring, &ring_addr, &ring_len);
 }
+OPTCMD_DEFINE_CMD_WITH_ARGS(getring, _getring, (ADDRESS, DATA));

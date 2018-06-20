@@ -21,7 +21,7 @@
 #include <libpdbg.h>
 
 #include "main.h"
-#include "mem.h"
+#include "optcmd.h"
 
 static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *arg, uint64_t *unused1)
 {
@@ -79,6 +79,57 @@ static int print_core_thread_status(struct pdbg_target *core_target, uint32_t in
 	printf("\n");
 
 	return rc;
+}
+
+static bool is_real_address(struct thread_regs *regs, uint64_t addr)
+{
+	return true;
+	if ((addr & 0xf000000000000000ULL) == 0xc000000000000000ULL)
+		return true;
+	return false;
+}
+
+static int load8(struct pdbg_target *target, uint64_t addr, uint64_t *value)
+{
+	if (adu_getmem(target, addr, (uint8_t *)value, 8)) {
+		pdbg_log(PDBG_ERROR, "Unable to read memory address=%016" PRIx64 ".\n", addr);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int dump_stack(struct thread_regs *regs)
+{
+	struct pdbg_target *target;
+	uint64_t sp = regs->gprs[1];
+	uint64_t pc;
+
+	pdbg_for_each_class_target("adu", target) {
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			continue;
+		break;
+	}
+
+	printf("STACK:\n");
+	if (!target)
+		pdbg_log(PDBG_ERROR, "Unable to read memory (no ADU found)\n");
+
+	if (sp && is_real_address(regs, sp)) {
+		if (!load8(target, sp, &sp))
+			return 1;
+		while (sp && is_real_address(regs, sp)) {
+			if (!load8(target, sp + 16, &pc))
+				return 1;
+
+			printf(" 0x%016" PRIx64 " 0x%16" PRIx64 "\n", sp, pc);
+
+			if (!load8(target, sp, &sp))
+				return 1;
+		}
+	}
+
+	return 0;
 }
 
 static int get_thread_max_index(struct pdbg_target *target, uint32_t index, uint64_t *maxindex, uint64_t *unused)
@@ -140,48 +191,37 @@ static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint6
 	return 1;
 }
 
-int thread_start(int optind, int argc, char *argv[])
+static int thread_start(void)
 {
 	return for_each_target("thread", start_thread, NULL, NULL);
 }
+OPTCMD_DEFINE_CMD(start, thread_start);
 
-int thread_step(int optind, int argc, char *argv[])
+static int thread_step(uint64_t count)
 {
-	uint64_t count;
-	char *endptr;
-
-	if (optind + 1 >= argc) {
-		printf("%s: command '%s' requires a count\n", argv[0], argv[optind]);
-		return -1;
-	}
-
-	errno = 0;
-	count = strtoull(argv[optind + 1], &endptr, 0);
-	if (errno || *endptr != '\0') {
-		printf("%s: command '%s' couldn't parse count '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
-		return -1;
-	}
-
 	return for_each_target("thread", step_thread, &count, NULL);
 }
+OPTCMD_DEFINE_CMD_WITH_ARGS(step, thread_step, (DATA));
 
-int thread_stop(int optind, int argc, char *argv[])
+static int thread_stop(void)
 {
 	return for_each_target("thread", stop_thread, NULL, NULL);
 }
+OPTCMD_DEFINE_CMD(stop, thread_stop);
 
-int thread_status_print(int optind, int argc, char *argv[])
+static int thread_status_print(void)
 {
 	return for_each_target("pib", print_proc_thread_status, NULL, NULL);
 }
+OPTCMD_DEFINE_CMD(threadstatus, thread_status_print);
 
-int thread_sreset(int optind, int argc, char *argv[])
+static int thread_sreset(void)
 {
 	return for_each_target("thread", sreset_thread, NULL, NULL);
 }
+OPTCMD_DEFINE_CMD(sreset, thread_sreset);
 
-int thread_state(int optind, int argc, char *argv[])
+static int thread_state(void)
 {
 	int err;
 
@@ -191,3 +231,4 @@ int thread_state(int optind, int argc, char *argv[])
 
 	return err;
 }
+OPTCMD_DEFINE_CMD(regs, thread_state);

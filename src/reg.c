@@ -22,6 +22,7 @@
 #include <libpdbg.h>
 
 #include "main.h"
+#include "optcmd.h"
 
 #define REG_MEM -3
 #define REG_MSR -2
@@ -91,143 +92,58 @@ static int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg,
 	return !rc;
 }
 
-int handle_gpr(int optind, int argc, char *argv[])
+static int getgpr(int gpr)
 {
-	char *endptr;
-	uint64_t gpr;
-
-	if (optind + 1 >= argc) {
-		printf("%s: command '%s' requires a GPR\n", argv[0], argv[optind]);
-		return -1;
-	}
-
-	errno = 0;
-	gpr = strtoull(argv[optind + 1], &endptr, 0);
-	if (errno || *endptr != '\0') {
-		printf("%s: command '%s' couldn't parse GPR '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
-		return -1;
-	}
-
-	if (gpr > 31) {
-		printf("A GPR must be between zero and 31 inclusive\n");
-		return -1;
-	}
-
-	if (strcmp(argv[optind], "putgpr") == 0) {
-		uint64_t data;
-
-		if (optind + 2 >= argc) {
-			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
-			return -1;
-		}
-
-		errno = 0;
-		data = strtoull(argv[optind + 2], &endptr, 0);
-		if (errno || *endptr != '\0') {
-			printf("%s: command '%s' couldn't parse data '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
-			return -1;
-		}
-
-		return for_each_target("thread", putprocreg, &gpr, &data);
-	}
-
-	return for_each_target("thread", getprocreg, &gpr, NULL);
-}
-
-int handle_nia(int optind, int argc, char *argv[])
-{
-	uint64_t reg = REG_NIA;
-	char *endptr;
-
-	if (strcmp(argv[optind], "putnia") == 0) {
-		uint64_t data;
-
-		if (optind + 1 >= argc) {
-			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
-			return -1;
-		}
-
-		errno = 0;
-		data = strtoull(argv[optind + 1], &endptr, 0);
-		if (errno || *endptr != '\0') {
-			printf("%s: command '%s' couldn't parse data '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
-			return -1;
-		}
-
-		return for_each_target("thread", putprocreg, &reg, &data);
-	}
-
+	uint64_t reg = gpr;
 	return for_each_target("thread", getprocreg, &reg, NULL);
 }
+OPTCMD_DEFINE_CMD_WITH_ARGS(getgpr, getgpr, (GPR));
 
-int handle_spr(int optind, int argc, char *argv[])
+static int putgpr(int gpr, uint64_t data)
 {
-	char *endptr;
-	uint64_t spr;
-
-	if (optind + 1 >= argc) {
-		printf("%s: command '%s' requires a GPR\n", argv[0], argv[optind]);
-		return -1;
-	}
-
-	errno = 0;
-	spr = strtoull(argv[optind + 1], &endptr, 0);
-	if (errno || *endptr != '\0') {
-		printf("%s: command '%s' couldn't parse GPR '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
-		return -1;
-	}
-
-	spr += REG_R31;
-
-	if (strcmp(argv[optind], "putspr") == 0) {
-		uint64_t data;
-
-		if (optind + 2 >= argc) {
-			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
-			return -1;
-		}
-
-		errno = 0;
-		data = strtoull(argv[optind + 2], &endptr, 0);
-		if (errno || *endptr != '\0') {
-			printf("%s: command '%s' couldn't parse data '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
-			return -1;
-		}
-
-		return for_each_target("thread", putprocreg, &spr, &data);
-	}
-
-	return for_each_target("thread", getprocreg, &spr, NULL);
+	uint64_t reg = gpr;
+	return for_each_target("thread", putprocreg, &reg, &data);
 }
+OPTCMD_DEFINE_CMD_WITH_ARGS(putgpr, putgpr, (GPR, DATA));
 
-int handle_msr(int optind, int argc, char *argv[])
+static int getnia(void)
 {
-	uint64_t msr = REG_MSR;
-	char *endptr;
-
-	if (strcmp(argv[optind], "putmsr") == 0) {
-		uint64_t data;
-
-		if (optind + 1 >= argc) {
-			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
-			return -1;
-		}
-
-		errno = 0;
-		data = strtoull(argv[optind + 1], &endptr, 0);
-		if (errno || *endptr != '\0') {
-			printf("%s: command '%s' couldn't parse data '%s'\n",
-				argv[0], argv[optind], argv[optind + 1]);
-			return -1;
-		}
-
-		return for_each_target("thread", putprocreg, &msr, &data);
-	}
-
-	return for_each_target("thread", getprocreg, &msr, NULL);
+	uint64_t reg = REG_NIA;
+	return for_each_target("thread", getprocreg, &reg, NULL);
 }
+OPTCMD_DEFINE_CMD(getnia, getnia);
+
+static int putnia(uint64_t nia)
+{
+	uint64_t reg = REG_NIA;
+	return for_each_target("thread", getprocreg, &reg, &nia);
+}
+OPTCMD_DEFINE_CMD_WITH_ARGS(putnia, putnia, (DATA));
+
+static int getspr(int spr)
+{
+	uint64_t reg = spr + REG_R31;
+	return for_each_target("thread", getprocreg, &reg, NULL);
+}
+OPTCMD_DEFINE_CMD_WITH_ARGS(getspr, getspr, (SPR));
+
+static int putspr(int spr, uint64_t data)
+{
+	uint64_t reg = spr + REG_R31;
+	return for_each_target("thread", putprocreg, &reg, &data);
+}
+OPTCMD_DEFINE_CMD_WITH_ARGS(putspr, putspr, (SPR, DATA));
+
+static int getmsr(void)
+{
+	uint64_t reg = REG_MSR;
+	return for_each_target("thread", getprocreg, &reg, NULL);
+}
+OPTCMD_DEFINE_CMD(getmsr, getmsr);
+
+static int putmsr(uint64_t data)
+{
+	uint64_t reg = REG_MSR;
+	return for_each_target("thread", putprocreg, &reg, &data);
+}
+OPTCMD_DEFINE_CMD_WITH_ARGS(putmsr, putmsr, (DATA));

@@ -39,6 +39,7 @@ pdbg_SOURCES = \
 	src/ring.c \
 	src/htm.c \
 	src/progress.c \
+	src/parsers.c \
 	src/optcmd.c \
 	src/options_@ARCH@.c
 

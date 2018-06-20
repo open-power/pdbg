@@ -34,14 +34,9 @@
 #include <target.h>
 
 #include "main.h"
-#include "cfam.h"
-#include "scom.h"
-#include "reg.h"
-#include "ring.h"
-#include "mem.h"
-#include "thread.h"
 #include "htm.h"
 #include "options.h"
+#include "optcmd.h"
 
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
@@ -77,43 +72,63 @@ static int **processorsel[MAX_PROCESSORS];
 static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
 static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
 
-static int handle_probe(int optind, int argc, char *argv[]);
-static int handle_release(int optind, int argc, char *argv[]);
+static int probe(void);
+static int release(void);
 
+/* TODO: We are repeating ourselves here. A little bit more macro magic could
+ * easily fix this but I was hesitant to introduce too much magic all at
+ * once. */
+extern struct optcmd_cmd
+	optcmd_getscom, optcmd_putscom,	optcmd_getcfam, optcmd_putcfam,
+	optcmd_getgpr, optcmd_putgpr, optcmd_getspr, optcmd_putspr,
+	optcmd_getnia, optcmd_putnia, optcmd_getmsr, optcmd_putmsr,
+	optcmd_getring, optcmd_start, optcmd_stop, optcmd_step,
+	optcmd_threadstatus, optcmd_sreset, optcmd_regs, optcmd_probe,
+	optcmd_getmem, optcmd_putmem;
+
+static struct optcmd_cmd *cmds[] = {
+	&optcmd_getscom, &optcmd_putscom, &optcmd_getcfam, &optcmd_putcfam,
+	&optcmd_getgpr, &optcmd_putgpr, &optcmd_getspr, &optcmd_putspr,
+	&optcmd_getnia, &optcmd_putnia, &optcmd_getmsr, &optcmd_putmsr,
+	&optcmd_getring, &optcmd_start, &optcmd_stop, &optcmd_step,
+	&optcmd_threadstatus, &optcmd_sreset, &optcmd_regs, &optcmd_probe,
+	&optcmd_getmem, &optcmd_putmem,
+};
+
+/* Purely for printing usage text. We could integrate printing argument and flag
+ * help into optcmd if desired. */
 struct action {
 	const char *name;
 	const char *args;
 	const char *desc;
-	int (*fn)(int, int, char **);
 };
 
 static struct action actions[] = {
-	{ "getgpr",  "<gpr>", "Read General Purpose Register (GPR)", &handle_gpr },
-	{ "putgpr",  "<gpr> <value>", "Write General Purpose Register (GPR)", &handle_gpr },
-	{ "getnia",  "", "Get Next Instruction Address (NIA)", &handle_nia },
-	{ "putnia",  "<value>", "Write Next Instrution Address (NIA)", &handle_nia },
-	{ "getspr",  "<spr>", "Get Special Purpose Register (SPR)", &handle_spr },
-	{ "putspr",  "<spr> <value>", "Write Special Purpose Register (SPR)", &handle_spr },
-	{ "getmsr",  "", "Get Machine State Register (MSR)", &handle_msr },
-	{ "putmsr",  "<value>", "Write Machine State Register (MSR)", &handle_msr },
-	{ "getring", "<addr> <len>", "Read a ring. Length must be correct", &handle_getring },
-	{ "start",   "", "Start thread", &thread_start },
-	{ "step",    "<count>", "Set a thread <count> instructions", &thread_step },
-	{ "stop",    "", "Stop thread", &thread_stop },
-	{ "htm", "core|nest start|stop|status|reset|dump|trace|analyse", "Hardware Trace Macro", &run_htm },
-	{ "release", "", "Should be called after pdbg work is finished, to release special wakeups and other resources.", &handle_release},
-	{ "probe", "", "", &handle_probe },
-	{ "getcfam", "<address>", "Read system cfam", &handle_cfams },
-	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam", &handle_cfams },
-	{ "getscom", "<address>", "Read system scom", &handle_scoms },
-	{ "putscom", "<address> <value> [<mask>]", "Write system scom", &handle_scoms },
-	{ "getmem",  "<address> <count>", "Read system memory", &handle_mem },
-	{ "putmem",  "<address>", "Write to system memory", &handle_mem },
-	{ "threadstatus", "", "Print the status of a thread", &thread_status_print },
-	{ "sreset",  "", "Reset", &thread_sreset },
-	{ "regs",  "", "State", &thread_state },
+	{ "getgpr",  "<gpr>", "Read General Purpose Register (GPR)" },
+	{ "putgpr",  "<gpr> <value>", "Write General Purpose Register (GPR)" },
+	{ "getnia",  "", "Get Next Instruction Address (NIA)" },
+	{ "putnia",  "<value>", "Write Next Instrution Address (NIA)" },
+	{ "getspr",  "<spr>", "Get Special Purpose Register (SPR)" },
+	{ "putspr",  "<spr> <value>", "Write Special Purpose Register (SPR)" },
+	{ "getmsr",  "", "Get Machine State Register (MSR)" },
+	{ "putmsr",  "<value>", "Write Machine State Register (MSR)" },
+	{ "getring", "<addr> <len>", "Read a ring. Length must be correct" },
+	{ "start",   "", "Start thread" },
+	{ "step",    "<count>", "Set a thread <count> instructions" },
+	{ "stop",    "", "Stop thread" },
+	{ "htm", "core|nest start|stop|status|reset|dump|trace|analyse", "Hardware Trace Macro" },
+	{ "release", "", "Should be called after pdbg work is finished" },
+	{ "probe", "", "" },
+	{ "getcfam", "<address>", "Read system cfam" },
+	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam" },
+	{ "getscom", "<address>", "Read system scom" },
+	{ "putscom", "<address> <value> [<mask>]", "Write system scom" },
+	{ "getmem",  "<address> <count>", "Read system memory" },
+	{ "putmem",  "<address>", "Write to system memory" },
+	{ "threadstatus", "", "Print the status of a thread" },
+	{ "sreset",  "", "Reset" },
+	{ "regs",  "", "State" },
 };
-
 
 static void print_usage(char *pname)
 {
@@ -600,7 +615,7 @@ static void release_target(struct pdbg_target *target)
 	pdbg_target_release(target);
 }
 
-static void do_release(void)
+static int release(void)
 {
 	struct pdbg_target_class *target_class;
 
@@ -610,7 +625,10 @@ static void do_release(void)
 		pdbg_for_each_class_target(target_class->name, target)
 			release_target(target);
 	}
+
+	return 0;
 }
+OPTCMD_DEFINE_CMD(release, release);
 
 void print_target(struct pdbg_target *target, int level)
 {
@@ -648,7 +666,7 @@ void print_target(struct pdbg_target *target, int level)
 	}
 }
 
-static int handle_probe(int optind, int argc, char *argv[])
+static int probe(void)
 {
 	struct pdbg_target *target;
 
@@ -660,25 +678,21 @@ static int handle_probe(int optind, int argc, char *argv[])
 
 	return 1;
 }
+OPTCMD_DEFINE_CMD(probe, probe);
 
 /*
  * Release handler.
  */
 static void atexit_release(void)
 {
-	do_release();
-}
-
-static int handle_release(int optind, int argc, char *argv[])
-{
-	do_release();
-
-	return 1;
+	release();
 }
 
 int main(int argc, char *argv[])
 {
 	int i, rc = 0;
+	void **args, **flags;
+	optcmd_cmd_t *cmd;
 
 	backend = default_backend();
 	device_node = default_target(backend);
@@ -710,11 +724,26 @@ int main(int argc, char *argv[])
 
 	atexit(atexit_release);
 
-	for (i = 0; i < ARRAY_SIZE(actions); i++) {
-		if (strcmp(argv[optind], actions[i].name) == 0) {
-			rc = actions[i].fn(optind, argc, argv);
-			goto found_action;
+	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
+		if (!strcmp(argv[optind], cmds[i]->cmd)) {
+			/* Found our command */
+			cmd = optcmd_parse(cmds[i], (const char **) &argv[optind + 1],
+					   argc - (optind + 1), &args, &flags);
+			if (cmd) {
+				rc = cmd(args, flags);
+				goto found_action;
+			} else {
+				/* Error parsing arguments so exit return directly */
+				return 1;
+			}
 		}
+	}
+
+	/* Process subcommands. Currently only 'htm'.
+	 * TODO: Move htm command parsing to optcmd once htm clean-up is complete */
+	if (!strcmp(argv[optind], "htm")) {
+		run_htm(optind, argc, argv);
+		goto found_action;
 	}
 
 	PR_ERROR("Unsupported command: %s\n", argv[optind]);

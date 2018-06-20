@@ -20,21 +20,32 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include <libpdbg.h>
 
 #include "main.h"
 #include "progress.h"
+#include "optcmd.h"
+#include "parsers.h"
 
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
 
 #define PUTMEM_BUF_SIZE 1024
-static int getmem(uint64_t addr, uint64_t size, bool ci)
+
+struct mem_flags {
+	bool ci;
+};
+
+#define MEM_CI_FLAG ("--ci", ci, parse_flag_noarg, false)
+
+static int getmem(uint64_t addr, uint64_t size, struct mem_flags flags)
 {
 	struct pdbg_target *target;
 	uint8_t *buf;
 	int rc = 0;
+
 	buf = malloc(size);
 	assert(buf);
 	pdbg_for_each_class_target("adu", target) {
@@ -43,7 +54,7 @@ static int getmem(uint64_t addr, uint64_t size, bool ci)
 
 		pdbg_set_progress_tick(progress_tick);
 		progress_init();
-		if (!__adu_getmem(target, addr, buf, size, ci)) {
+		if (!__adu_getmem(target, addr, buf, size, flags.ci)) {
 			if (write(STDOUT_FILENO, buf, size) < 0)
 				PR_ERROR("Unable to write stdout.\n");
 			else
@@ -58,7 +69,10 @@ static int getmem(uint64_t addr, uint64_t size, bool ci)
 	return rc;
 
 }
-static int putmem(uint64_t addr, bool ci)
+OPTCMD_DEFINE_CMD_WITH_FLAGS(getmem, getmem, (ADDRESS, DATA),
+			     mem_flags, (MEM_CI_FLAG));
+
+static int putmem(uint64_t addr, struct mem_flags flags)
 {
 	uint8_t *buf;
 	int read_size, rc = 0;
@@ -76,7 +90,7 @@ static int putmem(uint64_t addr, bool ci)
 	progress_init();
 	do {
 		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
-		if (__adu_putmem(adu_target, addr, buf, read_size, ci)) {
+		if (__adu_putmem(adu_target, addr, buf, read_size, flags.ci)) {
 			rc = 0;
 			printf("Unable to write memory.\n");
 			break;
@@ -89,101 +103,5 @@ static int putmem(uint64_t addr, bool ci)
 	free(buf);
 	return rc;
 }
-
-static bool is_real_address(struct thread_regs *regs, uint64_t addr)
-{
-	return true;
-	if ((addr & 0xf000000000000000ULL) == 0xc000000000000000ULL)
-		return true;
-	return false;
-}
-
-static int load8(struct pdbg_target *target, uint64_t addr, uint64_t *value)
-{
-	if (adu_getmem(target, addr, (uint8_t *)value, 8)) {
-		PR_ERROR("Unable to read memory address=%016" PRIx64 ".\n", addr);
-		return 0;
-	}
-
-	return 1;
-}
-
-int dump_stack(struct thread_regs *regs)
-{
-	struct pdbg_target *target;
-	uint64_t sp = regs->gprs[1];
-	uint64_t pc;
-
-	pdbg_for_each_class_target("adu", target) {
-		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
-			continue;
-		break;
-	}
-
-	printf("STACK:\n");
-	if (!target)
-		PR_ERROR("Unable to read memory (no ADU found)\n");
-
-	if (sp && is_real_address(regs, sp)) {
-		if (!load8(target, sp, &sp))
-			return 1;
-		while (sp && is_real_address(regs, sp)) {
-			if (!load8(target, sp + 16, &pc))
-				return 1;
-
-			printf(" 0x%016" PRIx64 " 0x%16" PRIx64 "\n", sp, pc);
-
-			if (!load8(target, sp, &sp))
-				return 1;
-		}
-	}
-
-	return 0;
-}
-
-int handle_mem(int optind, int argc, char *argv[])
-{
-	uint64_t addr;
-	char *endptr;
-	bool ci = false;
-
-	if (optind + 1 >= argc) {
-		printf("%s: command '%s' requires an address\n", argv[0], argv[optind]);
-		return -1;
-	}
-
-	errno = 0;
-
-	if (strcmp(argv[optind +1], "-ci") == 0) {
-		/* Set cache-inhibited flag */
-		ci = true;
-	}
-
-	addr = strtoull(argv[optind + 1 + ci], &endptr, 0);
-	if (errno || *endptr != '\0') {
-		printf("%s: command '%s' couldn't parse address '%s'\n",
-				argv[0], argv[optind], argv[optind + 1 + ci]);
-		return -1;
-	}
-
-	if (strcmp(argv[optind], "getmem") == 0) {
-		uint64_t size;
-
-		if (optind + 2 + ci >= argc) {
-			printf("%s: command '%s' requires data\n", argv[0], argv[optind]);
-			return -1;
-		}
-
-		errno = 0;
-		size = strtoull(argv[optind + 2 + ci], &endptr, 0);
-		if (errno || *endptr != '\0') {
-			printf("%s: command '%s' couldn't parse data '%s'\n",
-				argv[0], argv[optind], argv[optind + 1 + ci]);
-			return -1;
-		}
-
-		return getmem(addr, size, ci);
-	}
-
-	return putmem(addr, ci);
-}
+OPTCMD_DEFINE_CMD_WITH_FLAGS(putmem, putmem, (ADDRESS),
+			     mem_flags, (MEM_CI_FLAG));
