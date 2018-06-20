@@ -27,8 +27,17 @@ DT_headers = $(DT:.dts=.dt.h)
 BUILT_SOURCES = $(DT) $(DT_headers)
 
 pdbg_SOURCES = \
-	src/main.c src/cfam.c src/scom.c src/reg.c src/mem.c src/thread.c \
-	src/ring.c src/htm.c src/progress.c src/options_@ARCH@.c
+	src/main.c \
+	src/cfam.c \
+	src/scom.c \
+	src/reg.c \
+	src/mem.c \
+	src/thread.c \
+	src/ring.c \
+	src/htm.c \
+	src/progress.c \
+	src/optcmd.c \
+	src/options_@ARCH@.c
 
 pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la \
 	-L.libs -lrt
