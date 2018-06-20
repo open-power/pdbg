@@ -177,6 +177,25 @@
 		()
 
 /**
+ * CPPMAGIC_MAP_CNT - iterate antoher macro across arguments adding a count
+ * @m: name of a two argument macro
+ *
+ * CPPMAGIC_MAP_CNT(@m, @a1, @a2, ..., @an)
+ *      expands to the expansion of
+ *            @m(0, @a1) , @m(1, @a2) , ... , @m(n - 1, @an)
+ */
+#define _CPPMAGIC_MAP_CNT_()		_CPPMAGIC_MAP_CNT
+#define _CPPMAGIC_MAP_CNT(m_, c_, a_, ...)				\
+	m_(c_, a_)							\
+	CPPMAGIC_IFELSE(CPPMAGIC_NONEMPTY(__VA_ARGS__))			\
+	(, CPPMAGIC_DEFER2(_CPPMAGIC_MAP_CNT_)()(m_, CPPMAGIC_INC(c_), __VA_ARGS__)) \
+	()
+#define CPPMAGIC_MAP_CNT(m_, ...)				\
+	CPPMAGIC_IFELSE(CPPMAGIC_NONEMPTY(__VA_ARGS__))		\
+	(CPPMAGIC_EVAL(_CPPMAGIC_MAP_CNT(m_, 0, __VA_ARGS__)))	\
+	()
+
+/**
  * CPPMAGIC_JOIN - separate arguments with given delimiter
  * @d: delimiter
  *
