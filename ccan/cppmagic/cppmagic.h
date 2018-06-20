@@ -68,9 +68,15 @@
  * CPPMAGIC_NONEMPTY(@a, ...)
  * 	expand to '1'
  */
-#define _CPPMAGIC_EOA()			0
+#define CHECK_N(x, n, ...) n
+#define CHECK(...) CHECK_N(__VA_ARGS__, , )
+#define PROBE(x) x, 1,
+#define IS_PAREN(x, ...) CHECK(IS_PAREN_PROBE x)
+#define IS_PAREN_PROBE(...) PROBE(~)
+
+#define _CPPMAGIC_EOA(a_, ...)			0
 #define CPPMAGIC_NONEMPTY(...)		\
-	CPPMAGIC_NONZERO(CPPMAGIC_1ST(_CPPMAGIC_EOA __VA_ARGS__)())
+	CPPMAGIC_NONZERO(CPPMAGIC_1ST(_CPPMAGIC_EOA IS_PAREN(__VA_ARGS__) __VA_ARGS__)())
 
 /**
  * CPPMAGIC_ISEMPTY - does the macro have no arguments?
