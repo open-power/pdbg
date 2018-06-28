@@ -73,9 +73,10 @@
 #define HTM_MEMORY_CONF			1
 #define   HTM_MEM_ALLOC			PPC_BIT(0)
 #define   HTM_MEM_SCOPE			PPC_BITMASK(1,3)
-#define   HTM_MEM_PRIORITY		PPC_BIT(4)
-#define   HTM_MEM_SIZE_SMALL		PPC_BIT(5)
-#define   HTM_MEM_BASE			PPC_BITMASK(8,39)
+/* Note: the next 3 change on P9 */
+#define   HTM_MEM_PRIORITY		PPC_BITMASK(4,5)
+#define   HTM_MEM_SIZE_SMALL		PPC_BIT(13)
+#define   HTM_MEM_BASE			PPC_BITMASK(14,39)
 #define	  HTM_MEM_SIZE			PPC_BITMASK(40,48)
 #define HTM_STATUS			2
 #define   HTM_STATUS_MASK		PPC_BITMASK(2,19)
@@ -659,8 +660,8 @@ static bool is_configured(struct htm *htm)
 }
 static int configure_memory(struct htm *htm)
 {
-	uint64_t i, size, base, val;
-	uint16_t mem_size;
+	uint64_t size, base, val, small, mem_size;
+	int shift;
 
 	if (HTM_ERR(get_trace_size(htm, &size)))
 		return -1;
@@ -685,15 +686,49 @@ static int configure_memory(struct htm *htm)
 	/* Put mem alloc back in */
 	val |= HTM_MEM_ALLOC;
 
-	mem_size = 0;
-	i = size;
-	while ((!((val & HTM_MEM_SIZE_SMALL) && i>>20 == 16)) && (!(!(val & HTM_MEM_SIZE_SMALL) && i>>20 == 512))) {
-		mem_size <<= 1;
-		mem_size++;
-		i >>= 1;
+	/*
+	 * HTMSC_MEM_SIZE_SMALL:
+	 * 0 = Trace Mem Size from 512M to 256G
+	 * 1 = Trace Mem Size from 16M to 8G
+	 */
+	if (size < 16777216UL) {
+		PR_ERROR("memtrace size must be atleast 16MB. Currently:%lx\n", size);
+		return -1;
+	}
+	if (size > 274877906944UL) {
+		PR_ERROR("memtrace size must be smaller than 256GB. Currently:%lx\n", size);
+		return -1;
 	}
 
+	/*
+	 * The hardware has two sizes, small and large
+	 *   small: 16M  - 8G
+	 *   large: 512M - 256G
+	 * We use small for 16M-256, then large for 512M-256G
+	 *
+	 * Hardware buffer sizes:
+	 * Large  Small    HTMSC_MEM_SIZE encoding
+	 * 512M   16M        0b000000000
+	 * 1G     32M        0b000000001
+	 * 2G     64M        0b000000011
+	 * 4G     128M       0b000000111
+	 * 8G     256M       0b000001111
+	 * 16G    512M       0b000011111
+	 * 32G    1G         0b000111111
+	 * 64G    2G         0b001111111
+	 * 128G   4G         0b011111111
+	 * 256G   8G         0b111111111
+	 */
+	small = 0;
+	if (size < 512*1024*1024)
+		small = 1;
+	val = SETFIELD(HTM_MEM_SIZE_SMALL, val, small);
+	shift = 29; /* large */
+	if (small)
+		shift = 24;
+	mem_size = (size >> shift) - 1;
 	val = SETFIELD(HTM_MEM_SIZE, val, mem_size);
+
 	/*
 	 * Clear out the base
 	 * Don't use SETFIELD to write the base in since the value is
