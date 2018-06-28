@@ -742,7 +742,7 @@ int main(int argc, char *argv[])
 	/* Process subcommands. Currently only 'htm'.
 	 * TODO: Move htm command parsing to optcmd once htm clean-up is complete */
 	if (!strcmp(argv[optind], "htm")) {
-		run_htm(optind, argc, argv);
+		rc = run_htm(optind, argc, argv);
 		goto found_action;
 	}
 
