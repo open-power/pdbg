@@ -94,7 +94,7 @@ struct htm {
 	int (*start)(struct htm *);
 	int (*stop)(struct htm *);
 	int (*status)(struct htm *);
-	int (*dump)(struct htm *, uint64_t, char *);
+	int (*dump)(struct htm *, char *);
 	int (*record)(struct htm *, char *);
 };
 #define target_to_htm(x) container_of(x, struct htm, target)

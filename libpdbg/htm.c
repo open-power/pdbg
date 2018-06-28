@@ -218,14 +218,14 @@ int htm_status(struct pdbg_target *target)
 	return htm ? htm->status(htm) : -1;
 }
 
-int htm_dump(struct pdbg_target *target, uint64_t size, char *filename)
+int htm_dump(struct pdbg_target *target, char *filename)
 {
 	struct htm *htm = check_and_convert(target);
 
 	if (!htm || !filename)
 		return -1;
 
-	return htm->dump(htm, 0, filename);
+	return htm->dump(htm, filename);
 }
 
 int htm_record(struct pdbg_target *target, char *filename)
@@ -972,11 +972,12 @@ static int do_htm_status(struct htm *htm)
  * FIXME:
  *   Look for eyecatcher 0xacef_f000 at start, otherwise assume wrapping
  */
-static int do_htm_dump(struct htm *htm, uint64_t size, char *filename)
+static int do_htm_dump(struct htm *htm, char *filename)
 {
 	char *trace_file;
 	struct htm_status status;
 	uint64_t trace[0x1000];
+	uint64_t size;
 	int trace_fd, dump_fd;
 	uint32_t chip_id;
 	size_t r;
@@ -996,9 +997,7 @@ static int do_htm_dump(struct htm *htm, uint64_t size, char *filename)
 	if (chip_id == -1)
 		return -1;
 
-	/* If size is zero they must want the entire thing */
-	if (size == 0)
-		size = status.mem_last - status.mem_base;
+	size = status.mem_last - status.mem_base;
 
 	printf("Dumping %" PRIi64 "i MB to %s\n", size >> 20, filename);
 	if (status.mem_last - status.mem_base > size) {
@@ -1063,7 +1062,7 @@ static int do_htm_record(struct htm *htm, char *filename)
 	if (do_htm_stop(htm) < 0)
 		return -1;
 
-	if (do_htm_dump(htm, 0, filename) < 0)
+	if (do_htm_dump(htm, filename) < 0)
 		return -1;
 
 
