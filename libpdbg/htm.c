@@ -968,19 +968,54 @@ static int do_htm_status(struct htm *htm)
 	return 1;
 }
 
-/*
- * FIXME:
- *   Look for eyecatcher 0xacef_f000 at start, otherwise assume wrapping
- */
+#define COPY_BUF_SIZE getpagesize()
+static int copy_file(int output, int input, uint64_t size)
+{
+	char *buf;
+	size_t r;
+
+	buf = malloc(COPY_BUF_SIZE);
+	if (!buf) {
+		PR_ERROR("Can't malloc buffer\n");
+		return -1;
+	}
+
+	while (size) {
+		r = read(input, buf, MIN(COPY_BUF_SIZE, size));
+		if (r == -1) {
+			PR_ERROR("Failed to read\n");
+			goto out;
+		}
+		if (r == 0) {
+			PR_ERROR("EOF\n");
+			goto out;
+		}
+
+		if (write(output, buf, r) != r) {
+			PR_ERROR("Short write!\n");
+			goto out;
+		}
+		size -= r;
+	}
+
+	return 0;
+
+out:
+	free(buf);
+	return -1;
+
+}
+
 static int do_htm_dump(struct htm *htm, char *filename)
 {
 	char *trace_file;
 	struct htm_status status;
-	uint64_t trace[0x1000];
-	uint64_t size;
+	uint64_t last, end, trace_size;
 	int trace_fd, dump_fd;
+	uint32_t eyecatcher;
 	uint32_t chip_id;
 	size_t r;
+	bool wrapped;
 
 	if (!filename)
 		return -1;
@@ -997,16 +1032,6 @@ static int do_htm_dump(struct htm *htm, char *filename)
 	if (chip_id == -1)
 		return -1;
 
-	size = status.mem_last - status.mem_base;
-
-	printf("Dumping %" PRIi64 "i MB to %s\n", size >> 20, filename);
-	if (status.mem_last - status.mem_base > size) {
-		PR_INFO("Requested size is larger than trace 0x%" PRIx64" vs 0x%" PRIx64 "\n",
-				size, status.mem_last - status.mem_base);
-		size = status.mem_last - status.mem_base;
-		PR_INFO("Truncating request to a maxiumum of 0x%" PRIx64 "bytes\n", size);
-	}
-
 	trace_file = get_debugfs_file(htm, "trace");
 	if (!trace_file)
 		return -1;
@@ -1014,41 +1039,69 @@ static int do_htm_dump(struct htm *htm, char *filename)
 	trace_fd = open(trace_file, O_RDWR);
 	if (trace_fd == -1) {
 		PR_ERROR("Failed to open %s: %m\n", trace_file);
-		free(trace_file);
-		return -1;
+		r = trace_fd;
+		goto out3;
 	}
+
+	r = read(trace_fd, &eyecatcher, 4);
+	if (r == -1) {
+		PR_ERROR("Failed to read from %s: %m\n", trace_file);
+		goto out2;
+	}
+	wrapped = true;
+	if (eyecatcher == 0x00f0efac)
+		wrapped = false;
+	last = status.mem_last - status.mem_base;
+	end = htm_trace_size(&status);
+	trace_size = wrapped ? end : last;
+
+	printf("Dumping %li MB to %s\n", trace_size >> 20, filename);
 
 	dump_fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (dump_fd == -1) {
 		PR_ERROR("Failed to open %s: %m\n", filename);
-		free(filename);
-		free(trace_file);
-		close(trace_fd);
-		return -1;
+		r = dump_fd;
+		goto out2;
 	}
 
-	while (size) {
-		r = read(trace_fd, &trace, MIN(sizeof(trace), size));
-		if (r == -1) {
-			PR_ERROR("Failed to read from %s: %m\n", trace_file);
-			free(trace_file);
-			free(filename);
-			close(trace_fd);
-			close(dump_fd);
-			return -1;
-		}
-
-		if (write(dump_fd, &trace, r) != r)
-			PR_ERROR("Short write!\n");
-
-		size -= r;
+	/*
+	 * Trace buffer:
+         *   ------------------------------------------------
+	 *   |                              |               |
+         *   ------------------------------------------------
+	 * start                          last             end
+	 *
+	 * If the trace buffer has wrapped, the start of the trace is
+	 * after the last written value. In this case we need to copy
+	 * last -> end to dump file.  Then copy start -> last to the
+	 * dump file.
+	 */
+	if (wrapped) {
+		/* Copy last -> end first */
+		r =  lseek(trace_fd, last, SEEK_SET);
+		if (r == -1)
+			goto out1;
+		r = copy_file(dump_fd, trace_fd, end - last);
+		if (r)
+			goto out1;
 	}
 
-	free(trace_file);
-	free(filename);
-	close(trace_fd);
+	/* Copy start -> last */
+	lseek(trace_fd, 0, SEEK_SET);
+	if (r == -1)
+		goto out1;
+	r = copy_file(dump_fd, trace_fd, last);
+	if (r)
+		goto out1;
+	r = 1;
+
+out1:
 	close(dump_fd);
-	return 1;
+out2:
+	close(trace_fd);
+out3:
+	free(trace_file);
+	return r;
 }
 
 static int do_htm_record(struct htm *htm, char *filename)
