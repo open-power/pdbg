@@ -378,17 +378,26 @@ static bool parse_options(int argc, char *argv[])
 		return false;
 	}
 
+	if (p_count == 0)
+		return true;
+
 	for (i = 0; i < MAX_PROCESSORS; i++) {
 		if (p_list[i] == 0)
 			continue;
 
 		processorsel[i] = &chipsel[i][0];
 
+		if (c_count == 0)
+			continue;
+
 		for (j = 0; j < MAX_CHIPS; j++) {
 			if (c_list[j] == 0)
 				continue;
 
 			chipsel[i][j] = &threadsel[i][j][0];
+
+			if (t_count == 0)
+				continue;
 
 			for (k = 0; k < MAX_THREADS; k++) {
 				if (t_list[k] == 0)
