@@ -116,7 +116,7 @@ static struct action actions[] = {
 	{ "start",   "", "Start thread" },
 	{ "step",    "<count>", "Set a thread <count> instructions" },
 	{ "stop",    "", "Stop thread" },
-	{ "htm", "core|nest start|stop|status|reset|dump|trace|analyse", "Hardware Trace Macro" },
+	{ "htm", "core|nest start|stop|status|dump|record", "Hardware Trace Macro" },
 	{ "release", "", "Should be called after pdbg work is finished" },
 	{ "probe", "", "" },
 	{ "getcfam", "<address>", "Read system cfam" },
