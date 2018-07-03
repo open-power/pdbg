@@ -692,11 +692,13 @@ static int configure_memory(struct htm *htm)
 	 * 1 = Trace Mem Size from 16M to 8G
 	 */
 	if (size < 16777216UL) {
-		PR_ERROR("memtrace size must be atleast 16MB. Currently:%lx\n", size);
+		PR_ERROR("memtrace size must be atleast 16MB. Currently:%"
+			 PRIx64 "\n", size);
 		return -1;
 	}
 	if (size > 274877906944UL) {
-		PR_ERROR("memtrace size must be smaller than 256GB. Currently:%lx\n", size);
+		PR_ERROR("memtrace size must be smaller than 256GB. Currently:%"
+			 PRIx64 "\n", size);
 		return -1;
 	}
 
@@ -1055,7 +1057,7 @@ static int do_htm_dump(struct htm *htm, char *filename)
 	end = htm_trace_size(&status);
 	trace_size = wrapped ? end : last;
 
-	printf("Dumping %li MB to %s\n", trace_size >> 20, filename);
+	printf("Dumping %" PRIi64 " MB to %s\n", trace_size >> 20, filename);
 
 	dump_fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (dump_fd == -1) {
