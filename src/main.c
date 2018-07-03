@@ -266,6 +266,10 @@ static bool parse_options(int argc, char *argv[])
 	};
 	char *endptr;
 
+	memset(p_list, 0, sizeof(p_list));
+	memset(c_list, 0, sizeof(c_list));
+	memset(t_list, 0, sizeof(t_list));
+
 	do {
 		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:V", long_opts, NULL);
 		if (c == -1)
