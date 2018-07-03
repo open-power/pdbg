@@ -159,24 +159,6 @@ enum htm_error {
 	INVALID_CRESP,
 };
 
-enum htm_size {
-	MEM_16MB,
-	MEM_32MB,
-	MEM_64MB,
-	MEM_128MB,
-	MEM_256MB,
-	MEM_512MB,
-	MEM_1GB,
-	MEM_2GB,
-	MEM_4GB,
-	MEM_8GB,
-	MEM_16GB,
-	MEM_32GB,
-	MEM_64GB,
-	MEM_128GB,
-	MEM_256GB,
-};
-
 struct htm_status {
 	enum htm_state state;
 	enum htm_error error;
