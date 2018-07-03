@@ -952,41 +952,39 @@ static int do_htm_status(struct htm *htm)
 	return 1;
 }
 
-#define COPY_BUF_SIZE getpagesize()
 static int copy_file(int output, int input, uint64_t size)
 {
-	char *buf;
 	size_t r;
+	int pipefd[2];
+	int rc = -1;
 
-	buf = malloc(COPY_BUF_SIZE);
-	if (!buf) {
-		PR_ERROR("Can't malloc buffer\n");
-		return -1;
+	if (pipe(pipefd)) {
+		perror("pipe");
+		exit(1);
 	}
 
 	while (size) {
-		r = read(input, buf, MIN(COPY_BUF_SIZE, size));
+		r = splice(input, 0, pipefd[1], 0, size, 0);
 		if (r == -1) {
 			PR_ERROR("Failed to read\n");
 			goto out;
 		}
 		if (r == 0) {
-			PR_ERROR("EOF\n");
+			PR_ERROR("Unexpect EOF\n");
 			goto out;
 		}
 
-		if (write(output, buf, r) != r) {
+		if (splice(pipefd[0], 0, output, 0, r, 0) != r) {
 			PR_ERROR("Short write!\n");
 			goto out;
 		}
 		size -= r;
 	}
-
-	return 0;
-
+	rc = 0;
 out:
-	free(buf);
-	return -1;
+	close(pipefd[1]);
+	close(pipefd[0]);
+	return rc;
 
 }
 
