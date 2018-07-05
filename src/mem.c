@@ -90,6 +90,9 @@ static int putmem(uint64_t addr, struct mem_flags flags)
 	progress_init();
 	do {
 		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
+		if (read_size <= 0)
+			break;
+
 		if (__adu_putmem(adu_target, addr, buf, read_size, flags.ci)) {
 			rc = 0;
 			printf("Unable to write memory.\n");
