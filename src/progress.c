@@ -51,6 +51,9 @@ void progress_tick(uint64_t cur, uint64_t end)
 	uint64_t pcent;
 	double sec;
 
+	if (end == 0)
+		return;
+
 	pcent = (cur * 100) / end;
 	if (progress_pcent == pcent && cur < progress_n_upd &&
 	    cur < end)
