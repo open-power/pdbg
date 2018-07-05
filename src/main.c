@@ -661,6 +661,10 @@ void print_target(struct pdbg_target *target, int level)
 
 	if (target) {
 		char c = 0;
+
+		if (!pdbg_target_class_name(target))
+			return;
+
 		if (!strcmp(pdbg_target_class_name(target), "pib"))
 			c = 'p';
 		else if (!strcmp(pdbg_target_class_name(target), "core"))
