@@ -1069,7 +1069,7 @@ static int do_htm_dump(struct htm *htm, char *filename)
 	}
 
 	/* Copy start -> last */
-	lseek(trace_fd, 0, SEEK_SET);
+	r = lseek(trace_fd, 0, SEEK_SET);
 	if (r == -1)
 		goto out1;
 	r = copy_file(dump_fd, trace_fd, last);
