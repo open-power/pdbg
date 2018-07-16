@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 AM_MAKEFLAGS = --no-print-directory
 
-GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty || echo unknown`
+GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty 2>/dev/null || echo unknown`
 
 bin_PROGRAMS = pdbg optcmd_test
 
