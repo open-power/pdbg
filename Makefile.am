@@ -50,7 +50,7 @@ pdbg_SOURCES = \
 	src/parsers.h \
 	src/progress.h
 
-pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la \
+pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la libccan.a \
 	-L.libs -lrt
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
@@ -101,6 +101,20 @@ libpdbg_la_SOURCES = \
 	libpdbg/operations.h \
 	libpdbg/libpdbg.h \
 	libpdbg/target.h
+
+noinst_LIBRARIES = libccan.a
+
+libccan_a_SOURCES = \
+	ccan/array_size/array_size.h \
+	ccan/build_assert/build_assert.h \
+	ccan/check_type/check_type.h \
+	ccan/container_of/container_of.h \
+	ccan/cppmagic/cppmagic.h \
+	ccan/list/list.c \
+	ccan/list/list.h \
+	ccan/short_types/short_types.h \
+	ccan/str/str.c \
+	ccan/str/str.h
 
 M4_V = $(M4_V_$(V))
 M4_V_ = $(M4_V_$(AM_DEFAULT_VERBOSITY))
