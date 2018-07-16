@@ -9,6 +9,22 @@ noinst_PROGRAMS = optcmd_test
 ACLOCAL_AMFLAGS = -Im4
 AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror -O2
 
+EXTRA_DIST = \
+	fake.dts.m4 \
+	p8-fsi.dts.m4 \
+	p8-host.dts.m4 \
+	p8-i2c.dts.m4 \
+	p8-pib.dts.m4 \
+	p9-fsi.dtsi.m4 \
+	p9-host.dts.m4 \
+	p9-kernel.dts.m4 \
+	p9-pib.dts.m4 \
+	p9r-fsi.dts.m4 \
+	p9w-fsi.dts.m4 \
+	p9z-fsi.dts.m4 \
+	template.S \
+	generate_dt_header.sh
+
 if TARGET_ARM
 DT_ARM = p8-fsi.dts p8-i2c.dts \
 	 p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts
