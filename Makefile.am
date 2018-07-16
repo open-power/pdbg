@@ -41,7 +41,13 @@ pdbg_SOURCES = \
 	src/progress.c \
 	src/parsers.c \
 	src/optcmd.c \
-	src/options_@ARCH@.c
+	src/options_@ARCH@.c \
+	src/htm.h \
+	src/main.h \
+	src/optcmd.h \
+	src/options.h \
+	src/parsers.h \
+	src/progress.h
 
 pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la \
 	-L.libs -lrt
@@ -64,7 +70,11 @@ libfdt_la_SOURCES = \
 	libfdt/fdt_strerror.c \
 	libfdt/fdt_empty_tree.c \
 	libfdt/fdt_addresses.c \
-	libfdt/fdt_overlay.c
+	libfdt/fdt_overlay.c \
+	libfdt/fdt.h \
+	libfdt/libfdt_env.h \
+	libfdt/libfdt.h \
+	libfdt/libfdt_internal.h
 
 libpdbg_la_SOURCES = \
 	libpdbg/libpdbg.c \
@@ -81,7 +91,15 @@ libpdbg_la_SOURCES = \
 	libpdbg/device.c \
 	libpdbg/target.c \
 	libpdbg/htm.c \
-	libpdbg/debug.c
+	libpdbg/debug.c \
+	libpdbg/backend.h \
+	libpdbg/bitutils.h \
+	libpdbg/compiler.h \
+	libpdbg/debug.h \
+	libpdbg/device.h \
+	libpdbg/operations.h \
+	libpdbg/libpdbg.h \
+	libpdbg/target.h
 
 M4_V = $(M4_V_$(V))
 M4_V_ = $(M4_V_$(AM_DEFAULT_VERBOSITY))
