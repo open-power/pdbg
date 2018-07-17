@@ -321,7 +321,7 @@ static int cfam_hmfsi_probe(struct pdbg_target *target)
 	fsi_read(fsi_parent, 0x3404, &value);
 	value |= 1 << (31 - port);
 	if ((rc = fsi_write(fsi_parent, 0x3404, value))) {
-		PR_ERROR("Unale to enable HMFSI port %d\n", port);
+		PR_ERROR("Unable to enable HMFSI port %d\n", port);
 		return rc;
 	}
 
