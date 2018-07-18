@@ -139,6 +139,9 @@ static void print_usage(char *pname)
 	printf("\t-p, --processor=<0-%d>|<range>|<list>\n", MAX_PROCESSORS-1);
 	printf("\t-c, --chip=<0-%d>|<range>|<list>\n", MAX_CHIPS-1);
 	printf("\t-t, --thread=<0-%d>|<range>|<list>\n", MAX_THREADS-1);
+#ifdef TARGET_PPC
+	printf("\t-l, --cpu=<0-%d>|<range>|<list>\n", MAX_PROCESSORS-1);
+#endif
 	printf("\t-a, --all\n");
 	printf("\t\tRun command on all possible processors/chips/threads (default)\n");
 	printf("\t-b, --backend=backend\n");
@@ -242,6 +245,68 @@ static bool parse_list(const char *arg, int max, int *list, int *count)
 	return true;
 }
 
+#ifdef TARGET_PPC
+int get_pir(int linux_cpu)
+{
+	char *filename;
+	FILE *file;
+	int pir = -1;
+
+	if(asprintf(&filename, "/sys/devices/system/cpu/cpu%i/pir",
+		    linux_cpu) < 0)
+		return -1;
+
+	file = fopen(filename, "r");
+	if (!file) {
+		PR_ERROR("Invalid Linux CPU number %" PRIi32 "\n", linux_cpu);
+		goto out2;
+	}
+
+	if(fscanf(file, "%" PRIx32 "\n", &pir) != 1) {
+		PR_ERROR("fscanf() didn't match: %m\n");
+		pir = -1;
+		goto out1;
+	}
+
+out1:
+	fclose(file);
+out2:
+	free(filename);
+	return pir;
+}
+
+/* Stolen from skiboot */
+#define P9_PIR2GCID(pir) (((pir) >> 8) & 0x7f)
+#define P9_PIR2COREID(pir) (((pir) >> 2) & 0x3f)
+#define P9_PIR2THREADID(pir) ((pir) & 0x3)
+#define P8_PIR2GCID(pir) (((pir) >> 7) & 0x3f)
+#define P8_PIR2COREID(pir) (((pir) >> 3) & 0xf)
+#define P8_PIR2THREADID(pir) ((pir) & 0x7)
+
+void pir_map(int pir, int *chip, int *core, int *thread)
+{
+	assert(chip && core && thread);
+
+	if (!strncmp(device_node, "p9", 2)) {
+		*chip = P9_PIR2GCID(pir);
+		*core = P9_PIR2COREID(pir);
+		*thread = P9_PIR2THREADID(pir);
+	} else if (!strncmp(device_node, "p8", 2)) {
+		*chip = P8_PIR2GCID(pir);
+		*core = P8_PIR2COREID(pir);
+		*thread = P8_PIR2THREADID(pir);
+	} else
+		assert(0);
+
+}
+
+#define PPC_OPTS "l:"
+#else
+int get_pir(int linux_cpu) { return -1; }
+void pir_map(int pir, int *chip, int *core, int *thread) {}
+#define PPC_OPTS
+#endif
+
 static bool parse_options(int argc, char *argv[])
 {
 	int c;
@@ -249,7 +314,8 @@ static bool parse_options(int argc, char *argv[])
 	int p_list[MAX_PROCESSORS];
 	int c_list[MAX_CHIPS];
 	int t_list[MAX_THREADS];
-	int p_count = 0, c_count = 0, t_count = 0;
+	int l_list[MAX_PROCESSORS * MAX_THREADS * MAX_CHIPS];
+	int p_count = 0, c_count = 0, t_count = 0, l_count = 0;
 	int i, j, k;
 	struct option long_opts[] = {
 		{"all",			no_argument,		NULL,	'a'},
@@ -260,6 +326,9 @@ static bool parse_options(int argc, char *argv[])
 		{"processor",		required_argument,	NULL,	'p'},
 		{"slave-address",	required_argument,	NULL,	's'},
 		{"thread",		required_argument,	NULL,	't'},
+#ifdef TARGET_PPC
+		{"cpu",			required_argument,	NULL,	'l'},
+#endif
 		{"debug",		required_argument,	NULL,	'D'},
 		{"version",		no_argument,		NULL,	'V'},
 		{NULL,			0,			NULL,     0}
@@ -269,9 +338,11 @@ static bool parse_options(int argc, char *argv[])
 	memset(p_list, 0, sizeof(p_list));
 	memset(c_list, 0, sizeof(c_list));
 	memset(t_list, 0, sizeof(t_list));
+	memset(l_list, 0, sizeof(l_list));
 
 	do {
-		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:V", long_opts, NULL);
+		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:V" PPC_OPTS,
+				long_opts, NULL);
 		if (c == -1)
 			break;
 
@@ -313,6 +384,13 @@ static bool parse_options(int argc, char *argv[])
 		case 't':
 			if (!parse_list(optarg, MAX_THREADS, t_list, &t_count)) {
 				fprintf(stderr, "Failed to parse '-t %s'\n", optarg);
+				opt_error = true;
+			}
+			break;
+
+		case 'l':
+			if (!parse_list(optarg, MAX_PROCESSORS, l_list, &l_count)) {
+				fprintf(stderr, "Failed to parse '-l %s'\n", optarg);
 				opt_error = true;
 			}
 			break;
@@ -370,6 +448,11 @@ static bool parse_options(int argc, char *argv[])
 		return false;
 	}
 
+	if ((c_count > 0 || t_count > 0 || p_count > 0) && (l_count > 0)) {
+		fprintf(stderr, "Can't mix -l with -p/-c/-t/-a\n");
+		return false;
+	}
+
 	if ((c_count > 0 || t_count > 0) && p_count == 0) {
 		fprintf(stderr, "No processor(s) selected\n");
 		fprintf(stderr, "Use -p or -a to select processor(s)\n");
@@ -403,6 +486,26 @@ static bool parse_options(int argc, char *argv[])
 		}
 	}
 
+	if (l_count) {
+		int pir = -1, i, chip, core, thread;
+
+		for (i = 0; i < MAX_PROCESSORS; i++) {
+			if (l_list[i] == 1) {
+				pir = get_pir(i);
+				if (pir < 0)
+					return true;
+				break;
+			}
+		}
+		if (pir < 0)
+			return true;
+
+		pir_map(pir, &chip, &core, &thread);
+
+		threadsel[chip][core][thread] = 1;
+		chipsel[chip][core] = &threadsel[chip][core][thread];
+		processorsel[chip] = &chipsel[chip][core];
+	}
 	return true;
 }
 
