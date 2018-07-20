@@ -387,7 +387,7 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 	printf("LPCR  : 0x%016" PRIx64 "\n", regs->lpcr);
 
 	ram_getspr(thread, 464, &regs->ptcr);
-	printf("PTCR  : 0x%016" PRIx64 "\n", regs->lpcr);
+	printf("PTCR  : 0x%016" PRIx64 "\n", regs->ptcr);
 
 	ram_getspr(thread, 319, &regs->lpidr);
 	printf("LPIDR : 0x%016" PRIx64 "\n", regs->lpidr);
