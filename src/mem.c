@@ -46,6 +46,11 @@ static int getmem(uint64_t addr, uint64_t size, struct mem_flags flags)
 	uint8_t *buf;
 	int rc = 0;
 
+	if (size == 0) {
+		PR_ERROR("Size must be > 0\n");
+		return 1;
+	}
+
 	buf = malloc(size);
 	assert(buf);
 	pdbg_for_each_class_target("adu", target) {
