@@ -42,7 +42,8 @@ void progress_init(void)
 		fprintf(stderr, " ");
 	fprintf(stderr, "] 0%%");
 	fflush(stderr);
-	clock_gettime(CLOCK_MONOTONIC, &progress_start);}
+	clock_gettime(CLOCK_MONOTONIC, &progress_start);
+}
 
 void progress_tick(uint64_t cur, uint64_t end)
 {
