@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 
 #include "progress.h"
 
@@ -32,6 +33,8 @@ static struct timespec progress_start;
 static void progress_bar(unsigned int percent)
 {
 	unsigned int i, progress;
+
+	assert(percent <= 100);
 
 	progress = (percent * PROGRESS_CHARS) / 101;
 
