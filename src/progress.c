@@ -29,43 +29,46 @@ static struct timespec progress_start;
 
 #define PROGRESS_CHARS	50
 
+static void progress_bar(unsigned int percent)
+{
+	unsigned int i, progress;
+
+	progress = (percent * PROGRESS_CHARS) / 101;
+
+	fprintf(stderr, "\r[");
+	for (i = 0; i <= progress; i++)
+		fprintf(stderr, "=");
+	for (; i < PROGRESS_CHARS; i++)
+		fprintf(stderr, " ");
+	fprintf(stderr, "] %u%%", percent);
+	fflush(stderr);
+}
+
 void progress_init(void)
 {
-	unsigned int i;
-
 	progress_pcent = 0;
 	progress_n_upd = ULONG_MAX;
 	progress_prevsec = ULONG_MAX;
 
-	fprintf(stderr, "\r[");
-	for (i = 0; i < PROGRESS_CHARS; i++)
-		fprintf(stderr, " ");
-	fprintf(stderr, "] 0%%");
-	fflush(stderr);
+	progress_bar(0);
+
 	clock_gettime(CLOCK_MONOTONIC, &progress_start);
 }
 
 void progress_tick(uint64_t cur, uint64_t end)
 {
-	unsigned int i, pos;
 	struct timespec now;
-	uint64_t pcent;
+	unsigned int pcent;
 	double sec;
 
-	pcent = (cur * 100) / end;
+	pcent = (unsigned int)((cur * 100) / end);
 	if (progress_pcent == pcent && cur < progress_n_upd &&
 	    cur < end)
 		return;
 	progress_pcent = pcent;
-	pos = (pcent * PROGRESS_CHARS) / 101;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
-	fprintf(stderr, "\r[");
-	for (i = 0; i <= pos; i++)
-		fprintf(stderr, "=");
-	for (; i < PROGRESS_CHARS; i++)
-		fprintf(stderr, " ");
-	fprintf(stderr, "] %" PRIu64 "%%", pcent);
+	progress_bar(pcent);
 
 	sec = difftime(now.tv_sec, progress_start.tv_sec);
 	if (sec >= 5 && pcent > 0) {
