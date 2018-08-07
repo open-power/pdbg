@@ -22,6 +22,7 @@ EXTRA_DIST = \
 	p8-fsi.dts.m4 \
 	p8-host.dts.m4 \
 	p8-i2c.dts.m4 \
+	p8-kernel.dts.m4 \
 	p8-pib.dts.m4 \
 	p9-fsi.dtsi.m4 \
 	p9-host.dts.m4 \
@@ -38,7 +39,7 @@ EXTRA_DIST = \
 	$(PDBG_TESTS)
 
 if TARGET_ARM
-DT_ARM = p8-fsi.dts p8-i2c.dts \
+DT_ARM = p8-fsi.dts p8-i2c.dts p8-kernel.dts \
 	 p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts
 ARCH_FLAGS="-DTARGET_ARM=1"
 endif

@@ -46,6 +46,7 @@
 #ifdef TARGET_ARM
 #include "p8-i2c.dt.h"
 #include "p8-fsi.dt.h"
+#include "p8-kernel.dt.h"
 #include "p9w-fsi.dt.h"
 #include "p9r-fsi.dt.h"
 #include "p9z-fsi.dt.h"
@@ -613,7 +614,14 @@ static int target_selection(void)
 		break;
 
 	case KERNEL:
-		pdbg_targets_init(&_binary_p9_kernel_dtb_o_start);
+		if (device_node == NULL) {
+			PR_ERROR("kernel backend requires a device type\n");
+			return -1;
+		}
+		if (!strcmp(device_node, "p8"))
+			pdbg_targets_init(&_binary_p8_kernel_dtb_o_start);
+		else
+			pdbg_targets_init(&_binary_p9_kernel_dtb_o_start);
 		break;
 
 #endif
