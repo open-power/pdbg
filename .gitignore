@@ -1,6 +1,7 @@
 *~
 *.o
 *.d
+*.a
 TAGS
 tags
 cscope.out
