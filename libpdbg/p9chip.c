@@ -71,8 +71,8 @@
 #define  NET_CTRL0_FENCE_EN 		PPC_BIT(18)
 #define NET_CTRL0_WOR	0xf0042
 #define PPM_GPMMR	0xf0100
-#define PPM_SPWKUP_OTR	0xf010a
-#define PPM_SSHOTR	0xf0113
+#define PPM_SPWKUP_FSP	0xf010b
+#define PPM_SSHFSP	0xf0111
 #define  SPECIAL_WKUP_DONE PPC_BIT(1)
 
 #define RAS_STATUS_TIMEOUT	100 /* 100ms */
@@ -478,10 +478,10 @@ static int p9_core_probe(struct pdbg_target *target)
 	if (!(value & NET_CTRL0_CHIPLET_ENABLE))
 		return -1;
 
-	CHECK_ERR(pib_write(target, PPM_SPWKUP_OTR, PPC_BIT(0)));
+	CHECK_ERR(pib_write(target, PPM_SPWKUP_FSP, PPC_BIT(0)));
 	do {
 		usleep(1000);
-		CHECK_ERR(pib_read(target, PPM_SSHOTR, &value));
+		CHECK_ERR(pib_read(target, PPM_SSHFSP, &value));
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
 			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", target->name,
@@ -496,7 +496,7 @@ static int p9_core_probe(struct pdbg_target *target)
 static void p9_core_release(struct pdbg_target *target)
 {
 	usleep(1); /* enforce small delay before and after it is cleared */
-	pib_write(target, PPM_SPWKUP_OTR, 0);
+	pib_write(target, PPM_SPWKUP_FSP, 0);
 	usleep(10000);
 }
 
