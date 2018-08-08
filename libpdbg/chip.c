@@ -325,7 +325,7 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 {
 	struct thread_regs _regs;
 	struct thread *t;
-	uint64_t value;
+	uint64_t value = 0;
 	int i;
 
 	if (!regs)
@@ -362,7 +362,7 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 
 	regs->cr = 0;
 	for (i = 0; i < 8; i++) {
-		uint64_t cr;
+		uint64_t cr = 0;
 		ram_getcr(thread, i, &cr);
 		regs->cr |= cr;
 	}
