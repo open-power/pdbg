@@ -217,6 +217,9 @@ static int p9_ram_setup(struct thread *thread)
 	struct core *chip = target_to_core(thread->target.parent);
 	uint64_t value;
 
+	if (thread->ram_is_setup)
+		return 1;
+
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
 	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
@@ -255,6 +258,8 @@ static int p9_ram_setup(struct thread *thread)
 		thread_write(thread, P9_SCOMC, 0x0));
 
 	thread->status = p9_get_thread_status(thread);
+
+	thread->ram_is_setup = true;
 
 	return 0;
 
@@ -362,6 +367,9 @@ static int p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 
 static int p9_ram_destroy(struct thread *thread)
 {
+	if (!thread->ram_is_setup)
+		return 1;
+
 	/* Disable ram mode */
 	CHECK_ERR(thread_write(thread, P9_RAM_MODEREG, 0));
 
@@ -369,6 +377,8 @@ static int p9_ram_destroy(struct thread *thread)
 	CHECK_ERR(thread_write(thread, P9_THREAD_INFO, 0));
 
 	thread->status = p9_get_thread_status(thread);
+
+	thread->ram_is_setup = false;
 
 	return 0;
 }
