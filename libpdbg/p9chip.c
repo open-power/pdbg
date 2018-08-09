@@ -227,7 +227,9 @@ static int p9_ram_setup(struct thread *thread)
 
 		/* If this thread wasn't enabled it may not yet have been probed
 		   so do that now. This will also update the thread status */
-		p9_thread_probe(target);
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			goto out_fail;
+
 		tmp = target_to_thread(target);
 		if (!(tmp->status.quiesced))
 			goto out_fail;

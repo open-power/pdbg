@@ -300,6 +300,12 @@ static int p8_ram_setup(struct thread *thread)
 	 * quiesced */
 	dt_for_each_compatible(&chip->target, target, "ibm,power8-thread") {
 		struct thread *tmp;
+
+		/* If this thread wasn't enabled it may not yet have been probed
+		   so do that now. This will also update the thread status */
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			return 1;
+
 		tmp = target_to_thread(target);
 		if (!(get_thread_status(tmp).quiesced))
 			return 1;
