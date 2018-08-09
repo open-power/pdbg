@@ -84,17 +84,37 @@ uint32_t pdbg_target_index(struct pdbg_target *target)
 		return dn->index;
 }
 
+/* Find a target parent from the given class */
+struct pdbg_target *pdbg_target_parent(const char *class, struct pdbg_target *target)
+{
+	struct pdbg_target *parent;
+
+	for (parent = target->parent; parent && parent->parent; parent = parent->parent) {
+		if (!strcmp(class, pdbg_target_class_name(parent)))
+			return parent;
+	}
+
+	return NULL;
+}
+
+struct pdbg_target *pdbg_target_require_parent(const char *class, struct pdbg_target *target)
+{
+	struct pdbg_target *parent = pdbg_target_parent(class, target);
+
+	assert(parent);
+	return parent;
+}
+
 /* Searched up the tree for the first target of the right class and returns its index */
 uint32_t pdbg_parent_index(struct pdbg_target *target, char *class)
 {
-	struct pdbg_target *tmp;
+	struct pdbg_target *parent;
 
-	for (tmp = target; tmp && tmp->parent; tmp = tmp->parent) {
-		if (!strcmp(class, pdbg_target_class_name(tmp)))
-			return pdbg_target_index(tmp);
-	}
-
-	return -1;
+	parent = pdbg_target_parent(class, target);
+	if (parent)
+		return pdbg_target_index(parent);
+	else
+		return -1;
 }
 
 char *pdbg_target_class_name(struct pdbg_target *target)

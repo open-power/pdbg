@@ -66,6 +66,13 @@ enum pdbg_target_status {PDBG_TARGET_UNKNOWN = 0, PDBG_TARGET_ENABLED,
 	     target;					      \
 	     target = __pdbg_next_child_target(parent, target))
 
+/* Return the first parent target of the given class, or NULL if the given
+ * target does not have a parent of the given class. */
+struct pdbg_target *pdbg_target_parent(const char *klass, struct pdbg_target *target);
+
+/* Same as above but instead of returning NULL causes an assert failure. */
+struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_target *target);
+
 /* Set the given property. Will automatically add one if one doesn't exist */
 void pdbg_set_target_property(struct pdbg_target *target, const char *name, const void *val, size_t size);
 
