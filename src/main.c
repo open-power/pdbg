@@ -391,7 +391,7 @@ static bool parse_options(int argc, char *argv[])
 			break;
 
 		case 'l':
-			if (!parse_list(optarg, MAX_PROCESSORS, l_list, &l_count)) {
+			if (!parse_list(optarg, MAX_LINUX_CPUS, l_list, &l_count)) {
 				fprintf(stderr, "Failed to parse '-l %s'\n", optarg);
 				opt_error = true;
 			}
@@ -491,7 +491,7 @@ static bool parse_options(int argc, char *argv[])
 	if (l_count) {
 		int pir = -1, i, chip, core, thread;
 
-		for (i = 0; i < MAX_PROCESSORS; i++) {
+		for (i = 0; i < MAX_LINUX_CPUS; i++) {
 			if (l_list[i] == 1) {
 				pir = get_pir(i);
 				if (pir < 0)
