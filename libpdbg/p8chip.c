@@ -229,7 +229,8 @@ static int p8_thread_stop(struct thread *thread)
 {
 	int i = 0;
 	uint64_t val;
-	struct core *chip = target_to_core(thread->target.parent);
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
 
 	do {
 		/* Quiese active thread */
@@ -267,7 +268,8 @@ static int p8_thread_stop(struct thread *thread)
 static int p8_thread_start(struct thread *thread)
 {
 	uint64_t val;
-	struct core *chip = target_to_core(thread->target.parent);
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
 
 	/* Activate thread */
 	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));
@@ -290,7 +292,8 @@ static int p8_thread_sreset(struct thread *thread)
 static int p8_ram_setup(struct thread *thread)
 {
 	struct pdbg_target *target;
-	struct core *chip = target_to_core(thread->target.parent);
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
 	uint64_t ram_mode, val;
 
 	if (thread->ram_is_setup)
@@ -333,7 +336,8 @@ static int p8_ram_setup(struct thread *thread)
 
 static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *scratch)
 {
-	struct core *chip = target_to_core(thread->target.parent);
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
 	uint64_t val;
 
 	if (!thread->ram_is_setup)
@@ -368,7 +372,8 @@ static int p8_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t *
 
 static int p8_ram_destroy(struct thread *thread)
 {
-	struct core *chip = target_to_core(thread->target.parent);
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
 	uint64_t ram_mode;
 
 	/* Disable RAM mode */

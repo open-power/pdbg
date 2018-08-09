@@ -293,7 +293,7 @@ DECLARE_HW_UNIT(p8_opb_hmfsi);
 
 static int cfam_hmfsi_read(struct fsi *fsi, uint32_t addr, uint32_t *data)
 {
-	struct pdbg_target *parent_fsi = fsi->target.parent;
+	struct pdbg_target *parent_fsi = pdbg_target_require_parent("fsi", &fsi->target);
 
 	addr += dt_get_address(&fsi->target, 0, NULL);
 
@@ -302,7 +302,7 @@ static int cfam_hmfsi_read(struct fsi *fsi, uint32_t addr, uint32_t *data)
 
 static int cfam_hmfsi_write(struct fsi *fsi, uint32_t addr, uint32_t data)
 {
-	struct pdbg_target *parent_fsi = fsi->target.parent;
+	struct pdbg_target *parent_fsi = pdbg_target_require_parent("fsi", &fsi->target);
 
 	addr += dt_get_address(&fsi->target, 0, NULL);
 

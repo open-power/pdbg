@@ -214,7 +214,8 @@ static int p9_thread_sreset(struct thread *thread)
 static int p9_ram_setup(struct thread *thread)
 {
 	struct pdbg_target *target;
-	struct core *chip = target_to_core(thread->target.parent);
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
 	uint64_t value;
 
 	if (thread->ram_is_setup)

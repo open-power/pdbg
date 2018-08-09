@@ -422,6 +422,7 @@ static int configure_debugfs_memtrace(struct htm *htm)
 static int configure_chtm(struct htm *htm, bool wrap)
 {
 	uint64_t hid0, ncu, val;
+	struct pdbg_target *core;
 
 	if (!pdbg_target_is_class(&htm->target, "chtm"))
 		return 0;
@@ -434,16 +435,17 @@ static int configure_chtm(struct htm *htm, bool wrap)
 		HTM_MODE_ENABLE | val)))
 		return -1;
 
-	if (HTM_ERR(pib_read(htm->target.parent, HID0_REGISTER, &hid0)))
+	core = pdbg_target_require_parent("core", &htm->target);
+	if (HTM_ERR(pib_read(core, HID0_REGISTER, &hid0)))
 		return -1;
 	hid0 |= HID0_TRACE_BITS;
-	if (HTM_ERR(pib_write(htm->target.parent, HID0_REGISTER, hid0)))
+	if (HTM_ERR(pib_write(core, HID0_REGISTER, hid0)))
 		return -1;
 
-	if (HTM_ERR(pib_read(htm->target.parent, NCU_MODE_REGISTER, &ncu)))
+	if (HTM_ERR(pib_read(core, NCU_MODE_REGISTER, &ncu)))
 		return -1;
 	ncu |= NCU_MODE_HTM_ENABLE;
-	if (HTM_ERR(pib_write(htm->target.parent, NCU_MODE_REGISTER, ncu)))
+	if (HTM_ERR(pib_write(core, NCU_MODE_REGISTER, ncu)))
 		return -1;
 
 	return 0;
@@ -452,20 +454,22 @@ static int configure_chtm(struct htm *htm, bool wrap)
 static int deconfigure_chtm(struct htm *htm)
 {
 	uint64_t hid0, ncu;
+	struct pdbg_target *core;
 
 	if (!pdbg_target_is_class(&htm->target, "chtm"))
 		return 0;
 
-	if (HTM_ERR(pib_read(htm->target.parent, NCU_MODE_REGISTER, &ncu)))
+	core = pdbg_target_require_parent("core", &htm->target);
+	if (HTM_ERR(pib_read(core, NCU_MODE_REGISTER, &ncu)))
 		return -1;
 	ncu &= ~NCU_MODE_HTM_ENABLE;
-	if (HTM_ERR(pib_write(htm->target.parent, NCU_MODE_REGISTER, ncu)))
+	if (HTM_ERR(pib_write(core, NCU_MODE_REGISTER, ncu)))
 		return -1;
 
-	if (HTM_ERR(pib_read(htm->target.parent, HID0_REGISTER, &hid0)))
+	if (HTM_ERR(pib_read(core, HID0_REGISTER, &hid0)))
 		return -1;
 	hid0 &= ~(HID0_TRACE_BITS);
-	if (HTM_ERR(pib_write(htm->target.parent, HID0_REGISTER, hid0)))
+	if (HTM_ERR(pib_write(core, HID0_REGISTER, hid0)))
 		return -1;
 
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,0)))
@@ -757,15 +761,16 @@ static int do_htm_reset(struct htm *htm, bool wrap)
 static int htm_toggle_debug_bit(struct htm *htm)
 {
 	struct pdbg_target *target;
+	struct pdbg_target *core = pdbg_target_require_parent("core", &htm->target);
 	uint64_t reg;
 
 	/* FIXME: this is a hack for P8 */
-	if (!dt_node_is_compatible(htm->target.parent, "ibm,power8-core")) {
+	if (!dt_node_is_compatible(core, "ibm,power8-core")) {
 		PR_ERROR("HTM is POWER8 only currently\n");
 		return -1;
 	}
 
-	pdbg_for_each_target("thread", htm->target.parent, target) {
+	pdbg_for_each_target("thread", core, target) {
 		if (pdbg_target_index(target) == 0) {
 			/* Need to set this bit to ensure HTM starts */
 			pib_read (target, RAS_MODE_REG, &reg);
@@ -804,7 +809,7 @@ static int __do_htm_start(struct htm *htm, bool wrap)
 	/*
 	 * Instead of the HTM_TRIG_START, this is where you might want
 	 * to call do_adu_magic()
-	 * for_each_child_target("adu", &htm->target.parent, do_adu_magic, NULL, NULL);
+	 * for_each_child_target("adu", core, do_adu_magic, NULL, NULL);
 	 * see what I mean?
 	 */
 
