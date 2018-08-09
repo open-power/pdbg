@@ -223,7 +223,7 @@ static int p9_ram_setup(struct thread *thread)
 
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
-	dt_for_each_compatible(&chip->target, target, "ibm,power9-thread") {
+	pdbg_for_each_target("thread", &chip->target, target) {
 		struct thread *tmp;
 
 		/* If this thread wasn't enabled it may not yet have been probed
