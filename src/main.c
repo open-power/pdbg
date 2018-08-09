@@ -181,10 +181,6 @@ static bool parse_list(const char *arg, int max, int *list, int *count)
 
 	strcpy(str, arg);
 
-	for (i = 0; i < max; i++) {
-		list[i] = 0;
-	}
-
 	tmp = str;
 	while ((tok = strtok_r(tmp, ",", &saveptr)) != NULL) {
 		char *a, *b, *endptr, *saveptr2 = NULL;
