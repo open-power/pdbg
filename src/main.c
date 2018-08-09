@@ -496,18 +496,16 @@ static bool parse_options(int argc, char *argv[])
 				pir = get_pir(i);
 				if (pir < 0)
 					return true;
-				break;
+
+				pir_map(pir, &chip, &core, &thread);
+
+				processorsel[chip] = &chipsel[chip][0];
+				chipsel[chip][core] = &threadsel[chip][core][0];
+				threadsel[chip][core][thread] = 1;
 			}
 		}
-		if (pir < 0)
-			return true;
-
-		pir_map(pir, &chip, &core, &thread);
-
-		threadsel[chip][core][thread] = 1;
-		chipsel[chip][core] = &threadsel[chip][core][thread];
-		processorsel[chip] = &chipsel[chip][core];
 	}
+
 	return true;
 }
 
