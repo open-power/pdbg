@@ -68,6 +68,8 @@ static int i2c_addr = 0x50;
 #define MAX_CHIPS 24
 #define MAX_THREADS THREADS_PER_CORE
 
+#define MAX_LINUX_CPUS	(MAX_PROCESSORS * MAX_CHIPS * MAX_THREADS)
+
 static int **processorsel[MAX_PROCESSORS];
 static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
 static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
@@ -314,7 +316,7 @@ static bool parse_options(int argc, char *argv[])
 	int p_list[MAX_PROCESSORS];
 	int c_list[MAX_CHIPS];
 	int t_list[MAX_THREADS];
-	int l_list[MAX_PROCESSORS * MAX_THREADS * MAX_CHIPS];
+	int l_list[MAX_LINUX_CPUS];
 	int p_count = 0, c_count = 0, t_count = 0, l_count = 0;
 	int i, j, k;
 	struct option long_opts[] = {
