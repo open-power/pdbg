@@ -188,7 +188,7 @@ static int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes
 		if (thread->ram_instruction(thread, opcode, &scratch)) {
 			PR_DEBUG("%s: %d, %016" PRIx64 "\n", __FUNCTION__, __LINE__, opcode);
 			exception = 1;
-			if (i >= 0 || i < len)
+			if (i >= 0 && i < len)
 				/* skip the rest and attempt to restore r0 and r1 */
 				i = len - 1;
 			else
