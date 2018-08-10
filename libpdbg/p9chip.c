@@ -125,6 +125,15 @@ static int p9_thread_probe(struct pdbg_target *target)
 	return 0;
 }
 
+static void p9_thread_release(struct pdbg_target *target)
+{
+	struct core *core = target_to_core(pdbg_target_require_parent("core", target));
+	struct thread *thread = target_to_thread(target);
+
+	if (thread->status.quiesced)
+		/* This thread is still quiesced so don't release spwkup */
+		core->release_spwkup = false;}
+
 static int p9_thread_start(struct thread *thread)
 {
 	if (!(thread->status.quiesced))
@@ -392,6 +401,7 @@ static struct thread p9_thread = {
 		.compatible = "ibm,power9-thread",
 		.class = "thread",
 		.probe = p9_thread_probe,
+		.release = p9_thread_release,
 	},
 	.start = p9_thread_start,
 	.stop = p9_thread_stop,
@@ -472,6 +482,7 @@ static int p9_chiplet_getring(struct chiplet *chiplet, uint64_t ring_addr, int64
 
 static int p9_core_probe(struct pdbg_target *target)
 {
+	struct core *core = target_to_core(target);
 	int i = 0;
 	uint64_t value;
 
@@ -493,12 +504,41 @@ static int p9_core_probe(struct pdbg_target *target)
 		}
 	} while (!(value & SPECIAL_WKUP_DONE));
 
+	/* Child threads will set this to false if they are released while quiesced */
+	core->release_spwkup = true;
+
 	return 0;
 }
 
 static void p9_core_release(struct pdbg_target *target)
 {
+	struct pdbg_target *child;
+	struct core *core = target_to_core(target);
+	enum pdbg_target_status status;
+
 	usleep(1); /* enforce small delay before and after it is cleared */
+
+	/* Probe and release all threads to ensure release_spwkup is up to
+	 * date */
+	pdbg_for_each_target("thread", target, child) {
+		status = pdbg_target_status(child);
+
+		/* This thread has already been release so should have set
+		 * release_spwkup to false if it was quiesced, */
+		if (status == PDBG_TARGET_RELEASED)
+			continue;
+
+		status = pdbg_target_probe(child);
+		if (status != PDBG_TARGET_ENABLED)
+			continue;
+
+		/* Release the thread to ensure release_spwkup is updated. */
+		pdbg_target_release(child);
+	}
+
+	if (!core->release_spwkup)
+		return;
+
 	pib_write(target, PPM_SPWKUP_FSP, 0);
 	usleep(10000);
 }

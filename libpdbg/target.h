@@ -131,6 +131,7 @@ struct fsi {
 
 struct core {
 	struct pdbg_target target;
+	bool release_spwkup;
 };
 #define target_to_core(x) container_of(x, struct core, target)
 
