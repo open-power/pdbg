@@ -6,7 +6,10 @@ GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe
 bin_PROGRAMS = pdbg
 check_PROGRAMS = optcmd_test
 
-TESTS = optcmd_test
+PDBG_TESTS = \
+	tests/test_selection.sh
+
+TESTS = optcmd_test $(PDBG_TESTS)
 
 TEST_EXTENSIONS = .sh
 SH_LOG_DRIVER = $(SHELL) $(srcdir)/tests/run_test.sh
@@ -31,7 +34,8 @@ EXTRA_DIST = \
 	generate_dt_header.sh \
 	tests/driver.sh \
 	tests/run_test.sh \
-	tests/test_driver.sh
+	tests/test_driver.sh \
+	$(PDBG_TESTS)
 
 if TARGET_ARM
 DT_ARM = p8-fsi.dts p8-i2c.dts \
