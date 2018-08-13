@@ -342,36 +342,21 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 	return PDBG_TARGET_ENABLED;
 }
 
-/*
- * Walk back up, releasing.
- */
+/* Releases a target by first recursively releasing all its children */
 void pdbg_target_release(struct pdbg_target *target)
 {
-	struct pdbg_target *parent;
 	struct pdbg_target *child;
 
-	assert(target);
-
-	/* If it's not enabled, the parent wasn't enabled. */
-	if ((pdbg_target_status(target) != PDBG_TARGET_ENABLED))
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 		return;
 
-	pdbg_for_each_child_target(target, child) {
-		/* Not all children released yet, stop here. */
-		if (pdbg_target_status(child) == PDBG_TARGET_ENABLED)
-			return;
-	}
+	pdbg_for_each_child_target(target, child)
+		pdbg_target_release(child);
 
-	/* At this point any parents must exist and have already been probed */
+	/* Release the target */
 	if (target->release)
 		target->release(target);
 	target->status = PDBG_TARGET_RELEASED;
-
-	parent = target->parent;
-	if (parent) {
-		/* Recurse up the tree to release parents */
-		pdbg_target_release(parent);
-	}
 }
 
 /*

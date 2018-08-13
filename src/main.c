@@ -75,7 +75,6 @@ static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
 static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
 
 static int probe(void);
-static int release(void);
 
 /* TODO: We are repeating ourselves here. A little bit more macro magic could
  * easily fix this but I was hesitant to introduce too much magic all at
@@ -119,7 +118,6 @@ static struct action actions[] = {
 	{ "step",    "<count>", "Set a thread <count> instructions" },
 	{ "stop",    "", "Stop thread" },
 	{ "htm", "core|nest start|stop|status|dump|record", "Hardware Trace Macro" },
-	{ "release", "", "Should be called after pdbg work is finished" },
 	{ "probe", "", "" },
 	{ "getcfam", "<address>", "Read system cfam" },
 	{ "putcfam", "<address> <value> [<mask>]", "Write system cfam" },
@@ -701,37 +699,6 @@ static int target_selection(void)
 	return 0;
 }
 
-static void release_target(struct pdbg_target *target)
-{
-	struct pdbg_target *child;
-
-	/* !selected targets may get selected in other ways */
-
-	/* Does this target actually exist? */
-	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
-		return;
-
-	pdbg_for_each_child_target(target, child)
-		release_target(child);
-
-	pdbg_target_release(target);
-}
-
-static int release(void)
-{
-	struct pdbg_target_class *target_class;
-
-	for_each_target_class(target_class) {
-		struct pdbg_target *target;
-
-		pdbg_for_each_class_target(target_class->name, target)
-			release_target(target);
-	}
-
-	return 0;
-}
-OPTCMD_DEFINE_CMD(release, release);
-
 void print_target(struct pdbg_target *target, int level)
 {
 	int i;
@@ -798,7 +765,7 @@ OPTCMD_DEFINE_CMD(probe, probe);
  */
 static void atexit_release(void)
 {
-	release();
+	pdbg_target_release(dt_root);
 }
 
 int main(int argc, char *argv[])
