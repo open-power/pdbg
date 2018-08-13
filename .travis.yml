@@ -2,4 +2,4 @@ services:
     - docker
 
 script:
-    - ./.build.sh
+    - ./utils/build.sh
