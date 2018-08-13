@@ -23,24 +23,30 @@
 #include "main.h"
 #include "optcmd.h"
 
-static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *arg, uint64_t *unused1)
+static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *arg, uint64_t *valid)
 {
 	struct thread_state *status = (struct thread_state *) arg;
 
 	status[index] = thread_status(target);
+	valid[index] = true;
 	return 1;
 }
 
 static int print_core_thread_status(struct pdbg_target *core_target, uint32_t index, uint64_t *maxindex, uint64_t *unused1)
 {
 	struct thread_state status[8];
+	uint64_t valid[8] = {0};
 	int i, rc;
 
 	printf("c%02d:  ", index);
 
 	/* TODO: This cast is gross. Need to rewrite for_each_child_target as an iterator. */
-	rc = for_each_child_target("thread", core_target, print_thread_status, (uint64_t *) &status[0], NULL);
+	rc = for_each_child_target("thread", core_target, print_thread_status, (uint64_t *) &status[0], &valid[0]);
 	for (i = 0; i <= *maxindex; i++) {
+		if (!valid[i]) {
+			printf("    ");
+			continue;
+		}
 
 		if (status[i].active)
 			printf("A");
