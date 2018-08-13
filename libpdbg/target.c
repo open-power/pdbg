@@ -291,7 +291,6 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 
 	status = pdbg_target_status(target);
 	assert(status != PDBG_TARGET_RELEASED);
-	assert(status != PDBG_TARGET_PENDING_RELEASE);
 
 	if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_NONEXISTENT
 	    || status == PDBG_TARGET_ENABLED)
@@ -320,7 +319,6 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 			return pdbg_target_status(target);
 
 		case PDBG_TARGET_RELEASED:
-		case PDBG_TARGET_PENDING_RELEASE:
 		case PDBG_TARGET_MUSTEXIST:
 		case PDBG_TARGET_UNKNOWN:
 			/* We must know by now if the parent exists or not */
@@ -355,17 +353,12 @@ void pdbg_target_release(struct pdbg_target *target)
 	assert(target);
 
 	/* If it's not enabled, the parent wasn't enabled. */
-	if ((pdbg_target_status(target) != PDBG_TARGET_ENABLED) &&
-	    (pdbg_target_status(target) != PDBG_TARGET_PENDING_RELEASE))
+	if ((pdbg_target_status(target) != PDBG_TARGET_ENABLED))
 		return;
-
-	target->status = PDBG_TARGET_PENDING_RELEASE;
 
 	pdbg_for_each_child_target(target, child) {
 		/* Not all children released yet, stop here. */
 		if (pdbg_target_status(child) == PDBG_TARGET_ENABLED)
-			return;
-		if (pdbg_target_status(child) == PDBG_TARGET_PENDING_RELEASE)
 			return;
 	}
 

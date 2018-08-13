@@ -708,8 +708,7 @@ static void release_target(struct pdbg_target *target)
 	/* !selected targets may get selected in other ways */
 
 	/* Does this target actually exist? */
-	if ((pdbg_target_status(target) != PDBG_TARGET_ENABLED) &&
-	    (pdbg_target_status(target) != PDBG_TARGET_PENDING_RELEASE))
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 		return;
 
 	pdbg_for_each_child_target(target, child)

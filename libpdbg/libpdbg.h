@@ -38,8 +38,6 @@ struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct 
  *               Selection code may set this.
  *
  * released    - the target was enabled and has now been released.
- * pending release - the target was released but some children still enabled
- *               so the ->release method hasn't been called yet.
  *
  * Initially these properties are read from the device tree. This allows the
  * client application to select which targets it does not care about to avoid
@@ -48,8 +46,7 @@ struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct 
  */
 enum pdbg_target_status {PDBG_TARGET_UNKNOWN = 0, PDBG_TARGET_ENABLED,
 			 PDBG_TARGET_DISABLED, PDBG_TARGET_MUSTEXIST,
-			 PDBG_TARGET_NONEXISTENT, PDBG_TARGET_RELEASED,
-			 PDBG_TARGET_PENDING_RELEASE };
+			 PDBG_TARGET_NONEXISTENT, PDBG_TARGET_RELEASED};
 
 #define pdbg_for_each_target(class, parent, target)			\
 	for (target = __pdbg_next_target(class, parent, NULL);		\
