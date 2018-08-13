@@ -4,7 +4,9 @@ AM_MAKEFLAGS = --no-print-directory
 GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty 2>/dev/null || echo unknown`
 
 bin_PROGRAMS = pdbg
-noinst_PROGRAMS = optcmd_test
+check_PROGRAMS = optcmd_test
+
+TESTS = optcmd_test
 
 ACLOCAL_AMFLAGS = -Im4
 AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror -O2
