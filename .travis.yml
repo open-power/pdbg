@@ -3,3 +3,4 @@ services:
 
 script:
     - ./utils/build.sh
+    - ./utils/test.sh
