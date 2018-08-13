@@ -36,3 +36,6 @@ m4
 *.dts
 *.dt.h
 optcmd_test
+*.trs
+*.log
+test-driver
