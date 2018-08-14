@@ -20,5 +20,6 @@
 void progress_init(void);
 void progress_tick(uint64_t cur, uint64_t end);
 void progress_end(void);
+void progress_shutup(void);
 
 #endif /* __PROGRESS_H */

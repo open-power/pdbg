@@ -20,6 +20,7 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "progress.h"
 
@@ -27,6 +28,7 @@ static uint64_t progress_pcent;
 static uint64_t progress_n_upd;
 static time_t progress_prevsec;
 static struct timespec progress_start;
+static bool shutup;
 
 #define PROGRESS_CHARS	50
 
@@ -35,6 +37,9 @@ static void progress_bar(unsigned int percent)
 	unsigned int i, progress;
 
 	assert(percent <= 100);
+
+	if (shutup)
+		return;
 
 	progress = (percent * PROGRESS_CHARS) / 101;
 
@@ -45,6 +50,11 @@ static void progress_bar(unsigned int percent)
 		fprintf(stderr, " ");
 	fprintf(stderr, "] %u%%", percent);
 	fflush(stderr);
+}
+
+void progress_shutup(void)
+{
+	shutup = true;
 }
 
 void progress_init(void)
@@ -63,6 +73,9 @@ void progress_tick(uint64_t cur, uint64_t end)
 	struct timespec now;
 	unsigned int pcent;
 	double sec;
+
+	if (shutup)
+		return;
 
 	pcent = (unsigned int)((cur * 100) / end);
 	if (progress_pcent == pcent && cur < progress_n_upd &&
@@ -100,5 +113,8 @@ void progress_tick(uint64_t cur, uint64_t end)
 
 void progress_end(void)
 {
+	if (shutup)
+		return;
+
 	fprintf(stderr, "\n");
 }

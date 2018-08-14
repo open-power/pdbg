@@ -37,6 +37,7 @@
 #include "htm.h"
 #include "options.h"
 #include "optcmd.h"
+#include "progress.h"
 
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
@@ -161,6 +162,8 @@ static void print_usage(char *pname)
 	printf("\t\tand defaults to 0x50 for I2C\n");
 	printf("\t-D, --debug=<debug level>\n");
 	printf("\t\t0:error (default) 1:warning 2:notice 3:info 4:debug\n");
+	printf("\t-S, --shutup\n");
+	printf("\t\tShut up those annoying progress bars\n");
 	printf("\t-V, --version\n");
 	printf("\t-h, --help\n");
 	printf("\n");
@@ -327,6 +330,7 @@ static bool parse_options(int argc, char *argv[])
 		{"cpu",			required_argument,	NULL,	'l'},
 #endif
 		{"debug",		required_argument,	NULL,	'D'},
+		{"shutup",		no_argument,		NULL,	'S'},
 		{"version",		no_argument,		NULL,	'V'},
 		{NULL,			0,			NULL,     0}
 	};
@@ -338,7 +342,7 @@ static bool parse_options(int argc, char *argv[])
 	memset(l_list, 0, sizeof(l_list));
 
 	do {
-		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:V" PPC_OPTS,
+		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:SV" PPC_OPTS,
 				long_opts, NULL);
 		if (c == -1)
 			break;
@@ -422,6 +426,10 @@ static bool parse_options(int argc, char *argv[])
 			opt_error = (errno || *endptr != '\0');
 			if (opt_error)
 				fprintf(stderr, "Invalid slave address '%s'\n", optarg);
+			break;
+
+		case 'S':
+			progress_shutup();
 			break;
 
 		case 'D':
