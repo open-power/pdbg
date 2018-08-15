@@ -348,7 +348,8 @@ do_skip
 test_run pdbg -b fake -p0 probe
 
 
-test_result 1 <<EOF
+test_result 1 --
+test_result_stderr <<EOF
 No processor(s) selected
 Use -p or -a to select processor(s)
 EOF
@@ -357,7 +358,8 @@ do_skip
 test_run pdbg -b fake -c0 probe
 
 
-test_result 1 <<EOF
+test_result 1 --
+test_result_stderr <<EOF
 No processor(s) selected
 Use -p or -a to select processor(s)
 EOF
@@ -366,7 +368,8 @@ do_skip
 test_run pdbg -b fake -t0 probe
 
 
-test_result 1 <<EOF
+test_result 1 --
+test_result_stderr <<EOF
 No processor(s) selected
 Use -p or -a to select processor(s)
 EOF
@@ -375,7 +378,8 @@ do_skip
 test_run pdbg -b fake -c0 -t0 probe
 
 
-test_result 1 <<EOF
+test_result 1 --
+test_result_stderr <<EOF
 No chip(s) selected
 Use -c or -a to select chip(s)
 EOF
@@ -469,7 +473,8 @@ do_skip
 test_run pdbg -b fake -p1,3 -p5 -p7-9 -c1 -c3 -c5 -t1 probe
 
 
-test_result 1 <<EOF
+test_result 1 --
+test_result_stderr <<EOF
 Value 100 larger than max 63
 Failed to parse '-p 100'
 EOF
@@ -478,7 +483,8 @@ do_skip
 test_run pdbg -b fake -p100 probe
 
 
-test_result 1 <<EOF
+test_result 1 --
+test_result_stderr <<EOF
 Value 100 larger than max 23
 Failed to parse '-c 100'
 EOF
@@ -487,7 +493,8 @@ do_skip
 test_run pdbg -b fake -c100 probe
 
 
-test_result 1 <<EOF
+test_result 1 --
+test_result_stderr <<EOF
 Value 100 larger than max 7
 Failed to parse '-t 100'
 EOF
