@@ -242,11 +242,11 @@ p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
 %.dtb: %.dts
 	$(DTC_V)$(DTC) -i$(dir $@) -I dts $< -O dtb > $@
 
-%.dt.h: %.dtb
+%.dt.h: %.dts
 	$(GEN_V)$(srcdir)/generate_dt_header.sh $< > $@
 
 %.dtb.o: %.dtb
-	$(AM_V_CC)$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell echo $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
+	$(AM_V_CC)$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell basename $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
 
 %.c: %.rl
 	$(RAGEL_V)$(RAGEL) -o $@ $<
