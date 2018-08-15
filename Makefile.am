@@ -7,7 +7,8 @@ bin_PROGRAMS = pdbg
 check_PROGRAMS = optcmd_test
 
 PDBG_TESTS = \
-	tests/test_selection.sh
+	tests/test_selection.sh 	\
+	tests/test_hw_bmc.sh
 
 TESTS = optcmd_test $(PDBG_TESTS)
 
