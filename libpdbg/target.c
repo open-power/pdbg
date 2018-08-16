@@ -276,7 +276,7 @@ struct hw_unit_info *find_compatible_target(const char *compat)
 
 void pdbg_targets_init(void *fdt)
 {
-	dt_root = dt_new_root("", NULL, 0);
+	dt_root = dt_new_node("", NULL, 0);
 	dt_expand(fdt);
 }
 

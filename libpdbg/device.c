@@ -51,7 +51,7 @@ static void free_name(const char *name)
 		free((char *)name);
 }
 
-static struct pdbg_target *new_node(const char *name, const void *fdt, int node_offset)
+struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
 {
 	struct hw_unit_info *hw_info = NULL;
 	const struct fdt_property *prop;
@@ -106,11 +106,6 @@ static struct pdbg_target *new_node(const char *name, const void *fdt, int node_
 	/* FIXME: locking? */
 	node->phandle = ++last_phandle;
 	return node;
-}
-
-struct pdbg_target *dt_new_root(const char *name, const void *fdt, int offset)
-{
-	return new_node(name, fdt, offset);
 }
 
 static const char *get_unitname(const struct pdbg_target *node)
@@ -771,7 +766,7 @@ int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node)
 			break;
 		case FDT_BEGIN_NODE:
 			name = fdt_get_name(fdt, offset, NULL);
-			child = dt_new_root(name, fdt, offset);
+			child = dt_new_node(name, fdt, offset);
 			assert(child);
 			nextoffset = dt_expand_node(child, fdt, offset);
 

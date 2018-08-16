@@ -46,8 +46,8 @@ extern u32 last_phandle;
 extern struct pdbg_target *dt_root;
 extern struct pdbg_target *dt_chosen;
 
-/* Create a root node: ie. a parentless one. */
-struct pdbg_target *dt_new_root(const char *name, const void *fdt, int offset);
+/* Create a new node. */
+struct pdbg_target *dt_new_node(const char *name, const void *fdt, int offset);
 
 /* Graft a root node into this tree. */
 bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root);
