@@ -11,9 +11,6 @@
 struct pdbg_target;
 struct pdbg_target_class;
 
-
-struct pdbg_taget *pdbg_root_target;
-
 /* loops/iterators */
 struct pdbg_target *__pdbg_next_target(const char *klass, struct pdbg_target *parent, struct pdbg_target *last);
 struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct pdbg_target *last);
