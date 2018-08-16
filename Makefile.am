@@ -55,8 +55,6 @@ DT = fake.dts $(DT_ARM) $(DT_PPC)
 DT_objects = $(DT:.dts=.dtb.o)
 DT_headers = $(DT:.dts=.dt.h)
 
-BUILT_SOURCES = $(DT) $(DT_headers)
-
 optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
 optcmd_test_CFLAGS = -Wall -g
 
@@ -79,6 +77,8 @@ pdbg_SOURCES = \
 	src/options.h \
 	src/parsers.h \
 	src/progress.h
+
+src/main.c: $(DT_headers)
 
 pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la libccan.a \
 	-L.libs -lrt
