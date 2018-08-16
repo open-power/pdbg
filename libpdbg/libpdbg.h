@@ -88,6 +88,7 @@ char *pdbg_target_class_name(struct pdbg_target *target);
 char *pdbg_target_name(struct pdbg_target *target);
 void *pdbg_target_priv(struct pdbg_target *target);
 void pdbg_target_priv_set(struct pdbg_target *target, void *priv);
+struct pdbg_target *pdbg_target_root(void);
 
 /* Procedures */
 int fsi_read(struct pdbg_target *target, uint32_t addr, uint32_t *val);

@@ -391,3 +391,8 @@ void pdbg_target_priv_set(struct pdbg_target *target, void *priv)
 {
 	target->priv = priv;
 }
+
+struct pdbg_target *pdbg_target_root(void)
+{
+	return dt_root;
+}
