@@ -89,6 +89,9 @@ struct pdbg_target *pdbg_target_parent(const char *class, struct pdbg_target *ta
 {
 	struct pdbg_target *parent;
 
+	if (!class)
+		return target->parent;
+
 	for (parent = target->parent; parent && parent->parent; parent = parent->parent) {
 		if (!strcmp(class, pdbg_target_class_name(parent)))
 			return parent;
