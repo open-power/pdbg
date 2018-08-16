@@ -86,6 +86,7 @@ uint32_t pdbg_target_index(struct pdbg_target *target);
 uint32_t pdbg_parent_index(struct pdbg_target *target, char *klass);
 char *pdbg_target_class_name(struct pdbg_target *target);
 char *pdbg_target_name(struct pdbg_target *target);
+const char *pdbg_target_dn_name(struct pdbg_target *target);
 void *pdbg_target_priv(struct pdbg_target *target);
 void pdbg_target_priv_set(struct pdbg_target *target, void *priv);
 struct pdbg_target *pdbg_target_root(void);

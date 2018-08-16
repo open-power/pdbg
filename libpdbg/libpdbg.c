@@ -127,6 +127,11 @@ char *pdbg_target_name(struct pdbg_target *target)
 	return target->name;
 }
 
+const char *pdbg_target_dn_name(struct pdbg_target *target)
+{
+	return target->dn_name;
+}
+
 void pdbg_set_target_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
 {
 	struct dt_property *p;
