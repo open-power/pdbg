@@ -100,33 +100,45 @@ int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 		 uint8_t *output, uint64_t size, bool ci)
 {
 	struct adu *adu;
+	uint8_t *output0;
 	int rc = 0;
-	uint64_t addr;
+	uint64_t addr0, addr;
 
 	assert(!strcmp(adu_target->class, "adu"));
 	adu = target_to_adu(adu_target);
 
+	output0 = output;
+
+	/* Align start address to 8-byte boundary */
+	addr0 = 8 * (start_addr / 8);
+
 	/* We read data in 8-byte aligned chunks */
-	for (addr = 8*(start_addr / 8); addr < start_addr + size; addr += 8) {
+	for (addr = addr0; addr < start_addr + size; addr += 8) {
 		uint64_t data;
 
 		if (adu->getmem(adu, addr, &data, ci))
 			return -1;
 
-		pdbg_progress_tick(addr - start_addr, size);
-
 		/* ADU returns data in big-endian form in the register */
 		data = __builtin_bswap64(data);
 
 		if (addr < start_addr) {
-			memcpy(output, ((uint8_t *) &data) + (start_addr - addr), 8 - (start_addr - addr));
-			output += 8 - (start_addr - addr);
+			size_t offset = start_addr - addr;
+			size_t n = (size <= 8-offset ? size : 8-offset);
+
+			memcpy(output, ((uint8_t *) &data) + offset, n);
+			output += n;
 		} else if (addr + 8 > start_addr + size) {
-			memcpy(output, &data, start_addr + size - addr);
+			uint64_t offset = start_addr + size - addr;
+
+			memcpy(output, &data, offset);
+			output += offset;
 		} else {
 			memcpy(output, &data, 8);
 			output += 8;
 		}
+
+		pdbg_progress_tick(output - output0, size);
 	}
 
 	pdbg_progress_tick(size, size);
