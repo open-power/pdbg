@@ -17,6 +17,8 @@ PDBG_TESTS = \
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
 
+test: $(libpdbg_tests)
+
 TEST_EXTENSIONS = .sh
 SH_LOG_DRIVER = $(SHELL) $(srcdir)/tests/run_test.sh
 
