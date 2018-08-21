@@ -3,14 +3,16 @@ AM_MAKEFLAGS = --no-print-directory
 
 GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty 2>/dev/null || echo unknown`
 
+libpdbg_tests = libpdbg_target_test
+
 bin_PROGRAMS = pdbg
-check_PROGRAMS = optcmd_test
+check_PROGRAMS = $(libpdbg_tests) optcmd_test
 
 PDBG_TESTS = \
 	tests/test_selection.sh 	\
 	tests/test_hw_bmc.sh
 
-TESTS = optcmd_test $(PDBG_TESTS)
+TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
 
 TEST_EXTENSIONS = .sh
 SH_LOG_DRIVER = $(SHELL) $(srcdir)/tests/run_test.sh
@@ -145,6 +147,17 @@ libccan_a_SOURCES = \
 	ccan/short_types/short_types.h \
 	ccan/str/str.c \
 	ccan/str/str.h
+
+libpdbg_test_cflags = -I$(top_srcdir)/libpdbg -I$(top_srcdir)/libfdt
+libpdbg_test_ldflags = -Wl,--whole-archive,-lpdbg,--no-whole-archive
+libpdbg_test_ldadd = -L.libs libpdbg.la libfdt.la
+
+libpdbg_target_test_SOURCES = src/tests/libpdbg_target_test.c
+libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
+libpdbg_target_test_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_target_test_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+
+src/tests/libpdbg_target_test.c: fake.dt.h
 
 M4_V = $(M4_V_$(V))
 M4_V_ = $(M4_V_$(AM_DEFAULT_VERBOSITY))
