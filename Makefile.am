@@ -3,7 +3,10 @@ AM_MAKEFLAGS = --no-print-directory
 
 GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty 2>/dev/null || echo unknown`
 
-libpdbg_tests = libpdbg_target_test
+libpdbg_tests = libpdbg_target_test \
+		libpdbg_probe_test1 \
+		libpdbg_probe_test2 \
+		libpdbg_probe_test3
 
 bin_PROGRAMS = pdbg
 check_PROGRAMS = $(libpdbg_tests) optcmd_test
@@ -158,6 +161,23 @@ libpdbg_target_test_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_target_test_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
 
 src/tests/libpdbg_target_test.c: fake.dt.h
+
+libpdbg_probe_test1_SOURCES = src/tests/libpdbg_probe_test.c
+libpdbg_probe_test1_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=1
+libpdbg_probe_test1_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_probe_test1_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+
+libpdbg_probe_test2_SOURCES = src/tests/libpdbg_probe_test.c
+libpdbg_probe_test2_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=2
+libpdbg_probe_test2_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_probe_test2_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+
+libpdbg_probe_test3_SOURCES = src/tests/libpdbg_probe_test.c
+libpdbg_probe_test3_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=3
+libpdbg_probe_test3_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_probe_test3_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+
+src/tests/libpdbg_probe_test.c: fake.dt.h
 
 M4_V = $(M4_V_$(V))
 M4_V_ = $(M4_V_$(AM_DEFAULT_VERBOSITY))
