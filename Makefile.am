@@ -96,8 +96,8 @@ pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\" \
 
 lib_LTLIBRARIES = libpdbg.la libfdt.la
 
-libfdt_la_CFLAGS = -I$(top_srcdir)/libfdt -DHAVE_LITTLE_ENDIAN
-libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -DHAVE_LITTLE_ENDIAN -Wall -Werror
+libfdt_la_CFLAGS = -I$(top_srcdir)/libfdt
+libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -Wall -Werror
 
 libfdt_la_SOURCES = \
 	libfdt/fdt.c \
