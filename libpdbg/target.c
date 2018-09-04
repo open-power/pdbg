@@ -20,8 +20,13 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 {
 	/* Check class */
 	while (strcmp(target->class, name)) {
+
+		if (target->translate)
+			*addr = target->translate(target, *addr);
+		else
+			*addr += dt_get_address(target, 0, NULL);
+
 		/* Keep walking the tree translating addresses */
-		*addr += dt_get_address(target, 0, NULL);
 		target = target->parent;
 
 		/* The root node doesn't have an address space so it's

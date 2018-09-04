@@ -38,6 +38,7 @@ struct pdbg_target {
 	char *class;
 	int (*probe)(struct pdbg_target *target);
 	void (*release)(struct pdbg_target *target);
+	uint64_t (*translate)(struct pdbg_target *target, uint64_t addr);
 	int index;
 	enum pdbg_target_status status;
 	const char *dn_name;
@@ -56,6 +57,12 @@ struct pdbg_target_class *find_target_class(const char *name);
 struct pdbg_target_class *require_target_class(const char *name);
 struct pdbg_target_class *get_target_class(const char *name);
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
+
+/* This works and should be safe because struct pdbg_target is guaranteed to be
+ * the first member of the specialised type (see the DECLARE_HW_UNIT definition
+ * below). I'm not sure how sane it is though. Probably not very but it does
+ * remove a bunch of tedious container_of() typing */
+#define translate_cast(x) (uint64_t (*)(struct pdbg_target *, uint64_t)) (x)
 
 extern struct list_head empty_list;
 extern struct list_head target_classes;
