@@ -255,7 +255,7 @@ fail:
 
 int run_htm(int optind, int argc, char *argv[])
 {
-	struct pdbg_target *target;
+	struct pdbg_target *target, *nhtm;
 	enum htm_type type;
 	struct pdbg_target *core_target = NULL;
 	int i, rc = 0;
@@ -319,6 +319,16 @@ int run_htm(int optind, int argc, char *argv[])
 				target_select(target);
 				pdbg_target_probe(target);
 			}
+		}
+	}
+
+	if (type == HTM_NEST) {
+		pdbg_for_each_class_target("pib", target) {
+			if (!target_selected(target))
+				continue;
+
+			pdbg_for_each_target("nhtm", target, nhtm)
+				target_select(nhtm);
 		}
 	}
 
