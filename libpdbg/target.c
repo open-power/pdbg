@@ -24,10 +24,9 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 		*addr += dt_get_address(target, 0, NULL);
 		target = target->parent;
 
-		/* The should always be a parent. If there isn't it
-		 * means we traversed up the whole device tree and
-		 * didn't find a parent matching the given class. */
-		assert(target);
+		/* The root node doesn't have an address space so it's
+		 * an error in the device tree if we hit this. */
+		assert(target != dt_root);
 	}
 
 	return target;
