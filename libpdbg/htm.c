@@ -615,35 +615,6 @@ static int get_trace_base(struct htm *htm, uint64_t *base)
 	return !(rc == 1);
 }
 
-static bool is_resetable(struct htm_status *status)
-{
-	return status->state == COMPLETE ||
-		status->state == REPAIR ||
-		status->state == INIT;
-}
-
-static bool is_configured(struct htm *htm)
-{
-	struct htm_status status;
-	uint64_t val;
-
-	if (HTM_ERR(get_status(htm, &status)))
-		return false;
-
-	/*
-	 * We've most likely just booted and everything is zeroed
-	 */
-	if (status.raw == 0 && status.mem_base == 0 && status.mem_size == 0)
-		return false;
-
-	if (HTM_ERR(pib_read(&htm->target, HTM_COLLECTION_MODE, &val)))
-		return false;
-
-	if (!(val & HTM_MODE_ENABLE))
-		return false;
-
-	return true;
-}
 static int configure_memory(struct htm *htm)
 {
 	uint64_t size, base, val, small, mem_size;
@@ -742,12 +713,10 @@ static int do_htm_reset(struct htm *htm, bool wrap)
 	if (HTM_ERR(get_status(htm, &status)))
 		return -1;
 
-	if (!is_resetable(&status) || !is_configured(htm)) {
-		if (configure_nhtm(htm, wrap) < 0)
-			return -1;
-		if (configure_chtm(htm, wrap) < 0)
-			return -1;
-	}
+	if (configure_nhtm(htm, wrap) < 0)
+		return -1;
+	if (configure_chtm(htm, wrap) < 0)
+		return -1;
 
 	if (HTM_ERR(configure_memory(htm)))
 		return -1;
