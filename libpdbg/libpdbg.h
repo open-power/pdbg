@@ -84,6 +84,8 @@ void pdbg_target_release(struct pdbg_target *target);
 enum pdbg_target_status pdbg_target_status(struct pdbg_target *target);
 void pdbg_target_status_set(struct pdbg_target *target, enum pdbg_target_status status);
 uint32_t pdbg_target_index(struct pdbg_target *target);
+char *pdbg_target_path(const struct pdbg_target *target);
+struct pdbg_target *pdbg_target_from_path(struct pdbg_target *target, const char *path);
 uint32_t pdbg_parent_index(struct pdbg_target *target, char *klass);
 char *pdbg_target_class_name(struct pdbg_target *target);
 char *pdbg_target_name(struct pdbg_target *target);

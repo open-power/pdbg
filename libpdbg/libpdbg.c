@@ -135,6 +135,19 @@ const char *pdbg_target_dn_name(struct pdbg_target *target)
 	return target->dn_name;
 }
 
+char *pdbg_target_path(const struct pdbg_target *target)
+{
+	return dt_get_path(target);
+}
+
+struct pdbg_target *pdbg_target_from_path(struct pdbg_target *target, const char *path)
+{
+	if (!target)
+		target = dt_root;
+
+	return dt_find_by_path(target, path);
+}
+
 void pdbg_set_target_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
 {
 	struct dt_property *p;
