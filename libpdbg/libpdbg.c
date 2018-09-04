@@ -186,6 +186,18 @@ static int pdbg_get_target_u64_property(struct pdbg_target *target, const char *
 	return 0;
 }
 
+int pdbg_get_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val)
+{
+	struct dt_property *p;
+
+	p = dt_find_property(target, name);
+	if (!p)
+		return -1;
+
+	*val = dt_get_number(p->prop, 1);
+	return 0;
+}
+
 int pdbg_get_u64_property(struct pdbg_target *target, const char *name, uint64_t *val)
 {
 	struct pdbg_target *dn;

@@ -72,6 +72,7 @@ void pdbg_set_target_property(struct pdbg_target *target, const char *name, cons
 
 /* Get the given property and return the size */
 void *pdbg_get_target_property(struct pdbg_target *target, const char *name, size_t *size);
+int pdbg_get_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val);
 int pdbg_get_u64_property(struct pdbg_target *target, const char *name, uint64_t *val);
 uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size);
 
