@@ -730,8 +730,14 @@ static int do_htm_reset(struct htm *htm, bool wrap)
 static int htm_toggle_debug_bit(struct htm *htm)
 {
 	struct pdbg_target *target;
-	struct pdbg_target *core = pdbg_target_require_parent("core", &htm->target);
+	struct pdbg_target *core;
 	uint64_t reg;
+
+	/* NHTM doesn't have a core as a parent but donesn't need this
+	 * bit toggled */
+	core = pdbg_target_parent("core", &htm->target);
+	if (!core)
+		return 0; /* nhtm case */
 
 	/* FIXME: this is a hack for P8 */
 	if (!dt_node_is_compatible(core, "ibm,power8-core")) {
