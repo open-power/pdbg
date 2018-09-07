@@ -37,6 +37,24 @@ uint32_t *parse_number32(const char *argv)
 	return n;
 }
 
+uint16_t *parse_number16(const char *argv)
+{
+	unsigned long long tmp;
+	uint16_t *n = malloc(sizeof(*n));
+	char *endptr;
+
+	if (!argv)
+		return NULL;
+
+	errno = 0;
+	tmp = strtoul(argv, &endptr, 0);
+	if (errno || *endptr != '\0' || tmp > UINT16_MAX)
+		return NULL;
+
+	*n = tmp;
+	return n;
+}
+
 /* Parse a GPR number, returning an error if it's greater than 32 */
 int *parse_gpr(const char *argv)
 {
