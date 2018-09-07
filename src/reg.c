@@ -24,6 +24,7 @@
 #include "main.h"
 #include "optcmd.h"
 
+#define REG_CR -5
 #define REG_XER -4
 #define REG_MEM -3
 #define REG_MSR -2
@@ -45,6 +46,8 @@ static void print_proc_reg(struct pdbg_target *target, uint64_t reg, uint64_t va
 		printf("nia: ");
 	else if (reg == REG_XER)
 		printf("xer: ");
+	else if (reg == REG_CR)
+		printf("cr: ");
 	else if (reg > REG_R31)
 		printf("spr%03" PRIu64 ": ", reg - REG_R31);
 	else if (reg >= 0 && reg <= 31)
@@ -68,6 +71,8 @@ static int putprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg,
 		rc = ram_putnia(target, *value);
 	else if (*reg == REG_XER)
 		rc = ram_putxer(target, *value);
+	else if (*reg == REG_CR)
+		rc = ram_putcr(target, *value);
 	else if (*reg > REG_R31)
 		rc = ram_putspr(target, *reg - REG_R31, *value);
 	else if (*reg >= 0 && *reg <= 31)
@@ -89,6 +94,8 @@ static int getprocreg(struct pdbg_target *target, uint32_t index, uint64_t *reg,
 		rc = ram_getnia(target, &value);
 	else if (*reg == REG_XER)
 		rc = ram_getxer(target, &value);
+	else if (*reg == REG_CR)
+		rc = ram_getcr(target, (uint32_t *)&value);
 	else if (*reg > REG_R31)
 		rc = ram_getspr(target, *reg - REG_R31, &value);
 	else if (*reg >= 0 && *reg <= 31)
@@ -169,3 +176,18 @@ static int putxer(uint64_t data)
 	return for_each_target("thread", putprocreg, &reg, &d);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putxer, putxer, (DATA));
+
+static int getcr(void)
+{
+	uint64_t cr = REG_CR;
+	return for_each_target("thread", getprocreg, &cr, NULL);
+}
+OPTCMD_DEFINE_CMD(getcr, getcr);
+
+static int putcr(uint32_t data)
+{
+	uint64_t cr = REG_CR;
+	uint64_t d = data;
+	return for_each_target("thread", putprocreg, &cr, &d);
+}
+OPTCMD_DEFINE_CMD_WITH_ARGS(putcr, putcr, (DATA32));
