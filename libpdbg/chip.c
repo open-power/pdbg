@@ -52,6 +52,20 @@ static uint64_t mfocrf(uint64_t reg, uint64_t cr)
 	return MFOCRF_OPCODE | (reg << 21) | (1U << (12 + cr));
 }
 
+static uint64_t mtocrf(uint64_t cr, uint64_t reg)
+{
+	if (reg > 31) {
+		PR_ERROR("Invalid register specified for mfocrf\n");
+		exit(1);
+	}
+	if (cr > 7) {
+		PR_ERROR("Invalid CR field specified\n");
+		exit(1);
+	}
+
+	return MTOCRF_OPCODE | (reg << 21) | (1U << (12 + cr));
+}
+
 static uint64_t mfnia(uint64_t reg)
 {
 	if (reg > 31)
@@ -300,6 +314,18 @@ int ram_getcr(struct pdbg_target *thread, uint32_t *value)
 	}
 
 	*value = cr;
+	return 0;
+}
+
+int ram_putcr(struct pdbg_target *thread, uint32_t value)
+{
+	uint64_t opcodes[] = {mfspr(0, 277), mtocrf(0, 0), mtocrf(1, 0),
+			      mtocrf(2, 0), mtocrf(3, 0), mtocrf(4, 0),
+			      mtocrf(5, 0), mtocrf(6, 0), mtocrf(7, 0)};
+	uint64_t results[] = {value};
+
+	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
+
 	return 0;
 }
 

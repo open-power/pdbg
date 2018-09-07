@@ -142,6 +142,7 @@ int ram_putspr(struct pdbg_target *target, int spr, uint64_t val);
 int ram_putgpr(struct pdbg_target *target, int spr, uint64_t val);
 int ram_getmsr(struct pdbg_target *target, uint64_t *val);
 int ram_getcr(struct pdbg_target *thread,  uint32_t *value);
+int ram_putcr(struct pdbg_target *thread,  uint32_t value);
 int ram_getnia(struct pdbg_target *target, uint64_t *val);
 int ram_getspr(struct pdbg_target *target, int spr, uint64_t *val);
 int ram_getgpr(struct pdbg_target *target, int gpr, uint64_t *val);
