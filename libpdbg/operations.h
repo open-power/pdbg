@@ -20,9 +20,6 @@
 #include "target.h"
 #include "debug.h"
 
-/* Error codes */
-#define EFSI 1
-
 #define PRINT_ERR PR_DEBUG("failed\n");
 #define CHECK_ERR(x) do {					\
 	if (x) {	       					\
