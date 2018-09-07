@@ -29,7 +29,7 @@
 static uint64_t mfspr(uint64_t reg, uint64_t spr)
 {
 	if (reg > 31)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid register specified for mfspr\n");
 
 	return MFSPR_OPCODE | (reg << 21) | ((spr & 0x1f) << 16) | ((spr & 0x3e0) << 6);
 }
@@ -37,7 +37,7 @@ static uint64_t mfspr(uint64_t reg, uint64_t spr)
 static uint64_t mtspr(uint64_t spr, uint64_t reg)
 {
 	if (reg > 31)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid register specified for mtspr\n");
 
 	return MTSPR_OPCODE | (reg << 21) | ((spr & 0x1f) << 16) | ((spr & 0x3e0) << 6);
 }
@@ -45,9 +45,9 @@ static uint64_t mtspr(uint64_t spr, uint64_t reg)
 static uint64_t mfocrf(uint64_t reg, uint64_t cr)
 {
 	if (reg > 31)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid register specified for mfocrf\n");
 	if (cr > 7)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid CR field specified\n");
 
 	return MFOCRF_OPCODE | (reg << 21) | (1U << (12 + cr));
 }
@@ -55,7 +55,7 @@ static uint64_t mfocrf(uint64_t reg, uint64_t cr)
 static uint64_t mfnia(uint64_t reg)
 {
 	if (reg > 31)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid register specified for mfnia\n");
 
 	return MFNIA_OPCODE | (reg << 21);
 }
@@ -63,7 +63,7 @@ static uint64_t mfnia(uint64_t reg)
 static uint64_t mtnia(uint64_t reg)
 {
 	if (reg > 31)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid register specified for mtnia\n");
 
 	return MTNIA_OPCODE | (reg << 21);
 }
@@ -71,7 +71,7 @@ static uint64_t mtnia(uint64_t reg)
 static uint64_t mfmsr(uint64_t reg)
 {
 	if (reg > 31)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid register specified for mfmsr\n");
 
 	return MFMSR_OPCODE | (reg << 21);
 }
@@ -79,7 +79,7 @@ static uint64_t mfmsr(uint64_t reg)
 static uint64_t mtmsr(uint64_t reg)
 {
 	if (reg > 31)
-		PR_ERROR("Invalid register specified\n");
+		PR_ERROR("Invalid register specified for mtmsr\n");
 
 	return MTMSR_OPCODE | (reg << 21);
 }
