@@ -83,8 +83,60 @@
 #define EX_PM_GP0_REG			0xf0100
 #define  SPECIAL_WKUP_DONE		PPC_BIT(31)
 
+/* p8 specific opcodes for instruction ramming*/
+#define MTXERF0_OPCODE 0x00000008UL
+#define MTXERF1_OPCODE 0x00000108UL
+#define MTXERF2_OPCODE 0x00000208UL
+#define MTXERF3_OPCODE 0x00000308UL
+#define MFXERF0_OPCODE 0x00000010UL
+#define MFXERF1_OPCODE 0x00000110UL
+#define MFXERF2_OPCODE 0x00000210UL
+#define MFXERF3_OPCODE 0x00000310UL
+
 /* How long (in us) to wait for a special wakeup to complete */
 #define SPECIAL_WKUP_TIMEOUT		10
+
+#include "chip.h"
+
+static uint64_t mfxerf(uint64_t reg, uint64_t field)
+{
+	if (reg > 31)
+		PR_ERROR("Invalid register specified for mfxerf\n");
+
+	switch (field) {
+	case 0:
+		return MFXERF0_OPCODE | (reg << 21);
+	case 1:
+		return MFXERF1_OPCODE | (reg << 21);
+	case 2:
+		return MFXERF2_OPCODE | (reg << 21);
+	case 3:
+		return MFXERF3_OPCODE | (reg << 21);
+	default:
+		PR_ERROR("Invalid XER field specified\n");
+	}
+	return 0;
+}
+
+static uint64_t mtxerf(uint64_t reg, uint64_t field)
+{
+	if (reg > 31)
+		PR_ERROR("Invalid register specified for mtxerf\n");
+
+	switch (field) {
+	case 0:
+		return MTXERF0_OPCODE | (reg << 21);
+	case 1:
+		return MTXERF1_OPCODE | (reg << 21);
+	case 2:
+		return MTXERF2_OPCODE | (reg << 21);
+	case 3:
+		return MTXERF3_OPCODE | (reg << 21);
+	default:
+		PR_ERROR("Invalid XER field specified\n");
+	}
+	return 0;
+}
 
 static int assert_special_wakeup(struct core *chip)
 {
@@ -386,6 +438,38 @@ static int p8_ram_destroy(struct thread *thread)
 	return 0;
 }
 
+static int p8_ram_getxer(struct pdbg_target *thread, uint64_t *value)
+{
+	uint64_t opcodes[] = {mfxerf(0, 0), mtspr(277, 0), mfxerf(0, 1),
+			      mtspr(277, 0), mfxerf(0, 2), mtspr(277, 0),
+			      mfxerf(0, 3), mtspr(277, 0)};
+	uint64_t results[] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+	/* On POWER8 we can't get xer with getspr. We seem to only be able to
+	 * get and set IBM bits 32-34 and 44-56.
+	 */
+	PR_WARNING("Can only get/set IBM bits 32-34 and 44-56 of the XER register\n");
+
+
+	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
+
+	*value = results[1] | results[3] | results[5] | results[7];
+	return 0;
+}
+
+static int p8_ram_putxer(struct pdbg_target *thread, uint64_t value)
+{
+	uint64_t fields[] = {value, value, value, value, 0};
+	uint64_t opcodes[] = {mfspr(0, 277), mtxerf(0, 0), mtxerf(0, 1), mtxerf(0, 2), mtxerf(0, 3)};
+
+	/* We seem to only be able to get and set IBM bits 32-34 and 44-56.*/
+	PR_WARNING("Can only set IBM bits 32-34 and 44-56 of the XER register\n");
+
+	CHECK_ERR(ram_instructions(thread, opcodes, fields, ARRAY_SIZE(opcodes), 0));
+
+	return 0;
+}
+
 /*
  * Initialise all viable threads for ramming on the given core.
  */
@@ -413,6 +497,8 @@ static struct thread p8_thread = {
 	.ram_setup = p8_ram_setup,
 	.ram_instruction = p8_ram_instruction,
 	.ram_destroy = p8_ram_destroy,
+	.ram_getxer = p8_ram_getxer,
+	.ram_putxer = p8_ram_putxer,
 };
 DECLARE_HW_UNIT(p8_thread);
 

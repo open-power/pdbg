@@ -26,7 +26,7 @@
 #include "bitutils.h"
 #include "debug.h"
 
-static uint64_t mfspr(uint64_t reg, uint64_t spr)
+uint64_t mfspr(uint64_t reg, uint64_t spr)
 {
 	if (reg > 31)
 		PR_ERROR("Invalid register specified for mfspr\n");
@@ -34,7 +34,7 @@ static uint64_t mfspr(uint64_t reg, uint64_t spr)
 	return MFSPR_OPCODE | (reg << 21) | ((spr & 0x1f) << 16) | ((spr & 0x3e0) << 6);
 }
 
-static uint64_t mtspr(uint64_t spr, uint64_t reg)
+uint64_t mtspr(uint64_t spr, uint64_t reg)
 {
 	if (reg > 31)
 		PR_ERROR("Invalid register specified for mtspr\n");
@@ -148,7 +148,7 @@ int ram_sreset_thread(struct pdbg_target *thread_target)
  * data. Note that only register r0 is saved and restored so opcodes
  * must not touch other registers.
  */
-static int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes,
+int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes,
 			    uint64_t *results, int len, unsigned int lpar)
 {
 	uint64_t opcode = 0, r0 = 0, r1 = 0, scratch = 0;
@@ -168,6 +168,7 @@ static int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes
 	/* RAM instructions */
 	for (i = -2; i < len + 2; i++) {
 		if (i == -2)
+			/* Save r1 (assumes opcodes don't touch other registers) */
 			opcode = mtspr(277, 1);
 		else if (i == -1)
 			/* Save r0 (assumes opcodes don't touch other registers) */
@@ -309,6 +310,31 @@ int ram_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value)
 	return 0;
 }
 
+int ram_getxer(struct pdbg_target *thread_target, uint64_t *value)
+{
+
+	struct thread *thread;
+
+	assert(!strcmp(thread_target->class, "thread"));
+	thread = target_to_thread(thread_target);
+
+	CHECK_ERR(thread->ram_getxer(thread_target, value));
+
+	return 0;
+}
+
+int ram_putxer(struct pdbg_target *thread_target, uint64_t value)
+{
+	struct thread *thread;
+
+	assert(!strcmp(thread_target->class, "thread"));
+	thread = target_to_thread(thread_target);
+
+	CHECK_ERR(thread->ram_putxer(thread_target, value));
+
+	return 0;
+}
+
 /*
  * Read the given ring from the given chiplet. Result must be large enough to hold ring_len bits.
  */
@@ -368,12 +394,8 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 	}
 	printf("CR    : 0x%08" PRIx32 "\n", regs->cr);
 
-#if 0
-	/* TODO: Disabling because reading SPR 0x1 reliably checkstops a P8 */
-	ram_getspr(thread, 0x1, &value);
-	regs->xer = value;
-	printf("XER   : 0x%08" PRIx32 "\n", regs->xer);
-#endif
+	ram_getxer(thread, &regs->xer);
+	printf("XER   : 0x%08" PRIx64 "\n", regs->xer);
 
 	printf("GPRS  :\n");
 	for (i = 0; i < 32; i++) {

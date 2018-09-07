@@ -153,6 +153,8 @@ struct thread {
 	int (*ram_setup)(struct thread *);
 	int (*ram_instruction)(struct thread *, uint64_t opcode, uint64_t *scratch);
 	int (*ram_destroy)(struct thread *);
+	int (*ram_getxer)(struct pdbg_target *, uint64_t *value);
+	int (*ram_putxer)(struct pdbg_target *, uint64_t value);
 };
 #define target_to_thread(x) container_of(x, struct thread, target)
 

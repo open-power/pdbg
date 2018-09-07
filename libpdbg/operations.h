@@ -64,9 +64,10 @@
 #define MFOCRF_OPCODE 0x7c100026UL
 #define MFSPR_MASK (MFSPR_OPCODE | ((0x1f) << 16) | ((0x3e0) << 6))
 #define MFXER_OPCODE (MFSPR_OPCODE | ((1 & 0x1f) << 16) | ((1 & 0x3e0) << 6))
+#define MTXER_OPCODE (MTSPR_OPCODE | ((1 & 0x1f) << 16) | ((1 & 0x3e0) << 6))
 #define LD_OPCODE 0xe8000000UL
 
-#define MFSPR_SPR(opcode) (((opcode >> 16) & 0x1f) | ((opcode >> 6) & 0x3e0))
+#define MXSPR_SPR(opcode) (((opcode >> 16) & 0x1f) | ((opcode >> 6) & 0x3e0))
 
 /* GDB server functionality */
 int gdbserver_start(uint16_t port);
