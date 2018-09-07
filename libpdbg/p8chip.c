@@ -82,6 +82,8 @@
 #define  FSP_SPECIAL_WAKEUP		PPC_BIT(0)
 #define EX_PM_GP0_REG			0xf0100
 #define  SPECIAL_WKUP_DONE		PPC_BIT(31)
+#define HID0_REG                 	0x1329c
+#define EN_ATTN                 	PPC_BIT(31)
 
 /* p8 specific opcodes for instruction ramming*/
 #define MTXERF0_OPCODE 0x00000008UL
@@ -483,6 +485,44 @@ static int p8_thread_probe(struct pdbg_target *target)
 	return 0;
 }
 
+static int p8_get_hid0(struct pdbg_target *chip, uint64_t *value)
+{
+	CHECK_ERR(pib_read(chip, HID0_REG, value));
+	return 0;
+}
+
+static int p8_put_hid0(struct pdbg_target *chip, uint64_t value)
+{
+	CHECK_ERR(pib_write(chip, HID0_REG, value));
+	return 0;
+}
+
+static int p8_enable_attn(struct pdbg_target *target)
+{
+	struct pdbg_target *core;
+	uint64_t hid0;
+
+	core = pdbg_target_parent("core", target);
+	if (core == NULL)
+	{
+		PR_ERROR("CORE NOT FOUND\n");
+		return 1;
+	}
+
+	/* Need to enable the attn instruction in HID0 */
+	if (p8_get_hid0(core, &hid0)) {
+		PR_ERROR("Unable to get HID0\n");
+		return 1;
+	}
+	hid0 |= EN_ATTN;
+
+	if (p8_put_hid0(core, hid0)) {
+		PR_ERROR("Unable to set HID0\n");
+		return 1;
+	}
+	return 0;
+}
+
 static struct thread p8_thread = {
 	.target = {
 		.name = "POWER8 Thread",
@@ -499,6 +539,7 @@ static struct thread p8_thread = {
 	.ram_destroy = p8_ram_destroy,
 	.ram_getxer = p8_ram_getxer,
 	.ram_putxer = p8_ram_putxer,
+	.enable_attn = p8_enable_attn,
 };
 DECLARE_HW_UNIT(p8_thread);
 
