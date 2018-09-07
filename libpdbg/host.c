@@ -95,7 +95,15 @@ static int host_pib_probe(struct pdbg_target *target)
 	if (chip_id == -1)
 		goto out;
 
-	if (asprintf(&access_fn, "%s/%08x/access", XSCOM_BASE_PATH, chip_id) < 0)
+	/* This check should probably be done earlier */
+	if (access(XSCOM_BASE_PATH, F_OK) == -1)
+	{
+		PR_ERROR("Can not access %s. ", XSCOM_BASE_PATH);
+		PR_ERROR("Is CONFIG_SCOM_DEBUGFS set? ");
+		PR_ERROR("You may need to re-run the command as root.\n");
+	}
+
+	if (asprintf(&access_fn, "%s/%08d/access", XSCOM_BASE_PATH, chip_id) < 0)
 		goto out;
 
 	*fd = open(access_fn, O_RDWR);
