@@ -281,13 +281,25 @@ int ram_getmsr(struct pdbg_target *thread, uint64_t *value)
 	return 0;
 }
 
-int ram_getcr(struct pdbg_target *thread, int cr, uint64_t *value)
+int ram_getcr(struct pdbg_target *thread, uint32_t *value)
 {
-	uint64_t opcodes[] = {mfocrf(0, cr), mtspr(277, 0)};
-	uint64_t results[] = {0, 0};
+
+	uint64_t opcodes[] = {mfocrf(0, 0), mtspr(277, 0), mfocrf(0, 1), mtspr(277, 0),
+			      mfocrf(0, 2), mtspr(277, 0), mfocrf(0, 3), mtspr(277, 0),
+			      mfocrf(0, 4), mtspr(277, 0), mfocrf(0, 5), mtspr(277, 0),
+			      mfocrf(0, 6), mtspr(277, 0), mfocrf(0, 7), mtspr(277, 0)};
+	uint64_t results[16] = {0};
+	uint32_t cr_field, cr = 0;
+	int i;
 
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
-	*value = results[1];
+	for (i = 1; i < 16; i += 2) {
+		cr_field = results[i];
+		/* We are not guaranteed that the other bits will be zeroed out */
+		cr |= cr_field & (0xf << 2*(i-1));
+	}
+
+	*value = cr;
 	return 0;
 }
 
@@ -386,12 +398,7 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 	ram_getspr(thread, 815, &regs->tar);
 	printf("TAR   : 0x%016" PRIx64 "\n", regs->tar);
 
-	regs->cr = 0;
-	for (i = 0; i < 8; i++) {
-		uint64_t cr = 0;
-		ram_getcr(thread, i, &cr);
-		regs->cr |= cr;
-	}
+	ram_getcr(thread, &regs->cr);
 	printf("CR    : 0x%08" PRIx32 "\n", regs->cr);
 
 	ram_getxer(thread, &regs->xer);
