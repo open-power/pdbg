@@ -277,6 +277,7 @@ retry:
 		else {
 			PR_ERROR("Unable to read memory. "		\
 					 "ALTD_STATUS_REG = 0x%016" PRIx64 "\n", val);
+			adu_unlock(adu);
 			return -1;
 		}
 	}
