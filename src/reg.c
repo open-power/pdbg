@@ -116,7 +116,7 @@ OPTCMD_DEFINE_CMD(getnia, getnia);
 static int putnia(uint64_t nia)
 {
 	uint64_t reg = REG_NIA;
-	return for_each_target("thread", getprocreg, &reg, &nia);
+	return for_each_target("thread", putprocreg, &reg, &nia);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putnia, putnia, (DATA));
 
