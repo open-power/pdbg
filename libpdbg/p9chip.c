@@ -291,9 +291,9 @@ static int __p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t
 
 	switch(opcode & OPCODE_MASK) {
 	case MTNIA_OPCODE:
+		opcode = 0x4c0000a4;
+		opcode |= 0x001e0000;
 		predecode = 8;
-		/* Not currently supported as we can only MTNIA from LR */
-		PR_ERROR("MTNIA is not currently supported\n");
 		break;
 
 	case MFNIA_OPCODE:
@@ -302,6 +302,7 @@ static int __p9_ram_instruction(struct thread *thread, uint64_t opcode, uint64_t
 		break;
 
 	case MTMSR_OPCODE:
+		opcode |= 0x001e0000;
 		predecode = 8;
 		break;
 
