@@ -159,8 +159,8 @@ int ram_sreset_thread(struct pdbg_target *thread_target)
  * into *results. *results must point to an array the same size as
  * *opcodes. Each entry from *results is put into SCR0 prior to
  * executing an opcode so that it may also be used to pass in
- * data. Note that only register r0 is saved and restored so opcodes
- * must not touch other registers.
+ * data. Note that only registers r0 and r1 are saved and restored so
+ * opcode sequences must preserve other registers.
  */
 int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes,
 			    uint64_t *results, int len, unsigned int lpar)
@@ -257,10 +257,21 @@ int ram_getnia(struct pdbg_target *thread, uint64_t *value)
 	return 0;
 }
 
+/*
+ * P9 must MTNIA from LR, P8 can MTNIA from R0. So we set both LR and R0
+ * to value. LR must be saved and restored.
+ *
+ * This is a hack and should be made much cleaner once we have target
+ * specific putspr commands.
+ */
 int ram_putnia(struct pdbg_target *thread, uint64_t value)
 {
-	uint64_t opcodes[] = {mfspr(0, 277), mtnia(0)};
-	uint64_t results[] = {value, 0};
+	uint64_t opcodes[] = {	mfspr(1, 8),	/* mflr r1 */
+				mfspr(0, 277),	/* value -> r0 */
+				mtspr(8, 0),	/* mtlr r0 */
+				mtnia(0),
+				mtspr(8, 1), };	/* mtlr r1 */
+	uint64_t results[] = {0, value, 0, 0, 0};
 
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	return 0;
