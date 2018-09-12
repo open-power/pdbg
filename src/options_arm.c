@@ -21,6 +21,11 @@
 
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
 #define OPENFSI_BMC "/sys/bus/platform/devices/gpio-fsi/fsi0/"
+#define FSI_CFAM_ID "/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/cfam_id"
+
+#define CHIP_ID_P8  0xea
+#define CHIP_ID_P9  0xd1
+#define CHIP_ID_P8P 0xd3
 
 enum backend default_backend(void)
 {
@@ -46,6 +51,44 @@ void print_targets(FILE *stream)
 	fprintf(stream, "kernel: No target is necessary\n");
 	fprintf(stream, "i2c: No target is necessary\n");
 	fprintf(stream, "fsi: p8 p9w p9r p9z\n");
+}
+
+static const char *default_kernel_target(void)
+{
+	FILE *cfam_id_file;
+
+	/* Try and determine the correct device type */
+	cfam_id_file = fopen(FSI_CFAM_ID, "r");
+	if (cfam_id_file) {
+		uint32_t cfam_id = 0;
+
+		fscanf(cfam_id_file, "0x%" PRIx32, &cfam_id);
+		fclose(cfam_id_file);
+
+		switch((cfam_id >> 4) & 0xff) {
+		case CHIP_ID_P9:
+			return "p9";
+			break;
+
+		case CHIP_ID_P8:
+		case CHIP_ID_P8P:
+			return "p8";
+			break;
+
+		default:
+			pdbg_log(PDBG_ERROR, "Unknown chip-id detected\n");
+			pdbg_log(PDBG_ERROR, "You will need to specify a host type with -d <host type>\n");
+			return NULL;
+		}
+	} else {
+		/* The support for POWER8 included the cfam_id
+		 * so if it doesn't exist assume we must be on
+		 * P9 */
+		pdbg_log(PDBG_WARNING, "Unable to determine host type, defaulting to p9\n");
+		return "p9";
+	}
+
+	return NULL;
 }
 
 static const char *default_fsi_target(void)
@@ -86,7 +129,7 @@ const char *default_target(enum backend backend)
 		break;
 
 	case KERNEL:
-		return NULL;
+		return default_kernel_target();
 		break;
 
 	case FSI:
