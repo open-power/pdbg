@@ -26,15 +26,9 @@ enum backend default_backend(void)
 	return HOST;
 }
 
-bool backend_is_possible(enum backend backend)
-{
-	/* TODO */
-	return backend == HOST;
-}
-
 void print_backends(FILE *stream)
 {
-	fprintf(stream, "Valid backends: host\n");
+	fprintf(stream, "Valid backends: host fake\n");
 }
 
 const char *default_target(enum backend backend)
@@ -75,18 +69,4 @@ const char *default_target(enum backend backend)
 void print_targets(FILE *stream)
 {
 	fprintf(stream, "host: p8 p9\n");
-}
-
-bool target_is_possible(enum backend backend, const char *target)
-{
-	const char *def;
-
-	if (!backend_is_possible(backend))
-		return false;
-
-	def = default_target(backend);
-	if (!def || !target)
-		return false;
-
-	return strcmp(def, target) == 0;
 }

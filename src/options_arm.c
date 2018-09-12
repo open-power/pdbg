@@ -22,11 +22,6 @@
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
 #define OPENFSI_BMC "/sys/bus/platform/devices/gpio-fsi/fsi0/"
 
-static const char witherspoon[] = "p9w";
-static const char romulus[] = "p9r";
-static const char zaius[] = "p9z";
-static const char p8[] = "p8";
-
 enum backend default_backend(void)
 {
 	int rc;
@@ -43,17 +38,7 @@ enum backend default_backend(void)
 
 void print_backends(FILE *stream)
 {
-	fprintf(stream, "Valid backends: i2c kernel fsi\n");
-}
-
-bool backend_is_possible(enum backend backend)
-{
-	if (backend == I2C)
-		return true;
-	if (backend == KERNEL && access(OPENFSI_BMC, F_OK) == 0)
-		return true;
-
-	return backend == FSI;
+	fprintf(stream, "Valid backends: i2c kernel fsi fake\n");
 }
 
 void print_targets(FILE *stream)
@@ -63,14 +48,11 @@ void print_targets(FILE *stream)
 	fprintf(stream, "fsi: p8 p9w p9r p9z\n");
 }
 
-const char *default_target(enum backend backend)
+static const char *default_fsi_target(void)
 {
 	FILE *dt_compatible;
 	char line[256];
 	char *p;
-
-	if (backend == I2C || backend == KERNEL) /* No target nessesary */
-		return NULL;
 
 	dt_compatible = fopen("/proc/device-tree/compatible", "r");
 	if (!dt_compatible)
@@ -82,33 +64,39 @@ const char *default_target(enum backend backend)
 		return NULL;
 
 	if (strstr(line, "witherspoon"))
-		return witherspoon;
+		return "p9w";
 
 	if (strstr(line, "romulus"))
-		return romulus;
+		return "p9r";
 
 	if (strstr(line, "zaius"))
-		return zaius;
+		return "p9z";
 
 	if (strstr(line, "palmetto"))
-		return p8;
+		return "p8";
 
 	return NULL;
 }
 
-bool target_is_possible(enum backend backend, const char *target)
+const char *default_target(enum backend backend)
 {
-	const char *def;
+	switch(backend) {
+	case I2C:
+		return NULL;
+		break;
 
-	if (!backend_is_possible(backend))
-		return false;
+	case KERNEL:
+		return NULL;
+		break;
 
-	if (backend == I2C || backend == KERNEL) /* No target is nessesary */
-		return true;
+	case FSI:
+		return default_fsi_target();
+		break;
 
-	def = default_target(backend);
-	if (!def || !target)
-		return false;
+	default:
+		return NULL;
+		break;
+	}
 
-	return strcmp(def, target) == 0;
+	return NULL;
 }

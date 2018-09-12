@@ -405,7 +405,6 @@ static bool parse_options(int argc, char *argv[])
 		case 'b':
 			if (strcmp(optarg, "fsi") == 0) {
 				backend = FSI;
-				device_node = "p9w";
 			} else if (strcmp(optarg, "i2c") == 0) {
 				backend = I2C;
 			} else if (strcmp(optarg, "kernel") == 0) {
@@ -418,6 +417,7 @@ static bool parse_options(int argc, char *argv[])
 				backend = HOST;
 			} else {
 				fprintf(stderr, "Invalid backend '%s'\n", optarg);
+				print_backends(stderr);
 				opt_error = true;
 			}
 			break;
@@ -630,7 +630,7 @@ static int target_selection(void)
 	case KERNEL:
 		if (device_node == NULL) {
 			PR_ERROR("kernel backend requires a device type\n");
-			return -1;
+                        return -1;
 		}
 		if (!strcmp(device_node, "p8"))
 			pdbg_targets_init(&_binary_p8_kernel_dtb_o_start);
@@ -662,7 +662,9 @@ static int target_selection(void)
 		break;
 
 	default:
-		PR_ERROR("Invalid backend specified\n");
+		/* parse_options deals with parsing user input, so it should be
+		 * impossible to get here */
+		assert(0);
 		return -1;
 	}
 
@@ -797,28 +799,17 @@ int main(int argc, char *argv[])
 	optcmd_cmd_t *cmd;
 
 	backend = default_backend();
-	device_node = default_target(backend);
 
 	if (!parse_options(argc, argv))
 		return 1;
-
-	if (!backend_is_possible(backend)) {
-		fprintf(stderr, "Backend not possible\nUse: ");
-		print_backends(stderr);
-		return 1;
-	}
-
-	if (!target_is_possible(backend, device_node)) {
-		fprintf(stderr, "Target %s not possible\n",
-			device_node ? device_node : "(none)");
-		print_targets(stderr);
-		return 1;
-	}
 
 	if (optind >= argc) {
 		print_usage(basename(argv[0]));
 		return 1;
 	}
+
+	if (!device_node)
+		device_node = default_target(backend);
 
 	/* Disable unselected targets */
 	if (target_selection())

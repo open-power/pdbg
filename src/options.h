@@ -20,17 +20,8 @@ enum backend default_backend(void);
 /* Print all possible backends on this platform */
 void print_backends(FILE *stream);
 
-/* Is this backend possible on this platform */
-bool backend_is_possible(enum backend backend);
-
 /* The default (perhaps only) target for this backend */
 const char *default_target(enum backend backend);
 
 /* Print all possible targets on this platform */
 void print_targets(FILE *stream);
-
-/*
- * Does this platform backend support this target,
- * there is an implied check of is_backend_possible()
- */
-bool target_is_possible(enum backend backend, const char *target);

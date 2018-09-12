@@ -22,11 +22,6 @@ enum backend default_backend(void)
 	return FAKE;
 }
 
-bool backend_is_possible(enum backend backend)
-{
-	return backend == FAKE;
-}
-
 void print_backends(FILE *stream)
 {
 	fprintf(stream, "Valid backends: fake\n");
@@ -41,10 +36,4 @@ const char *default_target(enum backend backend)
 void print_targets(FILE *stream)
 {
 	fprintf(stream, "fake: No target is necessary\n");
-}
-
-/* Theres no device for FAKE backend */
-bool target_is_possible(enum backend backend, const char *target)
-{
-	return target == NULL;
 }
