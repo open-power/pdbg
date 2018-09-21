@@ -368,7 +368,7 @@ retry:
 	CHECK_ERR(adu_reset(adu));
 
 	/* Set the address */
-	ctrl_reg = SETFIELD(P9_FBC_ALTD_ADDRESS, 0, addr);
+	ctrl_reg = SETFIELD(P9_FBC_ALTD_ADDRESS, 0ULL, addr);
 	CHECK_ERR(pib_write(&adu->target, P9_ALTD_CONTROL_REG, ctrl_reg));
 
 	/* Start the command */
@@ -420,7 +420,7 @@ static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size
 	CHECK_ERR(adu_reset(adu));
 
 	/* Set the address */
-	ctrl_reg = SETFIELD(P9_FBC_ALTD_ADDRESS, 0, addr);
+	ctrl_reg = SETFIELD(P9_FBC_ALTD_ADDRESS, 0ULL, addr);
 retry:
 	CHECK_ERR(pib_write(&adu->target, P9_ALTD_CONTROL_REG, ctrl_reg));
 
