@@ -237,6 +237,7 @@ static int adu_reset(struct adu *adu)
 static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data, int ci)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
+	int rc = 0;
 
 	CHECK_ERR(adu_lock(adu));
 
@@ -248,25 +249,25 @@ static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data, int ci)
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_READ);
 	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, 8);
 
-	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
+	CHECK_ERR_GOTO(out, rc = pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
 	cmd_reg |= FBC_ALTD_START_OP;
 	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
 	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
 
 retry:
 	/* Clear status bits */
-	CHECK_ERR(adu_reset(adu));
+	CHECK_ERR_GOTO(out, rc = adu_reset(adu));
 
 	/* Set the address */
 	ctrl_reg = SETFIELD(P8_FBC_ALTD_ADDRESS, ctrl_reg, addr);
-	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CONTROL_REG, ctrl_reg));
+	CHECK_ERR_GOTO(out, rc = pib_write(&adu->target, P8_ALTD_CONTROL_REG, ctrl_reg));
 
 	/* Start the command */
-	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CMD_REG, cmd_reg));
+	CHECK_ERR_GOTO(out, rc = pib_write(&adu->target, P8_ALTD_CMD_REG, cmd_reg));
 
 	/* Wait for completion */
 	do {
-		CHECK_ERR(pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
+		CHECK_ERR_GOTO(out, rc = pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
 	} while (!val);
 
 	if( !(val & FBC_ALTD_ADDR_DONE) ||
@@ -283,11 +284,12 @@ retry:
 	}
 
 	/* Read data */
-	CHECK_ERR(pib_read(&adu->target, P8_ALTD_DATA_REG, data));
+	CHECK_ERR_GOTO(out, rc = pib_read(&adu->target, P8_ALTD_DATA_REG, data));
 
+out:
 	adu_unlock(adu);
+	return rc;
 
-	return 0;
 }
 
 int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size, int ci)
@@ -304,29 +306,29 @@ int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size, int c
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_WRITE);
 	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, size);
 
-	CHECK_ERR(pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
+	CHECK_ERR_GOTO(out, rc = pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
 	cmd_reg |= FBC_ALTD_START_OP;
 	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_SYSTEM);
 	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_MEDIUM);
 
 	/* Clear status bits */
-	CHECK_ERR(adu_reset(adu));
+	CHECK_ERR_GOTO(out, rc = adu_reset(adu));
 
 	/* Set the address */
 	ctrl_reg = SETFIELD(P8_FBC_ALTD_ADDRESS, ctrl_reg, addr);
 
 retry:
-	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CONTROL_REG, ctrl_reg));
+	CHECK_ERR_GOTO(out, rc = pib_write(&adu->target, P8_ALTD_CONTROL_REG, ctrl_reg));
 
 	/* Write the data */
-	CHECK_ERR(pib_write(&adu->target, P8_ALTD_DATA_REG, data));
+	CHECK_ERR_GOTO(out, rc = pib_write(&adu->target, P8_ALTD_DATA_REG, data));
 
 	/* Start the command */
-	CHECK_ERR(pib_write(&adu->target, P8_ALTD_CMD_REG, cmd_reg));
+	CHECK_ERR_GOTO(out, rc = pib_write(&adu->target, P8_ALTD_CMD_REG, cmd_reg));
 
 	/* Wait for completion */
 	do {
-		CHECK_ERR(pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
+		CHECK_ERR_GOTO(out, rc = pib_read(&adu->target, P8_ALTD_STATUS_REG, &val));
 	} while (!val);
 
 	if( !(val & FBC_ALTD_ADDR_DONE) ||
@@ -341,6 +343,7 @@ retry:
 		}
 	}
 
+out:
 	adu_unlock(adu);
 
 	return rc;

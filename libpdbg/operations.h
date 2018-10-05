@@ -29,7 +29,7 @@
 	} while(0)
 
 #define CHECK_ERR_GOTO(label, x) do {				\
-	if (x) {	       					\
+	if ((x)) {	       					\
 		PRINT_ERR;					\
 		goto label;					\
 	}							\
