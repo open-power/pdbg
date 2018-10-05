@@ -471,6 +471,13 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 	ram_getspr(thread, 307, &regs->hdar);
 	printf("HDAR  : 0x%016" PRIx64 "\n", regs->hdar);
 
+	ram_getspr(thread, 339, &value);
+	regs->heir = value;
+	printf("HEIR : 0x%016" PRIx32 "\n", regs->heir);
+
+	ram_getspr(thread, 1008, &regs->hid);
+	printf("HID0 : 0x%016" PRIx64 "\n", regs->hid);
+
 	ram_getspr(thread, 314, &regs->hsrr0);
 	printf("HSRR0 : 0x%016" PRIx64 "\n", regs->hsrr0);
 

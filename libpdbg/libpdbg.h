@@ -120,6 +120,8 @@ struct thread_regs {
 	uint64_t hsrr0;
 	uint64_t hsrr1;
 	uint64_t hdec;
+	uint32_t heir;
+	uint64_t hid;
 	uint64_t hsprg0;
 	uint64_t hsprg1;
 	uint64_t fscr;
