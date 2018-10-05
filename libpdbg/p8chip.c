@@ -514,8 +514,11 @@ static int p8_enable_attn(struct pdbg_target *target)
 		PR_ERROR("Unable to get HID0\n");
 		return 1;
 	}
+	PR_INFO("HID0 was 0x%"PRIx64 " \n", hid0);
+
 	hid0 |= EN_ATTN;
 
+	PR_INFO("writing 0x%"PRIx64 " to HID0\n", hid0);
 	if (p8_put_hid0(core, hid0)) {
 		PR_ERROR("Unable to set HID0\n");
 		return 1;
