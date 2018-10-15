@@ -135,7 +135,7 @@ static struct action actions[] = {
 	{ "putmem",  "<address>", "Write to system memory" },
 	{ "threadstatus", "", "Print the status of a thread" },
 	{ "sreset",  "", "Reset" },
-	{ "regs",  "", "State" },
+	{ "regs",  "[--backtrace]", "State (optionally display backtrace)" },
 };
 
 static void print_usage(char *pname)

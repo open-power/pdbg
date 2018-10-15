@@ -185,14 +185,16 @@ static int sreset_thread(struct pdbg_target *thread_target, uint32_t index, uint
 	return ram_sreset_thread(thread_target) ? 0 : 1;
 }
 
-static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
+static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *i_doBacktrace, uint64_t *unused)
 {
 	struct thread_regs regs;
+	bool do_backtrace = (bool) i_doBacktrace;
 
 	if (ram_state_thread(thread_target, &regs))
 		return 0;
 
-	dump_stack(&regs);
+	if (do_backtrace)
+		dump_stack(&regs);
 
 	return 1;
 }
@@ -227,14 +229,22 @@ static int thread_sreset(void)
 }
 OPTCMD_DEFINE_CMD(sreset, thread_sreset);
 
-static int thread_state(void)
+
+struct reg_flags {
+	bool do_backtrace;
+};
+
+#define REG_BACKTRACE_FLAG ("--backtrace", do_backtrace, parse_flag_noarg, false)
+
+static int thread_state(struct reg_flags flags)
 {
 	int err;
 
-	err = for_each_target("thread", state_thread, NULL, NULL);
+	err = for_each_target("thread", state_thread,
+			(uint64_t *)flags.do_backtrace, NULL);
 
 	for_each_target_release("thread");
 
 	return err;
 }
-OPTCMD_DEFINE_CMD(regs, thread_state);
+OPTCMD_DEFINE_CMD_ONLY_FLAGS(regs, thread_state, reg_flags, (REG_BACKTRACE_FLAG));
