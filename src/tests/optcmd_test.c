@@ -72,11 +72,22 @@ static int test_flags(uint64_t num_arg, uint64_t opt_arg, struct flags flags)
 OPTCMD_DEFINE_CMD_WITH_FLAGS(test_flags, test_flags, (ARG_NUM, ARG_NUM_OPT),
 			     flags, (FLAG_TEST_BOOL, FLAG_TEST_NUM));
 
+static int test_only_flags(struct flags flags)
+{
+	flag = flags.test_num;
+	bool_flag = flags.test_bool;
+
+	return 0;
+}
+OPTCMD_DEFINE_CMD_ONLY_FLAGS(test_only_flags, test_only_flags, flags,
+			     (FLAG_TEST_BOOL, FLAG_TEST_NUM));
+
 int parse_argv(const char *argv[], int argc)
 {
 	int i, rc;
 	void **args, **flags;
-	struct optcmd_cmd *cmds[] = { &optcmd_test, &optcmd_test_args, &optcmd_test_flags };
+	struct optcmd_cmd *cmds[] = { &optcmd_test, &optcmd_test_args, &optcmd_test_flags,
+				      &optcmd_test_only_flags };
 	optcmd_cmd_t *cmd;
 
 	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
@@ -156,6 +167,20 @@ int main(void)
 	/* So should this, unknown flag */
 	const char *test10_argv[] = { "test_flags", "9", "10", "--test-blah", "--test-num=11" };
 	assert(parse_argv(test10_argv, ARRAY_SIZE(test10_argv)));
+
+	const char *test11_argv[] = { "test_only_flags" };
+	assert(!parse_argv(test11_argv, ARRAY_SIZE(test11_argv)));
+	assert(flag == 10);
+	assert(!bool_flag);
+
+	const char *test12_argv[] = { "test_only_flags", "--test-num=12" };
+	assert(!parse_argv(test12_argv, ARRAY_SIZE(test12_argv)));
+	assert(flag == 12);
+	assert(!bool_flag);
+
+	/* Should fail because we're passing a positional argument */
+	const char *test13_argv[] = { "test_only_flags", "--test-num=12", "13" };
+	assert(parse_argv(test13_argv, ARRAY_SIZE(test13_argv)));
 
 	return 0;
 }

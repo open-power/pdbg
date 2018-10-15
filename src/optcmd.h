@@ -144,6 +144,28 @@ struct optcmd_cmd {
 	}
 
 /*
+ * Defines a new command taking only flags and no positional arguments.
+ *  @cmd_name - name of command used on the command line
+ *  @cmd_func - pointer to the function to call for this command
+ *  @flag - name of flag struct to pass @cmd_func as the last parameter
+ *  @flags - list of flags in the form (("--flag-name", <struct field name>, parser, <default value>, "help text"), ...)
+ */
+#define OPTCMD_DEFINE_CMD_ONLY_FLAGS(cmd_name_, cmd_func_, flag_, flags_) \
+        int cmd_func_(struct flag_);					\
+	int __##cmd_func_(void *args[], void *flags[])			\
+	{								\
+		struct flag_ flag;					\
+		CPPMAGIC_JOIN(, CPPMAGIC_MAP(OPTCMD_CAST_FLAGS, CPPMAGIC_EVAL flags_)) \
+		return cmd_func_(flag);					\
+	}								\
+									\
+	struct optcmd_cmd optcmd_##cmd_name_ = {			\
+		.cmd = #cmd_name_,					\
+		.cmdp = __##cmd_func_,					\
+		.flags = { CPPMAGIC_MAP(OPTCMD_FLAG, CPPMAGIC_EVAL flags_), {NULL} }, \
+	}
+
+/*
  * Defines a new command with arguments.
  *  @cmd_name - name of command used on the command line
  *  @cmd_func - pointer to the function to call for this command
