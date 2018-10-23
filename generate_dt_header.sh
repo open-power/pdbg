@@ -16,9 +16,9 @@ cat - <<EOF
 #ifndef __${SYMBOL}_H__
 #define __${SYMBOL}_H__
 
-unsigned char ${SYM_START};
-unsigned char ${SYM_END};
-long ${SYM_SIZE};
+extern unsigned char ${SYM_START};
+extern unsigned char ${SYM_END};
+extern long ${SYM_SIZE};
 
 #endif /* __${SYMBOL}_H__ */
 EOF
