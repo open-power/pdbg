@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "main.h"
 
@@ -61,8 +62,11 @@ static const char *default_kernel_target(void)
 	cfam_id_file = fopen(FSI_CFAM_ID, "r");
 	if (cfam_id_file) {
 		uint32_t cfam_id = 0;
+		int rc;
 
-		fscanf(cfam_id_file, "0x%" PRIx32, &cfam_id);
+		rc = fscanf(cfam_id_file, "0x%" PRIx32, &cfam_id);
+		if (rc != 1)
+			pdbg_log(PDBG_ERROR, "%s", strerror(errno));
 		fclose(cfam_id_file);
 
 		switch((cfam_id >> 4) & 0xff) {
