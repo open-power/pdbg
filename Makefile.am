@@ -87,7 +87,7 @@ pdbg_SOURCES = \
 
 src/main.c: $(DT_headers)
 
-pdbg_LDADD = $(DT_objects) libpdbg.la libfdt.la libccan.a \
+pdbg_LDADD = $(DT_objects) libpdbg.la libccan.a \
 	-L.libs -lrt
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
@@ -138,6 +138,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/operations.h \
 	libpdbg/libpdbg.h \
 	libpdbg/target.h
+libpdbg_la_LIBADD = libfdt.la
 
 noinst_LIBRARIES = libccan.a
 
@@ -155,7 +156,7 @@ libccan_a_SOURCES = \
 
 libpdbg_test_cflags = -I$(top_srcdir)/libpdbg -I$(top_srcdir)/libfdt
 libpdbg_test_ldflags = -Wl,--whole-archive,-lpdbg,--no-whole-archive
-libpdbg_test_ldadd = -L.libs libpdbg.la libfdt.la
+libpdbg_test_ldadd = -L.libs libpdbg.la
 
 libpdbg_target_test_SOURCES = src/tests/libpdbg_target_test.c
 libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
