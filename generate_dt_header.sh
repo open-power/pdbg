@@ -7,8 +7,8 @@ fi
 
 SYMBOL=$(echo "$1" | tr '.-' '_')
 SYM_START="_binary_${SYMBOL}_o_start"
-SYM_END="_biary_${SYMBOL}_o_end"
-SYM_SIZE="_biary_${SYMBOL}_o_size"
+SYM_END="_binary_${SYMBOL}_o_end"
+SYM_SIZE="_binary_${SYMBOL}_o_size"
 HEADER="$f.h"
 
 cat - <<EOF
