@@ -791,7 +791,7 @@ OPTCMD_DEFINE_CMD(probe, probe);
  */
 static void atexit_release(void)
 {
-	pdbg_target_release(dt_root);
+	pdbg_target_release(pdbg_target_root());
 }
 
 int main(int argc, char *argv[])

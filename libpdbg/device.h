@@ -23,6 +23,4 @@
 /* Any property or node with this prefix will not be passed to the kernel. */
 #define DT_PRIVATE	"skiboot,"
 
-extern struct pdbg_target *dt_root;
-
 #endif /* __DEVICE_H */

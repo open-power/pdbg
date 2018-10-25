@@ -36,7 +36,7 @@
 /* Used to give unique handles. */
 static u32 last_phandle = 0;
 
-struct pdbg_target *dt_root;
+static struct pdbg_target *pdbg_dt_root;
 
 /*
  * An in-memory representation of a node in the device tree.
@@ -591,7 +591,7 @@ static void dt_expand(const void *fdt)
 {
 	PR_DEBUG("FDT: Parsing fdt @%p\n", fdt);
 
-	if (dt_expand_node(dt_root, fdt, 0) < 0)
+	if (dt_expand_node(pdbg_dt_root, fdt, 0) < 0)
 		abort();
 }
 
@@ -637,7 +637,7 @@ uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 
 void pdbg_targets_init(void *fdt)
 {
-	dt_root = dt_new_node("", NULL, 0);
+	pdbg_dt_root = dt_new_node("", NULL, 0);
 	dt_expand(fdt);
 }
 
@@ -649,7 +649,12 @@ char *pdbg_target_path(const struct pdbg_target *target)
 struct pdbg_target *pdbg_target_from_path(struct pdbg_target *target, const char *path)
 {
 	if (!target)
-		target = dt_root;
+		target = pdbg_dt_root;
 
 	return dt_find_by_path(target, path);
+}
+
+struct pdbg_target *pdbg_target_root(void)
+{
+	return pdbg_dt_root;
 }

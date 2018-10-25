@@ -31,7 +31,7 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 
 		/* The root node doesn't have an address space so it's
 		 * an error in the device tree if we hit this. */
-		assert(target != dt_root);
+		assert(target != pdbg_target_root());
 	}
 
 	return target;
@@ -365,7 +365,7 @@ void pdbg_target_probe_all(struct pdbg_target *parent)
 	struct pdbg_target *child;
 
 	if (!parent)
-		parent = dt_root;
+		parent = pdbg_target_root();
 
 	pdbg_for_each_child_target(parent, child) {
 		pdbg_target_probe_all(child);
@@ -388,9 +388,4 @@ void *pdbg_target_priv(struct pdbg_target *target)
 void pdbg_target_priv_set(struct pdbg_target *target, void *priv)
 {
 	target->priv = priv;
-}
-
-struct pdbg_target *pdbg_target_root(void)
-{
-	return dt_root;
 }
