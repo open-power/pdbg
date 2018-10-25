@@ -82,6 +82,10 @@ uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size);
 #define pdbg_get_target_property(target, name, size) \
 	pdbg_target_property(target, name, size)
 
+/* Find an chip-id property in this node; if not found, walk up the parent
+ * nodes. Returns -1 if no chip-id property exists. */
+uint32_t pdbg_target_chip_id(struct pdbg_target *target);
+
 /* Misc. */
 void pdbg_targets_init(void *fdt);
 void pdbg_target_probe_all(struct pdbg_target *parent);

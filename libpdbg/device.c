@@ -675,25 +675,6 @@ u64 dt_get_address(const struct pdbg_target *node, unsigned int index,
 	return dt_get_number(p->prop + pos, na);
 }
 
-static u32 __dt_get_chip_id(const struct pdbg_target *node)
-{
-	const struct dt_property *prop;
-
-	for (; node; node = node->parent) {
-		prop = dt_find_property(node, "chip-id");
-		if (prop)
-			return dt_property_get_cell(prop, 0);
-	}
-	return 0xffffffff;
-}
-
-u32 dt_get_chip_id(const struct pdbg_target *node)
-{
-	u32 id = __dt_get_chip_id(node);
-	assert(id != 0xffffffff);
-	return id;
-}
-
 void pdbg_targets_init(void *fdt)
 {
 	dt_root = dt_new_node("", NULL, 0);

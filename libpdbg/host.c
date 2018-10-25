@@ -91,9 +91,7 @@ static int host_pib_probe(struct pdbg_target *target)
 	if (!fd)
 		return -1;
 
-	chip_id = dt_get_chip_id(target);
-	if (chip_id == -1)
-		goto out;
+	chip_id = pdbg_target_chip_id(target);
 
 	/* This check should probably be done earlier */
 	if (access(XSCOM_BASE_PATH, F_OK) == -1)

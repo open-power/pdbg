@@ -44,10 +44,6 @@ const void *dt_prop_get(const struct pdbg_target *node, const char *prop);
 const void *dt_prop_get_def(const struct pdbg_target *node, const char *prop,
 			    void *def);
 
-/* Find an chip-id property in this node; if not found, walk up the parent
- * nodes. Returns -1 if no chip-id property exists. */
-u32 dt_get_chip_id(const struct pdbg_target *node);
-
 /* Address accessors ("reg" properties parsing). No translation,
  * only support "simple" address forms (1 or 2 cells). Asserts
  * if address doesn't exist

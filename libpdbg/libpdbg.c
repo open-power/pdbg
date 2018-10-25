@@ -150,6 +150,21 @@ int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint3
 	return 0;
 }
 
+uint32_t pdbg_target_chip_id(struct pdbg_target *target)
+{
+        uint32_t id;
+
+	while (pdbg_target_u32_property(target, "chip-id", &id)) {
+		target = target->parent;
+
+		/* If we hit this we've reached the top of the tree
+		 * and haven't found chip-id */
+		assert(target);
+	}
+
+	return id;
+}
+
 void pdbg_progress_tick(uint64_t cur, uint64_t end)
 {
 	if (progress_tick)

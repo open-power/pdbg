@@ -551,12 +551,7 @@ static char *get_debugfs_file(struct htm *htm, const char *file)
 	uint32_t chip_id;
 	char *filename;
 
-	chip_id = dt_get_chip_id(&htm->target);
-	if (chip_id == -1) {
-		PR_ERROR("Couldn't find a chip id\n");
-		return NULL;
-	}
-
+	chip_id = pdbg_target_chip_id(&htm->target);
 	if (asprintf(&filename, "%s/%08x/%s", DEBUGFS_MEMTRACE, chip_id, file) == -1) {
 		PR_ERROR("Couldn't asprintf() '%s/%08x/size': %m\n",
 				DEBUGFS_MEMTRACE, chip_id);
@@ -975,7 +970,6 @@ static int do_htm_dump(struct htm *htm, char *filename)
 	uint64_t last, end, trace_size;
 	int trace_fd, dump_fd;
 	uint32_t eyecatcher;
-	uint32_t chip_id;
 	size_t r;
 	bool wrapped;
 
@@ -989,10 +983,6 @@ static int do_htm_dump(struct htm *htm, char *filename)
 		PR_INFO("* Skipping DUMP tigger, HTM is not in complete state\n");
 		return -1;
 	}
-
-	chip_id = dt_get_chip_id(&htm->target);
-	if (chip_id == -1)
-		return -1;
 
 	trace_file = get_debugfs_file(htm, "trace");
 	if (!trace_file)
