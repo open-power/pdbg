@@ -37,11 +37,4 @@ struct pdbg_target *dt_find_compatible_node(struct pdbg_target *root,
 	for (node = NULL; 			        \
 	     (node = dt_find_compatible_node(root, node, compat)) != NULL;)
 
-/* Simplified accessors */
-u32 dt_prop_get_u32(const struct pdbg_target *node, const char *prop);
-u32 dt_prop_get_u32_index(const struct pdbg_target *node, const char *prop, u32 index);
-const void *dt_prop_get(const struct pdbg_target *node, const char *prop);
-const void *dt_prop_get_def(const struct pdbg_target *node, const char *prop,
-			    void *def);
-
 #endif /* __DEVICE_H */

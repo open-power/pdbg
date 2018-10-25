@@ -501,14 +501,8 @@ struct pdbg_target *dt_find_compatible_node(struct pdbg_target *root,
 	return NULL;
 }
 
-u32 dt_prop_get_u32(const struct pdbg_target *node, const char *prop)
-{
-	const struct dt_property *p = dt_require_property(node, prop, 4);
-
-	return dt_property_get_cell(p, 0);
-}
-
-static u32 dt_prop_get_u32_def(const struct pdbg_target *node, const char *prop, u32 def)
+static uint32_t dt_prop_get_u32_def(const struct pdbg_target *node,
+				    const char *prop, uint32_t def)
 {
         const struct dt_property *p = dt_find_property(node, prop);
 
@@ -516,35 +510,6 @@ static u32 dt_prop_get_u32_def(const struct pdbg_target *node, const char *prop,
                 return def;
 
         return dt_property_get_cell(p, 0);
-}
-
-u32 dt_prop_get_u32_index(const struct pdbg_target *node, const char *prop, u32 index)
-{
-	const struct dt_property *p = dt_require_property(node, prop, -1);
-
-	return dt_property_get_cell(p, index);
-}
-
-const void *dt_prop_get(const struct pdbg_target *node, const char *prop)
-{
-	const struct dt_property *p = dt_require_property(node, prop, -1);
-
-	return p->prop;
-}
-
-const void *dt_prop_get_def(const struct pdbg_target *node, const char *prop,
-			    void *def)
-{
-	const struct dt_property *p = dt_find_property(node, prop);
-
-	return p ? p->prop : def;
-}
-
-u32 dt_prop_get_cell(const struct pdbg_target *node, const char *prop, u32 cell)
-{
-	const struct dt_property *p = dt_require_property(node, prop, -1);
-
-	return dt_property_get_cell(p, cell);
 }
 
 static enum pdbg_target_status str_to_status(const char *status)

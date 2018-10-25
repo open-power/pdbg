@@ -42,7 +42,7 @@
  * address offset */
 struct gpio_pin {
 	uint32_t offset;
-	int bit;
+	uint32_t bit;
 };
 
 enum gpio {
@@ -71,7 +71,7 @@ enum fsi_result {
 	FSI_ERR_C = 0x3,
 };
 
-static int clock_delay  = 0;
+static uint32_t clock_delay  = 0;
 
 #define FSI_DATA0_REG	0x1000
 #define FSI_DATA1_REG	0x1001
@@ -459,17 +459,28 @@ int bmcfsi_probe(struct pdbg_target *target)
 	}
 
 	if (!gpio_reg) {
-		gpio_pins[GPIO_FSI_CLK].offset = dt_prop_get_u32_index(target, "fsi_clk", 0);
-		gpio_pins[GPIO_FSI_CLK].bit = dt_prop_get_u32_index(target, "fsi_clk", 1);
-		gpio_pins[GPIO_FSI_DAT].offset = dt_prop_get_u32_index(target, "fsi_dat", 0);
-		gpio_pins[GPIO_FSI_DAT].bit = dt_prop_get_u32_index(target, "fsi_dat", 1);
-		gpio_pins[GPIO_FSI_DAT_EN].offset = dt_prop_get_u32_index(target, "fsi_dat_en", 0);
-		gpio_pins[GPIO_FSI_DAT_EN].bit = dt_prop_get_u32_index(target, "fsi_dat_en", 1);
-		gpio_pins[GPIO_FSI_ENABLE].offset = dt_prop_get_u32_index(target, "fsi_enable", 0);
-		gpio_pins[GPIO_FSI_ENABLE].bit = dt_prop_get_u32_index(target, "fsi_enable", 1);
-		gpio_pins[GPIO_CRONUS_SEL].offset = dt_prop_get_u32_index(target, "cronus_sel", 0);
-		gpio_pins[GPIO_CRONUS_SEL].bit = dt_prop_get_u32_index(target, "cronus_sel", 1);
-		clock_delay = dt_prop_get_u32(target, "clock_delay");
+		assert(!(pdbg_target_u32_index(target, "fsi_clk", 0,
+			 &gpio_pins[GPIO_FSI_CLK].offset)));
+		assert(!(pdbg_target_u32_index(target, "fsi_clk", 1,
+			 &gpio_pins[GPIO_FSI_CLK].bit)));
+		assert(!(pdbg_target_u32_index(target, "fsi_dat", 0,
+			 &gpio_pins[GPIO_FSI_DAT].offset)));
+		assert(!(pdbg_target_u32_index(target, "fsi_dat", 1,
+			 &gpio_pins[GPIO_FSI_DAT].bit)));
+		assert(!(pdbg_target_u32_index(target, "fsi_dat_en", 0,
+			 &gpio_pins[GPIO_FSI_DAT_EN].offset)));
+		assert(!(pdbg_target_u32_index(target, "fsi_dat_en", 1,
+			 &gpio_pins[GPIO_FSI_DAT_EN].bit)));
+		assert(!(pdbg_target_u32_index(target, "fsi_enable", 0,
+			 &gpio_pins[GPIO_FSI_ENABLE].offset)));
+		assert(!(pdbg_target_u32_index(target, "fsi_enable", 1,
+			 &gpio_pins[GPIO_FSI_ENABLE].bit)));
+		assert(!(pdbg_target_u32_index(target, "cronus_sel", 0,
+			 &gpio_pins[GPIO_CRONUS_SEL].offset)));
+		assert(!(pdbg_target_u32_index(target, "cronus_sel", 1,
+			 &gpio_pins[GPIO_CRONUS_SEL].bit)));
+		assert(!(pdbg_target_u32_property(target, "clock_delay",
+			 &clock_delay)));
 
 		/* We only have to do this init once per backend */
 		gpio_reg = mmap(NULL, getpagesize(),

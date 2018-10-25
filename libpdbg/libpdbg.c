@@ -150,6 +150,25 @@ int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint3
 	return 0;
 }
 
+int pdbg_target_u32_index(struct pdbg_target *target, const char *name, int index, uint32_t *val)
+{
+        size_t len;
+	uint32_t *p;
+
+        p = pdbg_get_target_property(target, name, &len);
+        if (!p)
+                return -1;
+
+        assert(len >= (index+1)*sizeof(uint32_t));
+
+	/* FDT pointers should be aligned, but best to check */
+	assert(!((uintptr_t) p & 0x3));
+
+        /* Always aligned, so this works. */
+        *val = be32toh(p[index]);
+        return 0;
+}
+
 uint32_t pdbg_target_chip_id(struct pdbg_target *target)
 {
         uint32_t id;

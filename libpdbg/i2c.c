@@ -130,7 +130,10 @@ int i2c_target_probe(struct pdbg_target *target)
 	const char *bus;
 	int addr;
 
-	bus = dt_prop_get_def(&pib->target, "bus", "/dev/i2c4");
+	bus = pdbg_target_property(&pib->target, "bus", NULL);
+	if (!bus)
+		bus = "/dev/i2c4";
+
 	addr = pdbg_target_address(&pib->target, NULL);
 	assert(addr);
 
