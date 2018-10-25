@@ -520,7 +520,7 @@ static int configure_nhtm(struct htm *htm, bool wrap)
 			NHTM_TTYPE_SIZE_MASK ))) /* no pattern matching */
 		return -1;
 
-	if (dt_node_is_compatible(&htm->target, "ibm,power9-nhtm")) {
+	if (pdbg_target_compatible(&htm->target, "ibm,power9-nhtm")) {
 		if (HTM_ERR(pib_read(&htm->target, NHTM_FLEX_MUX, &val)))
 			return -1;
 
@@ -735,7 +735,7 @@ static int htm_toggle_debug_bit(struct htm *htm)
 		return 0; /* nhtm case */
 
 	/* FIXME: this is a hack for P8 */
-	if (!dt_node_is_compatible(core, "ibm,power8-core")) {
+	if (!pdbg_target_compatible(core, "ibm,power8-core")) {
 		PR_ERROR("HTM is POWER8 only currently\n");
 		return -1;
 	}
@@ -862,7 +862,7 @@ static int do_htm_status(struct htm *htm)
 	uint64_t val, total;
 	int i, regs = 9;
 
-	if (dt_node_is_compatible(&htm->target, "ibm,power9-nhtm"))
+	if (pdbg_target_compatible(&htm->target, "ibm,power9-nhtm"))
 		regs++;
 
 	PR_INFO("HTM register dump:\n");
@@ -1091,7 +1091,7 @@ static int nhtm_probe(struct pdbg_target *target)
 	if (!is_debugfs_memtrace_ok() || !is_debugfs_scom_ok())
 		return -1;
 
-	if (dt_node_is_compatible(target, "ibm,power9-nhtm")) {
+	if (pdbg_target_compatible(target, "ibm,power9-nhtm")) {
 		pib_read(target, NHTM_FLEX_MUX, &val);
 		if (GETFIELD(NHTM_FLEX_MUX_MASK, val) != NHTM_FLEX_DEFAULT) {
 			PR_DEBUG("FLEX_MUX not default\n");

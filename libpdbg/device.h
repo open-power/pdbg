@@ -25,16 +25,4 @@
 
 extern struct pdbg_target *dt_root;
 
-/* Check a compatible property */
-bool dt_node_is_compatible(const struct pdbg_target *node, const char *compat);
-
-/* Find a node based on compatible property */
-struct pdbg_target *dt_find_compatible_node(struct pdbg_target *root,
-					struct pdbg_target *prev,
-					const char *compat);
-
-#define dt_for_each_compatible(root, node, compat)	\
-	for (node = NULL; 			        \
-	     (node = dt_find_compatible_node(root, node, compat)) != NULL;)
-
 #endif /* __DEVICE_H */

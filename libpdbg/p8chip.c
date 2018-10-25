@@ -355,7 +355,7 @@ static int p8_ram_setup(struct thread *thread)
 
 	/* We can only ram a thread if all the threads on the core/chip are
 	 * quiesced */
-	dt_for_each_compatible(&chip->target, target, "ibm,power8-thread") {
+	pdbg_for_each_compatible(&chip->target, target, "ibm,power8-thread") {
 		struct thread *tmp;
 
 		/* If this thread wasn't enabled it may not yet have been probed

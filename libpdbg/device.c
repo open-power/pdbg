@@ -464,41 +464,37 @@ static const struct dt_property *dt_require_property(const struct pdbg_target *n
 	return p;
 }
 
-bool dt_prop_find_string(const struct dt_property *p, const char *s)
+bool pdbg_target_compatible(struct pdbg_target *target, const char *compatible)
 {
-	const char *c, *end;
+        char *c, *end;
+        size_t len;
 
-	if (!p)
-		return false;
-	c = p->prop;
-	end = c + p->len;
+        c = pdbg_target_property(target, "compatible", &len);
+        if (!c)
+                return false;
 
-	while(c < end) {
-		if (!strcasecmp(s, c))
-			return true;
-		c += strlen(c) + 1;
-	}
-	return false;
+        end = c + len;
+        while(c < end) {
+                if (!strcasecmp(compatible, c))
+                        return true;
+
+                c += strlen(c) + 1;
+        }
+
+        return false;
 }
 
-bool dt_node_is_compatible(const struct pdbg_target *node, const char *compat)
+struct pdbg_target *__pdbg_next_compatible_node(struct pdbg_target *root,
+                                                struct pdbg_target *prev,
+                                                const char *compat)
 {
-	const struct dt_property *p = dt_find_property(node, "compatible");
+        struct pdbg_target *target;
 
-	return dt_prop_find_string(p, compat);
-}
-
-struct pdbg_target *dt_find_compatible_node(struct pdbg_target *root,
-					struct pdbg_target *prev,
-					const char *compat)
-{
-	struct pdbg_target *node;
-
-	node = prev ? dt_next(root, prev) : root;
-	for (; node; node = dt_next(root, node))
-		if (dt_node_is_compatible(node, compat))
-			return node;
-	return NULL;
+        target = prev ? dt_next(root, prev) : root;
+        for (; target; target = dt_next(root, target))
+                if (pdbg_target_compatible(target, compat))
+                        return target;
+        return NULL;
 }
 
 static uint32_t dt_prop_get_u32_def(const struct pdbg_target *node,

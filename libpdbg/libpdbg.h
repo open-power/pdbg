@@ -12,6 +12,9 @@ struct pdbg_target;
 struct pdbg_target_class;
 
 /* loops/iterators */
+struct pdbg_target *__pdbg_next_compatible_node(struct pdbg_target *root,
+                                                struct pdbg_target *prev,
+                                                const char *compat);
 struct pdbg_target *__pdbg_next_target(const char *klass, struct pdbg_target *parent, struct pdbg_target *last);
 struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct pdbg_target *last);
 
@@ -44,6 +47,10 @@ struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct 
 enum pdbg_target_status {PDBG_TARGET_UNKNOWN = 0, PDBG_TARGET_ENABLED,
 			 PDBG_TARGET_DISABLED, PDBG_TARGET_MUSTEXIST,
 			 PDBG_TARGET_NONEXISTENT, PDBG_TARGET_RELEASED};
+
+#define pdbg_for_each_compatible(parent, target, compat)		\
+        for (target = NULL;                                             \
+             (target = __pdbg_next_compatible_node(parent, target, compat)) != NULL;)
 
 #define pdbg_for_each_target(class, parent, target)			\
 	for (target = __pdbg_next_target(class, parent, NULL);		\
@@ -106,6 +113,7 @@ const char *pdbg_target_dn_name(struct pdbg_target *target);
 void *pdbg_target_priv(struct pdbg_target *target);
 void pdbg_target_priv_set(struct pdbg_target *target, void *priv);
 struct pdbg_target *pdbg_target_root(void);
+bool pdbg_target_compatible(struct pdbg_target *target, const char *compatible);
 
 /* Procedures */
 int fsi_read(struct pdbg_target *target, uint32_t addr, uint32_t *val);
