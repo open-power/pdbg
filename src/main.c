@@ -677,7 +677,7 @@ static int target_selection(void)
 		int proc_index = pdbg_target_index(pib);
 
 		if (backend == I2C && device_node)
-			pdbg_set_target_property(pib, "bus", device_node, strlen(device_node) + 1);
+			pdbg_target_set_property(pib, "bus", device_node, strlen(device_node) + 1);
 
 		if (processorsel[proc_index]) {
 			target_select(pib);

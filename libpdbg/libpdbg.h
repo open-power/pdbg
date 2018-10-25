@@ -68,12 +68,19 @@ struct pdbg_target *pdbg_target_parent(const char *klass, struct pdbg_target *ta
 struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_target *target);
 
 /* Set the given property. Will automatically add one if one doesn't exist */
-void pdbg_set_target_property(struct pdbg_target *target, const char *name, const void *val, size_t size);
+void pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size);
 
 /* Get the given property and return the size */
-void *pdbg_get_target_property(struct pdbg_target *target, const char *name, size_t *size);
-int pdbg_get_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val);
+void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size);
+int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val);
 uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size);
+
+/* Old deprecated for names for the above. Do not use for new projects
+ * as these will be removed at some future point. */
+#define pdbg_set_target_property(target, name, val, size)	\
+	pdbg_target_set_property(target, name, val, size)
+#define pdbg_get_target_property(target, name, size) \
+	pdbg_target_property(target, name, size)
 
 /* Misc. */
 void pdbg_targets_init(void *fdt);

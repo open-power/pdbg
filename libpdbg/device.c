@@ -375,7 +375,7 @@ static void dt_resize_property(struct dt_property **prop, size_t len)
 	(*prop)->list.prev->next = &(*prop)->list;
 }
 
-void pdbg_set_target_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
+void pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
 {
 	struct dt_property *p;
 
@@ -391,7 +391,7 @@ void pdbg_set_target_property(struct pdbg_target *target, const char *name, cons
 	}
 }
 
-void *pdbg_get_target_property(struct pdbg_target *target, const char *name, size_t *size)
+void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size)
 {
 	struct dt_property *p;
 
@@ -634,7 +634,7 @@ static void dt_expand(const void *fdt)
 		abort();
 }
 
-u64 dt_get_number(const void *pdata, unsigned int cells)
+static u64 dt_get_number(const void *pdata, unsigned int cells)
 {
 	const u32 *p = pdata;
 	u64 ret = 0;

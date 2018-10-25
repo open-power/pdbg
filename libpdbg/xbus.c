@@ -41,7 +41,7 @@ static int xbus_probe(struct pdbg_target *target)
 {
 	struct xbus *xbus = target_to_xbus(target);
 
-	if (pdbg_get_target_u32_property(&xbus->target, "ring-id", &xbus->ring_id)) {
+	if (pdbg_target_u32_property(&xbus->target, "ring-id", &xbus->ring_id)) {
 		printf("Unknown ring-id on %s@%d\n", pdbg_target_name(&xbus->target),
 		       pdbg_target_index(&xbus->target));
 		return -1;

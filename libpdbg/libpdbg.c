@@ -135,7 +135,7 @@ const char *pdbg_target_dn_name(struct pdbg_target *target)
 	return target->dn_name;
 }
 
-int pdbg_get_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val)
+int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val)
 {
 	uint32_t *p;
 	size_t size;
