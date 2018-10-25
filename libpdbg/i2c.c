@@ -131,7 +131,7 @@ int i2c_target_probe(struct pdbg_target *target)
 	int addr;
 
 	bus = dt_prop_get_def(&pib->target, "bus", "/dev/i2c4");
-	addr = dt_get_address(&pib->target, 0, NULL);
+	addr = pdbg_target_address(&pib->target, NULL);
 	assert(addr);
 
 	i2c_data = malloc(sizeof(*i2c_data));

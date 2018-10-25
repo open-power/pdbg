@@ -527,7 +527,7 @@ static int p9_core_probe(struct pdbg_target *target)
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
 			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", target->name,
-				 dt_get_address(target, 0, NULL));
+				 pdbg_target_address(target, NULL));
 			break;
 		}
 	} while (!(value & SPECIAL_WKUP_DONE));

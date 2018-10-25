@@ -155,7 +155,7 @@ static int assert_special_wakeup(struct core *chip)
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
 			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", chip->target.name,
-				 dt_get_address(&chip->target, 0, NULL));
+				 pdbg_target_address(&chip->target, NULL));
 			return -1;
 		}
 	} while (!(gp0 & SPECIAL_WKUP_DONE));
@@ -479,7 +479,7 @@ static int p8_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
 
-	thread->id = (dt_get_address(target, 0, NULL) >> 4) & 0xf;
+	thread->id = (pdbg_target_address(target, NULL) >> 4) & 0xf;
 	thread->status = get_thread_status(thread);
 
 	return 0;

@@ -658,17 +658,16 @@ static u32 dt_n_size_cells(const struct pdbg_target *node)
 	return dt_prop_get_u32_def(node->parent, "#size-cells", 1);
 }
 
-u64 dt_get_address(const struct pdbg_target *node, unsigned int index,
-		   u64 *out_size)
+uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 {
 	const struct dt_property *p;
-	u32 na = dt_n_address_cells(node);
-	u32 ns = dt_n_size_cells(node);
+	u32 na = dt_n_address_cells(target);
+	u32 ns = dt_n_size_cells(target);
 	u32 pos, n;
 
-	p = dt_require_property(node, "reg", -1);
+	p = dt_require_property(target, "reg", -1);
 	n = (na + ns) * sizeof(u32);
-	pos = n * index;
+	pos = n;
 	assert((pos + n) <= p->len);
 	if (out_size)
 		*out_size = dt_get_number(p->prop + pos + na * sizeof(u32), ns);

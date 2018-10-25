@@ -73,7 +73,7 @@ void pdbg_target_set_property(struct pdbg_target *target, const char *name, cons
 /* Get the given property and return the size */
 void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size);
 int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val);
-uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size);
+uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *size);
 
 /* Old deprecated for names for the above. Do not use for new projects
  * as these will be removed at some future point. */
@@ -81,6 +81,8 @@ uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size);
 	pdbg_target_set_property(target, name, val, size)
 #define pdbg_get_target_property(target, name, size) \
 	pdbg_target_property(target, name, size)
+#define pdbg_get_address(target, index, size) \
+	(index == 0 ? pdbg_target_address(target, size) : assert(0))
 
 /* Find an chip-id property in this node; if not found, walk up the parent
  * nodes. Returns -1 if no chip-id property exists. */

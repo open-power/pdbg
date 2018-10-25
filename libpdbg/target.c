@@ -24,7 +24,7 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 		if (target->translate)
 			*addr = target->translate(target, *addr);
 		else
-			*addr += dt_get_address(target, 0, NULL);
+			*addr += pdbg_target_address(target, NULL);
 
 		/* Keep walking the tree translating addresses */
 		target = target->parent;
