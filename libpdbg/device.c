@@ -30,8 +30,11 @@
 #define prerror printf
 #define is_rodata(p) false
 
+#define dt_for_each_child(parent, node) \
+	list_for_each(&parent->children, node, list)
+
 /* Used to give unique handles. */
-u32 last_phandle = 0;
+static u32 last_phandle = 0;
 
 struct pdbg_target *dt_root;
 
@@ -50,7 +53,7 @@ static void free_name(const char *name)
 		free((char *)name);
 }
 
-struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
+static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
 {
 	struct hw_unit_info *hw_info = NULL;
 	const struct fdt_property *prop;
@@ -117,7 +120,7 @@ static const char *get_unitname(const struct pdbg_target *node)
 	return c + 1;
 }
 
-int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target *b)
+static int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target *b)
 {
 	const char *a_unit = get_unitname(a);
 	const char *b_unit = get_unitname(b);
@@ -140,7 +143,7 @@ int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target *b)
 	return strcmp(a->dn_name, b->dn_name);
 }
 
-bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root)
+static bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root)
 {
 	struct pdbg_target *node;
 
@@ -184,7 +187,7 @@ static inline void dt_destroy(struct pdbg_target *dn)
 	free(dn);
 }
 
-char *dt_get_path(const struct pdbg_target *node)
+static char *dt_get_path(const struct pdbg_target *node)
 {
 	unsigned int len = 0;
 	const struct pdbg_target *n;
@@ -246,7 +249,7 @@ static const char *__dt_path_split(const char *p,
 	return sl;
 }
 
-struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char *path)
+static struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char *path)
 {
 	struct pdbg_target *n;
 	const char *pn, *pa = NULL, *p = path, *nn = NULL, *na = NULL;
@@ -346,7 +349,7 @@ void dt_resize_property(struct dt_property **prop, size_t len)
 	(*prop)->list.prev->next = &(*prop)->list;
 }
 
-u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
+static u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
 {
 	assert(prop->len >= (index+1)*sizeof(u32));
 	/* Always aligned, so this works. */
@@ -354,13 +357,13 @@ u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
 }
 
 /* First child of this node. */
-struct pdbg_target *dt_first(const struct pdbg_target *root)
+static struct pdbg_target *dt_first(const struct pdbg_target *root)
 {
 	return list_top(&root->children, struct pdbg_target, list);
 }
 
 /* Return next node, or NULL. */
-struct pdbg_target *dt_next(const struct pdbg_target *root,
+static struct pdbg_target *dt_next(const struct pdbg_target *root,
 			const struct pdbg_target *prev)
 {
 	/* Children? */
@@ -390,8 +393,8 @@ struct dt_property *dt_find_property(const struct pdbg_target *node,
 	return NULL;
 }
 
-const struct dt_property *dt_require_property(const struct pdbg_target *node,
-					      const char *name, int wanted_len)
+static const struct dt_property *dt_require_property(const struct pdbg_target *node,
+						     const char *name, int wanted_len)
 {
 	const struct dt_property *p = dt_find_property(node, name);
 
@@ -459,7 +462,7 @@ u32 dt_prop_get_u32(const struct pdbg_target *node, const char *prop)
 	return dt_property_get_cell(p, 0);
 }
 
-u32 dt_prop_get_u32_def(const struct pdbg_target *node, const char *prop, u32 def)
+static u32 dt_prop_get_u32_def(const struct pdbg_target *node, const char *prop, u32 def)
 {
         const struct dt_property *p = dt_find_property(node, prop);
 
@@ -498,7 +501,7 @@ u32 dt_prop_get_cell(const struct pdbg_target *node, const char *prop, u32 cell)
 	return dt_property_get_cell(p, cell);
 }
 
-enum pdbg_target_status str_to_status(const char *status)
+static enum pdbg_target_status str_to_status(const char *status)
 {
 	if (!strcmp(status, "enabled")) {
 		/* There isn't really a use case for this at the moment except
@@ -520,7 +523,7 @@ enum pdbg_target_status str_to_status(const char *status)
 		assert(0);
 }
 
-int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node)
+static int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node)
 {
 	const struct fdt_property *prop;
 	int offset, nextoffset, err;
@@ -577,7 +580,7 @@ int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node)
 	return nextoffset;
 }
 
-void dt_expand(const void *fdt)
+static void dt_expand(const void *fdt)
 {
 	PR_DEBUG("FDT: Parsing fdt @%p\n", fdt);
 
@@ -595,14 +598,14 @@ u64 dt_get_number(const void *pdata, unsigned int cells)
 	return ret;
 }
 
-u32 dt_n_address_cells(const struct pdbg_target *node)
+static u32 dt_n_address_cells(const struct pdbg_target *node)
 {
 	if (!node->parent)
 		return 0;
 	return dt_prop_get_u32_def(node->parent, "#address-cells", 2);
 }
 
-u32 dt_n_size_cells(const struct pdbg_target *node)
+static u32 dt_n_size_cells(const struct pdbg_target *node)
 {
 	if (!node->parent)
 		return 0;
@@ -643,4 +646,23 @@ u32 dt_get_chip_id(const struct pdbg_target *node)
 	u32 id = __dt_get_chip_id(node);
 	assert(id != 0xffffffff);
 	return id;
+}
+
+void pdbg_targets_init(void *fdt)
+{
+	dt_root = dt_new_node("", NULL, 0);
+	dt_expand(fdt);
+}
+
+char *pdbg_target_path(const struct pdbg_target *target)
+{
+	return dt_get_path(target);
+}
+
+struct pdbg_target *pdbg_target_from_path(struct pdbg_target *target, const char *path)
+{
+	if (!target)
+		target = dt_root;
+
+	return dt_find_by_path(target, path);
 }

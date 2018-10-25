@@ -278,12 +278,6 @@ struct hw_unit_info *find_compatible_target(const char *compat)
 	return NULL;
 }
 
-void pdbg_targets_init(void *fdt)
-{
-	dt_root = dt_new_node("", NULL, 0);
-	dt_expand(fdt);
-}
-
 /* We walk the tree root down disabling targets which might/should
  * exist but don't */
 enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
