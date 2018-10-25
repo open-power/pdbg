@@ -34,7 +34,6 @@
 #include <ccan/array_size/array_size.h>
 
 #include <libpdbg.h>
-#include <device.h>
 #include <bitutils.h>
 
 #include "main.h"

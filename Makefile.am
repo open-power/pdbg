@@ -151,7 +151,6 @@ libpdbg_la_SOURCES = \
 	libpdbg/debug.c \
 	libpdbg/debug.h \
 	libpdbg/device.c \
-	libpdbg/device.h \
 	libpdbg/fake.c \
 	libpdbg/host.c \
 	libpdbg/htm.c \

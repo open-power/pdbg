@@ -8,6 +8,8 @@
 
 #include <stdbool.h>
 
+#include <ccan/short_types/short_types.h>
+
 struct pdbg_target;
 struct pdbg_target_class;
 

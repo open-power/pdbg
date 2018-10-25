@@ -21,7 +21,6 @@
 #include <ccan/str/str.h>
 #include <ccan/container_of/container_of.h>
 #include "compiler.h"
-#include "device.h"
 #include "libpdbg.h"
 
 enum chip_type {CHIP_UNKNOWN, CHIP_P8, CHIP_P8NV, CHIP_P9};

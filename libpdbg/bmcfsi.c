@@ -27,7 +27,6 @@
 
 #include "bitutils.h"
 #include "operations.h"
-#include "device.h"
 #include "target.h"
 #include "debug.h"
 

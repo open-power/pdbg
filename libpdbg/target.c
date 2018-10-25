@@ -7,7 +7,6 @@
 
 #include "bitutils.h"
 #include "target.h"
-#include "device.h"
 #include "operations.h"
 #include "debug.h"
 

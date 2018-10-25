@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#include "device.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include "target.h"
 #include <libfdt/libfdt.h>
 #include <libfdt/libfdt_internal.h>
+#include <ccan/list/list.h>
+#include <ccan/short_types/short_types.h>
 #include <ccan/str/str.h>
 #include <endian.h>
 
 #include "debug.h"
+#include "compiler.h"
 
 #define zalloc(size) calloc(1, size)
 #define prerror printf
@@ -34,7 +36,7 @@
 	list_for_each(&parent->children, node, list)
 
 /* Used to give unique handles. */
-static u32 last_phandle = 0;
+static uint32_t last_phandle = 0;
 
 static struct pdbg_target *pdbg_dt_root;
 

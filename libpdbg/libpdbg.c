@@ -1,7 +1,6 @@
 #include <string.h>
 
 #include "target.h"
-#include "device.h"
 #include "libpdbg.h"
 
 static pdbg_progress_tick_t progress_tick;
