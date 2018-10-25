@@ -135,51 +135,18 @@ const char *pdbg_target_dn_name(struct pdbg_target *target)
 	return target->dn_name;
 }
 
-void pdbg_set_target_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
-{
-	struct dt_property *p;
-
-	if ((p = dt_find_property(target, name))) {
-		if (size > p->len) {
-			dt_resize_property(&p, size);
-			p->len = size;
-		}
-
-		memcpy(p->prop, val, size);
-	} else {
-		dt_add_property(target, name, val, size);
-	}
-}
-
-void *pdbg_get_target_property(struct pdbg_target *target, const char *name, size_t *size)
-{
-	struct dt_property *p;
-
-	p = dt_find_property(target, name);
-	if (p) {
-		if (size)
-			*size = p->len;
-		return p->prop;
-	} else if (size)
-		*size = 0;
-
-	return NULL;
-}
-
-uint64_t pdbg_get_address(struct pdbg_target *target, uint64_t *size)
-{
-	return dt_get_address(target, 0, size);
-}
-
 int pdbg_get_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val)
 {
-	struct dt_property *p;
+	uint32_t *p;
+	size_t size;
 
-	p = dt_find_property(target, name);
+	p = pdbg_get_target_property(target, name, &size);
 	if (!p)
 		return -1;
 
-	*val = dt_get_number(p->prop, 1);
+	assert(size == 4);
+	*val = be32toh(*p);
+
 	return 0;
 }
 

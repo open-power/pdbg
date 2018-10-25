@@ -38,6 +38,21 @@ static u32 last_phandle = 0;
 
 struct pdbg_target *dt_root;
 
+/*
+ * An in-memory representation of a node in the device tree.
+ *
+ * This is trivially flattened into an fdt.
+ *
+ * Note that the add_* routines will make a copy of the name if it's not
+ * a read-only string (ie. usually a string literal).
+ */
+struct dt_property {
+	struct list_node list;
+	const char *name;
+	size_t len;
+	char prop[/* len */];
+};
+
 static const char *take_name(const char *name)
 {
 	if (!is_rodata(name) && !(name = strdup(name))) {
@@ -285,6 +300,17 @@ static struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char 
 	return root;
 }
 
+static struct dt_property *dt_find_property(const struct pdbg_target *node,
+					   const char *name)
+{
+	struct dt_property *i;
+
+	list_for_each(&node->properties, i, list)
+		if (strcmp(i->name, name) == 0)
+			return i;
+	return NULL;
+}
+
 static struct dt_property *new_property(struct pdbg_target *node,
 					const char *name, size_t size)
 {
@@ -313,7 +339,7 @@ static struct dt_property *new_property(struct pdbg_target *node,
 	return p;
 }
 
-struct dt_property *dt_add_property(struct pdbg_target *node,
+static struct dt_property *dt_add_property(struct pdbg_target *node,
 				    const char *name,
 				    const void *val, size_t size)
 {
@@ -338,7 +364,7 @@ struct dt_property *dt_add_property(struct pdbg_target *node,
 	return p;
 }
 
-void dt_resize_property(struct dt_property **prop, size_t len)
+static void dt_resize_property(struct dt_property **prop, size_t len)
 {
 	size_t new_len = sizeof(**prop) + len;
 
@@ -347,6 +373,37 @@ void dt_resize_property(struct dt_property **prop, size_t len)
 	/* Fix up linked lists in case we moved. (note: not an empty list). */
 	(*prop)->list.next->prev = &(*prop)->list;
 	(*prop)->list.prev->next = &(*prop)->list;
+}
+
+void pdbg_set_target_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
+{
+	struct dt_property *p;
+
+	if ((p = dt_find_property(target, name))) {
+		if (size > p->len) {
+			dt_resize_property(&p, size);
+			p->len = size;
+		}
+
+		memcpy(p->prop, val, size);
+	} else {
+		dt_add_property(target, name, val, size);
+	}
+}
+
+void *pdbg_get_target_property(struct pdbg_target *target, const char *name, size_t *size)
+{
+	struct dt_property *p;
+
+	p = dt_find_property(target, name);
+	if (p) {
+		if (size)
+			*size = p->len;
+		return p->prop;
+	} else if (size)
+		*size = 0;
+
+	return NULL;
 }
 
 static u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
@@ -379,17 +436,6 @@ static struct pdbg_target *dt_next(const struct pdbg_target *root,
 		prev = prev->parent;
 	} while (prev != root);
 
-	return NULL;
-}
-
-struct dt_property *dt_find_property(const struct pdbg_target *node,
-					   const char *name)
-{
-	struct dt_property *i;
-
-	list_for_each(&node->properties, i, list)
-		if (strcmp(i->name, name) == 0)
-			return i;
 	return NULL;
 }
 

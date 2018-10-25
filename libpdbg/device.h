@@ -23,30 +23,7 @@
 /* Any property or node with this prefix will not be passed to the kernel. */
 #define DT_PRIVATE	"skiboot,"
 
-/*
- * An in-memory representation of a node in the device tree.
- *
- * This is trivially flattened into an fdt.
- *
- * Note that the add_* routines will make a copy of the name if it's not
- * a read-only string (ie. usually a string literal).
- */
-struct dt_property {
-	struct list_node list;
-	const char *name;
-	size_t len;
-	char prop[/* len */];
-};
-
 extern struct pdbg_target *dt_root;
-
-/* Add a property node, various forms. */
-struct dt_property *dt_add_property(struct pdbg_target *node,
-				    const char *name,
-				    const void *val, size_t size);
-
-/* Warning: moves *prop! */
-void dt_resize_property(struct dt_property **prop, size_t len);
 
 /* Check a compatible property */
 bool dt_node_is_compatible(const struct pdbg_target *node, const char *compat);
@@ -60,19 +37,12 @@ struct pdbg_target *dt_find_compatible_node(struct pdbg_target *root,
 	for (node = NULL; 			        \
 	     (node = dt_find_compatible_node(root, node, compat)) != NULL;)
 
-/* Find a property by name. */
-struct dt_property *dt_find_property(const struct pdbg_target *node,\
-				     const char *name);
-
 /* Simplified accessors */
 u32 dt_prop_get_u32(const struct pdbg_target *node, const char *prop);
 u32 dt_prop_get_u32_index(const struct pdbg_target *node, const char *prop, u32 index);
 const void *dt_prop_get(const struct pdbg_target *node, const char *prop);
 const void *dt_prop_get_def(const struct pdbg_target *node, const char *prop,
 			    void *def);
-
-/* Parsing helpers */
-u64 dt_get_number(const void *pdata, unsigned int cells);
 
 /* Find an chip-id property in this node; if not found, walk up the parent
  * nodes. Returns -1 if no chip-id property exists. */
