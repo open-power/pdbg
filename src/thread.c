@@ -105,11 +105,21 @@ static int load8(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 	return 1;
 }
 
+uint64_t flip_endian(uint64_t v)
+{
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+	return be64toh(v);
+#else
+	return le64toh(v);
+#endif
+}
+
 static int dump_stack(struct thread_regs *regs)
 {
 	struct pdbg_target *target;
-	uint64_t sp = regs->gprs[1];
+	uint64_t next_sp = regs->gprs[1];
 	uint64_t pc;
+	bool finished = false;
 
 	pdbg_for_each_class_target("adu", target) {
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
@@ -117,23 +127,88 @@ static int dump_stack(struct thread_regs *regs)
 		break;
 	}
 
-	printf("STACK:\n");
+	printf("STACK:           SP                NIA\n");
 	if (!target)
 		pdbg_log(PDBG_ERROR, "Unable to read memory (no ADU found)\n");
 
-	if (sp && is_real_address(regs, sp)) {
-		if (!load8(target, sp, &sp))
-			return 1;
-		while (sp && is_real_address(regs, sp)) {
-			if (!load8(target, sp + 16, &pc))
-				return 1;
-
-			printf(" 0x%016" PRIx64 " 0x%16" PRIx64 "\n", sp, pc);
-
-			if (!load8(target, sp, &sp))
-				return 1;
-		}
+	if (!(next_sp && is_real_address(regs, next_sp))) {
+		printf("SP:0x%016" PRIx64 " does not appear to be a stack\n", next_sp);
+		return 0;
 	}
+
+	while (!finished) {
+		uint64_t sp = next_sp;
+		uint64_t tmp, tmp2;
+		bool flip = false;
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+		bool be = false;
+#else
+		bool be = true;
+#endif
+
+		if (!is_real_address(regs, sp))
+			break;
+
+		if (!load8(target, sp, &tmp))
+			return 1;
+		if (!load8(target, sp + 16, &pc))
+			return 1;
+
+		tmp2 = flip_endian(tmp);
+
+		if (!tmp) {
+			finished = true;
+			goto no_flip;
+		}
+
+		/*
+		 * Basic endian detection.
+		 * Stack grows down, so as we unwind it we expect to see
+		 * increasing addresses without huge jumps.  The stack may
+		 * switch endian-ness across frames in some cases (e.g., LE
+		 * kernel calling BE OPAL).
+		 */
+
+		/* Check for OPAL stack -> Linux stack */
+		if ((sp >= 0x30000000UL && sp < 0x40000000UL) &&
+				!(tmp >= 0x30000000UL && tmp < 0x40000000UL)) {
+			if (tmp >> 60 == 0xc)
+				goto no_flip;
+			if (tmp2 >> 60 == 0xc)
+				goto do_flip;
+		}
+
+		/* Check for Linux -> userspace */
+		if ((sp >> 60 == 0xc) && !(tmp >> 60 == 0xc)) {
+			finished = true; /* Don't decode userspace */
+			if (tmp >> 60 == 0)
+				goto no_flip;
+			if (tmp2 >> 60 == 0)
+				goto do_flip;
+		}
+
+		/* Otherwise try to ensure sane stack */
+		if (tmp < sp || (tmp - sp > 0xffffffffUL)) {
+			if (tmp2 < sp || (tmp2 - sp > 0xffffffffUL)) {
+				finished = true;
+				goto no_flip;
+			}
+do_flip:
+			next_sp = tmp2;
+			flip = true;
+			be = !be;
+		} else {
+no_flip:
+			next_sp = tmp;
+		}
+
+		if (flip)
+			pc = flip_endian(pc);
+
+		printf(" 0x%016" PRIx64 " 0x%016" PRIx64 " (%s)\n",
+			sp, pc, be ? "big-endian" : "little-endian");
+	}
+	printf(" 0x%016" PRIx64 "\n", next_sp);
 
 	return 0;
 }
