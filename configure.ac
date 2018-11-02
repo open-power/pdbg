@@ -36,4 +36,10 @@ AC_SUBST([ARCH])
 AM_CONDITIONAL([TARGET_ARM], [test x"$ARCH" = "xarm"])
 AM_CONDITIONAL([TARGET_PPC], [test x"$ARCH" = "xppc"])
 
+AC_ARG_ENABLE(gdbserver,
+AC_HELP_STRING([--disable-gdbserver], [disables building the gdbserver]),
+want_gdbserver=false,
+want_gdbserver=true)
+AM_CONDITIONAL([GDBSERVER], [test x$want_gdbserver = xtrue])
+
 AC_OUTPUT

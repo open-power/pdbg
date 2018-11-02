@@ -25,6 +25,8 @@
 #include "debug.h"
 #include "chip.h"
 
+#ifndef DISABLE_GDBSERVER
+
 /* Maximum packet size */
 #define BUFFER_SIZE    	8192
 
@@ -544,4 +546,11 @@ static int gdbserver(uint16_t port)
 	gdbserver_start(target, port);
 	return 0;
 }
+#else
+
+static int gdbserver(uint16_t port)
+{
+	return 0;
+}
+#endif
 OPTCMD_DEFINE_CMD_WITH_ARGS(gdbserver, gdbserver, (DATA16));
