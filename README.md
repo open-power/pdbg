@@ -365,3 +365,29 @@ There are also low level htm commands which can also be used:
  - `stop` will still stop the trace and de-configure the hardware.
  - `dump` will dump the trace to a file.
 
+### GDBSERVER
+At the moment gdbserver is only supported on P8 while the cores are in the
+kernel. 
+
+To run a gdbserver on a P8 machine from a BMC running openbmc:
+
+Stop all the threads of the core you want to look at
+$ ./pdbg -d p8 -c11 -a stop
+
+Run gdbserver on thread 0 of core 11, accessible through port 44
+$ ./pdbg -d p8 -p0 -c11 -t0 gdbserver 44
+
+On your local machine:
+$ gdb
+(gdb)  set architecture powerpc:common64
+(gdb) target remote palm5-bmc:44
+
+Debugging info:
+(gdb) set debug remote 10
+
+
+Notes:
+1. DON'T RUN PDBG OVER FSI WHILE HOSTBOOT IS RUNNING. Weird things seem to
+happen.
+2. If you want to view the kernel call trace then run gdb on the vmlinux that
+the host is running (the kernel needs to be compiled with debug symbols).
