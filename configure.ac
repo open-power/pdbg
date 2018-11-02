@@ -19,6 +19,7 @@ AC_SUBST([DTC])
 
 AC_PATH_PROG([RAGEL], [ragel])
 AC_SUBST([RAGEL])
+AM_CONDITIONAL([HAVE_RAGEL], [test x"$ac_cv_path_RAGEL" != "x"])
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])

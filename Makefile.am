@@ -65,6 +65,12 @@ DT_headers = $(DT:.dts=.dt.h)
 optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
 optcmd_test_CFLAGS = -Wall -g
 
+if HAVE_RAGEL
+extra_sources = src/gdb_parser.c
+else
+extra_sources = src/gdb_parser_precompile.c
+endif
+
 pdbg_SOURCES = \
 	src/main.c \
 	src/cfam.c \
