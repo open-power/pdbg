@@ -165,4 +165,5 @@ struct chiplet {
 	int (*getring)(struct chiplet *, uint64_t, int64_t, uint32_t[]);
 };
 #define target_to_chiplet(x) container_of(x, struct chiplet, target)
+
 #endif

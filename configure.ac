@@ -17,6 +17,9 @@ if test x"$ac_cv_path_DTC" = x ; then
 fi
 AC_SUBST([DTC])
 
+AC_PATH_PROG([RAGEL], [ragel])
+AC_SUBST([RAGEL])
+
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])

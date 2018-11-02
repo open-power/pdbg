@@ -39,3 +39,4 @@ optcmd_test
 *.trs
 *.log
 test-driver
+src/gdb_parser.c

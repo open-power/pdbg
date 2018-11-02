@@ -38,6 +38,7 @@
 #include "options.h"
 #include "optcmd.h"
 #include "progress.h"
+#include "pdbgproxy.h"
 
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
@@ -88,7 +89,7 @@ extern struct optcmd_cmd
 	optcmd_getring, optcmd_start, optcmd_stop, optcmd_step,
 	optcmd_threadstatus, optcmd_sreset, optcmd_regs, optcmd_probe,
 	optcmd_getmem, optcmd_putmem, optcmd_getxer, optcmd_putxer,
-	optcmd_getcr, optcmd_putcr;
+	optcmd_getcr, optcmd_putcr, optcmd_gdbserver;
 
 static struct optcmd_cmd *cmds[] = {
 	&optcmd_getscom, &optcmd_putscom, &optcmd_getcfam, &optcmd_putcfam,
@@ -97,7 +98,7 @@ static struct optcmd_cmd *cmds[] = {
 	&optcmd_getring, &optcmd_start, &optcmd_stop, &optcmd_step,
 	&optcmd_threadstatus, &optcmd_sreset, &optcmd_regs, &optcmd_probe,
 	&optcmd_getmem, &optcmd_putmem, &optcmd_getxer, &optcmd_putxer,
-	&optcmd_getcr, &optcmd_putcr,
+	&optcmd_getcr, &optcmd_putcr, &optcmd_gdbserver,
 };
 
 /* Purely for printing usage text. We could integrate printing argument and flag
@@ -136,6 +137,7 @@ static struct action actions[] = {
 	{ "threadstatus", "", "Print the status of a thread" },
 	{ "sreset",  "", "Reset" },
 	{ "regs",  "[--backtrace]", "State (optionally display backtrace)" },
+	{ "gdbserver", "", "Start a gdb server" },
 };
 
 static void print_usage(char *pname)

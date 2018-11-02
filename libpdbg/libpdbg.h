@@ -139,6 +139,7 @@ struct thread_regs {
 };
 
 int ram_putmsr(struct pdbg_target *target, uint64_t val);
+int ram_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value);
 int ram_putnia(struct pdbg_target *target, uint64_t val);
 int ram_putspr(struct pdbg_target *target, int spr, uint64_t val);
 int ram_putgpr(struct pdbg_target *target, int spr, uint64_t val);
