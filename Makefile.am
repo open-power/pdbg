@@ -163,7 +163,8 @@ libpdbg_la_SOURCES = \
 	libpdbg/p8chip.c \
 	libpdbg/p9chip.c \
 	libpdbg/target.c \
-	libpdbg/target.h
+	libpdbg/target.h \
+	libpdbg/xbus.c
 
 libpdbg_la_LIBADD = libfdt.la
 

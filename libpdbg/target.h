@@ -173,4 +173,9 @@ struct chiplet {
 };
 #define target_to_chiplet(x) container_of(x, struct chiplet, target)
 
+struct xbus {
+	struct pdbg_target target;
+	uint32_t ring_id;
+};
+#define target_to_xbus(x) container_of(x, struct xbus, target)
 #endif
