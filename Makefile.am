@@ -65,12 +65,6 @@ DT_headers = $(DT:.dts=.dt.h)
 optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
 optcmd_test_CFLAGS = -Wall -g
 
-if HAVE_RAGEL
-extra_sources = src/gdb_parser.c
-else
-extra_sources = src/gdb_parser_precompile.c
-endif
-
 pdbg_SOURCES = \
 	src/cfam.c \
 	src/htm.c \
@@ -106,8 +100,11 @@ pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\" \
 	      $(ARCH_FLAGS)
 
 if GDBSERVER
-pdbg_SOURCES += \
-	$(extra_sources)
+if HAVE_RAGEL
+pdbg_SOURCES += src/gdb_parser.c
+else
+pdbg_SOURCES += src/gdb_parser_precompile.c
+endif
 else
 pdbg_CFLAGS += -DDISABLE_GDBSERVER
 endif
