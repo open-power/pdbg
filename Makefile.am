@@ -41,6 +41,7 @@ EXTRA_DIST = \
 	p9z-fsi.dts.m4 \
 	template.S \
 	generate_dt_header.sh \
+	src/gdb_parser.rl \
 	tests/driver.sh \
 	tests/run_test.sh \
 	tests/test_driver.sh \
