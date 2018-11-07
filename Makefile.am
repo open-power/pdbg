@@ -132,6 +132,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/bmcfsi.c \
 	libpdbg/cfam.c \
 	libpdbg/chip.c \
+	libpdbg/chip.h \
 	libpdbg/compiler.h \
 	libpdbg/debug.c \
 	libpdbg/debug.h \
