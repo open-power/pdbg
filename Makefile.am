@@ -126,29 +126,30 @@ libfdt_la_SOURCES = \
 	libfdt/libfdt_internal.h
 
 libpdbg_la_SOURCES = \
-	libpdbg/libpdbg.c \
-	libpdbg/host.c \
-	libpdbg/kernel.c \
-	libpdbg/fake.c \
-	libpdbg/chip.c \
-	libpdbg/p8chip.c \
-	libpdbg/p9chip.c \
-	libpdbg/bmcfsi.c \
-	libpdbg/cfam.c \
-	libpdbg/i2c.c \
 	libpdbg/adu.c \
-	libpdbg/device.c \
-	libpdbg/target.c \
-	libpdbg/htm.c \
-	libpdbg/debug.c \
 	libpdbg/backend.h \
 	libpdbg/bitutils.h \
+	libpdbg/bmcfsi.c \
+	libpdbg/cfam.c \
+	libpdbg/chip.c \
 	libpdbg/compiler.h \
+	libpdbg/debug.c \
 	libpdbg/debug.h \
+	libpdbg/device.c \
 	libpdbg/device.h \
-	libpdbg/operations.h \
+	libpdbg/fake.c \
+	libpdbg/host.c \
+	libpdbg/htm.c \
+	libpdbg/i2c.c \
+	libpdbg/kernel.c \
+	libpdbg/libpdbg.c \
 	libpdbg/libpdbg.h \
+	libpdbg/operations.h \
+	libpdbg/p8chip.c \
+	libpdbg/p9chip.c \
+	libpdbg/target.c \
 	libpdbg/target.h
+
 libpdbg_la_LIBADD = libfdt.la
 
 include_HEADERS = libpdbg/libpdbg.h
