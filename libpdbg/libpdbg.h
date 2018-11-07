@@ -204,12 +204,22 @@ int htm_status(struct pdbg_target *target);
 int htm_dump(struct pdbg_target *target, char *filename);
 int htm_record(struct pdbg_target *target, char *filename);
 
-int adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *ouput, uint64_t size);
-int adu_putmem(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size);
-int adu_getmem_ci(struct pdbg_target *target, uint64_t addr, uint8_t *ouput, uint64_t size);
-int adu_putmem_ci(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size);
-int __adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *ouput, uint64_t size, bool ci);
-int __adu_putmem(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size, bool ci);
+int adu_getmem(struct pdbg_target *target, uint64_t addr,
+	       uint8_t *ouput, uint64_t size);
+int adu_putmem(struct pdbg_target *target, uint64_t addr,
+	       uint8_t *input, uint64_t size);
+int adu_getmem_ci(struct pdbg_target *target, uint64_t addr,
+		  uint8_t *ouput, uint64_t size);
+int adu_putmem_ci(struct pdbg_target *target, uint64_t addr,
+		  uint8_t *input, uint64_t size);
+int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
+		  uint8_t *output, uint64_t size, uint8_t blocksize);
+int adu_putmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
+		  uint8_t *input, uint64_t size, uint8_t block_size);
+int __adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *ouput,
+		 uint64_t size, bool ci);
+int __adu_putmem(struct pdbg_target *target, uint64_t addr, uint8_t *input,
+		 uint64_t size, bool ci);
 
 int opb_read(struct pdbg_target *target, uint32_t addr, uint32_t *data);
 int opb_write(struct pdbg_target *target, uint32_t addr, uint32_t data);

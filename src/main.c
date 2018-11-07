@@ -91,8 +91,9 @@ extern struct optcmd_cmd
 	optcmd_getnia, optcmd_putnia, optcmd_getmsr, optcmd_putmsr,
 	optcmd_getring, optcmd_start, optcmd_stop, optcmd_step,
 	optcmd_threadstatus, optcmd_sreset, optcmd_regs, optcmd_probe,
-	optcmd_getmem, optcmd_putmem, optcmd_getxer, optcmd_putxer,
-	optcmd_getcr, optcmd_putcr, optcmd_gdbserver;
+	optcmd_getmem, optcmd_putmem, optcmd_getmemio, optcmd_putmemio,
+	optcmd_getxer, optcmd_putxer, optcmd_getcr, optcmd_putcr,
+	optcmd_gdbserver;
 
 static struct optcmd_cmd *cmds[] = {
 	&optcmd_getscom, &optcmd_putscom, &optcmd_getcfam, &optcmd_putcfam,
@@ -100,8 +101,9 @@ static struct optcmd_cmd *cmds[] = {
 	&optcmd_getnia, &optcmd_putnia, &optcmd_getmsr, &optcmd_putmsr,
 	&optcmd_getring, &optcmd_start, &optcmd_stop, &optcmd_step,
 	&optcmd_threadstatus, &optcmd_sreset, &optcmd_regs, &optcmd_probe,
-	&optcmd_getmem, &optcmd_putmem, &optcmd_getxer, &optcmd_putxer,
-	&optcmd_getcr, &optcmd_putcr, &optcmd_gdbserver,
+	&optcmd_getmem, &optcmd_putmem, &optcmd_getmemio, &optcmd_putmemio,
+	&optcmd_getxer, &optcmd_putxer, &optcmd_getcr, &optcmd_putcr,
+	&optcmd_gdbserver,
 };
 
 /* Purely for printing usage text. We could integrate printing argument and flag
@@ -136,7 +138,9 @@ static struct action actions[] = {
 	{ "getscom", "<address>", "Read system scom" },
 	{ "putscom", "<address> <value> [<mask>]", "Write system scom" },
 	{ "getmem",  "<address> <count>", "Read system memory" },
+	{ "getmemio", "<address> <count> <block size>", "Read memory cache inhibited with specified transfer size" },
 	{ "putmem",  "<address>", "Write to system memory" },
+	{ "putmemio", "<address> <block size>", "Write system memory cache inhibited with specified transfer size" },
 	{ "threadstatus", "", "Print the status of a thread" },
 	{ "sreset",  "", "Reset" },
 	{ "regs",  "[--backtrace]", "State (optionally display backtrace)" },

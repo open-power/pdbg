@@ -84,20 +84,34 @@
 #define FBC_ALTD_DATA_DONE	PPC_BIT(3)
 #define FBC_ALTD_PBINIT_MISSING PPC_BIT(18)
 
-int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
-	       uint8_t *output, uint64_t size)
+/* There are more general implementations of this with a loop and more
+ * performant implementations using GCC builtins which aren't
+ * portable. Given we only need a limited domain this is quick, easy
+ * and portable. */
+uint8_t blog2(uint8_t x)
 {
-	return __adu_getmem(adu_target, start_addr, output, size, false);
+	switch(x) {
+	case 1:
+		return 0;
+	case 2:
+		return 1;
+	case 4:
+		return 2;
+	case 8:
+		return 3;
+	case 16:
+		return 4;
+	case 32:
+		return 5;
+	case 64:
+		return 6;
+	default:
+		assert(0);
+	}
 }
 
-int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
-		  uint8_t *output, uint64_t size)
-{
-	return __adu_getmem(adu_target, start_addr, output, size, true);
-}
-
-int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
-		 uint8_t *output, uint64_t size, bool ci)
+static int __adu_getmem_blocksize(struct pdbg_target *adu_target, uint64_t start_addr,
+				  uint8_t *output, uint64_t size, uint8_t block_size, bool ci)
 {
 	struct adu *adu;
 	uint8_t *output0;
@@ -109,33 +123,34 @@ int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 
 	output0 = output;
 
-	/* Align start address to 8-byte boundary */
-	addr0 = 8 * (start_addr / 8);
+	/* Align start address to block_sized boundary */
+	addr0 = block_size * (start_addr / block_size);
 
-	/* We read data in 8-byte aligned chunks */
-	for (addr = addr0; addr < start_addr + size; addr += 8) {
+	/* We read data in block_sized aligned chunks */
+	for (addr = addr0; addr < start_addr + size; addr += block_size) {
 		uint64_t data;
 
-		if (adu->getmem(adu, addr, &data, ci))
+		if (adu->getmem(adu, addr, &data, ci, block_size))
 			return -1;
 
-		/* ADU returns data in big-endian form in the register */
+		/* ADU returns data in big-endian form in the register. */
 		data = __builtin_bswap64(data);
+		data >>= (addr & 0x7ull)*8;
 
 		if (addr < start_addr) {
 			size_t offset = start_addr - addr;
-			size_t n = (size <= 8-offset ? size : 8-offset);
+			size_t n = (size <= block_size-offset ? size : block_size-offset);
 
 			memcpy(output, ((uint8_t *) &data) + offset, n);
 			output += n;
-		} else if (addr + 8 > start_addr + size) {
+		} else if (addr + block_size > start_addr + size) {
 			uint64_t offset = start_addr + size - addr;
 
 			memcpy(output, &data, offset);
 			output += offset;
 		} else {
-			memcpy(output, &data, 8);
-			output += 8;
+			memcpy(output, &data, block_size);
+			output += block_size;
 		}
 
 		pdbg_progress_tick(output - output0, size);
@@ -146,20 +161,37 @@ int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	return rc;
 }
 
-int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
+int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	       uint8_t *output, uint64_t size)
 {
-	return __adu_putmem(adu_target, start_addr, output, size, false);
+	return __adu_getmem_blocksize(adu_target, start_addr, output,
+				      size, 8, false);
 }
 
-int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
+int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *output, uint64_t size)
 {
-	return __adu_putmem(adu_target, start_addr, output, size, true);
+	return __adu_getmem_blocksize(adu_target, start_addr, output,
+			    size, 8, true);
 }
 
-int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
-		 uint8_t *input, uint64_t size, bool ci)
+int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
+		  uint8_t *output, uint64_t size, uint8_t blocksize)
+{
+	/* There is no equivalent for cachable memory as blocksize
+	 * does not apply to cachable reads */
+	return __adu_getmem_blocksize(adu_target, start_addr, output,
+				      size, blocksize, true);
+}
+
+int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
+		 uint8_t *output, uint64_t size, bool ci)
+{
+	return __adu_getmem_blocksize(adu_target, start_addr, output,
+				      size, 8, ci);
+}
+static int __adu_putmem_blocksize(struct pdbg_target *adu_target, uint64_t start_addr,
+				  uint8_t *input, uint64_t size, uint8_t block_size, bool ci)
 {
 	struct adu *adu;
 	int rc = 0, tsize;
@@ -169,26 +201,55 @@ int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	adu = target_to_adu(adu_target);
 	end_addr = start_addr + size;
 	for (addr = start_addr; addr < end_addr; addr += tsize, input += tsize) {
-		if ((addr % 8) || (addr + 8 > end_addr)) {
-			/* If the address is not 64-bit aligned we
-			 * copy in a byte at a time until it is. */
+		if ((addr % block_size) || (addr + block_size > end_addr)) {
+			/* If the address is not aligned to block_size
+			 * we copy the data in one byte at a time
+			 * until it is aligned. */
 			tsize = 1;
 
-			/* Copy the input data in with correct alignment */
+			/* Copy the input data in with correct
+			 * alignment. Bytes need to aligned to the
+			 * correct byte offset in the data register
+			 * regardless of address. */
 			data = ((uint64_t) *input) << 8*(8 - (addr % 8) - 1);
 		} else {
-			tsize = 8;
-			memcpy(&data, input, sizeof(data));
+			tsize = block_size;
+			memcpy(&data, input, block_size);
 			data = __builtin_bswap64(data);
+			data >>= (addr & 7ull)*8;
 		}
 
-		adu->putmem(adu, addr, data, tsize, ci);
+		adu->putmem(adu, addr, data, tsize, ci, block_size);
 		pdbg_progress_tick(addr - start_addr, size);
 	}
 
 	pdbg_progress_tick(size, size);
 
 	return rc;
+}
+
+int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
+	       uint8_t *input, uint64_t size)
+{
+	return __adu_putmem_blocksize(adu_target, start_addr, input, size, 8, false);
+}
+
+int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
+		  uint8_t *input, uint64_t size)
+{
+	return __adu_putmem_blocksize(adu_target, start_addr, input, size, 8, true);
+}
+
+int adu_putmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
+		  uint8_t *input, uint64_t size, uint8_t block_size)
+{
+	return __adu_putmem_blocksize(adu_target, start_addr, input, size, block_size, true);
+}
+
+int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
+		 uint8_t *input, uint64_t size, bool ci)
+{
+	return __adu_putmem_blocksize(adu_target, start_addr, input, size, 8, ci);
 }
 
 static int adu_lock(struct adu *adu)
@@ -234,7 +295,8 @@ static int adu_reset(struct adu *adu)
 	return 0;
 }
 
-static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data, int ci)
+static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data,
+			 int ci, uint8_t block_size)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
 	int rc = 0;
@@ -242,12 +304,15 @@ static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data, int ci)
 	CHECK_ERR(adu_lock(adu));
 
 	ctrl_reg = P8_TTYPE_TREAD;
-	if (ci)
+	if (ci) {
 		/* Do cache inhibited access */
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_CI_PARTIAL_READ);
-	else
+		block_size = (blog2(block_size) + 1) << 1;
+	} else {
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_READ);
-	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, 8);
+		block_size = 0;
+	}
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, block_size);
 
 	CHECK_ERR_GOTO(out, rc = pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
 	cmd_reg |= FBC_ALTD_START_OP;
@@ -292,19 +357,23 @@ out:
 
 }
 
-int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size, int ci)
+int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size,
+		  int ci, uint8_t block_size)
 {
 	int rc = 0;
 	uint64_t cmd_reg, ctrl_reg, val;
 	CHECK_ERR(adu_lock(adu));
 
 	ctrl_reg = P8_TTYPE_TWRITE;
-	if (ci)
+	if (ci) {
 		/* Do cache inhibited access */
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_CI_PARTIAL_WRITE);
-	else
+		block_size = (blog2(block_size) + 1) << 1;
+	} else {
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_WRITE);
-	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, size);
+		block_size <<= 1;
+	}
+	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, block_size);
 
 	CHECK_ERR_GOTO(out, rc = pib_read(&adu->target, P8_ALTD_CMD_REG, &cmd_reg));
 	cmd_reg |= FBC_ALTD_START_OP;
@@ -349,19 +418,25 @@ out:
 	return rc;
 }
 
-static int p9_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data, int ci)
+static int p9_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data,
+			 int ci, uint8_t block_size)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
 
 	cmd_reg = P9_TTYPE_TREAD;
-	if (ci)
+	if (ci) {
 		/* Do cache inhibited access */
 		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_CI_PARTIAL_READ);
-	else
+		block_size = (blog2(block_size) + 1) << 1;
+	} else {
 		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_READ);
 
-	/* For a read size is apparently always 0 */
-	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, 0);
+		/* For normal reads the size is ignored as HW always
+		 * returns a cache line */
+		block_size = 0;
+	}
+
+	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, block_size);
  	cmd_reg |= FBC_ALTD_START_OP;
 	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_REMOTE);
 	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_LOW);
@@ -400,7 +475,8 @@ retry:
 	return 0;
 }
 
-static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size, int ci)
+static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size,
+			 int ci, uint8_t block_size)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
 
@@ -409,12 +485,15 @@ static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size
 	size <<= 1;
 
 	cmd_reg = P9_TTYPE_TWRITE;
-	if (ci)
+	if (ci) {
 		/* Do cache inhibited access */
 		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_CI_PARTIAL_WRITE);
-	else
+		block_size = (blog2(block_size) + 1) << 1;
+	} else {
 		cmd_reg = SETFIELD(P9_FBC_ALTD_TTYPE, cmd_reg, P9_TTYPE_DMA_PARTIAL_WRITE);
-	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, size);
+		block_size <<= 1;
+	}
+	cmd_reg = SETFIELD(P9_FBC_ALTD_TSIZE, cmd_reg, block_size);
  	cmd_reg |= FBC_ALTD_START_OP;
 	cmd_reg = SETFIELD(FBC_ALTD_SCOPE, cmd_reg, SCOPE_REMOTE);
 	cmd_reg = SETFIELD(FBC_ALTD_DROP_PRIORITY, cmd_reg, DROP_PRIORITY_LOW);
