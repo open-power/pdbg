@@ -111,16 +111,16 @@ libfdt_la_CFLAGS = -I$(top_srcdir)/libfdt
 libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -Wall -Werror
 
 libfdt_la_SOURCES = \
+	libfdt/fdt_addresses.c \
 	libfdt/fdt.c \
+	libfdt/fdt_empty_tree.c \
+	libfdt/fdt.h \
+	libfdt/fdt_overlay.c \
 	libfdt/fdt_ro.c \
-	libfdt/fdt_wip.c \
-	libfdt/fdt_sw.c \
 	libfdt/fdt_rw.c \
 	libfdt/fdt_strerror.c \
-	libfdt/fdt_empty_tree.c \
-	libfdt/fdt_addresses.c \
-	libfdt/fdt_overlay.c \
-	libfdt/fdt.h \
+	libfdt/fdt_sw.c \
+	libfdt/fdt_wip.c \
 	libfdt/libfdt_env.h \
 	libfdt/libfdt.h \
 	libfdt/libfdt_internal.h
