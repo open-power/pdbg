@@ -151,6 +151,8 @@ libpdbg_la_SOURCES = \
 	libpdbg/target.h
 libpdbg_la_LIBADD = libfdt.la
 
+include_HEADERS = libpdbg/libpdbg.h
+
 noinst_LIBRARIES = libccan.a
 
 libccan_a_SOURCES = \
