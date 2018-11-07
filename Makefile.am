@@ -119,7 +119,7 @@ pdbg_LDADD = $(DT_objects) libpdbg.la libccan.a \
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 
-lib_LTLIBRARIES = libpdbg.la libfdt.la
+lib_LTLIBRARIES = libfdt.la libpdbg.la
 
 libfdt_la_CFLAGS = -I$(top_srcdir)/libfdt
 libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -Wall -Werror
