@@ -72,19 +72,19 @@ extra_sources = src/gdb_parser_precompile.c
 endif
 
 pdbg_SOURCES = \
-	src/main.c \
 	src/cfam.c \
-	src/scom.c \
-	src/reg.c \
-	src/mem.c \
-	src/thread.c \
-	src/ring.c \
 	src/htm.c \
-	src/progress.c \
-	src/parsers.c \
+	src/main.c \
+	src/mem.c \
 	src/optcmd.c \
 	src/options_@ARCH@.c \
-	src/pdbgproxy.c
+	src/parsers.c \
+	src/pdbgproxy.c \
+	src/progress.c \
+	src/reg.c \
+	src/ring.c \
+	src/scom.c \
+	src/thread.c
 
 pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\" \
 	      $(ARCH_FLAGS)
