@@ -74,13 +74,20 @@ endif
 pdbg_SOURCES = \
 	src/cfam.c \
 	src/htm.c \
+	src/htm.h \
 	src/main.c \
+	src/main.h \
 	src/mem.c \
 	src/optcmd.c \
+	src/optcmd.h \
 	src/options_@ARCH@.c \
+	src/options.h \
 	src/parsers.c \
+	src/parsers.h \
 	src/pdbgproxy.c \
+	src/pdbgproxy.h \
 	src/progress.c \
+	src/progress.h \
 	src/reg.c \
 	src/ring.c \
 	src/scom.c \
