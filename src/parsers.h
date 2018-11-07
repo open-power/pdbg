@@ -16,6 +16,7 @@
 uint64_t *parse_number64(const char *argv);
 uint32_t *parse_number32(const char *argv);
 uint16_t *parse_number16(const char *argv);
+uint8_t *parse_number8_pow2(const char *argv);
 int *parse_gpr(const char *argv);
 int *parse_spr(const char *argv);
 bool *parse_flag_noarg(const char *argv);

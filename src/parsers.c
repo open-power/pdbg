@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -52,6 +53,31 @@ uint16_t *parse_number16(const char *argv)
 		return NULL;
 
 	*n = tmp;
+	return n;
+}
+
+/* Parse an 8-bit number that is a power of 2 */
+uint8_t *parse_number8_pow2(const char *argv)
+{
+	uint8_t *n;
+	unsigned long int tmp, i;
+	char *endptr;
+
+	if (!argv)
+		return NULL;
+
+	errno = 0;
+	tmp = strtoul(argv, &endptr, 0);
+	if (tmp >= 256)
+		return NULL;
+
+	for (i = tmp; i; i >>= 1)
+		if ((i & 1) && (i >> 1))
+			return NULL;
+
+	n = malloc(sizeof(*n));
+	*n = tmp;
+
 	return n;
 }
 
