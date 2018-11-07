@@ -80,7 +80,6 @@ pdbg_SOURCES = \
 	src/mem.c \
 	src/optcmd.c \
 	src/optcmd.h \
-	src/options_@ARCH@.c \
 	src/options.h \
 	src/parsers.c \
 	src/parsers.h \
@@ -92,6 +91,16 @@ pdbg_SOURCES = \
 	src/ring.c \
 	src/scom.c \
 	src/thread.c
+
+if TARGET_ARM
+pdbg_SOURCES += src/options_arm.c
+else
+if TARGET_PPC
+pdbg_SOURCES += src/options_ppc.c
+else
+pdbg_SOURCES += src/options_def.c
+endif
+endif
 
 pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\" \
 	      $(ARCH_FLAGS)
