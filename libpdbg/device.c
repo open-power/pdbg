@@ -626,15 +626,14 @@ uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 	const struct dt_property *p;
 	u32 na = dt_n_address_cells(target);
 	u32 ns = dt_n_size_cells(target);
-	u32 pos, n;
+	u32 n;
 
 	p = dt_require_property(target, "reg", -1);
 	n = (na + ns) * sizeof(u32);
-	pos = n;
-	assert((pos + n) <= p->len);
+	assert(n <= p->len);
 	if (out_size)
-		*out_size = dt_get_number(p->prop + pos + na * sizeof(u32), ns);
-	return dt_get_number(p->prop + pos, na);
+		*out_size = dt_get_number(p->prop + na * sizeof(u32), ns);
+	return dt_get_number(p->prop, na);
 }
 
 void pdbg_targets_init(void *fdt)

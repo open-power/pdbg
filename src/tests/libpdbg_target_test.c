@@ -63,7 +63,7 @@ int main(void)
 {
 	struct pdbg_target *root, *target, *parent, *parent2;
 	const char *name;
-	int count;
+	int count, i;
 
 	pdbg_targets_init(&_binary_fake_dtb_o_start);
 
@@ -161,7 +161,10 @@ int main(void)
 		assert(!strncmp(name, "pib", 3));
 	}
 
+	i = 0;
 	pdbg_for_each_class_target("core", target) {
+		uint64_t addr, size;
+
 		parent = pdbg_target_parent("fsi", target);
 		assert(parent);
 
@@ -203,6 +206,11 @@ int main(void)
 
 		name = pdbg_target_dn_name(target);
 		assert(!strncmp(name, "core", 4));
+
+		addr = pdbg_target_address(target, &size);
+		assert(size == 0);
+		assert(addr == 0x10000 + (i / 4)*0x1000 + ((i % 4) + 1)*0x10);
+		i++;
 	}
 
 	pdbg_for_each_class_target("thread", target) {
