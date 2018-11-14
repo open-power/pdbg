@@ -90,6 +90,7 @@ test_name=${TEST_NAME:-$0}
 test_logfile=${TEST_LOG:-}
 test_trsfile=${TEST_TRS:-}
 test_color=${TEST_COLOR:-yes}
+test_exit_failure=${TEST_EXIT_FAILURE:-yes}
 
 red= grn= lgn= blu= mgn= std=
 if [ $test_color = yes ] ; then
@@ -215,6 +216,10 @@ test_output ()
 		count_skipped=$(( count_skipped + 1 ))
 	elif [ $res = "XPASS" -o $res = "FAIL" ] ; then
 		count_failed=$(( count_failed + 1 ))
+	fi
+
+	if [ $count_failed -gt 0 -a "$test_exit_failure" = "yes" ] ; then
+		exit 99
 	fi
 }
 
