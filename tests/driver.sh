@@ -84,7 +84,7 @@ if [ "$TESTDIR" = "." ] ; then
 	TESTDIR=$(cd "$TESTDIR"; pwd)
 fi
 SRCDIR=$(dirname "$TESTDIR")
-PATH="$SRCDIR":$PATH
+PATH="$SRCDIR":.:$PATH
 
 test_name=${TEST_NAME:-$0}
 test_logfile=${TEST_LOG:-}
