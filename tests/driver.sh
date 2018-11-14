@@ -370,9 +370,9 @@ test_run ()
 		output_mismatch=1
 	fi
 
+	output_stderr_raw=$(cat "$stderr_file")
+	output_stderr=$(cat "$stderr_file" | result_filter)
 	if [ $test_stderr -eq 1 ] ; then
-		output_stderr_raw=$(cat "$stderr_file")
-		output_stderr=$(cat "$stderr_file" | result_filter)
 		if [ "$output_stderr" != "$required_output_stderr" ] ; then
 			test_log "expected stderr:"
 			test_log "$required_output_stderr"
@@ -383,6 +383,13 @@ test_run ()
 				test_log "$output_stderr_raw"
 			fi
 			output_mismatch=1
+		fi
+	else
+		if [ $rc -ne $required_rc -o $output_mismatch -eq 1 ] ; then
+			if [ -n "$output_stderr_raw" ] ; then
+				test_log "output stderr:"
+				test_log "$output_stderr_raw"
+			fi
 		fi
 	fi
 
