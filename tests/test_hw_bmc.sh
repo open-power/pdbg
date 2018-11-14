@@ -62,15 +62,17 @@ do_skip ()
     fi
 }
 
+
 echo -n "Checking if the host is up... "
 output=$(test_wrapper /usr/sbin/obmcutil state | grep CurrentHostState)
 rc=$?
 if [ $rc -ne 0 ] || \
-    [ "$output" != "xyz.openbmc_project.State.Host.HostState.Running" ] ; then
+    [ "$output" = "CurrentHostState    : xyz.openbmc_project.State.Host.HostState.Running" ] ; then
 	echo "yes"
 	hw_state=1
 else
 	echo "no"
+	echo "$output"
 fi
 
 result_filter ()
