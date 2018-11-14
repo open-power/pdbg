@@ -52,10 +52,14 @@ echo_stderr ()
 	echo "$*" >&2
 }
 
+test_wrapper echo_stderr
+
 echo "match stderr"
 test_result 0 --
 test_result_stderr foo
-test_run echo_stderr foo
+test_run foo
+
+test_wrapper
 
 echo
 
@@ -73,10 +77,12 @@ test_run echo 666
 
 echo
 
-test_wrapper ()
+prefix_output ()
 {
 	echo "output: $*"
 }
+
+test_wrapper prefix_output
 
 test_result 0 "output: foobar"
 test_run foobar

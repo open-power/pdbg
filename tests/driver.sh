@@ -44,8 +44,9 @@
 #
 # test_wrapper
 #
-#    To execute commands in a special context, test_wrapper function can be
-#    defined.  This function will be passed all the arguments to test_run
+#    Register a test wrapper function.  If test_wrapper is called without
+#    an argument, then the test wrapper function is set to default.
+#    The test wrapper function will be passed all the arguments to test_run
 #    command.
 #
 #
@@ -222,9 +223,15 @@ test_wrapper_default ()
 	"$@"
 }
 
+test_wrapper_func=test_wrapper_default
+
 test_wrapper ()
 {
-	test_wrapper_default "$@"
+	if [ $# -eq 0 ] ; then
+		test_wrapper_func=test_wrapper_default
+	else
+		test_wrapper_func="$1"
+	fi
 }
 
 result_filter_default ()
@@ -337,7 +344,7 @@ test_run ()
 
 	stderr_file=$(mktemp)
 
-	output_raw=$(test_wrapper "$@" 2>"$stderr_file")
+	output_raw=$($test_wrapper_func "$@" 2>"$stderr_file")
 	rc=$?
 
 	if [ $rc -ne $required_rc ] ; then

@@ -40,7 +40,7 @@ copy_pdbg ()
 			${BMC_USER}@${BMC_HOST}:${PDBG_PATH}
 }
 
-test_wrapper ()
+run_over_ssh ()
 {
 	sshpass -p "$BMC_PASS" \
 		ssh ${BMC_USER}@${BMC_HOST} \
@@ -64,7 +64,7 @@ do_skip ()
 
 
 echo -n "Checking if the host is up... "
-output=$(test_wrapper /usr/sbin/obmcutil state | grep CurrentHostState)
+output=$(run_over_ssh /usr/sbin/obmcutil state | grep CurrentHostState)
 rc=$?
 if [ $rc -ne 0 ] || \
     [ "$output" = "CurrentHostState    : xyz.openbmc_project.State.Host.HostState.Running" ] ; then
@@ -74,6 +74,8 @@ else
 	echo "no"
 	echo "$output"
 fi
+
+test_wrapper run_over_ssh
 
 result_filter ()
 {
