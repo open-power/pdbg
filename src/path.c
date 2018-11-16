@@ -222,6 +222,7 @@ static void path_pattern_match(struct pdbg_target *target,
 {
 	struct pdbg_target *child;
 	char comp_name[MAX_PATH_COMP_LEN];
+	const char *classname;
 	char *tok;
 	int next = level;
 	bool found = false;
@@ -236,7 +237,11 @@ static void path_pattern_match(struct pdbg_target *target,
 		goto end;
 	}
 
-	safe_strcpy(comp_name, sizeof(comp_name), pdbg_target_class_name(target));
+	classname = pdbg_target_class_name(target);
+	if (!classname)
+		goto end;
+
+	safe_strcpy(comp_name, sizeof(comp_name), classname);
 	if (pats[level].match_full) {
 		tok = comp_name;
 	} else {
