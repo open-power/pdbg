@@ -85,7 +85,9 @@ pdbg_SOURCES = \
 	src/reg.c \
 	src/ring.c \
 	src/scom.c \
-	src/thread.c
+	src/thread.c \
+	src/util.c \
+	src/util.h
 
 if TARGET_ARM
 pdbg_SOURCES += src/options_arm.c
