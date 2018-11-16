@@ -18,41 +18,100 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include <libpdbg.h>
 
 #include "main.h"
 #include "optcmd.h"
+#include "path.h"
 
-static int _getscom(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *unused)
+/* Check if a target has scom region */
+static bool scommable(struct pdbg_target *target)
 {
-	uint64_t value;
+	char *classname;
 
-	if (pib_read(target, *addr, &value))
-		return 0;
+	classname = pdbg_target_class_name(target);
+	if (!strcmp(classname, "pib") ||
+	    !strcmp(classname, "core") ||
+	    !strcmp(classname, "thread"))
+		return true;
 
-	printf("p%d:0x%" PRIx64 " = 0x%016" PRIx64 "\n", index, *addr, value);
-
-	return 1;
+	return false;
 }
 
- int getscom(uint64_t addr)
+int getscom(uint64_t addr)
 {
-	return for_each_target("pib", _getscom, &addr, NULL);
+	struct pdbg_target *target;
+	char *path;
+	uint64_t value;
+	int count = 0;
+
+	for_each_path_target(target) {
+		struct pdbg_target *addr_base;
+		uint64_t xlate_addr;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (!scommable(target)) {
+			continue;
+		}
+
+		path = pdbg_target_path(target);
+		assert(path);
+
+		xlate_addr = addr;
+		addr_base = pdbg_address_absolute(target, &xlate_addr);
+
+		if (pib_read(target, addr, &value)) {
+			printf("p%d: 0x%016" PRIx64 " failed (%s)\n", pdbg_target_index(addr_base), xlate_addr, path);
+			free(path);
+			continue;
+		}
+
+		printf("p%d: 0x%016" PRIx64 " = 0x%016" PRIx64 " (%s)\n", pdbg_target_index(addr_base), xlate_addr, value, path);
+		free(path);
+		count++;
+	}
+
+	return count;
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(getscom, getscom, (ADDRESS));
 
-static int _putscom(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *data)
+int putscom(uint64_t addr, uint64_t data, uint64_t mask)
 {
-	if (pib_write(target, *addr, *data))
-		return 0;
+	struct pdbg_target *target;
+	char *path;
+	int count = 0;
 
-	return 1;
-}
+	for_each_path_target(target) {
+		struct pdbg_target *addr_base;
+		uint64_t xlate_addr;
 
- int putscom(uint64_t addr, uint64_t data, uint64_t mask)
-{
-	/* TODO: Restore the <mask> functionality */
-	return for_each_target("pib", _putscom, &addr, &data);
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (!scommable(target)) {
+			continue;
+		}
+
+		path = pdbg_target_path(target);
+		assert(path);
+
+		xlate_addr = addr;
+		addr_base = pdbg_address_absolute(target, &xlate_addr);
+
+		/* TODO: Restore the <mask> functionality */
+		if (pib_write(target, addr, data)) {
+			printf("p%d: 0x%016" PRIx64 " failed (%s)\n", pdbg_target_index(addr_base), xlate_addr, path);
+			free(path);
+			continue;
+		}
+
+		count++;
+	}
+
+	return count;
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putscom, putscom, (ADDRESS, DATA, DEFAULT_DATA("0xffffffffffffffff")));

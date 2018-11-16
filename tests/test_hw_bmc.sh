@@ -79,8 +79,9 @@ test_wrapper run_over_ssh
 
 result_filter ()
 {
-	sed -E -e 's#0x[[:xdigit:]]{16}#HEX16#' \
-	    -E -e 's#0x[[:xdigit:]]{8}#HEX8#'
+	sed -E -e 's#0x[[:xdigit:]]{16}#HEX16#g' \
+	    -E -e 's#0x[[:xdigit:]]{8}#HEX8#g' \
+	    -E -e 's#/.*fsi@0/pib@1000#PIB0PATH#'
 }
 
 test_result 0 <<EOF
@@ -91,7 +92,7 @@ do_skip
 test_run $PDBG -p0 getcfam 0xc09
 
 test_result 0 <<EOF
-p0:0xf000f = HEX16
+p0: HEX16 = HEX16 (PIB0PATH)
 EOF
 
 do_skip
