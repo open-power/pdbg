@@ -13,10 +13,9 @@ do_skip ()
 	fi
 }
 
-test_result 0 <<EOF
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
+test_result 1 <<EOF
+No valid targets found or specified. Try adding -p/-c/-t options to specify a target.
+Alternatively run 'pdbg -a probe' to get a list of all valid targets
 EOF
 
 do_skip
@@ -128,9 +127,6 @@ p7: Fake PIB
     c3: Fake Core
         t0: Fake Thread
         t1: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -151,9 +147,6 @@ p0: Fake PIB
     c3: Fake Core
         t0: Fake Thread
         t1: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -193,9 +186,6 @@ p7: Fake PIB
     c0: Fake Core
         t0: Fake Thread
         t1: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -275,9 +265,6 @@ p7: Fake PIB
         t0: Fake Thread
     c3: Fake Core
         t0: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -289,9 +276,6 @@ p0: Fake PIB
     c2: Fake Core
         t0: Fake Thread
         t1: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -302,9 +286,6 @@ test_result 0 <<EOF
 p0: Fake PIB
     c2: Fake Core
         t1: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -328,9 +309,6 @@ p6: Fake PIB
     c0: Fake Core
         t0: Fake Thread
 
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
-
 EOF
 
 do_skip
@@ -339,9 +317,6 @@ test_run pdbg -b fake -p1-3,5,5-6 -c0 -t0 probe
 
 test_result 0 <<EOF
 p0: Fake PIB
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -391,9 +366,6 @@ test_run pdbg -b fake -t0 -p0 probe
 test_result 0 <<EOF
 p0: Fake PIB
     c0: Fake Core
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -404,9 +376,6 @@ test_result 0 <<EOF
 p0: Fake PIB
     c0: Fake Core
         t0: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -434,9 +403,6 @@ p7: Fake PIB
         t0: Fake Thread
     c3: Fake Core
         t0: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip
@@ -464,9 +430,6 @@ p7: Fake PIB
         t1: Fake Thread
     c3: Fake Core
         t1: Fake Thread
-
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
 EOF
 
 do_skip

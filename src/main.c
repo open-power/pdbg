@@ -678,8 +678,6 @@ void print_target(struct pdbg_target *target, int level)
 	struct pdbg_target *next;
 	enum pdbg_target_status status;
 
-	pdbg_target_probe(target);
-
 	/* Does this target actually exist? */
 	status = pdbg_target_status(target);
 	if (status != PDBG_TARGET_ENABLED)
@@ -708,9 +706,6 @@ void print_target(struct pdbg_target *target, int level)
 	}
 
 	pdbg_for_each_child_target(target, next) {
-		if (!target_selected(next))
-			continue;
-
 		print_target(next, level + 1);
 	}
 }
@@ -720,14 +715,8 @@ static int probe(void)
 	struct pdbg_target *target;
 
 	pdbg_for_each_class_target("pib", target) {
-		if (!target_selected(target))
-			continue;
-
 		print_target(target, 0);
 	}
-
-	printf("\nNote that only selected targets will be shown above. If none are shown\n"
-			"try adding '-a' to select all targets\n");
 
 	return 1;
 }
