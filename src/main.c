@@ -75,10 +75,6 @@ static int i2c_addr = 0x50;
 
 #define MAX_LINUX_CPUS	(MAX_PROCESSORS * MAX_CHIPS * MAX_THREADS)
 
-static int **processorsel[MAX_PROCESSORS];
-static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
-static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
-
 #define MAX_PATH_ARGS	16
 
 static const char *pathsel[MAX_PATH_ARGS];
@@ -525,19 +521,12 @@ static bool parse_options(int argc, char *argv[])
 
 void target_select(struct pdbg_target *target)
 {
-	/* We abuse the private data pointer atm to indicate the target is
-	 * selected */
-	pdbg_target_priv_set(target, (void *) 1);
-}
-
-void target_unselect(struct pdbg_target *target)
-{
-	pdbg_target_priv_set(target, NULL);
+	path_target_add(target);
 }
 
 bool target_selected(struct pdbg_target *target)
 {
-	return (bool) pdbg_target_priv(target);
+	return path_target_selected(target);
 }
 
 /* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
@@ -556,7 +545,6 @@ int for_each_child_target(char *class, struct pdbg_target *parent,
 
 		index = pdbg_target_index(target);
 		assert(index != -1);
-		pdbg_target_probe(target);
 		status = pdbg_target_status(target);
 		if (status != PDBG_TARGET_ENABLED)
 			continue;
@@ -580,7 +568,6 @@ int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint6
 
 		index = pdbg_target_index(target);
 		assert(index != -1);
-		pdbg_target_probe(target);
 		status = pdbg_target_status(target);
 		if (status != PDBG_TARGET_ENABLED)
 			continue;
@@ -605,8 +592,6 @@ void for_each_target_release(char *class)
 
 static bool target_selection(void)
 {
-	struct pdbg_target *fsi, *pib, *chip, *thread;
-
 	switch (backend) {
 #ifdef TARGET_ARM
 	case I2C:
@@ -673,61 +658,15 @@ static bool target_selection(void)
 		return false;
 	}
 
-	/* At this point we should have a device-tree loaded. We want
-	 * to walk the tree and disabled nodes we don't care about
-	 * prior to probing. */
-	pdbg_for_each_class_target("pib", pib) {
-		int proc_index = pdbg_target_index(pib);
-
-		if (backend == I2C && device_node)
-			pdbg_target_set_property(pib, "bus", device_node, strlen(device_node) + 1);
-
-		if (processorsel[proc_index]) {
-			target_select(pib);
-			pdbg_for_each_target("core", pib, chip) {
-				int chip_index = pdbg_target_index(chip);
-				if (pdbg_parent_index(chip, "pib") != proc_index)
-					continue;
-
-				if (chipsel[proc_index][chip_index]) {
-					target_select(chip);
-					pdbg_for_each_target("thread", chip, thread) {
-						int thread_index = pdbg_target_index(thread);
-						if (threadsel[proc_index][chip_index][thread_index])
-							target_select(thread);
-						else
-							target_unselect(thread);
-					}
-				} else
-					target_unselect(chip);
-			}
-
-			/* This is kinda broken as we're overloading what '-c'
-			 * means - it's now up to each command to select targets
-			 * based on core/chiplet. We really need a better
-			 * solution to target selection. */
-			pdbg_for_each_target("chiplet", pib, chip) {
-				int chip_index = pdbg_target_index(chip);
-				if (chipsel[proc_index][chip_index]) {
-					target_select(chip);
-				} else
-					target_unselect(chip);
-			}
-		} else
-			target_unselect(pib);
-	}
-
-	pdbg_for_each_class_target("fsi", fsi) {
-		int index = pdbg_target_index(fsi);
-		if (processorsel[index])
-			target_select(fsi);
-		else
-			target_unselect(fsi);
-	}
-
 	if (pathsel_count) {
 		if (!path_target_parse(pathsel, pathsel_count))
 			return false;
+	}
+
+	if (!path_target_present()) {
+		printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
+		printf("Alternatively run 'pdbg -a probe' to get a list of all valid targets\n");
+		return false;
 	}
 
 	return true;
@@ -862,8 +801,5 @@ found_action:
 	if (rc > 0)
 		return 0;
 
-	printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
-	printf("Alternatively run '%s -a probe' to get a list of all valid targets\n",
-	       basename(argv[0]));
 	return 1;
 }
