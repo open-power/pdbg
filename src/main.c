@@ -280,6 +280,26 @@ static bool pathsel_add(char *format, ...)
 	return true;
 }
 
+static bool list_to_string(int *list, int max, char *str, size_t len)
+{
+	char tmp[16];
+	int i;
+
+	memset(str, 0, len);
+
+	for (i=0; i<max; i++) {
+		if (list[i] == 1) {
+			sprintf(tmp, "%d,", i);
+			if (strlen(str) + strlen(tmp) + 1 > len) {
+				return false;
+			}
+			strcat(str, tmp);
+		}
+	}
+
+	return true;
+}
+
 static bool parse_options(int argc, char *argv[])
 {
 	int c;
@@ -289,7 +309,7 @@ static bool parse_options(int argc, char *argv[])
 	int t_list[MAX_THREADS];
 	int l_list[MAX_LINUX_CPUS];
 	int p_count = 0, c_count = 0, t_count = 0, l_count = 0;
-	int i, j, k;
+	int i;
 	struct option long_opts[] = {
 		{"all",			no_argument,		NULL,	'a'},
 		{"backend",		required_argument,	NULL,	'b'},
@@ -309,6 +329,7 @@ static bool parse_options(int argc, char *argv[])
 		{NULL,			0,			NULL,     0}
 	};
 	char *endptr;
+	char p_str[256], c_str[256], t_str[256];
 
 	memset(p_list, 0, sizeof(p_list));
 	memset(c_list, 0, sizeof(c_list));
@@ -437,6 +458,16 @@ static bool parse_options(int argc, char *argv[])
 		return false;
 	}
 
+	if (pathsel_count > 0 && l_count > 0) {
+		fprintf(stderr, "Can't mix -l with -P\n");
+		return false;
+	}
+
+	if ((c_count > 0 || t_count > 0 || p_count > 0) && (pathsel_count > 0)) {
+		fprintf(stderr, "Can't mix -P with -p/-c/-t/-a\n");
+		return false;
+	}
+
 	if ((c_count > 0 || t_count > 0) && p_count == 0) {
 		fprintf(stderr, "No processor(s) selected\n");
 		fprintf(stderr, "Use -p or -a to select processor(s)\n");
@@ -449,25 +480,27 @@ static bool parse_options(int argc, char *argv[])
 		return false;
 	}
 
-	for (i = 0; i < MAX_PROCESSORS; i++) {
-		if (p_list[i] == 0)
-			continue;
+	if (p_count) {
+		if (!list_to_string(p_list, MAX_PROCESSORS, p_str, sizeof(p_str)))
+			return false;
+		if (!pathsel_add("fsi[%s]", p_str))
+			return false;
+		if (!pathsel_add("pib[%s]", p_str))
+			return false;
+	}
 
-		processorsel[i] = &chipsel[i][0];
+	if (c_count) {
+		if (!list_to_string(c_list, MAX_CHIPS, c_str, sizeof(c_str)))
+			return false;
+		if (!pathsel_add("pib[%s]/core[%s]", p_str, c_str))
+			return false;
+	}
 
-		for (j = 0; j < MAX_CHIPS; j++) {
-			if (c_list[j] == 0)
-				continue;
-
-			chipsel[i][j] = &threadsel[i][j][0];
-
-			for (k = 0; k < MAX_THREADS; k++) {
-				if (t_list[k] == 0)
-					continue;
-
-				threadsel[i][j][k] = 1;
-			}
-		}
+	if (t_count) {
+		if (!list_to_string(t_list, MAX_THREADS, t_str, sizeof(t_str)))
+			return false;
+		if (!pathsel_add("pib[%s]/core[%s]/thread[%s]", p_str, c_str, t_str))
+			return false;
 	}
 
 	if (l_count) {
@@ -481,9 +514,8 @@ static bool parse_options(int argc, char *argv[])
 
 				pir_map(pir, &chip, &core, &thread);
 
-				processorsel[chip] = &chipsel[chip][0];
-				chipsel[chip][core] = &threadsel[chip][core][0];
-				threadsel[chip][core][thread] = 1;
+				if (!pathsel_add("pib%d/core%d/thread%d", chip, core, thread))
+					return false;
 			}
 		}
 	}
