@@ -13,6 +13,7 @@ check_PROGRAMS = $(libpdbg_tests) optcmd_test
 
 PDBG_TESTS = \
 	tests/test_selection.sh 	\
+	tests/test_selection2.sh 	\
 	tests/test_hw_bmc.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
