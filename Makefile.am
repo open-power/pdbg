@@ -78,6 +78,8 @@ pdbg_SOURCES = \
 	src/options.h \
 	src/parsers.c \
 	src/parsers.h \
+	src/path.c \
+	src/path.h \
 	src/pdbgproxy.c \
 	src/pdbgproxy.h \
 	src/progress.c \
