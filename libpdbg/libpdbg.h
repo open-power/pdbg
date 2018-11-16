@@ -117,6 +117,10 @@ void pdbg_target_priv_set(struct pdbg_target *target, void *priv);
 struct pdbg_target *pdbg_target_root(void);
 bool pdbg_target_compatible(struct pdbg_target *target, const char *compatible);
 
+/* Translate an address offset for a target to absolute address in address
+ * space of a "base" target.  */
+struct pdbg_target *pdbg_address_absolute(struct pdbg_target *target, uint64_t *addr);
+
 /* Procedures */
 int fsi_read(struct pdbg_target *target, uint32_t addr, uint32_t *val);
 int fsi_write(struct pdbg_target *target, uint32_t addr, uint32_t val);

@@ -36,6 +36,11 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 	return target;
 }
 
+struct pdbg_target *pdbg_address_absolute(struct pdbg_target *target, uint64_t *addr)
+{
+	return get_class_target_addr(target, "pib", addr);
+}
+
 /* The indirect access code was largely stolen from hw/xscom.c in skiboot */
 #define PIB_IND_MAX_RETRIES 10
 #define PIB_IND_READ PPC_BIT(0)
