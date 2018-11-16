@@ -13,20 +13,22 @@
  * see the license for the specific language governing permissions and
  * limitations under the license.
  */
-#include "operations.h"
 #include <stdio.h>
 #include <inttypes.h>
+
+#include "libpdbg.h"
+#include "operations.h"
 
 static int fake_fsi_read(struct fsi *fsi, uint32_t addr, uint32_t *value)
 {
 	*value = 0xfeed0cfa;
-	printf("fake_fsi_read(0x%04" PRIx32 ", 0x%04" PRIx32 ")\n", addr, *value);
+	PR_DEBUG("fake_fsi_read(0x%04" PRIx32 ", 0x%04" PRIx32 ")\n", addr, *value);
 	return 0;
 }
 
 static int fake_fsi_write(struct fsi *fsi, uint32_t addr, uint32_t value)
 {
-	printf("fake_fsi_write(0x%04" PRIx32 ", 0x%04" PRIx32 ")\n", addr, value);
+	PR_DEBUG("fake_fsi_write(0x%04" PRIx32 ", 0x%04" PRIx32 ")\n", addr, value);
 	return 0;
 }
 
@@ -44,13 +46,13 @@ DECLARE_HW_UNIT(fake_fsi);
 static int fake_pib_read(struct pib *pib, uint64_t addr, uint64_t *value)
 {
 	*value = 0xdeadbeef;
-	printf("fake_pib_read(0x%08" PRIx64 ", 0x%08" PRIx64 ")\n", addr, *value);
+	PR_DEBUG("fake_pib_read(0x%08" PRIx64 ", 0x%08" PRIx64 ")\n", addr, *value);
 	return 0;
 }
 
 static int fake_pib_write(struct pib *pib, uint64_t addr, uint64_t value)
 {
-	printf("fake_pib_write(0x%08" PRIx64 ", 0x%08" PRIx64 ")\n", addr, value);
+	PR_DEBUG("fake_pib_write(0x%08" PRIx64 ", 0x%08" PRIx64 ")\n", addr, value);
 	return 0;
 }
 
