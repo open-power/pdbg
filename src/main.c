@@ -143,11 +143,11 @@ static struct action actions[] = {
 	{ "gdbserver", "", "Start a gdb server" },
 };
 
-static void print_usage(char *pname)
+static void print_usage(void)
 {
 	int i;
 
-	printf("Usage: %s [options] command ...\n\n", pname);
+	printf("Usage: pdbg [options] command ...\n\n");
 	printf(" Options:\n");
 	printf("\t-p, --processor=<0-%d>|<range>|<list>\n", MAX_PROCESSORS-1);
 	printf("\t-c, --chip=<0-%d>|<range>|<list>\n", MAX_CHIPS-1);
@@ -440,7 +440,7 @@ static bool parse_options(int argc, char *argv[])
 		case '?':
 		case 'h':
 			opt_error = true;
-			print_usage(basename(argv[0]));
+			print_usage();
 			break;
 		}
 	} while (c != EOF && !opt_error);
@@ -743,7 +743,7 @@ int main(int argc, char *argv[])
 		return 1;
 
 	if (optind >= argc) {
-		print_usage(basename(argv[0]));
+		print_usage();
 		return 1;
 	}
 
