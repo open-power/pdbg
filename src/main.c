@@ -775,6 +775,7 @@ int main(int argc, char *argv[])
 	int i, rc = 0;
 	void **args, **flags;
 	optcmd_cmd_t *cmd;
+	struct pdbg_target *target;
 
 	backend = default_backend();
 
@@ -792,6 +793,11 @@ int main(int argc, char *argv[])
 	/* Disable unselected targets */
 	if (!target_selection())
 		return 1;
+
+	/* Probe all selected targets */
+	for_each_path_target(target) {
+		pdbg_target_probe(target);
+	}
 
 	atexit(atexit_release);
 
