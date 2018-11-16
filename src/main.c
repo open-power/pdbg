@@ -677,6 +677,7 @@ void print_target(struct pdbg_target *target, int level)
 	int i;
 	struct pdbg_target *next;
 	enum pdbg_target_status status;
+	char *classname;
 
 	/* Does this target actually exist? */
 	status = pdbg_target_status(target);
@@ -686,24 +687,14 @@ void print_target(struct pdbg_target *target, int level)
 	for (i = 0; i < level; i++)
 		printf("    ");
 
-	if (target) {
-		char c = 0;
+	classname = pdbg_target_class_name(target);
+	if (!classname)
+		return;
 
-		if (!pdbg_target_class_name(target))
-			return;
-
-		if (!strcmp(pdbg_target_class_name(target), "pib"))
-			c = 'p';
-		else if (!strcmp(pdbg_target_class_name(target), "core"))
-			c = 'c';
-		else if (!strcmp(pdbg_target_class_name(target), "thread"))
-			c = 't';
-
-		if (c)
-			printf("%c%d: %s\n", c, pdbg_target_index(target), pdbg_target_name(target));
-		else
-			printf("%s\n", pdbg_target_name(target));
-	}
+	printf("%s%d: %s", classname, pdbg_target_index(target), pdbg_target_name(target));
+	if (target_selected(target))
+		printf(" (*)");
+	printf("\n");
 
 	pdbg_for_each_child_target(target, next) {
 		print_target(next, level + 1);
@@ -714,7 +705,7 @@ static int probe(void)
 {
 	struct pdbg_target *target;
 
-	pdbg_for_each_class_target("pib", target) {
+	pdbg_for_each_child_target(pdbg_target_root(), target) {
 		print_target(target, 0);
 	}
 
