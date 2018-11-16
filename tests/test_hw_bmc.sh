@@ -84,7 +84,7 @@ result_filter ()
 }
 
 test_result 0 <<EOF
-p0:0xc09 = HEX8
+p0: 0xc09 = HEX8
 EOF
 
 do_skip
