@@ -600,7 +600,7 @@ void for_each_target_release(char *class)
 	}
 }
 
-static int target_selection(void)
+static bool target_selection(void)
 {
 	struct pdbg_target *fsi, *pib, *chip, *thread;
 
@@ -613,7 +613,7 @@ static int target_selection(void)
 	case FSI:
 		if (device_node == NULL) {
 			PR_ERROR("FSI backend requires a device type\n");
-			return -1;
+			return false;
 		}
 		if (!strcmp(device_node, "p8"))
 			pdbg_targets_init(&_binary_p8_fsi_dtb_o_start);
@@ -625,14 +625,14 @@ static int target_selection(void)
 			pdbg_targets_init(&_binary_p9z_fsi_dtb_o_start);
 		else {
 			PR_ERROR("Invalid device type specified\n");
-			return -1;
+			return false;
 		}
 		break;
 
 	case KERNEL:
 		if (device_node == NULL) {
 			PR_ERROR("kernel backend requires a device type\n");
-                        return -1;
+                        return false;
 		}
 		if (!strcmp(device_node, "p8"))
 			pdbg_targets_init(&_binary_p8_kernel_dtb_o_start);
@@ -646,7 +646,7 @@ static int target_selection(void)
 	case HOST:
 		if (device_node == NULL) {
 			PR_ERROR("Host backend requires a device type\n");
-			return -1;
+			return false;
 		}
 		if (!strcmp(device_node, "p8"))
 			pdbg_targets_init(&_binary_p8_host_dtb_o_start);
@@ -654,7 +654,7 @@ static int target_selection(void)
 			pdbg_targets_init(&_binary_p9_host_dtb_o_start);
 		else {
 			PR_ERROR("Unsupported device type for host backend\n");
-			return -1;
+			return false;
 		}
 		break;
 #endif
@@ -667,7 +667,7 @@ static int target_selection(void)
 		/* parse_options deals with parsing user input, so it should be
 		 * impossible to get here */
 		assert(0);
-		return -1;
+		return false;
 	}
 
 	/* At this point we should have a device-tree loaded. We want
@@ -722,7 +722,7 @@ static int target_selection(void)
 			target_unselect(fsi);
 	}
 
-	return 0;
+	return true;
 }
 
 void print_target(struct pdbg_target *target, int level)
@@ -814,7 +814,7 @@ int main(int argc, char *argv[])
 		device_node = default_target(backend);
 
 	/* Disable unselected targets */
-	if (target_selection())
+	if (!target_selection())
 		return 1;
 
 	atexit(atexit_release);
