@@ -40,6 +40,7 @@
 #include "progress.h"
 #include "pdbgproxy.h"
 #include "util.h"
+#include "path.h"
 
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
@@ -77,6 +78,11 @@ static int i2c_addr = 0x50;
 static int **processorsel[MAX_PROCESSORS];
 static int *chipsel[MAX_PROCESSORS][MAX_CHIPS];
 static int threadsel[MAX_PROCESSORS][MAX_CHIPS][MAX_THREADS];
+
+#define MAX_PATH_ARGS	16
+
+static const char *pathsel[MAX_PATH_ARGS];
+static int pathsel_count;
 
 static int probe(void);
 
@@ -153,6 +159,7 @@ static void print_usage(char *pname)
 #ifdef TARGET_PPC
 	printf("\t-l, --cpu=<0-%d>|<range>|<list>\n", MAX_PROCESSORS-1);
 #endif
+	printf("\t-P, --path=<device tree node spec>\n");
 	printf("\t-a, --all\n");
 	printf("\t\tRun command on all possible processors/chips/threads (default)\n");
 	printf("\t-b, --backend=backend\n");
@@ -243,6 +250,36 @@ void pir_map(int pir, int *chip, int *core, int *thread) {}
 #define PPC_OPTS
 #endif
 
+static bool pathsel_add(char *format, ...) __attribute__((format (printf, 1, 2)));
+
+static bool pathsel_add(char *format, ...)
+{
+	va_list ap;
+	char path[1024];
+	int len;
+
+	va_start(ap, format);
+
+	len = vsnprintf(path, sizeof(path), format, ap);
+	if (len > sizeof(path)) {
+		va_end(ap);
+		return false;
+	}
+
+	va_end(ap);
+
+	if (pathsel_count == MAX_PATH_ARGS) {
+		fprintf(stderr, "Too many path arguments\n");
+		return false;
+	}
+
+	pathsel[pathsel_count] = strdup(path);
+	assert(pathsel[pathsel_count]);
+	pathsel_count++;
+
+	return true;
+}
+
 static bool parse_options(int argc, char *argv[])
 {
 	int c;
@@ -266,6 +303,7 @@ static bool parse_options(int argc, char *argv[])
 		{"cpu",			required_argument,	NULL,	'l'},
 #endif
 		{"debug",		required_argument,	NULL,	'D'},
+		{"path",		required_argument,	NULL,	'P'},
 		{"shutup",		no_argument,		NULL,	'S'},
 		{"version",		no_argument,		NULL,	'V'},
 		{NULL,			0,			NULL,     0}
@@ -278,7 +316,7 @@ static bool parse_options(int argc, char *argv[])
 	memset(l_list, 0, sizeof(l_list));
 
 	do {
-		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:SV" PPC_OPTS,
+		c = getopt_long(argc, argv, "+ab:c:d:hp:s:t:D:P:SV" PPC_OPTS,
 				long_opts, NULL);
 		if (c == -1)
 			break;
@@ -362,6 +400,11 @@ static bool parse_options(int argc, char *argv[])
 			opt_error = (errno || *endptr != '\0');
 			if (opt_error)
 				fprintf(stderr, "Invalid slave address '%s'\n", optarg);
+			break;
+
+		case 'P':
+			if (!pathsel_add("%s", optarg))
+				opt_error = true;
 			break;
 
 		case 'S':
@@ -648,6 +691,11 @@ static bool target_selection(void)
 			target_select(fsi);
 		else
 			target_unselect(fsi);
+	}
+
+	if (pathsel_count) {
+		if (!path_target_parse(pathsel, pathsel_count))
+			return false;
 	}
 
 	return true;
