@@ -28,7 +28,6 @@
 #include "debug.h"
 #include "compiler.h"
 
-#define zalloc(size) calloc(1, size)
 #define prerror printf
 #define is_rodata(p) false
 
@@ -219,7 +218,7 @@ static char *dt_get_path(const struct pdbg_target *node)
 		if (n->parent || n == node)
 			len++;
 	}
-	path = zalloc(len + 1);
+	path = calloc(1, len + 1);
 	assert(path);
 	p = path + len;
 	for (n = node; n; n = n->parent) {
