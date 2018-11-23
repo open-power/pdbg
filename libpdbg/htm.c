@@ -1107,10 +1107,10 @@ static int chtm_probe(struct pdbg_target *target)
 	return is_debugfs_memtrace_ok() && is_debugfs_scom_ok() ? 0 : -1;
 }
 
-static struct htm nhtm = {
+static struct htm p8_nhtm = {
 	.target = {
-		.name =	"Nest HTM",
-		.compatible = "ibm,power8-nhtm", "ibm,power9-nhtm",
+		.name =	"POWER8 Nest HTM",
+		.compatible = "ibm,power8-nhtm",
 		.class = "nhtm",
 		.probe = nhtm_probe,
 	},
@@ -1120,9 +1120,24 @@ static struct htm nhtm = {
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };
-DECLARE_HW_UNIT(nhtm);
+DECLARE_HW_UNIT(p8_nhtm);
 
-static struct htm chtm = {
+static struct htm p9_nhtm = {
+	.target = {
+		.name =	"POWER9 Nest HTM",
+		.compatible = "ibm,power9-nhtm",
+		.class = "nhtm",
+		.probe = nhtm_probe,
+	},
+	.start = do_htm_start,
+	.stop = do_htm_stop,
+	.record = do_htm_record,
+	.status = do_htm_status,
+	.dump = do_htm_dump,
+};
+DECLARE_HW_UNIT(p9_nhtm);
+
+static struct htm p8_chtm = {
 	.target = {
 		.name = "POWER8 Core HTM",
 		.compatible = "ibm,power8-chtm",
@@ -1135,4 +1150,4 @@ static struct htm chtm = {
 	.status = do_htm_status,
 	.dump = do_htm_dump,
 };
-DECLARE_HW_UNIT(chtm);
+DECLARE_HW_UNIT(p8_chtm);
