@@ -52,23 +52,13 @@ uint64_t flip_endian(uint64_t v)
 #endif
 }
 
-static int dump_stack(struct thread_regs *regs)
+static int dump_stack(struct thread_regs *regs, struct pdbg_target *adu)
 {
-	struct pdbg_target *target;
 	uint64_t next_sp = regs->gprs[1];
 	uint64_t pc;
 	bool finished = false;
 
-	pdbg_for_each_class_target("adu", target) {
-		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
-			continue;
-		break;
-	}
-
 	printf("STACK:           SP                NIA\n");
-	if (!target)
-		pdbg_log(PDBG_ERROR, "Unable to read memory (no ADU found)\n");
-
 	if (!(next_sp && is_real_address(regs, next_sp))) {
 		printf("SP:0x%016" PRIx64 " does not appear to be a stack\n", next_sp);
 		return 0;
@@ -87,9 +77,9 @@ static int dump_stack(struct thread_regs *regs)
 		if (!is_real_address(regs, sp))
 			break;
 
-		if (!load8(target, sp, &tmp))
+		if (!load8(adu, sp, &tmp))
 			return 1;
-		if (!load8(target, sp + 16, &pc))
+		if (!load8(adu, sp + 16, &pc))
 			return 1;
 
 		tmp2 = flip_endian(tmp);
@@ -149,20 +139,6 @@ no_flip:
 	printf(" 0x%016" PRIx64 "\n", next_sp);
 
 	return 0;
-}
-
-static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *i_doBacktrace, uint64_t *unused)
-{
-	struct thread_regs regs;
-	bool do_backtrace = (bool) i_doBacktrace;
-
-	if (ram_state_thread(thread_target, &regs))
-		return 0;
-
-	if (do_backtrace)
-		dump_stack(&regs);
-
-	return 1;
 }
 
 static int thread_start(void)
@@ -335,15 +311,38 @@ struct reg_flags {
 
 #define REG_BACKTRACE_FLAG ("--backtrace", do_backtrace, parse_flag_noarg, false)
 
-static int thread_state(struct reg_flags flags)
+static int thread_regs_print(struct reg_flags flags)
 {
-	int err;
+	struct pdbg_target *pib, *core, *thread;
+	struct thread_regs regs;
+	int count = 0;
 
-	err = for_each_target("thread", state_thread,
-			(uint64_t *)flags.do_backtrace, NULL);
+	for_each_path_target_class("thread", thread) {
+		core = pdbg_target_parent("core", thread);
+		pib = pdbg_target_parent("pib", core);
 
-	for_each_target_release("thread");
+		printf("p%d c%d t%d\n",
+		       pdbg_target_index(pib),
+		       pdbg_target_index(core),
+		       pdbg_target_index(thread));
 
-	return err;
+		if (ram_state_thread(thread, &regs))
+			continue;
+
+		if (flags.do_backtrace) {
+			struct pdbg_target *adu;
+
+			pdbg_for_each_class_target("adu", adu) {
+				if (pdbg_target_probe(adu) == PDBG_TARGET_ENABLED) {
+					dump_stack(&regs, adu);
+					break;
+				}
+			}
+		}
+
+		count++;
+	}
+
+	return count;
 }
-OPTCMD_DEFINE_CMD_ONLY_FLAGS(regs, thread_state, reg_flags, (REG_BACKTRACE_FLAG));
+OPTCMD_DEFINE_CMD_ONLY_FLAGS(regs, thread_regs_print, reg_flags, (REG_BACKTRACE_FLAG));
