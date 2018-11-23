@@ -24,6 +24,7 @@
 #include "optcmd.h"
 #include "debug.h"
 #include "chip.h"
+#include "path.h"
 
 #ifndef DISABLE_GDBSERVER
 
@@ -41,6 +42,7 @@
 #define TEST_SKIBOOT_ADDR 0x40000000
 
 static struct pdbg_target *thread_target = NULL;
+static struct pdbg_target *adu_target;
 static struct timeval timeout;
 static int poll_interval = 100;
 static int fd = -1;
@@ -200,7 +202,6 @@ static uint64_t get_real_addr(uint64_t addr)
 
 static void get_mem(uint64_t *stack, void *priv)
 {
-	struct pdbg_target *adu;
 	uint64_t addr, len, linear_map;
 	int i, err = 0;
 	uint64_t data[MAX_DATA/sizeof(uint64_t)];
@@ -209,17 +210,6 @@ static void get_mem(uint64_t *stack, void *priv)
 	/* stack[0] is the address and stack[1] is the length */
 	addr = stack[0];
 	len = stack[1];
-
-	pdbg_for_each_class_target("adu", adu) {
-		if (pdbg_target_probe(adu) == PDBG_TARGET_ENABLED)
-			break;
-	}
-
-	if (adu == NULL) {
-		PR_ERROR("ADU NOT FOUND\n");
-		err=3;
-		goto out;
-	}
 
 	if (len > MAX_DATA) {
 		PR_INFO("Too much memory requested, truncating\n");
@@ -233,7 +223,7 @@ static void get_mem(uint64_t *stack, void *priv)
 
 	linear_map = get_real_addr(addr);
 	if (linear_map != -1UL) {
-		if (adu_getmem(adu, linear_map, (uint8_t *) data, len)) {
+		if (adu_getmem(adu_target, linear_map, (uint8_t *) data, len)) {
 			PR_ERROR("Unable to read memory\n");
 			err = 1;
 		}
@@ -261,7 +251,6 @@ out:
 
 static void put_mem(uint64_t *stack, void *priv)
 {
-	struct pdbg_target *adu;
 	uint64_t addr, len;
 	uint8_t *data;
 	uint8_t attn_opcode[] = {0x00, 0x00, 0x02, 0x00};
@@ -276,17 +265,6 @@ static void put_mem(uint64_t *stack, void *priv)
 	addr = stack[0];
 	len = stack[1];
 	data = (uint8_t *) &stack[2];
-
-	pdbg_for_each_class_target("adu", adu) {
-		if (pdbg_target_probe(adu) == PDBG_TARGET_ENABLED)
-			break;
-	}
-
-	if (adu == NULL) {
-		PR_ERROR("ADU NOT FOUND\n");
-		err=3;
-		goto out;
-	}
 
 	addr = get_real_addr(addr);
 	if (addr == -1UL) {
@@ -315,7 +293,7 @@ static void put_mem(uint64_t *stack, void *priv)
 
 	PR_INFO("put_mem 0x%016" PRIx64 " = 0x%016" PRIx64 "\n", addr, stack[2]);
 
-	if (adu_putmem(adu, addr, data, len)) {
+	if (adu_putmem(adu_target, addr, data, len)) {
 		PR_ERROR("Unable to write memory\n");
 		err = 3;
 	}
@@ -442,14 +420,15 @@ command_cb callbacks[LAST_CMD + 1] = {
 	disconnect,
 	NULL};
 
-int gdbserver_start(struct pdbg_target *target, uint16_t port)
+int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_t port)
 {
 	int sock, i;
 	struct sockaddr_in name;
 	fd_set active_fd_set, read_fd_set;
 
 	parser_init(callbacks);
-	thread_target = target;
+	thread_target = thread;
+	adu_target = adu;
 
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
@@ -516,34 +495,54 @@ int gdbserver_start(struct pdbg_target *target, uint16_t port)
 
 static int gdbserver(uint16_t port)
 {
-	struct pdbg_target *target = NULL;
+	struct pdbg_target *target, *adu, *thread = NULL;
 	uint64_t msr;
 	int rc;
 
-	for_each_class_target("thread", target) {
-		if (!target_selected(target))
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
-		if (pdbg_target_probe(target) == PDBG_TARGET_ENABLED)
-			break;
+
+		if (!thread) {
+			thread = target;
+		} else {
+			fprintf(stderr, "GDB server cannot be run on multiple threads at once.\n");
+			return 0;
+		}
 	}
-	if (!target->class)
-		return -1;
-	assert(!strcmp(target->class, "thread"));
+
+	if (!thread) {
+		fprintf(stderr, "No thread selected\n");
+		return 0;
+	}
+
+	//
 	// Temporary until I can get this working a bit smoother on p9
-	if (strcmp(target->compatible, "ibm,power8-thread")) {
+	if (strcmp(thread->compatible, "ibm,power8-thread")) {
 		PR_ERROR("GDBSERVER is only tested on POWER8\n");
 		return -1;
 	}
 
 	/* Check endianess in MSR */
-	rc = ram_getmsr(target, &msr);
+	rc = ram_getmsr(thread, &msr);
 	if (rc) {
 		PR_ERROR("Couldn't read the MSR. Are all threads on this chiplet quiesced?\n");
 		return 1;
 	}
 	littleendian = 0x01 & msr;
 
-	gdbserver_start(target, port);
+	/* Select ADU target */
+	pdbg_for_each_class_target("adu", adu) {
+		if (pdbg_target_probe(adu) == PDBG_TARGET_ENABLED)
+			break;
+	}
+
+	if (!adu) {
+		fprintf(stderr, "No ADU found\n");
+		return 0;
+	}
+
+	gdbserver_start(thread, adu, port);
 	return 0;
 }
 #else
