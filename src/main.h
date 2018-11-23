@@ -26,7 +26,3 @@ static inline bool target_is_disabled(struct pdbg_target *target)
 	return pdbg_target_status(target) == PDBG_TARGET_DISABLED ||
 		pdbg_target_status(target) == PDBG_TARGET_NONEXISTENT;
 }
-
-void target_select(struct pdbg_target *target);
-void target_unselect(struct pdbg_target *target);
-bool target_selected(struct pdbg_target *target);

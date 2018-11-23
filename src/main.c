@@ -522,16 +522,6 @@ static bool parse_options(int argc, char *argv[])
 	return true;
 }
 
-void target_select(struct pdbg_target *target)
-{
-	path_target_add(target);
-}
-
-bool target_selected(struct pdbg_target *target)
-{
-	return path_target_selected(target);
-}
-
 static bool target_selection(void)
 {
 	switch (backend) {
@@ -634,7 +624,7 @@ static void print_target(struct pdbg_target *target, int level)
 		return;
 
 	printf("%s%d: %s", classname, pdbg_target_index(target), pdbg_target_name(target));
-	if (target_selected(target))
+	if (path_target_selected(target))
 		printf(" (*)");
 	printf("\n");
 
