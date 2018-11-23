@@ -532,67 +532,6 @@ bool target_selected(struct pdbg_target *target)
 	return path_target_selected(target);
 }
 
-/* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
-int for_each_child_target(char *class, struct pdbg_target *parent,
-				 int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *),
-				 uint64_t *arg1, uint64_t *arg2)
-{
-	int rc = 0;
-	struct pdbg_target *target;
-	uint32_t index;
-	enum pdbg_target_status status;
-
-	pdbg_for_each_target(class, parent, target) {
-		if (!target_selected(target))
-			continue;
-
-		index = pdbg_target_index(target);
-		assert(index != -1);
-		status = pdbg_target_status(target);
-		if (status != PDBG_TARGET_ENABLED)
-			continue;
-
-		rc += cb(target, index, arg1, arg2);
-	}
-
-	return rc;
-}
-
-int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *), uint64_t *arg1, uint64_t *arg2)
-{
-	struct pdbg_target *target;
-	uint32_t index;
-	enum pdbg_target_status status;
-	int rc = 0;
-
-	pdbg_for_each_class_target(class, target) {
-		if (!target_selected(target))
-			continue;
-
-		index = pdbg_target_index(target);
-		assert(index != -1);
-		status = pdbg_target_status(target);
-		if (status != PDBG_TARGET_ENABLED)
-			continue;
-
-		rc += cb(target, index, arg1, arg2);
-	}
-
-	return rc;
-}
-
-void for_each_target_release(char *class)
-{
-	struct pdbg_target *target;
-
-	pdbg_for_each_class_target(class, target) {
-		if (!target_selected(target))
-			continue;
-
-		pdbg_target_release(target);
-	}
-}
-
 static bool target_selection(void)
 {
 	switch (backend) {

@@ -30,11 +30,3 @@ static inline bool target_is_disabled(struct pdbg_target *target)
 void target_select(struct pdbg_target *target);
 void target_unselect(struct pdbg_target *target);
 bool target_selected(struct pdbg_target *target);
-
-/* Returns the sum of return codes. This can be used to count how many targets the callback was run on. */
-int for_each_child_target(char *class, struct pdbg_target *parent,
-				 int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *),
-				 uint64_t *arg1, uint64_t *arg2);
-
-int for_each_target(char *class, int (*cb)(struct pdbg_target *, uint32_t, uint64_t *, uint64_t *), uint64_t *arg1, uint64_t *arg2);
-void for_each_target_release(char *class);
