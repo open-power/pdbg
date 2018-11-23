@@ -502,6 +502,9 @@ static bool parse_options(int argc, char *argv[])
 	if (l_count) {
 		int pir = -1, i, chip, core, thread;
 
+		if (!device_node)
+			return false;
+
 		for (i = 0; i < MAX_LINUX_CPUS; i++) {
 			if (l_list[i] == 1) {
 				pir = get_pir(i);
@@ -730,6 +733,9 @@ int main(int argc, char *argv[])
 
 	backend = default_backend();
 
+	if (!device_node)
+		device_node = default_target(backend);
+
 	if (!parse_options(argc, argv))
 		return 1;
 
@@ -737,9 +743,6 @@ int main(int argc, char *argv[])
 		print_usage();
 		return 1;
 	}
-
-	if (!device_node)
-		device_node = default_target(backend);
 
 	/* Disable unselected targets */
 	if (!target_selection())
