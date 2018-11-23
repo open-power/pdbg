@@ -675,7 +675,7 @@ static bool target_selection(void)
 	return true;
 }
 
-void print_target(struct pdbg_target *target, int level)
+static void print_target(struct pdbg_target *target, int level)
 {
 	int i;
 	struct pdbg_target *next;
