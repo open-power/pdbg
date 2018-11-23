@@ -37,6 +37,7 @@
 #include <bitutils.h>
 
 #include "main.h"
+#include "path.h"
 
 #define HTM_ENUM_TO_STRING(e) ((e == HTM_NEST) ? "nhtm" : "chtm")
 
@@ -55,7 +56,9 @@ static inline void print_htm_address(enum htm_type type,
 		printf("p%d:", pdbg_parent_index(target, "pib"));
 		printf("c%d:", pdbg_parent_index(target, "core"));
 	}
-	printf("t%d\n", pdbg_target_index(target));
+	if (type == HTM_NEST) {
+		printf("p%d\n", pdbg_parent_index(target, "pib"));
+	}
 }
 
 static char *get_htm_dump_filename(struct pdbg_target *target)
@@ -78,10 +81,7 @@ static int run_start(enum htm_type type)
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		if (!target_selected(target))
-			continue;
-		pdbg_target_probe(target);
+	for_each_path_target_class(HTM_ENUM_TO_STRING(type), target) {
 		if (target_is_disabled(target))
 			continue;
 
@@ -102,10 +102,7 @@ static int run_stop(enum htm_type type)
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		if (!target_selected(target))
-			continue;
-		pdbg_target_probe(target);
+	for_each_path_target_class(HTM_ENUM_TO_STRING(type), target) {
 		if (target_is_disabled(target))
 			continue;
 
@@ -126,10 +123,7 @@ static int run_status(enum htm_type type)
 	struct pdbg_target *target;
 	int rc = 0;
 
-	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		if (!target_selected(target))
-			continue;
-		pdbg_target_probe(target);
+	for_each_path_target_class(HTM_ENUM_TO_STRING(type), target) {
 		if (target_is_disabled(target))
 			continue;
 
@@ -151,10 +145,7 @@ static int run_dump(enum htm_type type)
 	char *filename;
 	int rc = 0;
 
-	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		if (!target_selected(target))
-			continue;
-		pdbg_target_probe(target);
+	for_each_path_target_class(HTM_ENUM_TO_STRING(type), target) {
 		if (target_is_disabled(target))
 			continue;
 
@@ -182,10 +173,7 @@ static int run_record(enum htm_type type)
 	char *filename;
 	int rc = 0;
 
-	pdbg_for_each_class_target(HTM_ENUM_TO_STRING(type), target) {
-		if (!target_selected(target))
-			continue;
-		pdbg_target_probe(target);
+	for_each_path_target_class(HTM_ENUM_TO_STRING(type), target) {
 		if (target_is_disabled(target))
 			continue;
 
@@ -254,9 +242,11 @@ fail:
 
 int run_htm(int optind, int argc, char *argv[])
 {
-	struct pdbg_target *target, *nhtm;
+	struct pdbg_target *target;
 	enum htm_type type;
 	struct pdbg_target *core_target = NULL;
+	struct pdbg_target *pib_target = NULL;
+	enum pdbg_target_status status;
 	int i, rc = 0;
 
 	/*
@@ -283,29 +273,27 @@ int run_htm(int optind, int argc, char *argv[])
 	}
 
 	if (type == HTM_CORE) {
-		pdbg_for_each_class_target("core", target) {
-			if (target_selected(target)) {
-				if (!core_target) {
-					core_target = target;
-				} else {
-					fprintf(stderr, "It doesn't make sense to core trace on"
-						" multiple cores at once.\n");
-					fprintf(stderr, "What you probably want is -p 0 -c x\n");
-					return 0;
-				}
+		for_each_path_target_class("core", target) {
+			if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+				continue;
+
+			if (!core_target) {
+				core_target = target;
+			} else {
+				fprintf(stderr, "It doesn't make sense to run core trace on multiple cores at once.\n");
+				return 0;
 			}
 		}
 
 		if (!core_target) {
-			fprintf(stderr, "You haven't selected any HTM Cores\n");
+			fprintf(stderr, "No core selected\n");
 			return 0;
 		}
 
 		/* Check that powersave is off */
 		pdbg_for_each_class_target("thread", target) {
-			pdbg_target_probe(target);
-
-			if (pdbg_target_status(target) == PDBG_TARGET_NONEXISTENT)
+			status = pdbg_target_probe(target);
+			if (status == PDBG_TARGET_NONEXISTENT)
 				continue;
 
 			if (!is_smt1(target))
@@ -313,21 +301,51 @@ int run_htm(int optind, int argc, char *argv[])
 		}
 
 		/* Select the correct chtm target */
-		pdbg_for_each_child_target(core_target, target) {
-			if (!strcmp(pdbg_target_class_name(target), "chtm")) {
-				target_select(target);
-				pdbg_target_probe(target);
+		pdbg_for_each_target("chtm", core_target, target) {
+			status = pdbg_target_probe(target);
+			if (status == PDBG_TARGET_ENABLED) {
+				assert(path_target_add(target));
+				break;
 			}
+		}
+
+		if (!target) {
+			fprintf(stderr, "No CHTM target enabled\n");
+			return 0;
 		}
 	}
 
 	if (type == HTM_NEST) {
-		pdbg_for_each_class_target("pib", target) {
-			if (!target_selected(target))
+		for_each_path_target_class("pib", target) {
+			if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 				continue;
 
-			pdbg_for_each_target("nhtm", target, nhtm)
-				target_select(nhtm);
+			if (!pib_target) {
+				pib_target = target;
+			} else {
+				fprintf(stderr, "It doesn't make sense to run nest trace on multiple cores at once.\n");
+
+				return 0;
+			}
+		}
+
+		if (!pib_target) {
+			fprintf(stderr, "No pib selected\n");
+			return 0;
+		}
+
+
+		pdbg_for_each_target("nhtm", pib_target, target) {
+			status = pdbg_target_probe(target);
+			if (status == PDBG_TARGET_ENABLED) {
+				assert(path_target_add(target));
+				break;
+			}
+		}
+
+		if (!target) {
+			fprintf(stderr, "No NHTM target enabled\n");
+			return 0;
 		}
 	}
 
