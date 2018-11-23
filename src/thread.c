@@ -22,6 +22,7 @@
 
 #include "main.h"
 #include "optcmd.h"
+#include "path.h"
 
 static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *arg, uint64_t *valid)
 {
@@ -240,26 +241,6 @@ static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t ind
 	return for_each_child_target("core", pib_target, print_core_thread_status, &maxindex, NULL);
 };
 
-static int start_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
-{
-	return ram_start_thread(thread_target) ? 0 : 1;
-}
-
-static int step_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *count, uint64_t *unused1)
-{
-	return ram_step_thread(thread_target, *count) ? 0 : 1;
-}
-
-static int stop_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
-{
-	return ram_stop_thread(thread_target) ? 0 : 1;
-}
-
-static int sreset_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
-{
-	return ram_sreset_thread(thread_target) ? 0 : 1;
-}
-
 static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *i_doBacktrace, uint64_t *unused)
 {
 	struct thread_regs regs;
@@ -276,19 +257,52 @@ static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint6
 
 static int thread_start(void)
 {
-	return for_each_target("thread", start_thread, NULL, NULL);
+	struct pdbg_target *target;
+	int count = 0;
+
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		ram_start_thread(target);
+		count++;
+	}
+
+	return count;
 }
 OPTCMD_DEFINE_CMD(start, thread_start);
 
-static int thread_step(uint64_t count)
+static int thread_step(uint64_t steps)
 {
-	return for_each_target("thread", step_thread, &count, NULL);
+	struct pdbg_target *target;
+	int count = 0;
+
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		ram_step_thread(target, (int)steps);
+		count++;
+	}
+
+	return count;
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(step, thread_step, (DATA));
 
 static int thread_stop(void)
 {
-	return for_each_target("thread", stop_thread, NULL, NULL);
+	struct pdbg_target *target;
+	int count = 0;
+
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		ram_stop_thread(target);
+		count++;
+	}
+
+	return count;
 }
 OPTCMD_DEFINE_CMD(stop, thread_stop);
 
@@ -300,7 +314,18 @@ OPTCMD_DEFINE_CMD(threadstatus, thread_status_print);
 
 static int thread_sreset(void)
 {
-	return for_each_target("thread", sreset_thread, NULL, NULL);
+	struct pdbg_target *target;
+	int count = 0;
+
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		ram_sreset_thread(target);
+		count++;
+	}
+
+	return count;
 }
 OPTCMD_DEFINE_CMD(sreset, thread_sreset);
 
