@@ -17,76 +17,13 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <libpdbg.h>
 
 #include "main.h"
 #include "optcmd.h"
 #include "path.h"
-
-static int print_thread_status(struct pdbg_target *target, uint32_t index, uint64_t *arg, uint64_t *valid)
-{
-	struct thread_state *status = (struct thread_state *) arg;
-
-	status[index] = thread_status(target);
-	valid[index] = true;
-	return 1;
-}
-
-static int print_core_thread_status(struct pdbg_target *core_target, uint32_t index, uint64_t *maxindex, uint64_t *unused1)
-{
-	struct thread_state status[8];
-	uint64_t valid[8] = {0};
-	int i, rc;
-
-	printf("c%02d:  ", index);
-
-	/* TODO: This cast is gross. Need to rewrite for_each_child_target as an iterator. */
-	rc = for_each_child_target("thread", core_target, print_thread_status, (uint64_t *) &status[0], &valid[0]);
-	for (i = 0; i <= *maxindex; i++) {
-		if (!valid[i]) {
-			printf("    ");
-			continue;
-		}
-
-		if (status[i].active)
-			printf("A");
-		else
-			printf(".");
-
-		switch (status[i].sleep_state) {
-		case PDBG_THREAD_STATE_DOZE:
-			printf("D");
-			break;
-
-		case PDBG_THREAD_STATE_NAP:
-			printf("N");
-			break;
-
-		case PDBG_THREAD_STATE_SLEEP:
-			printf("Z");
-			break;
-
-		case PDBG_THREAD_STATE_STOP:
-			printf("S");
-			break;
-
-		default:
-			printf(".");
-			break;
-		}
-
-		if (status[i].quiesced)
-			printf("Q");
-		else
-			printf(".");
-		printf(" ");
-
-	}
-	printf("\n");
-
-	return rc;
-}
 
 static bool is_real_address(struct thread_regs *regs, uint64_t addr)
 {
@@ -214,33 +151,6 @@ no_flip:
 	return 0;
 }
 
-static int get_thread_max_index(struct pdbg_target *target, uint32_t index, uint64_t *maxindex, uint64_t *unused)
-{
-	if (index > *maxindex)
-		*maxindex = index;
-	return 1;
-}
-
-static int get_core_max_threads(struct pdbg_target *core_target, uint32_t index, uint64_t *maxindex, uint64_t *unused1)
-{
-	return for_each_child_target("thread", core_target, get_thread_max_index, maxindex, NULL);
-}
-
-static int print_proc_thread_status(struct pdbg_target *pib_target, uint32_t index, uint64_t *unused, uint64_t *unused1)
-{
-	int i;
-	uint64_t maxindex = 0;
-
-	for_each_child_target("core", pib_target, get_core_max_threads, &maxindex, NULL);
-
-	printf("\np%01dt:", index);
-	for (i = 0; i <= maxindex; i++)
-		printf("   %d", i);
-	printf("\n");
-
-	return for_each_child_target("core", pib_target, print_core_thread_status, &maxindex, NULL);
-};
-
 static int state_thread(struct pdbg_target *thread_target, uint32_t index, uint64_t *i_doBacktrace, uint64_t *unused)
 {
 	struct thread_regs regs;
@@ -306,9 +216,98 @@ static int thread_stop(void)
 }
 OPTCMD_DEFINE_CMD(stop, thread_stop);
 
+
+static int print_one_thread(struct pdbg_target *thread)
+{
+	struct thread_state tstate;
+	char c;
+
+	if (!path_target_selected(thread)) {
+		printf("... ");
+		return 0;
+	}
+
+	tstate = thread_status(thread);
+
+
+	switch (tstate.sleep_state) {
+	case PDBG_THREAD_STATE_DOZE:
+		c = 'D';
+		break;
+
+	case PDBG_THREAD_STATE_NAP:
+		c = 'N';
+		break;
+
+	case PDBG_THREAD_STATE_SLEEP:
+		c = 'Z';
+		break;
+
+	case PDBG_THREAD_STATE_STOP:
+		c = 'S';
+		break;
+
+	default:
+		c = '.';
+		break;
+	}
+
+	printf("%c%c%c ",
+	       (tstate.active ? 'A' : '.'),
+	       c,
+	       (tstate.quiesced ? 'Q': '.'));
+	return 1;
+}
+
 static int thread_status_print(void)
 {
-	return for_each_target("pib", print_proc_thread_status, NULL, NULL);
+	struct pdbg_target *thread, *core, *pib;
+	int threads_per_core = 0;
+	int count = 0;
+
+	for_each_path_target_class("thread", thread) {
+		core = pdbg_target_parent("core", thread);
+		assert(path_target_add(core));
+
+		pib = pdbg_target_parent("pib", core);
+		assert(path_target_add(pib));
+	}
+
+	pib = __pdbg_next_target("pib", pdbg_target_root(), NULL);
+	assert(pib);
+
+	core = __pdbg_next_target("core", pib, NULL);
+	assert(core);
+
+	pdbg_for_each_target("thread", core, thread)
+		threads_per_core++;
+
+	for_each_path_target_class("pib", pib) {
+		int i;
+
+		if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
+			continue;
+
+		printf("\np%01dt:", pdbg_target_index(pib));
+		for (i = 0; i < threads_per_core; i++)
+			printf("   %d", i);
+		printf("\n");
+
+		pdbg_for_each_target("core", pib, core) {
+			if (!path_target_selected(core))
+				continue;
+			if (pdbg_target_status(core) != PDBG_TARGET_ENABLED)
+				continue;
+
+			printf("c%02d:  ", pdbg_target_index(core));
+
+			pdbg_for_each_target("thread", core, thread)
+				count += print_one_thread(thread);
+			printf("\n");
+		}
+	}
+
+	return count;
 }
 OPTCMD_DEFINE_CMD(threadstatus, thread_status_print);
 
