@@ -24,36 +24,56 @@
 
 #include "main.h"
 #include "optcmd.h"
+#include "path.h"
 
-static int pdbg_getring(struct pdbg_target *target, uint32_t index, uint64_t *addr, uint64_t *len)
+static int get_ring(uint64_t ring_addr, uint64_t ring_len)
 {
+	struct pdbg_target *target;
 	uint32_t *result;
-	int i, words;
-	int ring_len = *len;
+	int count = 0;
+	int words;
 
-	words = (ring_len + 32 - 1)/32;
+	words = (ring_len + 32 - 1) / 32;
 
 	result = calloc(words, sizeof(*result));
 	assert(result);
 
-	getring(target, *addr, ring_len, result);
+	for_each_path_target_class("chiplet", target) {
+		char *path;
+		int rc, i, len;
 
-	for (i = 0; i < ring_len/32; i++)
-		printf("%08" PRIx32, result[i]);
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
 
-	ring_len -= i*32;
+		path = pdbg_target_path(target);
+		assert(path);
 
-	/* Print out remaining bits */
-	for (i = 0; i < (ring_len + 4 - 1)/4; i++)
-		printf("%01" PRIx32, (result[words - 1] >> (28 - i*4)) & 0xf);
+		printf("%s: 0x%016" PRIx64 " = ", path, ring_addr);
+		free(path);
 
-	printf("\n");
+		rc = getring(target, ring_addr, ring_len, result);
+		if (rc) {
+			printf("failed\n");
+			continue;
+		}
 
-	return 1;
+		printf("\n");
+
+		len = (int)ring_len;
+		for (i = 0; i < len/32; i++)
+			printf("%08" PRIx32, result[i]);
+
+		len -= i*32;
+
+		for (i=0; i < (len + 4 - 1)/4; i++)
+			printf("%01" PRIx32, (result[words-1] >> (28 - i*4)) & 0xf);
+
+		printf("\n");
+
+		count++;
+	}
+
+	free(result);
+	return count;
 }
-
-static int _getring(uint64_t ring_addr, uint64_t ring_len)
-{
-	return for_each_target("chiplet", pdbg_getring, &ring_addr, &ring_len);
-}
-OPTCMD_DEFINE_CMD_WITH_ARGS(getring, _getring, (ADDRESS, DATA));
+OPTCMD_DEFINE_CMD_WITH_ARGS(getring, get_ring, (ADDRESS, DATA));
