@@ -548,13 +548,16 @@ static int is_startable(struct htm_status *status)
 
 static char *get_debugfs_file(struct htm *htm, const char *file)
 {
-	uint32_t chip_id;
+	struct pdbg_target *pib;
+	uint32_t index;
 	char *filename;
 
-	chip_id = pdbg_target_chip_id(&htm->target);
-	if (asprintf(&filename, "%s/%08x/%s", DEBUGFS_MEMTRACE, chip_id, file) == -1) {
+	pib = pdbg_target_parent("pib", &htm->target);
+	assert(pib);
+	index = pdbg_target_index(pib);
+	if (asprintf(&filename, "%s/%08x/%s", DEBUGFS_MEMTRACE, index, file) == -1) {
 		PR_ERROR("Couldn't asprintf() '%s/%08x/size': %m\n",
-				DEBUGFS_MEMTRACE, chip_id);
+				DEBUGFS_MEMTRACE, index);
 		return NULL;
 	}
 

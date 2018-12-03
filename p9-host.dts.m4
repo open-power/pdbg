@@ -21,7 +21,7 @@
 	      compatible = "ibm,host-pib";
 	      reg = <0x8>;
 	      chip-id = <0x8>;
-	      index = <0x1>;
+	      index = <0x8>;
 	      include(p9-pib.dts.m4)dnl
 	};
 };
