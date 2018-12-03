@@ -101,7 +101,7 @@ static int host_pib_probe(struct pdbg_target *target)
 		PR_ERROR("You may need to re-run the command as root.\n");
 	}
 
-	if (asprintf(&access_fn, "%s/%08d/access", XSCOM_BASE_PATH, chip_id) < 0)
+	if (asprintf(&access_fn, "%s/%08x/access", XSCOM_BASE_PATH, chip_id) < 0)
 		goto out;
 
 	*fd = open(access_fn, O_RDWR);
