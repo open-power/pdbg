@@ -3,7 +3,6 @@ define(`CHIP',`pib@$1 {
 	      #size-cells = <0x1>;
 	      compatible = "ibm,host-pib";
 	      reg = <$1>;
-	      chip-id = <$1>;
 	      index = <$1>;
 	      include(p8-pib.dts.m4)dnl
 	}')dnl
