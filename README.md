@@ -35,7 +35,7 @@ POWER8 Backends:
 - i2c (default): Uses an i2c connection between BMC and host processor
 - fsi: Uses a bit-banging GPIO backend which accesses BMC registers directly via
   /dev/mem/. Requires `-d p8` to specify you are running on a POWER8 system.
-  
+
 POWER9 Backends:
 
 - kernel (default): Uses the in kernel OpenFSI driver provided by OpenBMC
@@ -56,6 +56,57 @@ host-failure-reboots@0.service`
 Usage is straight forward. Note that if the binary is not statically linked all
 commands need to be prefixed with LD\_LIBRARY\_PATH=<path to libpdbg> in
 addition to the arguments for selecting a backend.
+
+### Target Selection
+
+pdbg has commands that operate on specific hardware unit(s) inside the
+POWER processor.  To select appropriate hardware unit (commonly referred
+as **target**), pdbg provides two different mechanisms.
+
+#### Select processor(s) / Core(s) / Thread(s) using -p/-c/-t/-a/-l
+
+Many commands typically operate on hardware thread(s) or CPU(s)
+as identified by Linux.
+
+ - all threads (`-a`)
+ - core 0 of processor 0 (`-p0 -c0`)
+ - all threads on processor 0  (`-p0 -a`)
+ - all threads on core 1 of processor 0 (`-p0 -c1 -a`)
+ - thread 2 on core 1 of processor 0 (`-p0 -c1 -t2`)
+ - thread 0 on all cores of processor 0 (`-p0 -t0 -a`)
+ - threads 1,2,3,4 on cores 1,3,5 of processor 1 (`-p1 -c1,3,5 -t1-4`)
+ - CPUs 15 and 17 as identified by Linux (`-l15,17`)
+
+Note: `-l` option is only available when running `pdbg` on the host.
+
+#### Select targets based on path using -P
+
+To select any target in a device tree, it can be specified using `-P`.
+The -P option takes path specification as an argument.  This path specification
+is constructed using the *class* names of targets present in a device tree.
+
+Some of the targets currently available for selection are:
+
+ - `pib`
+ - `core`
+ - `thread`
+ - `adu`
+ - `fsi`
+ - `chiplet`
+
+Path specification can be either an individual target or a *path* constructed
+using more than one targets.
+
+ - all threads (`-P thread`)
+ - core 0 of processor 0 (`-P pib0/core0`)
+ - all threads on processor 0 (`-P pib0/thread`)
+ - all threads on core 1 of processor 0 (`-P pib0/core1/thread`)
+ - thread 2 on core 1 of processor 0 (`-P pib0/core1/thread2`)
+ - thread 0 on all cores of processor 0 (`-P pib0/thread0`)
+ - threads 1,2,3,4 on cores 1,3,5 of processor 1 (`-P pib1/core[1,3,5]/thread[1-4]`)
+ - chiplet at address 21000000 (-P `chiplet@21000000`)
+ - all adus (`-P adu`)
+ - First FSI (`-P fsi0`)
 
 ## Examples
 
