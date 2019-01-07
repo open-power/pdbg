@@ -216,6 +216,26 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 	return fsi->write(fsi, addr64, data);
 }
 
+int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, uint8_t block_size, bool ci)
+{
+	struct adu *adu;
+
+	assert(pdbg_target_is_class(target, "adu"));
+	adu = target_to_adu(target);
+
+	return adu->read(adu, addr, output, size, block_size, ci);
+}
+
+int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size, uint8_t block_size, bool ci)
+{
+	struct adu *adu;
+
+	assert(pdbg_target_is_class(target, "adu"));
+	adu = target_to_adu(target);
+
+	return adu->write(adu, addr, input, size, block_size, ci);
+}
+
 struct pdbg_target *require_target_parent(struct pdbg_target *target)
 {
 	assert(target->parent);

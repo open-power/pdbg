@@ -221,6 +221,9 @@ int __adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *ouput,
 int __adu_putmem(struct pdbg_target *target, uint64_t addr, uint8_t *input,
 		 uint64_t size, bool ci);
 
+int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, uint8_t block_size, bool ci);
+int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size, uint8_t block_size, bool ci);
+
 int opb_read(struct pdbg_target *target, uint32_t addr, uint32_t *data);
 int opb_write(struct pdbg_target *target, uint32_t addr, uint32_t data);
 
