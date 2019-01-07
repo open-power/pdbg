@@ -109,6 +109,8 @@ struct adu {
 	struct pdbg_target target;
 	int (*getmem)(struct adu *, uint64_t, uint64_t *, int, uint8_t);
 	int (*putmem)(struct adu *, uint64_t, uint64_t, int, int, uint8_t);
+	int (*read)(struct adu *, uint64_t, uint8_t *, uint64_t, uint8_t, bool);
+	int (*write)(struct adu *, uint64_t, uint8_t *, uint64_t, uint8_t, bool);
 };
 #define target_to_adu(x) container_of(x, struct adu, target)
 

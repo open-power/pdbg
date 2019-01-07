@@ -570,6 +570,8 @@ static struct adu p8_adu = {
 	},
 	.getmem = p8_adu_getmem,
 	.putmem = p8_adu_putmem,
+	.read = adu_read,
+	.write = adu_write,
 };
 DECLARE_HW_UNIT(p8_adu);
 
@@ -581,5 +583,7 @@ static struct adu p9_adu = {
 	},
 	.getmem = p9_adu_getmem,
 	.putmem = p9_adu_putmem,
+	.read = adu_read,
+	.write = adu_write,
 };
 DECLARE_HW_UNIT(p9_adu);
