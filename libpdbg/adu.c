@@ -110,16 +110,12 @@ uint8_t blog2(uint8_t x)
 	}
 }
 
-static int __adu_getmem_blocksize(struct pdbg_target *adu_target, uint64_t start_addr,
-				  uint8_t *output, uint64_t size, uint8_t block_size, bool ci)
+static int adu_read(struct adu *adu, uint64_t start_addr, uint8_t *output,
+		    uint64_t size, uint8_t block_size, bool ci)
 {
-	struct adu *adu;
 	uint8_t *output0;
 	int rc = 0;
 	uint64_t addr0, addr;
-
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
 
 	output0 = output;
 
@@ -164,41 +160,55 @@ static int __adu_getmem_blocksize(struct pdbg_target *adu_target, uint64_t start
 int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	       uint8_t *output, uint64_t size)
 {
-	return __adu_getmem_blocksize(adu_target, start_addr, output,
-				      size, 8, false);
+	struct adu *adu;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
+
+	return adu_read(adu, start_addr, output, size, 8, false);
 }
 
 int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *output, uint64_t size)
 {
-	return __adu_getmem_blocksize(adu_target, start_addr, output,
-			    size, 8, true);
+	struct adu *adu;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
+
+	return adu_read(adu, start_addr, output, size, 8, true);
 }
 
 int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *output, uint64_t size, uint8_t blocksize)
 {
+	struct adu *adu;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
+
 	/* There is no equivalent for cachable memory as blocksize
 	 * does not apply to cachable reads */
-	return __adu_getmem_blocksize(adu_target, start_addr, output,
-				      size, blocksize, true);
+	return adu_read(adu, start_addr, output, size, blocksize, true);
 }
 
 int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 		 uint8_t *output, uint64_t size, bool ci)
 {
-	return __adu_getmem_blocksize(adu_target, start_addr, output,
-				      size, 8, ci);
-}
-static int __adu_putmem_blocksize(struct pdbg_target *adu_target, uint64_t start_addr,
-				  uint8_t *input, uint64_t size, uint8_t block_size, bool ci)
-{
 	struct adu *adu;
-	int rc = 0, tsize;
-	uint64_t addr, data, end_addr;
 
 	assert(!strcmp(adu_target->class, "adu"));
 	adu = target_to_adu(adu_target);
+
+	return adu_read(adu, start_addr, output, size, 8, ci);
+}
+
+static int adu_write(struct adu *adu, uint64_t start_addr, uint8_t *input,
+		     uint64_t size, uint8_t block_size, bool ci)
+{
+	int rc = 0, tsize;
+	uint64_t addr, data, end_addr;
+
 	end_addr = start_addr + size;
 	for (addr = start_addr; addr < end_addr; addr += tsize, input += tsize) {
 		if ((addr % block_size) || (addr + block_size > end_addr)) {
@@ -231,25 +241,45 @@ static int __adu_putmem_blocksize(struct pdbg_target *adu_target, uint64_t start
 int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	       uint8_t *input, uint64_t size)
 {
-	return __adu_putmem_blocksize(adu_target, start_addr, input, size, 8, false);
+	struct adu *adu;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
+
+	return adu_write(adu, start_addr, input, size, 8, false);
 }
 
 int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *input, uint64_t size)
 {
-	return __adu_putmem_blocksize(adu_target, start_addr, input, size, 8, true);
+	struct adu *adu;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
+
+	return adu_write(adu, start_addr, input, size, 8, true);
 }
 
 int adu_putmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *input, uint64_t size, uint8_t block_size)
 {
-	return __adu_putmem_blocksize(adu_target, start_addr, input, size, block_size, true);
+	struct adu *adu;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
+
+	return adu_write(adu, start_addr, input, size, block_size, true);
 }
 
 int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 		 uint8_t *input, uint64_t size, bool ci)
 {
-	return __adu_putmem_blocksize(adu_target, start_addr, input, size, 8, ci);
+	struct adu *adu;
+
+	assert(!strcmp(adu_target->class, "adu"));
+	adu = target_to_adu(adu_target);
+
+	return adu_write(adu, start_addr, input, size, 8, ci);
 }
 
 static int adu_lock(struct adu *adu)
