@@ -183,7 +183,7 @@ static void get_spr(uint64_t *stack, void *priv)
 
 #define MAX_DATA 0x1000
 
-/* Returns a real address to use with adu_getmem or -1UL if we
+/* Returns a real address to use with mem_read or -1UL if we
  * couldn't determine a real address. At the moment we only deal with
  * kernel linear mapping but in future we could walk that page
  * tables. */
@@ -223,7 +223,7 @@ static void get_mem(uint64_t *stack, void *priv)
 
 	linear_map = get_real_addr(addr);
 	if (linear_map != -1UL) {
-		if (adu_getmem(adu_target, linear_map, (uint8_t *) data, len)) {
+		if (mem_read(adu_target, linear_map, (uint8_t *) data, len, 0, false)) {
 			PR_ERROR("Unable to read memory\n");
 			err = 1;
 		}
@@ -293,7 +293,7 @@ static void put_mem(uint64_t *stack, void *priv)
 
 	PR_INFO("put_mem 0x%016" PRIx64 " = 0x%016" PRIx64 "\n", addr, stack[2]);
 
-	if (adu_putmem(adu_target, addr, data, len)) {
+	if (mem_write(adu_target, addr, data, len, 0, false)) {
 		PR_ERROR("Unable to write memory\n");
 		err = 3;
 	}

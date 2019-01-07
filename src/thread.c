@@ -35,7 +35,7 @@ static bool is_real_address(struct thread_regs *regs, uint64_t addr)
 
 static int load8(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 {
-	if (adu_getmem(target, addr, (uint8_t *)value, 8)) {
+	if (mem_read(target, addr, (uint8_t *)value, 8, 0, false)) {
 		pdbg_log(PDBG_ERROR, "Unable to read memory address=%016" PRIx64 ".\n", addr);
 		return 0;
 	}
