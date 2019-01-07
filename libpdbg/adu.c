@@ -117,6 +117,9 @@ static int adu_read(struct adu *adu, uint64_t start_addr, uint8_t *output,
 	int rc = 0;
 	uint64_t addr0, addr;
 
+	if (!block_size)
+		block_size = 8;
+
 	output0 = output;
 
 	/* Align start address to block_sized boundary */
@@ -208,6 +211,9 @@ static int adu_write(struct adu *adu, uint64_t start_addr, uint8_t *input,
 {
 	int rc = 0, tsize;
 	uint64_t addr, data, end_addr;
+
+	if (!block_size)
+		block_size = 8;
 
 	end_addr = start_addr + size;
 	for (addr = start_addr; addr < end_addr; addr += tsize, input += tsize) {
