@@ -532,6 +532,14 @@ static bool target_selection(void)
 #ifdef TARGET_ARM
 	case I2C:
 		pdbg_targets_init(&_binary_p8_i2c_dtb_o_start);
+		/* Set device for I2C backend */
+		if (device_node) {
+			struct pdbg_target *pib;
+			const size_t len = strlen(device_node) + 1 /* include last null */;
+			pdbg_for_each_class_target("pib", pib) {
+				pdbg_target_set_property(pib, "bus", device_node, len);
+			}
+		}
 		break;
 
 	case FSI:
