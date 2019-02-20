@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include <libpdbg.h>
 
@@ -28,6 +29,7 @@
 #include "progress.h"
 #include "optcmd.h"
 #include "parsers.h"
+#include "util.h"
 
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
@@ -36,12 +38,19 @@
 
 struct mem_flags {
 	bool ci;
+	bool raw;
+};
+
+struct mem_io_flags {
+	bool raw;
 };
 
 #define MEM_CI_FLAG ("--ci", ci, parse_flag_noarg, false)
+#define MEM_RAW_FLAG ("--raw", raw, parse_flag_noarg, false)
+
 #define BLOCK_SIZE (parse_number8_pow2, NULL)
 
-static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci)
+static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bool raw)
 {
 	struct pdbg_target *target;
 	uint8_t *buf;
@@ -75,8 +84,27 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci)
 	}
 
 	if (count > 0) {
-		if (write(STDOUT_FILENO, buf, size) < 0)
-			PR_ERROR("Unable to write stdout.\n");
+		uint64_t i;
+		bool printable = true;
+
+		if (raw) {
+			if (write(STDOUT_FILENO, buf, size) < 0)
+				PR_ERROR("Unable to write stdout.\n");
+		} else {
+			for (i=0; i<size; i++) {
+				if (!isprint(buf[i])) {
+					printable = false;
+					break;
+				}
+			}
+
+			if (!printable) {
+				hexdump(addr, buf, size, 1);
+			} else {
+				if (write(STDOUT_FILENO, buf, size) < 0)
+					PR_ERROR("Unable to write stdout.\n");
+			}
+		}
 	}
 
 	free(buf);
@@ -86,18 +114,19 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci)
 static int getmem(uint64_t addr, uint64_t size, struct mem_flags flags)
 {
 	if (flags.ci)
-		return _getmem(addr, size, 8, true);
+		return _getmem(addr, size, 8, true, flags.raw);
 	else
-		return _getmem(addr, size, 0, false);
+		return _getmem(addr, size, 0, false, flags.raw);
 }
 OPTCMD_DEFINE_CMD_WITH_FLAGS(getmem, getmem, (ADDRESS, DATA),
-			     mem_flags, (MEM_CI_FLAG));
+			     mem_flags, (MEM_CI_FLAG, MEM_RAW_FLAG));
 
-static int getmemio(uint64_t addr, uint64_t size, uint8_t block_size)
+static int getmemio(uint64_t addr, uint64_t size, uint8_t block_size, struct mem_io_flags flags)
 {
-	return _getmem(addr, size, block_size, true);
+	return _getmem(addr, size, block_size, true, flags.raw);
 }
-OPTCMD_DEFINE_CMD_WITH_ARGS(getmemio, getmemio, (ADDRESS, DATA, BLOCK_SIZE));
+OPTCMD_DEFINE_CMD_WITH_FLAGS(getmemio, getmemio, (ADDRESS, DATA, BLOCK_SIZE),
+			     mem_io_flags, (MEM_RAW_FLAG));
 
 static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 {
