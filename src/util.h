@@ -16,6 +16,9 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 /**
  * @brief Parse a range or a list of numbers from a string into an array
  *
@@ -30,5 +33,18 @@
  * @return true on success, false on error
  */
 bool parse_list(const char *arg, int max, int *list, int *count);
+
+/**
+ * @brief Dump bytes in hex similar to hexdump format
+ *
+ * Prints 16 bytes per line in the specified groups.  The addresses are
+ * printed aligned to 16 bytes.
+ *
+ * @param[in]  addr Address
+ * @param[in]  buf Data to print
+ * @param[in]  size Number of bytes to print
+ * @param[in]  group_size How to group bytes (valid values 1, 2, 4, 8)
+ */
+void hexdump(uint64_t addr, uint8_t *buf, uint64_t size, uint8_t group_size);
 
 #endif

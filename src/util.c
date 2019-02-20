@@ -19,6 +19,9 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <assert.h>
+#include <inttypes.h>
+
+#include "util.h"
 
 /* Parse argument of the form 0-5,7,9-11,15,17 */
 bool parse_list(const char *arg, int max, int *list, int *count)
@@ -93,3 +96,45 @@ bool parse_list(const char *arg, int max, int *list, int *count)
 	return true;
 }
 
+void hexdump(uint64_t addr, uint8_t *buf, uint64_t size, uint8_t group_size)
+{
+	uint64_t start_addr, offset, i;
+	int j, k;
+
+	start_addr = addr & (~(uint64_t)0xf);
+	offset = addr - start_addr;
+
+	if (group_size == 0)
+		group_size = 1;
+
+	assert(group_size == 1 || group_size == 2 || group_size == 4 || group_size == 8);
+
+	for (i = 0; i < size + 15; i += 16) {
+		bool do_prefix = true;
+
+		if (start_addr + i >= addr + size)
+			break;
+
+		for (j = 0; j < 16; j += group_size) {
+			for (k = j; k < j + group_size; k++) {
+				uint64_t cur_addr = start_addr + i + k;
+
+				if (cur_addr >= addr + size) {
+					printf("\n");
+					return;
+				}
+
+				if (do_prefix) {
+					printf("0x%016" PRIx64 ": ", start_addr + i);
+					do_prefix = false;
+				}
+				if (i+k >= offset && i+k <= offset + size)
+					printf("%02x", buf[i+k - offset]);
+				else
+					printf("  ");
+			}
+			printf(" ");
+		}
+		printf("\n");
+	}
+}
