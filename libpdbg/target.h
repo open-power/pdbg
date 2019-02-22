@@ -20,6 +20,7 @@
 #include <ccan/list/list.h>
 #include <ccan/str/str.h>
 #include <ccan/container_of/container_of.h>
+#include <ccan/short_types/short_types.h>
 #include "compiler.h"
 #include "libpdbg.h"
 

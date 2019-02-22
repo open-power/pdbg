@@ -8,7 +8,9 @@
 
 #include <stdbool.h>
 
-#include <ccan/short_types/short_types.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct pdbg_target;
 struct pdbg_target_class;
@@ -243,5 +245,9 @@ typedef void (*pdbg_log_func_t)(int loglevel, const char *fmt, va_list ap);
 void pdbg_set_logfunc(pdbg_log_func_t fn);
 void pdbg_set_loglevel(int loglevel);
 void pdbg_log(int loglevel, const char *fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
