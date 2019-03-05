@@ -128,6 +128,18 @@ pdbg_LDADD = libpdbg.la libccan.a \
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 
 lib_LTLIBRARIES = libpdbg.la
+noinst_LTLIBRARIES = libcronus.la
+
+libcronus_la_SOURCES = \
+	libcronus/buffer.c \
+	libcronus/buffer.h \
+	libcronus/cfam.c \
+	libcronus/connect.c \
+	libcronus/instruction.h \
+	libcronus/libcronus.h \
+	libcronus/libcronus_private.h \
+	libcronus/request.c \
+	libcronus/scom.c
 
 libpdbg_la_SOURCES = \
 	$(DT_sources) \
