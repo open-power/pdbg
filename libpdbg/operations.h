@@ -22,9 +22,10 @@
 
 #define PRINT_ERR PR_DEBUG("failed\n");
 #define CHECK_ERR(x) do {					\
-	if (x) {	       					\
+	typeof(x) __x = (x);					\
+	if (__x) {	       					\
 		PRINT_ERR;					\
-		return x;					\
+		return __x;					\
 	}							\
 	} while(0)
 
