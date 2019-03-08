@@ -291,7 +291,7 @@ static int p8_thread_stop(struct thread *thread)
 		CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STOP));
 
 		/* Wait for thread to quiese */
-		CHECK_ERR(pib_read(&chip->target, RAS_STATUS_REG, &val));
+		CHECK_ERR(pib_read(&thread->target, RAS_STATUS_REG, &val));
 		if (i++ > RAS_STATUS_TIMEOUT) {
 			PR_ERROR("Unable to quiesce thread %d (0x%016" PRIx64 ").\n",
 				 thread->id, val);
