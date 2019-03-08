@@ -286,9 +286,11 @@ static int p8_thread_stop(struct thread *thread)
 	struct core *chip = target_to_core(
 		pdbg_target_require_parent("core", &thread->target));
 
+	/* Quiese active thread */
+	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STOP));
+
 	do {
-		/* Quiese active thread */
-		CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STOP));
+		usleep(1);
 
 		/* Wait for thread to quiese */
 		CHECK_ERR(pib_read(&thread->target, RAS_STATUS_REG, &val));
