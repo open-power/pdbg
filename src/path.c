@@ -270,6 +270,19 @@ static void path_pattern_match(struct pdbg_target *target,
 		}
 	}
 
+	/*
+	 * If we find the same class nested which is not a match,
+	 * then stop recursion
+	 */
+	if (level > 0 && !strcmp(tok, pats[level-1].prefix)) {
+		if (pats[level-1].match_index) {
+			int index = pdbg_target_index(target);
+
+			if (pats[level-1].index[index] != 1)
+				return;
+		}
+	}
+
 end:
 	pdbg_for_each_child_target(target, child) {
 		path_pattern_match(child, pats, max_levels, next);
