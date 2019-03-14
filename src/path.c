@@ -241,12 +241,14 @@ static void path_pattern_match(struct pdbg_target *target,
 	if (!classname)
 		goto end;
 
-	safe_strcpy(comp_name, sizeof(comp_name), classname);
 	if (pats[level].match_full) {
-		tok = comp_name;
+		const char *dn_name = pdbg_target_dn_name(target);
+
+		safe_strcpy(comp_name, sizeof(comp_name), dn_name);
 	} else {
-		tok = strtok(comp_name, "@");
+		safe_strcpy(comp_name, sizeof(comp_name), classname);
 	}
+	tok = comp_name;
 
 	if (!strcmp(tok, pats[level].prefix)) {
 		found = true;
