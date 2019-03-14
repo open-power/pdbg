@@ -557,3 +557,27 @@ EOF
 
 do_skip
 test_run pdbg -b fake -P "fsi0/pib%d" probe
+
+
+test_result 0 <<EOF
+fsi0: Fake FSI
+    pib0: Fake PIB
+        core3: Fake Core (*)
+    pib1: Fake PIB
+        core3: Fake Core (*)
+    pib2: Fake PIB
+        core3: Fake Core (*)
+    pib3: Fake PIB
+        core3: Fake Core (*)
+    pib4: Fake PIB
+        core3: Fake Core (*)
+    pib5: Fake PIB
+        core3: Fake Core (*)
+    pib6: Fake PIB
+        core3: Fake Core (*)
+    pib7: Fake PIB
+        core3: Fake Core (*)
+EOF
+
+do_skip
+test_run pdbg -b fake -P core@10040 probe

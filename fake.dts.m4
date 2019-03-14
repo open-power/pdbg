@@ -69,7 +69,7 @@ dnl dump_processor([index], [addr], [num_cores], [num_threads])
 dnl
 define(`dump_processor',dnl
 `dump_processor_pre(`$1', `$2')
-forloop(`i', `0', eval(`$3-1'), `dump_core(i, eval($2+(i+1)*10), $4)')
+forloop(`i', `0', eval(`$3-1'), `dump_core(i, eval(10000+(i+1)*10), $4)')
 dump_processor_post()')
 
 dnl
