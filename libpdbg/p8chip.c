@@ -284,6 +284,8 @@ static int p8_thread_stop(struct thread *thread)
 {
 	int i = 0;
 	uint64_t val;
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
 
 	/* Quiese active thread */
 	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_STOP));
@@ -302,16 +304,38 @@ static int p8_thread_stop(struct thread *thread)
 			}
 			break;
 		}
-	} while (!(val & RAS_STATUS_INST_COMPLETE) &&
-		 !(val & RAS_STATUS_TS_QUIESCE));
+
+		/* We can continue ramming if either the
+		 * thread is not active or the SRQ/LSU/TS bits
+		 * are set. */
+	} while ((val & RAS_STATUS_THREAD_ACTIVE) &&
+		 !((val & RAS_STATUS_SRQ_EMPTY)
+		   && (val & RAS_STATUS_LSU_QUIESCED)
+		   && (val & RAS_STATUS_TS_QUIESCE)));
+
+
+	/* Make the threads RAM thread active */
+	CHECK_ERR(pib_read(&chip->target, THREAD_ACTIVE_REG, &val));
+	val |= PPC_BIT(8) >> thread->id;
+	CHECK_ERR(pib_write(&chip->target, THREAD_ACTIVE_REG, val));
 
 	return 0;
 }
 
 static int p8_thread_start(struct thread *thread)
 {
+	uint64_t val;
+	struct core *chip = target_to_core(
+		pdbg_target_require_parent("core", &thread->target));
+
 	/* Activate thread */
 	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));
+
+	/* Restore thread active */
+	CHECK_ERR(pib_read(&chip->target, THREAD_ACTIVE_REG, &val));
+	val &= ~(PPC_BIT(8) >> thread->id);
+	val |= PPC_BIT(thread->id);
+	CHECK_ERR(pib_write(&chip->target, THREAD_ACTIVE_REG, val));
 
 	return 0;
 }
@@ -348,10 +372,8 @@ static int p8_ram_setup(struct thread *thread)
 #endif
 	}
 
-	if (!(thread->status.active)) {
-		PR_WARNING("Thread is in power save state, can not RAM\n");
+	if (!(thread->status.active))
 		return 2;
-	}
 
 	/* Activate RAM mode */
 	CHECK_ERR(pib_read(&chip->target, RAM_MODE_REG, &ram_mode));
@@ -410,14 +432,7 @@ static int p8_ram_destroy(struct thread *thread)
 {
 	struct core *chip = target_to_core(
 		pdbg_target_require_parent("core", &thread->target));
-	uint64_t val, ram_mode;
-
-	if (!(get_thread_status(thread).active)) {
-		/* Mark the RAM thread active so GPRs stick */
-		CHECK_ERR(pib_read(&chip->target, THREAD_ACTIVE_REG, &val));
-		val |= PPC_BIT(8) >> thread->id;
-		CHECK_ERR(pib_write(&chip->target, THREAD_ACTIVE_REG, val));
-	}
+	uint64_t ram_mode;
 
 	/* Disable RAM mode */
 	CHECK_ERR(pib_read(&chip->target, RAM_MODE_REG, &ram_mode));
