@@ -29,7 +29,6 @@
 #define RAS_STATUS_TIMEOUT	100
 
 #define DIRECT_CONTROLS_REG    		0x0
-#define  DIRECT_CONTROL_SP_SRESET	PPC_BIT(60)
 #define  DIRECT_CONTROL_SP_STEP		PPC_BIT(61)
 #define  DIRECT_CONTROL_SP_START 	PPC_BIT(62)
 #define  DIRECT_CONTROL_SP_STOP 	PPC_BIT(63)
@@ -340,6 +339,12 @@ static int p8_thread_start(struct thread *thread)
 	return 0;
 }
 
+static int p8_thread_sreset(struct thread *thread)
+{
+	/* Broken on p8 */
+	return 1;
+}
+
 static int p8_ram_setup(struct thread *thread)
 {
 	struct pdbg_target *target;
@@ -363,13 +368,6 @@ static int p8_ram_setup(struct thread *thread)
 		tmp = target_to_thread(target);
 		if (!(get_thread_status(tmp).quiesced))
 			return 1;
-
-#if 1
-		/* Mark all threads in the core active so GPRs stick */
-		CHECK_ERR(pib_read(&chip->target, THREAD_ACTIVE_REG, &val));
-		val |= PPC_BIT(8) >> thread->id;
-		CHECK_ERR(pib_write(&chip->target, THREAD_ACTIVE_REG, val));
-#endif
 	}
 
 	if (!(thread->status.active))
@@ -474,74 +472,6 @@ static int p8_ram_putxer(struct pdbg_target *thread, uint64_t value)
 	CHECK_ERR(ram_instructions(thread, opcodes, fields, ARRAY_SIZE(opcodes), 0));
 
 	return 0;
-}
-
-#define SPR_SRR0 0x01a
-#define SPR_SRR1 0x01b
-
-#define HID0_HILE	PPC_BIT(19)
-
-#define MSR_HV          PPC_BIT(3)      /* Hypervisor mode */
-#define MSR_EE          PPC_BIT(48)     /* External Int. Enable */
-#define MSR_PR          PPC_BIT(49)     /* Problem State */
-#define MSR_FE0         PPC_BIT(52)     /* FP Exception 0 */
-#define MSR_FE1         PPC_BIT(55)     /* FP Exception 1 */
-#define MSR_IR          PPC_BIT(58)     /* Instructions reloc */
-#define MSR_DR          PPC_BIT(59)     /* Data reloc */
-#define MSR_RI          PPC_BIT(62)     /* Recoverable Interrupt */
-#define MSR_LE		PPC_BIT(63)	/* Little Endian */
-
-static int p8_get_hid0(struct pdbg_target *chip, uint64_t *value);
-static int emulate_sreset(struct thread *thread)
-{
-	struct pdbg_target *chip = pdbg_target_parent("core", &thread->target);
-	uint64_t hid0;
-	uint64_t old_nia, old_msr;
-	uint64_t new_nia, new_msr;
-
-	printf("emulate sreset begin\n");
-	CHECK_ERR(p8_get_hid0(chip, &hid0));
-	printf("emulate sreset HILE=%d\n", !!(hid0 & HID0_HILE));
-	CHECK_ERR(ram_getnia(&thread->target, &old_nia));
-	CHECK_ERR(ram_getmsr(&thread->target, &old_msr));
-	new_nia = 0x100;
-	new_msr = (old_msr & ~(MSR_PR | MSR_IR | MSR_DR | MSR_FE0 | MSR_FE1 | MSR_EE | MSR_RI)) | MSR_HV;
-	if (hid0 & HID0_HILE)
-		new_msr |= MSR_LE;
-	else
-		new_msr &= ~MSR_LE;
-	printf("emulate sreset old NIA:%llx MSR:%llx\n", old_nia, old_msr);
-	printf("emulate sreset new NIA:%llx MSR:%llx\n", new_nia, new_msr);
-	CHECK_ERR(ram_putspr(&thread->target, SPR_SRR0, old_nia));
-	CHECK_ERR(ram_putspr(&thread->target, SPR_SRR1, old_msr));
-	CHECK_ERR(ram_putnia(&thread->target, new_nia));
-	CHECK_ERR(ram_putmsr(&thread->target, new_msr));
-	printf("emulate sreset done\n");
-
-	return 0;
-}
-
-static int p8_thread_sreset(struct thread *thread)
-{
-	int rc;
-
-	if (!(thread->status.active)) {
-		CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_SRESET));
-		return 0;
-	}
-
-	/* Thread was active, emulate the sreset */
-	rc = p8_ram_setup(thread);
-	if (rc)
-		return rc;
-	rc = emulate_sreset(thread);
-	if (rc) {
-		p8_ram_destroy(thread);
-		return rc;
-	}
-
-	return 0;
-//	return p8_thread_start(thread);
 }
 
 /*
