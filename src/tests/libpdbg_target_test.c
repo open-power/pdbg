@@ -161,9 +161,9 @@ int main(void)
 		assert(!strncmp(name, "pib", 3));
 	}
 
-	i = 0;
 	pdbg_for_each_class_target("core", target) {
 		uint64_t addr, size;
+		uint32_t index;
 
 		parent = pdbg_target_parent("fsi", target);
 		assert(parent);
@@ -207,10 +207,10 @@ int main(void)
 		name = pdbg_target_dn_name(target);
 		assert(!strncmp(name, "core", 4));
 
+		index = pdbg_target_index(target);
 		addr = pdbg_target_address(target, &size);
 		assert(size == 0);
-		assert(addr == 0x10000 + (i / 4)*0x1000 + ((i % 4) + 1)*0x10);
-		i++;
+		assert(addr == 0x10000 + (index + 1)*0x10);
 	}
 
 	pdbg_for_each_class_target("thread", target) {
