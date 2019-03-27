@@ -164,11 +164,16 @@ static int assert_special_wakeup(struct core *chip)
 	return 0;
 }
 
-static void deassert_special_wakeup(struct core *chip)
+#if 0
+/* TODO: Work out when to do this. */
+static int deassert_special_wakeup(struct core *chip)
 {
 	/* Assert special wakeup to prevent low power states */
-	pib_write(&chip->target, PMSPCWKUPFSP_REG, 0);
+	CHECK_ERR(pib_write(&chip->target, PMSPCWKUPFSP_REG, 0));
+
+	return 0;
 }
+#endif
 
 static struct thread_state get_thread_status(struct thread *thread)
 {
@@ -537,16 +542,6 @@ static int p8_thread_probe(struct pdbg_target *target)
 	return 0;
 }
 
-static void p8_thread_release(struct pdbg_target *target)
-{
-	struct core *core = target_to_core(pdbg_target_require_parent("core", target));
-	struct thread *thread = target_to_thread(target);
-
-	if (thread->status.quiesced)
-		/* this thread is still quiesced so don't release spwkup */
-		core->release_spwkup = false;
-}
-
 static int p8_get_hid0(struct pdbg_target *chip, uint64_t *value)
 {
 	CHECK_ERR(pib_read(chip, HID0_REG, value));
@@ -594,7 +589,6 @@ static struct thread p8_thread = {
 		.compatible = "ibm,power8-thread",
 		.class = "thread",
 		.probe = p8_thread_probe,
-		.release = p8_thread_release,
 	},
 	.step = p8_thread_step,
 	.start = p8_thread_start,
@@ -623,46 +617,8 @@ static int p8_core_probe(struct pdbg_target *target)
 	if (!GETFIELD(PPC_BIT(0), value))
 		return -1;
 
-	if (assert_special_wakeup(core))
-		return -1;
-
-	/* Child threads will set this to false if they are released while quiesced */
-	core->release_spwkup = true;
-
+	assert_special_wakeup(core);
 	return 0;
-}
-
-static void p8_core_release(struct pdbg_target *target)
-{
-	struct pdbg_target *child;
-	struct core *core = target_to_core(target);
-	enum pdbg_target_status status;
-
-	usleep(1); /* enforce small delay before and after it is cleared */
-
-	/* Probe and release all threads to ensure release_spwkup is up to
-	 * date */
-	pdbg_for_each_target("thread", target, child) {
-		status = pdbg_target_status(child);
-
-		/* This thread has already been release so should have set
-		 * release_spwkup to false if it was quiesced, */
-		if (status == PDBG_TARGET_RELEASED)
-			continue;
-
-		status = pdbg_target_probe(child);
-		if (status != PDBG_TARGET_ENABLED)
-			continue;
-
-		/* Release the thread to ensure release_spwkup is updated. */
-		pdbg_target_release(child);
-	}
-
-	if (!core->release_spwkup)
-		return;
-
-	deassert_special_wakeup(core);
-	usleep(10000);
 }
 
 static struct core p8_core = {
@@ -671,7 +627,6 @@ static struct core p8_core = {
 		.compatible = "ibm,power8-core",
 		.class = "core",
 		.probe = p8_core_probe,
-		.release = p8_core_release,
 	},
 };
 DECLARE_HW_UNIT(p8_core);
