@@ -85,7 +85,7 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 {
 	struct pdbg_target *target;
 	uint8_t *buf;
-	int count = 0;
+	int rc, count = 0;
 
 	if (size == 0) {
 		PR_ERROR("Size must be > 0\n");
@@ -95,9 +95,7 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 	buf = malloc(size);
 	assert(buf);
 
-	pdbg_for_each_class_target("adu", target) {
-		int rc;
-
+	pdbg_for_each_class_target("sbefifo", target) {
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
 
@@ -106,14 +104,32 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 		rc = mem_read(target, addr, buf, size, block_size, ci);
 		progress_end();
 		if (rc) {
-			PR_ERROR("Unable to read memory.\n");
+			PR_ERROR("Unable to read memory using sbefifo\n");
 			continue;
 		}
 
 		count++;
-		break;
+		goto done;
 	}
 
+	pdbg_for_each_class_target("adu", target) {
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		pdbg_set_progress_tick(progress_tick);
+		progress_init();
+		rc = mem_read(target, addr, buf, size, block_size, ci);
+		progress_end();
+		if (rc) {
+			PR_ERROR("Unable to read memory using adu\n");
+			continue;
+		}
+
+		count++;
+		goto done;
+	}
+
+done:
 	if (count > 0) {
 		uint64_t i;
 		bool printable = true;
@@ -172,6 +188,23 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 	buf = read_stdin(&buflen);
 	assert(buf);
 
+	pdbg_for_each_class_target("sbefifo", target) {
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		pdbg_set_progress_tick(progress_tick);
+		progress_init();
+		rc = mem_write(target, addr, buf, buflen, block_size, ci);
+		progress_end();
+		if (rc) {
+			printf("Unable to write memory using sbefifo\n");
+			continue;
+		}
+
+		count++;
+		goto done;
+	}
+
 	pdbg_for_each_class_target("adu", target) {
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
@@ -181,14 +214,15 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 		rc = mem_write(target, addr, buf, buflen, block_size, ci);
 		progress_end();
 		if (rc) {
-			printf("Unable to write memory\n");
+			printf("Unable to write memory using adu\n");
 			continue;
 		}
 
 		count++;
-		break;
+		goto done;
 	}
 
+done:
 	if (count > 0)
 		printf("Wrote %zu bytes starting at 0x%016" PRIx64 "\n", buflen, addr);
 
