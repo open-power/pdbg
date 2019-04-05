@@ -45,7 +45,7 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci)
 {
 	struct pdbg_target *target;
 	uint8_t *buf;
-	int rc = 0;
+	int count = 0;
 
 	if (size == 0) {
 		PR_ERROR("Size must be > 0\n");
@@ -54,27 +54,33 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci)
 
 	buf = malloc(size);
 	assert(buf);
+
 	pdbg_for_each_class_target("adu", target) {
+		int rc;
+
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
 
 		pdbg_set_progress_tick(progress_tick);
 		progress_init();
 		rc = mem_read(target, addr, buf, size, block_size, ci);
-		if (rc)
-			PR_ERROR("Unable to read memory.\n");
-
-		if (write(STDOUT_FILENO, buf, size) < 0)
-			PR_ERROR("Unable to write stdout.\n");
-		else
-				rc++;
-
 		progress_end();
+		if (rc) {
+			PR_ERROR("Unable to read memory.\n");
+			continue;
+		}
+
+		count++;
 		break;
 	}
-	free(buf);
-	return rc;
 
+	if (count > 0) {
+		if (write(STDOUT_FILENO, buf, size) < 0)
+			PR_ERROR("Unable to write stdout.\n");
+	}
+
+	free(buf);
+	return count;
 }
 
 static int getmem(uint64_t addr, uint64_t size, struct mem_flags flags)
