@@ -23,6 +23,13 @@
 			include(p9-pib.dts.m4)dnl
 		};
 
+		sbefifo@2400 { /* Bogus address */
+			reg = <0x0 0x2400 0x7>;
+			index = <0x0>;
+			compatible = "ibm,kernel-sbefifo";
+			device-path = "/dev/sbefifo1";
+		};
+
 		hmfsi@100000 {
 			#address-cells = <0x2>;
 			#size-cells = <0x1>;

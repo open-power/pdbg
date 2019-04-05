@@ -65,6 +65,14 @@ struct adu {
 };
 #define target_to_adu(x) container_of(x, struct adu, target)
 
+struct sbefifo {
+	struct pdbg_target target;
+	int (*mem_read)(struct sbefifo *, uint64_t, uint8_t *, uint64_t, bool);
+	int (*mem_write)(struct sbefifo *, uint64_t, uint8_t *, uint64_t, bool);
+	int fd;
+};
+#define target_to_sbefifo(x) container_of(x, struct sbefifo, target)
+
 struct pib {
 	struct pdbg_target target;
 	int (*read)(struct pib *, uint64_t, uint64_t *);

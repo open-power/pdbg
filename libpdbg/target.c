@@ -218,22 +218,50 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 
 int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, uint8_t block_size, bool ci)
 {
-	struct adu *adu;
+	int rc = -1;
 
-	assert(pdbg_target_is_class(target, "adu"));
-	adu = target_to_adu(target);
+	assert(pdbg_target_is_class(target, "sbefifo") ||
+	       pdbg_target_is_class(target, "adu"));
 
-	return adu->read(adu, addr, output, size, block_size, ci);
+	if (pdbg_target_is_class(target, "sbefifo")) {
+		struct sbefifo *sbefifo;
+
+		sbefifo = target_to_sbefifo(target);
+		rc = sbefifo->mem_read(sbefifo, addr, output, size, ci);
+	}
+
+	if (pdbg_target_is_class(target, "adu")) {
+		struct adu *adu;
+
+		adu = target_to_adu(target);
+		rc = adu->read(adu, addr, output, size, block_size, ci);
+	}
+
+	return rc;
 }
 
 int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size, uint8_t block_size, bool ci)
 {
-	struct adu *adu;
+	int rc = -1;
 
-	assert(pdbg_target_is_class(target, "adu"));
-	adu = target_to_adu(target);
+	assert(pdbg_target_is_class(target, "sbefifo") ||
+	       pdbg_target_is_class(target, "adu"));
 
-	return adu->write(adu, addr, input, size, block_size, ci);
+	if (pdbg_target_is_class(target, "sbefifo")) {
+		struct sbefifo *sbefifo;
+
+		sbefifo = target_to_sbefifo(target);
+		rc = sbefifo->mem_write(sbefifo, addr, input, size, ci);
+	}
+
+	if (pdbg_target_is_class(target, "adu")) {
+		struct adu *adu;
+
+		adu = target_to_adu(target);
+		rc = adu->write(adu, addr, input, size, block_size, ci);
+	}
+
+	return rc;
 }
 
 struct pdbg_target *require_target_parent(struct pdbg_target *target)

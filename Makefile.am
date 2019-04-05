@@ -160,6 +160,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/operations.h \
 	libpdbg/p8chip.c \
 	libpdbg/p9chip.c \
+	libpdbg/sbefifo.c \
 	libpdbg/target.c \
 	libpdbg/target.h \
 	libpdbg/xbus.c
