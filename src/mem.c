@@ -166,31 +166,34 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 {
 	uint8_t *buf;
 	size_t buflen;
-	int rc = 0;
-	struct pdbg_target *adu_target;
-
-	pdbg_for_each_class_target("adu", adu_target)
-		break;
-
-	if (pdbg_target_probe(adu_target) != PDBG_TARGET_ENABLED)
-		return 0;
+	int rc, count = 0;
+	struct pdbg_target *target;
 
 	buf = read_stdin(&buflen);
 	assert(buf);
 
-	pdbg_set_progress_tick(progress_tick);
-	progress_init();
-	rc = mem_write(adu_target, addr, buf, buflen, block_size, ci);
-	progress_end();
-	if (rc) {
-		printf("Unable to write memory\n");
-		free(buf);
-		return 0;
+	pdbg_for_each_class_target("adu", target) {
+		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		pdbg_set_progress_tick(progress_tick);
+		progress_init();
+		rc = mem_write(target, addr, buf, buflen, block_size, ci);
+		progress_end();
+		if (rc) {
+			printf("Unable to write memory\n");
+			continue;
+		}
+
+		count++;
+		break;
 	}
 
-	printf("Wrote %zu bytes starting at 0x%016" PRIx64 "\n", buflen, addr);
+	if (count > 0)
+		printf("Wrote %zu bytes starting at 0x%016" PRIx64 "\n", buflen, addr);
+
 	free(buf);
-	return 1;
+	return count;
 }
 
 static int putmem(uint64_t addr, struct mem_flags flags)
