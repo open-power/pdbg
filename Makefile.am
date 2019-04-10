@@ -15,12 +15,13 @@ libpdbg_tests = libpdbg_target_test \
 		libpdbg_probe_test3
 
 bin_PROGRAMS = pdbg
-check_PROGRAMS = $(libpdbg_tests) optcmd_test
+check_PROGRAMS = $(libpdbg_tests) optcmd_test hexdump_test
 
 PDBG_TESTS = \
 	tests/test_selection.sh 	\
 	tests/test_selection2.sh 	\
-	tests/test_hw_bmc.sh
+	tests/test_hw_bmc.sh		\
+	tests/test_hexdump.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
 
@@ -72,6 +73,9 @@ DT_headers = $(DT:.dts=.dt.h)
 
 optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
 optcmd_test_CFLAGS = -Wall -g
+
+hexdump_test_SOURCES = src/util.c src/tests/hexdump_test.c
+hexdump_test_CFLAGS = -Wall -g
 
 pdbg_SOURCES = \
 	src/cfam.c \
