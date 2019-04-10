@@ -22,7 +22,6 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <errno.h>
-#include <err.h>
 #include <inttypes.h>
 #include <endian.h>
 
@@ -42,18 +41,20 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
-		warn("Failed to seek %s", FSI_CFAM_PATH);
-		return errno;
+		rc = errno;
+		PR_WARNING("Failed to seek %s", FSI_CFAM_PATH);
+		return rc;
 	}
 
 	rc = read(fsi_fd, &tmp, 4);
 	if (rc < 0) {
+		rc = errno;
 		if ((addr64 & 0xfff) != 0xc09)
 			/* We expect reads of 0xc09 to occasionally
 			 * fail as the probing code uses it to see
 			 * if anything is present on the link. */
-			warn("Failed to read from 0x%08" PRIx32 " (%016" PRIx32 ")", (uint32_t) addr, addr64);
-		return errno;
+			PR_ERROR("Failed to read from 0x%08" PRIx32 " (%016" PRIx32 ")", (uint32_t) addr, addr64);
+		return rc;
 	}
 	*value = be32toh(tmp);
 
@@ -67,15 +68,17 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
-		warn("Failed to seek %s", FSI_CFAM_PATH);
-		return errno;
+		rc = errno;
+		PR_WARNING("Failed to seek %s", FSI_CFAM_PATH);
+		return rc;
 	}
 
 	tmp = htobe32(data);
 	rc = write(fsi_fd, &tmp, 4);
 	if (rc < 0) {
-		warn("Failed to write to 0x%08" PRIx32 " (%016" PRIx32 ")", addr, addr64);
-		return errno;
+		rc = errno;
+		PR_ERROR("Failed to write to 0x%08" PRIx32 " (%016" PRIx32 ")", addr, addr64);
+		return rc;
 	}
 
 	return 0;
@@ -97,12 +100,14 @@ static void kernel_fsi_scan_devices(void)
 	int rc, fd;
 
 	fd = open(FSI_SCAN_PATH, O_WRONLY | O_SYNC);
-	if (fd < 0)
-		err(errno, "Unable to open %s", FSI_SCAN_PATH);
+	if (fd < 0) {
+		PR_ERROR("Unable to open %s", FSI_SCAN_PATH);
+		return;
+	}
 
 	rc = write(fd, &one, sizeof(one));
 	if (rc < 0)
-		err(errno, "Unable to write to %s", FSI_SCAN_PATH);
+		PR_ERROR("Unable to write to %s", FSI_SCAN_PATH);
 
 	close(fd);
 }
@@ -124,7 +129,7 @@ int kernel_fsi_probe(struct pdbg_target *target)
 			sleep(1);
 		}
 		if (fsi_fd < 0) {
-			err(errno, "Unable to open %s", FSI_CFAM_PATH);
+			PR_ERROR("Unable to open %s", FSI_CFAM_PATH);
 			return -1;
 		}
 
