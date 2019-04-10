@@ -50,6 +50,37 @@ struct mem_io_flags {
 
 #define BLOCK_SIZE (parse_number8_pow2, NULL)
 
+static uint8_t *read_stdin(size_t *size)
+{
+	uint8_t *buf = NULL;
+	size_t allocated = 0;
+	size_t buflen = 0;
+	ssize_t n;
+
+	while (1) {
+		if (allocated == buflen) {
+			uint8_t *ptr;
+
+			ptr = realloc(buf, allocated + PUTMEM_BUF_SIZE);
+			if (!ptr) {
+				free(buf);
+				return NULL;
+			}
+			buf = ptr;
+			allocated += PUTMEM_BUF_SIZE;
+		}
+
+		n = read(STDIN_FILENO, buf + buflen, allocated - buflen);
+		if (n <= 0)
+			break;
+
+		buflen += n;
+	}
+
+	*size = buflen;
+	return buf;
+}
+
 static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bool raw)
 {
 	struct pdbg_target *target;
@@ -134,7 +165,8 @@ OPTCMD_DEFINE_CMD_WITH_FLAGS(getmemio, getmemio, (ADDRESS, DATA, BLOCK_SIZE),
 static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 {
 	uint8_t *buf;
-	int read_size, rc = 0;
+	size_t buflen;
+	int rc = 0;
 	struct pdbg_target *adu_target;
 
 	pdbg_for_each_class_target("adu", adu_target)
@@ -143,29 +175,22 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 	if (pdbg_target_probe(adu_target) != PDBG_TARGET_ENABLED)
 		return 0;
 
-	buf = malloc(PUTMEM_BUF_SIZE);
+	buf = read_stdin(&buflen);
 	assert(buf);
+
 	pdbg_set_progress_tick(progress_tick);
 	progress_init();
-	do {
-		read_size = read(STDIN_FILENO, buf, PUTMEM_BUF_SIZE);
-		if (read_size <= 0)
-			break;
-
-		rc = mem_write(adu_target, addr, buf, read_size, block_size, ci);
-		if (rc) {
-			rc = 0;
-			printf("Unable to write memory.\n");
-			break;
-		}
-
-		rc += read_size;
-	} while (read_size > 0);
+	rc = mem_write(adu_target, addr, buf, buflen, block_size, ci);
 	progress_end();
+	if (rc) {
+		printf("Unable to write memory\n");
+		free(buf);
+		return 0;
+	}
 
-	printf("Wrote %d bytes starting at 0x%016" PRIx64 "\n", rc, addr);
+	printf("Wrote %zu bytes starting at 0x%016" PRIx64 "\n", buflen, addr);
 	free(buf);
-	return rc;
+	return 1;
 }
 
 static int putmem(uint64_t addr, struct mem_flags flags)
