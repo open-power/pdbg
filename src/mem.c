@@ -92,6 +92,9 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 				PR_ERROR("Unable to write stdout.\n");
 		} else {
 			for (i=0; i<size; i++) {
+				if (buf[i] == 0x0a || buf[i] == 0x0d || buf[i] == 0)
+					continue;
+
 				if (!isprint(buf[i])) {
 					printable = false;
 					break;
