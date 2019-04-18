@@ -58,6 +58,24 @@ uint16_t *parse_number16(const char *argv)
 	return n;
 }
 
+uint8_t *parse_number8(const char *argv)
+{
+	unsigned long long tmp;
+	uint8_t *n = malloc(sizeof(*n));
+	char *endptr;
+
+	if (!argv)
+		return NULL;
+
+	errno = 0;
+	tmp = strtoul(argv, &endptr, 0);
+	if (errno || *endptr != '\0' || tmp > UINT8_MAX)
+		return NULL;
+
+	*n = tmp;
+	return n;
+}
+
 /* Parse an 8-bit number that is a power of 2 */
 uint8_t *parse_number8_pow2(const char *argv)
 {
