@@ -1,7 +1,10 @@
 AUTOMAKE_OPTIONS = foreign
 AM_MAKEFLAGS = --no-print-directory
 
-SUBDIRS = libfdt
+if BUILD_LIBFDT
+MAYBE_LIBFDT = libfdt
+endif
+SUBDIRS = $(MAYBE_LIBFDT)
 DIST_SUBDIRS = libfdt
 
 GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty 2>/dev/null || echo unknown`
@@ -157,7 +160,9 @@ libpdbg_la_SOURCES = \
 	libpdbg/target.h \
 	libpdbg/xbus.c
 
+if BUILD_LIBFDT
 libpdbg_la_LIBADD = libfdt/libfdt.la
+endif
 
 include_HEADERS = libpdbg/libpdbg.h
 
