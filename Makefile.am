@@ -1,6 +1,9 @@
 AUTOMAKE_OPTIONS = foreign
 AM_MAKEFLAGS = --no-print-directory
 
+SUBDIRS = libfdt
+DIST_SUBDIRS = libfdt
+
 GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty 2>/dev/null || echo unknown`
 
 libpdbg_tests = libpdbg_target_test \
@@ -124,25 +127,9 @@ pdbg_LDADD = $(DT_objects) libpdbg.la libccan.a \
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 
-lib_LTLIBRARIES = libfdt.la libpdbg.la
+lib_LTLIBRARIES = libpdbg.la
 
-libfdt_la_CFLAGS = -I$(top_srcdir)/libfdt
 libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -Wall -Werror
-
-libfdt_la_SOURCES = \
-	libfdt/fdt_addresses.c \
-	libfdt/fdt.c \
-	libfdt/fdt_empty_tree.c \
-	libfdt/fdt.h \
-	libfdt/fdt_overlay.c \
-	libfdt/fdt_ro.c \
-	libfdt/fdt_rw.c \
-	libfdt/fdt_strerror.c \
-	libfdt/fdt_sw.c \
-	libfdt/fdt_wip.c \
-	libfdt/libfdt_env.h \
-	libfdt/libfdt.h \
-	libfdt/libfdt_internal.h
 
 libpdbg_la_SOURCES = \
 	libpdbg/adu.c \
@@ -170,7 +157,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/target.h \
 	libpdbg/xbus.c
 
-libpdbg_la_LIBADD = libfdt.la
+libpdbg_la_LIBADD = libfdt/libfdt.la
 
 include_HEADERS = libpdbg/libpdbg.h
 
