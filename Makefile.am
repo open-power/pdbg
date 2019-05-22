@@ -68,7 +68,7 @@ if TARGET_PPC
 ARCH_FLAGS="-DTARGET_PPC=1"
 endif
 
-DT = fake.dts $(DT_ARM) $(DT_PPC)
+DT = fake.dts p8-cronus.dts p9-cronus.dts $(DT_ARM) $(DT_PPC)
 
 DT_sources = $(DT:.dts=.dtb.S)
 DT_headers = $(DT:.dts=.dt.h)
