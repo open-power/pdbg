@@ -15,7 +15,7 @@ libpdbg_tests = libpdbg_target_test \
 		libpdbg_probe_test3
 
 bin_PROGRAMS = pdbg
-check_PROGRAMS = $(libpdbg_tests) optcmd_test hexdump_test
+check_PROGRAMS = $(libpdbg_tests) optcmd_test hexdump_test cronus_proxy
 
 PDBG_TESTS = \
 	tests/test_selection.sh 	\
@@ -78,6 +78,9 @@ optcmd_test_CFLAGS = -Wall -g
 
 hexdump_test_SOURCES = src/util.c src/tests/hexdump_test.c
 hexdump_test_CFLAGS = -Wall -g
+
+cronus_proxy_SOURCES = libcronus/proxy.c
+cronus_proxy_CFLAGS = -Wall -g
 
 pdbg_SOURCES = \
 	src/cfam.c \
