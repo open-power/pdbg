@@ -149,6 +149,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/fake.c \
 	libpdbg/host.c \
 	libpdbg/htm.c \
+	libpdbg/hwunit.c \
 	libpdbg/hwunit.h \
 	libpdbg/i2c.c \
 	libpdbg/kernel.c \
