@@ -32,9 +32,6 @@ void pdbg_hwunit_register(const struct hw_unit_info *hw_unit)
 	g_hw_unit_count++;
 }
 
-extern struct hw_unit_info *__start_hw_units;
-extern struct hw_init_info *__stop_hw_units;
-
 const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat)
 {
 	const struct hw_unit_info *p;

@@ -34,22 +34,17 @@ struct hw_unit_info {
 void pdbg_hwunit_register(const struct hw_unit_info *hw_unit);
 const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat);
 
-/* We can't pack the structs themselves directly into a special
- * section because there doesn't seem to be any standard way of doing
- * that due to alignment rules. So instead we pack pointers into a
- * special section.
- *
+/*
  * If this macro fails to compile for you, you've probably not
  * declared the struct pdbg_target as the first member of the
  * container struct. Not doing so will break other assumptions.
- * */
+ */
 #define DECLARE_HW_UNIT(name)						\
 	static inline void name ##_hw_unit_check(void) {		\
 		((void)sizeof(char[1 - 2 * (container_off(typeof(name), target) != 0)])); \
 	}								\
 	const struct hw_unit_info __used name ##_hw_unit =              \
-	{ .hw_unit = &name, .size = sizeof(name) }; 	                \
-	const struct hw_unit_info __used __section("hw_units") *name ##_hw_unit_p = &name ##_hw_unit
+	{ .hw_unit = &name, .size = sizeof(name) };
 
 struct htm {
 	struct pdbg_target target;
