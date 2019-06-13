@@ -67,12 +67,6 @@ bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 extern struct list_head empty_list;
 extern struct list_head target_classes;
 
-#define for_each_class_target(class_name, target)			\
-	list_for_each((find_target_class(class_name) ? &require_target_class(class_name)->targets : &empty_list), target, class_link)
-
-#define for_each_target_class(target_class)			\
-	list_for_each(&target_classes, target_class, class_head_link)
-
 struct hw_unit_info {
 	void *hw_unit;
 	size_t size;
