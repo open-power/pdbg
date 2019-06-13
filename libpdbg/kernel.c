@@ -144,3 +144,9 @@ static struct fsi kernel_fsi = {
 	.write = kernel_fsi_putcfam,
 };
 DECLARE_HW_UNIT(kernel_fsi);
+
+__attribute__((constructor))
+static void register_kernel(void)
+{
+	pdbg_hwunit_register(&kernel_fsi_hw_unit);
+}

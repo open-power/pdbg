@@ -734,3 +734,10 @@ static struct core p8_core = {
 	},
 };
 DECLARE_HW_UNIT(p8_core);
+
+__attribute__((constructor))
+static void register_p8chip(void)
+{
+	pdbg_hwunit_register(&p8_thread_hw_unit);
+	pdbg_hwunit_register(&p8_core_hw_unit);
+}

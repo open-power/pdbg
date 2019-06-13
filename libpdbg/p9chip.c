@@ -607,3 +607,11 @@ static struct chiplet p9_chiplet = {
 	.getring = p9_chiplet_getring,
 };
 DECLARE_HW_UNIT(p9_chiplet);
+
+__attribute__((constructor))
+static void register_p9chip(void)
+{
+	pdbg_hwunit_register(&p9_thread_hw_unit);
+	pdbg_hwunit_register(&p9_core_hw_unit);
+	pdbg_hwunit_register(&p9_chiplet_hw_unit);
+}

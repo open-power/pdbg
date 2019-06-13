@@ -1154,3 +1154,11 @@ static struct htm p8_chtm = {
 	.dump = do_htm_dump,
 };
 DECLARE_HW_UNIT(p8_chtm);
+
+__attribute__((constructor))
+static void register_htm(void)
+{
+	pdbg_hwunit_register(&p8_nhtm_hw_unit);
+	pdbg_hwunit_register(&p9_nhtm_hw_unit);
+	pdbg_hwunit_register(&p8_chtm_hw_unit);
+}

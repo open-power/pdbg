@@ -60,3 +60,9 @@ struct xbus p9_xbus = {
         },
 };
 DECLARE_HW_UNIT(p9_xbus);
+
+__attribute__((constructor))
+static void register_xbus(void)
+{
+	pdbg_hwunit_register(&p9_xbus_hw_unit);
+}

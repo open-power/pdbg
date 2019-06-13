@@ -85,3 +85,12 @@ static struct thread fake_thread = {
 	},
 };
 DECLARE_HW_UNIT(fake_thread);
+
+__attribute__((constructor))
+static void register_fake(void)
+{
+	pdbg_hwunit_register(&fake_fsi_hw_unit);
+	pdbg_hwunit_register(&fake_pib_hw_unit);
+	pdbg_hwunit_register(&fake_core_hw_unit);
+	pdbg_hwunit_register(&fake_thread_hw_unit);
+}

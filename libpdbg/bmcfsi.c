@@ -514,3 +514,9 @@ static struct fsi bmcfsi = {
 	.write = fsi_putcfam,
 };
 DECLARE_HW_UNIT(bmcfsi);
+
+__attribute__((constructor))
+static void register_bmcfsi(void)
+{
+	pdbg_hwunit_register(&bmcfsi_hw_unit);
+}

@@ -594,3 +594,10 @@ static struct adu p9_adu = {
 	.write = adu_write,
 };
 DECLARE_HW_UNIT(p9_adu);
+
+__attribute__((constructor))
+static void register_adu(void)
+{
+	pdbg_hwunit_register(&p8_adu_hw_unit);
+	pdbg_hwunit_register(&p9_adu_hw_unit);
+}
