@@ -6,7 +6,7 @@
 #include <libfdt/libfdt.h>
 
 #include "bitutils.h"
-#include "target.h"
+#include "hwunit.h"
 #include "operations.h"
 #include "debug.h"
 

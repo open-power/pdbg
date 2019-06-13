@@ -32,7 +32,7 @@
 
 #include "bitutils.h"
 #include "operations.h"
-#include "target.h"
+#include "hwunit.h"
 
 #define XSCOM_BASE_PATH "/sys/kernel/debug/powerpc/scom"
 

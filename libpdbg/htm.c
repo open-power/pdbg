@@ -27,7 +27,7 @@
 
 #include "operations.h"
 #include "bitutils.h"
-#include "target.h"
+#include "hwunit.h"
 #include "debug.h"
 
 #define HTM_ERR(x) ({int rc = (x); if (rc) {PR_ERROR("HTM Error %d %s:%d\n", \

@@ -18,6 +18,7 @@
 
 #include "libpdbg.h"
 #include "operations.h"
+#include "hwunit.h"
 
 static int fake_fsi_read(struct fsi *fsi, uint32_t addr, uint32_t *value)
 {

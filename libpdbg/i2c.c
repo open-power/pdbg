@@ -26,6 +26,7 @@
 #include "bitutils.h"
 #include "operations.h"
 #include "debug.h"
+#include "hwunit.h"
 
 struct i2c_data {
 	int addr;

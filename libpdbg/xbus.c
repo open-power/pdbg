@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "target.h"
+#include "hwunit.h"
 #include "bitutils.h"
 
 /* XBus addressing is more complicated. This comes from p9_scominfo.C

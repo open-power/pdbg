@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include "target.h"
+#include "hwunit.h"
 #include "bitutils.h"
 #include "operations.h"
 #include "debug.h"

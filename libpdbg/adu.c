@@ -21,6 +21,7 @@
 #include "operations.h"
 #include "bitutils.h"
 #include "debug.h"
+#include "hwunit.h"
 
 /* P8 ADU SCOM Register Definitions */
 #define P8_ALTD_CONTROL_REG	0x0

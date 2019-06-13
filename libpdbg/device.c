@@ -27,6 +27,7 @@
 
 #include "debug.h"
 #include "compiler.h"
+#include "hwunit.h"
 
 #define prerror printf
 #define is_rodata(p) false

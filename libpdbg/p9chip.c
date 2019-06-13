@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "target.h"
+#include "hwunit.h"
 #include "operations.h"
 #include "bitutils.h"
 #include "debug.h"

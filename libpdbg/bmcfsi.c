@@ -27,7 +27,7 @@
 
 #include "bitutils.h"
 #include "operations.h"
-#include "target.h"
+#include "hwunit.h"
 #include "debug.h"
 
 #define GPIO_BASE	0x1e780000
