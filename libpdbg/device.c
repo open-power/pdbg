@@ -162,7 +162,7 @@ static int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target
 
 static bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root)
 {
-	struct pdbg_target *node;
+	struct pdbg_target *node = NULL;
 
 	assert(!root->parent);
 
@@ -305,7 +305,7 @@ static struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char 
 static struct dt_property *dt_find_property(const struct pdbg_target *node,
 					   const char *name)
 {
-	struct dt_property *i;
+	struct dt_property *i = NULL;
 
 	list_for_each(&node->properties, i, list)
 		if (strcmp(i->name, name) == 0)

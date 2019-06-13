@@ -283,7 +283,7 @@ struct pdbg_target *require_target_parent(struct pdbg_target *target)
 /* Finds the given class. Returns NULL if not found. */
 struct pdbg_target_class *find_target_class(const char *name)
 {
-	struct pdbg_target_class *target_class;
+	struct pdbg_target_class *target_class = NULL;
 
 	list_for_each(&target_classes, target_class, class_head_link)
 		if (!strcmp(target_class->name, name))
