@@ -1,4 +1,5 @@
 #include <string.h>
+#include <endian.h>
 
 #include "target.h"
 #include "libpdbg.h"
