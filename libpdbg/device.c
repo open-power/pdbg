@@ -72,7 +72,7 @@ static void free_name(const char *name)
 
 static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
 {
-	struct hw_unit_info *hw_info = NULL;
+	const struct hw_unit_info *hw_info = NULL;
 	const struct fdt_property *prop;
 	struct pdbg_target *node;
 	size_t size = sizeof(*node);
@@ -89,7 +89,7 @@ static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int no
 			 */
 			i = 0;
 			while (i < prop_len) {
-				hw_info = find_compatible_target(&prop->data[i]);
+				hw_info = pdbg_hwunit_find_compatible(&prop->data[i]);
 				if (hw_info) {
 					size = hw_info->size;
 					break;

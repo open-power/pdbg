@@ -34,17 +34,20 @@ void pdbg_hwunit_register(const struct hw_unit_info *hw_unit)
 
 extern struct hw_unit_info *__start_hw_units;
 extern struct hw_init_info *__stop_hw_units;
-struct hw_unit_info *find_compatible_target(const char *compat)
-{
-	struct hw_unit_info **p;
-	struct pdbg_target *target;
 
-	for (p = &__start_hw_units; p < (struct hw_unit_info **) &__stop_hw_units; p++) {
-		target = (*p)->hw_unit;
+const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat)
+{
+	const struct hw_unit_info *p;
+	struct pdbg_target *target;
+	int i;
+
+	for (i = 0; i < g_hw_unit_count; i++) {
+		p = g_hw_unit[i];
+		target = p->hw_unit;
+
 		if (!strcmp(target->compatible, compat))
-			return *p;
+			return p;
 	}
 
 	return NULL;
 }
-

@@ -32,7 +32,7 @@ struct hw_unit_info {
 };
 
 void pdbg_hwunit_register(const struct hw_unit_info *hw_unit);
-struct hw_unit_info *find_compatible_target(const char *compat);
+const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat);
 
 /* We can't pack the structs themselves directly into a special
  * section because there doesn't seem to be any standard way of doing
