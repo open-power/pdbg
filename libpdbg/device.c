@@ -64,12 +64,6 @@ static const char *take_name(const char *name)
 	return name;
 }
 
-static void free_name(const char *name)
-{
-	if (!is_rodata(name))
-		free((char *)name);
-}
-
 static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
 {
 	const struct hw_unit_info *hw_info = NULL;
@@ -193,15 +187,6 @@ static bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root)
 	root->parent = parent;
 
 	return true;
-}
-
-static inline void dt_destroy(struct pdbg_target *dn)
-{
-	if (!dn)
-		return;
-
-	free_name(dn->dn_name);
-	free(dn);
 }
 
 static char *dt_get_path(const struct pdbg_target *node)
