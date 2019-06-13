@@ -123,7 +123,7 @@ static bool path_pattern_parse(const char *arg, struct path_pattern *pat)
 		safe_strcpy(pat->prefix, sizeof(pat->prefix), tmp);
 	}
 
-	if (!pat->prefix)
+	if (!pat->prefix[0])
 		return false;
 
 	return true;
