@@ -128,8 +128,6 @@ src/pdbg-gdb_parser.$(OBJEXT): CFLAGS+=-Wno-unused-const-variable
 pdbg_LDADD = $(DT_objects) libpdbg.la libccan.a \
 	-L.libs -lrt
 
-pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
-
 lib_LTLIBRARIES = libpdbg.la
 
 libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -Wall -Werror
@@ -183,29 +181,24 @@ libccan_a_SOURCES = \
 	ccan/str/str.h
 
 libpdbg_test_cflags = -I$(top_srcdir)/libpdbg -I$(top_srcdir)/libfdt
-libpdbg_test_ldflags = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 libpdbg_test_ldadd = -L.libs libpdbg.la
 
 libpdbg_target_test_SOURCES = src/tests/libpdbg_target_test.c
 libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
-libpdbg_target_test_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_target_test_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
 
 src/tests/libpdbg_target_test.c: fake.dt.h
 
 libpdbg_probe_test1_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test1_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=1
-libpdbg_probe_test1_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_probe_test1_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
 
 libpdbg_probe_test2_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test2_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=2
-libpdbg_probe_test2_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_probe_test2_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
 
 libpdbg_probe_test3_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test3_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=3
-libpdbg_probe_test3_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_probe_test3_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
 
 src/tests/libpdbg_probe_test.c: fake.dt.h
