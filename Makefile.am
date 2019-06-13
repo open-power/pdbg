@@ -81,6 +81,7 @@ pdbg_SOURCES = \
 	src/cfam.c \
 	src/htm.c \
 	src/htm.h \
+	src/istep.c \
 	src/main.c \
 	src/main.h \
 	src/mem.c \

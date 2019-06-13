@@ -93,7 +93,7 @@ extern struct optcmd_cmd
 	optcmd_threadstatus, optcmd_sreset, optcmd_regs, optcmd_probe,
 	optcmd_getmem, optcmd_putmem, optcmd_getmemio, optcmd_putmemio,
 	optcmd_getxer, optcmd_putxer, optcmd_getcr, optcmd_putcr,
-	optcmd_gdbserver;
+	optcmd_gdbserver, optcmd_istep;
 
 static struct optcmd_cmd *cmds[] = {
 	&optcmd_getscom, &optcmd_putscom, &optcmd_getcfam, &optcmd_putcfam,
@@ -103,7 +103,7 @@ static struct optcmd_cmd *cmds[] = {
 	&optcmd_threadstatus, &optcmd_sreset, &optcmd_regs, &optcmd_probe,
 	&optcmd_getmem, &optcmd_putmem, &optcmd_getmemio, &optcmd_putmemio,
 	&optcmd_getxer, &optcmd_putxer, &optcmd_getcr, &optcmd_putcr,
-	&optcmd_gdbserver,
+	&optcmd_gdbserver, &optcmd_istep,
 };
 
 /* Purely for printing usage text. We could integrate printing argument and flag
@@ -145,6 +145,7 @@ static struct action actions[] = {
 	{ "sreset",  "", "Reset" },
 	{ "regs",  "[--backtrace]", "State (optionally display backtrace)" },
 	{ "gdbserver", "", "Start a gdb server" },
+	{ "istep", "<major> <minor>", "Execute istep on SBE" },
 };
 
 static void print_usage(void)
