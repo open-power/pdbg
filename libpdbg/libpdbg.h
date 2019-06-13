@@ -229,6 +229,8 @@ int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_
 int opb_read(struct pdbg_target *target, uint32_t addr, uint32_t *data);
 int opb_write(struct pdbg_target *target, uint32_t addr, uint32_t data);
 
+int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor);
+
 typedef void (*pdbg_progress_tick_t)(uint64_t cur, uint64_t end);
 
 void pdbg_set_progress_tick(pdbg_progress_tick_t fn);

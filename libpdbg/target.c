@@ -264,6 +264,16 @@ int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_
 	return rc;
 }
 
+int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
+{
+	struct sbefifo *sbefifo;
+
+	assert(pdbg_target_is_class(target, "sbefifo"));
+
+	sbefifo = target_to_sbefifo(target);
+	return sbefifo->istep(sbefifo, major, minor);
+}
+
 struct pdbg_target *require_target_parent(struct pdbg_target *target)
 {
 	assert(target->parent);
