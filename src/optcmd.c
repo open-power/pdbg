@@ -87,7 +87,7 @@ optcmd_cmd_t *optcmd_parse(struct optcmd_cmd *cmd, const char *argv[], int argc,
 		}
 	}
 
-	for (arg_count = arg_count; arg_count < total_arg_count; arg_count++) {
+	for (; arg_count < total_arg_count; arg_count++) {
 		/* Process default positional arguments */
 		struct optcmd_arg *arg = &args[arg_count];
 
