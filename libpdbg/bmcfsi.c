@@ -160,7 +160,8 @@ static inline void clock_cycle(struct gpio_pin *pin, int num_clks)
 	volatile int j;
 
 	/* Need to introduce delays when inlining this function */
-	for (j = 0; j < clock_delay; j++);
+	for (j = 0; j < clock_delay; j++)
+		;
         for (i = 0; i < num_clks; i++) {
                 write_gpio(pin, 0);
                 write_gpio(pin, 1);
