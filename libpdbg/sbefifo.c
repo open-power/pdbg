@@ -144,7 +144,7 @@ static int sbefifo_op(struct sbefifo *sbefifo,
 	uint16_t value;
 	int rc;
 
-	assert(msg_len > 0 && out_len > 0);
+	assert(msg_len > 0);
 
 	/* Allocate extra memory for FFDC (SBEFIFO_MAX_FFDC_SIZE = 0x2000) */
 	buflen = out_len + 0x2000;
@@ -206,6 +206,32 @@ static int sbefifo_op(struct sbefifo *sbefifo,
 fail:
 	free(buf);
 	return -1;
+}
+
+static int sbefifo_op_istep(struct sbefifo *sbefifo,
+			    uint32_t major, uint32_t minor)
+{
+	uint8_t *out;
+	uint32_t msg[3];
+	uint32_t cmd, step;
+	int rc;
+
+	PR_NOTICE("sbefifo: istep %u.%u\n", major, minor);
+
+	cmd = 0xa101;
+	step = (major & 0xff) << 16 | (minor & 0xff);
+
+	msg[0] = htobe32(3);	// number of words
+	msg[1] = htobe32(cmd);
+	msg[2] = htobe32(step);
+
+	/* Return - data read + length of data read */
+	rc = sbefifo_op(sbefifo, msg, sizeof(msg), cmd, 0, &out);
+	if (rc)
+		return rc;
+
+	free(out);
+	return 0;
 }
 
 static int sbefifo_op_getmem(struct sbefifo *sbefifo,
@@ -310,7 +336,7 @@ static int sbefifo_op_putmem(struct sbefifo *sbefifo,
 	memcpy(&msg[6], data, len);
 
 	/* Return - length of data written */
-	rc = sbefifo_op(sbefifo, msg, msg_len, cmd, 4, &out);
+	rc = sbefifo_op(sbefifo, msg, msg_len, cmd, 0, &out);
 	if (rc)
 		return rc;
 
@@ -351,6 +377,7 @@ struct sbefifo kernel_sbefifo = {
 		.class = "sbefifo",
 		.probe = sbefifo_probe,
 	},
+	.istep = sbefifo_op_istep,
 	.mem_read = sbefifo_op_getmem,
 	.mem_write = sbefifo_op_putmem,
 	.fd = -1,
