@@ -15,8 +15,22 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include "hwunit.h"
+
+#define MAX_HW_UNITS	1024
+
+static const struct hw_unit_info *g_hw_unit[MAX_HW_UNITS];
+static int g_hw_unit_count;
+
+void pdbg_hwunit_register(const struct hw_unit_info *hw_unit)
+{
+	assert(g_hw_unit_count < MAX_HW_UNITS);
+
+	g_hw_unit[g_hw_unit_count] = hw_unit;
+	g_hw_unit_count++;
+}
 
 extern struct hw_unit_info *__start_hw_units;
 extern struct hw_init_info *__stop_hw_units;

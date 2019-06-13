@@ -30,6 +30,8 @@ struct hw_unit_info {
 	void *hw_unit;
 	size_t size;
 };
+
+void pdbg_hwunit_register(const struct hw_unit_info *hw_unit);
 struct hw_unit_info *find_compatible_target(const char *compat);
 
 /* We can't pack the structs themselves directly into a special
