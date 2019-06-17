@@ -517,6 +517,10 @@ static bool parse_options(int argc, char *argv[])
 
 				pir_map(pir, &chip, &core, &thread);
 
+				if (!pathsel_add("pib%d", chip))
+					return false;
+				if (!pathsel_add("pib%d/core%d", chip, core))
+					return false;
 				if (!pathsel_add("pib%d/core%d/thread%d", chip, core, thread))
 					return false;
 			}
