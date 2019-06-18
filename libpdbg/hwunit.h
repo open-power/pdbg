@@ -40,7 +40,7 @@ const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat);
  * container struct. Not doing so will break other assumptions.
  */
 #define DECLARE_HW_UNIT(name)						\
-	static inline void name ##_hw_unit_check(void) {		\
+	__attribute__((unused)) static inline void name ##_hw_unit_check(void) {	\
 		((void)sizeof(char[1 - 2 * (container_off(typeof(name), target) != 0)])); \
 	}								\
 	const struct hw_unit_info __used name ##_hw_unit =              \
