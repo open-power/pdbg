@@ -135,8 +135,6 @@ pdbg_LDADD = $(DT_objects) libpdbg.la libccan.a \
 
 lib_LTLIBRARIES = libpdbg.la
 
-libpdbg_la_CFLAGS = -I$(top_srcdir)/libfdt -Wall -Werror
-
 libpdbg_la_SOURCES = \
 	libpdbg/adu.c \
 	libpdbg/backend.h \
@@ -166,7 +164,10 @@ libpdbg_la_SOURCES = \
 	libpdbg/target.h \
 	libpdbg/xbus.c
 
+libpdbg_la_CFLAGS = -Wall -Werror
+
 if BUILD_LIBFDT
+libpdbg_la_CFLAGS += -I$(top_srcdir)/libfdt
 libpdbg_la_LIBADD = libfdt/libfdt.la
 endif
 
@@ -186,8 +187,12 @@ libccan_a_SOURCES = \
 	ccan/str/str.c \
 	ccan/str/str.h
 
-libpdbg_test_cflags = -I$(top_srcdir)/libpdbg -I$(top_srcdir)/libfdt
+libpdbg_test_cflags = -I$(top_srcdir)/libpdbg
 libpdbg_test_ldadd = -L.libs libpdbg.la
+
+if BUILD_LIBFDT
+libpdbg_test_cflags += -I$(top_srcdir)/libfdt
+endif
 
 libpdbg_target_test_SOURCES = src/tests/libpdbg_target_test.c
 libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
