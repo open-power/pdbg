@@ -115,7 +115,7 @@ static void get_gprs(uint64_t *stack, void *priv)
 
 	for (i = 0; i < 32; i++) {
 		PR_INFO("r%d = 0x%016" PRIx64 "\n", i, regs.gprs[i]);
-		snprintf(data + i*16, 17, "%016" PRIx64 , __builtin_bswap64(regs.gprs[i]));
+		snprintf(data + i*16, 17, "%016" PRIx64 , be64toh(regs.gprs[i]));
 	}
 
 	send_response(fd, data);
@@ -131,7 +131,7 @@ static void get_spr(uint64_t *stack, void *priv)
 		/* Get PC/NIA */
 		if (ram_getnia(thread_target, &value))
 			PR_ERROR("Error reading NIA\n");
-		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , __builtin_bswap64(value));
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
 		break;
 
@@ -139,7 +139,7 @@ static void get_spr(uint64_t *stack, void *priv)
 		/* Get MSR */
 		if (ram_getmsr(thread_target, &value))
 			PR_ERROR("Error reading MSR\n");
-		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , __builtin_bswap64(value));
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
 		break;
 
@@ -147,7 +147,7 @@ static void get_spr(uint64_t *stack, void *priv)
 		/* Get CR */
 		if (ram_getcr(thread_target, (uint32_t *)&value))
 			PR_ERROR("Error reading CR \n");
-		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , __builtin_bswap64(value));
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
 		break;
 
@@ -155,7 +155,7 @@ static void get_spr(uint64_t *stack, void *priv)
 		/* Get LR */
 		if (ram_getspr(thread_target, 8, &value))
 			PR_ERROR("Error reading LR\n");
-		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , __builtin_bswap64(value));
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
 		break;
 
@@ -163,7 +163,7 @@ static void get_spr(uint64_t *stack, void *priv)
 		/* Get CTR */
 		if (ram_getspr(thread_target, 9, &value))
 			PR_ERROR("Error reading CTR\n");
-		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , __builtin_bswap64(value));
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
 		break;
 
