@@ -57,6 +57,7 @@ static int dump_stack(struct thread_regs *regs, struct pdbg_target *adu)
 	uint64_t next_sp = regs->gprs[1];
 	uint64_t pc;
 	bool finished = false;
+	bool prev_flip = false;
 
 	printf("STACK:           SP                NIA\n");
 	if (!(next_sp && is_real_address(regs, next_sp))) {
@@ -82,12 +83,16 @@ static int dump_stack(struct thread_regs *regs, struct pdbg_target *adu)
 		if (!load8(adu, sp + 16, &pc))
 			return 1;
 
-		tmp2 = flip_endian(tmp);
-
 		if (!tmp) {
 			finished = true;
-			goto no_flip;
+			flip = prev_flip;
+			if (flip)
+				be = !be;
+			next_sp = 0;
+			goto do_pc;
 		}
+
+		tmp2 = flip_endian(tmp);
 
 		/*
 		 * Basic endian detection.
@@ -130,11 +135,14 @@ no_flip:
 			next_sp = tmp;
 		}
 
+do_pc:
 		if (flip)
 			pc = flip_endian(pc);
 
 		printf(" 0x%016" PRIx64 " 0x%016" PRIx64 " (%s)\n",
 			sp, pc, be ? "big-endian" : "little-endian");
+
+		prev_flip = flip;
 	}
 	printf(" 0x%016" PRIx64 "\n", next_sp);
 
