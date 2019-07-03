@@ -39,6 +39,8 @@
 #include "p9-kernel.dt.h"
 #include "p8-host.dt.h"
 #include "p9-host.dt.h"
+#include "p8-cronus.dt.h"
+#include "p9-cronus.dt.h"
 
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
 #define OPENFSI_BMC "/sys/bus/platform/devices/gpio-fsi/fsi0/"
@@ -261,6 +263,25 @@ void *pdbg_default_dtb(void)
 		else {
 			pdbg_log(PDBG_ERROR, "Invalid device type specified\n");
 			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9r/p9w/p9z'\n");
+			return NULL;
+		}
+
+		break;
+
+	case PDBG_BACKEND_CRONUS:
+		if (!pdbg_backend_option) {
+			pdbg_log(PDBG_ERROR, "No device type specified\n");
+			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
+			return NULL;
+		}
+
+		if (!strncmp(pdbg_backend_option, "p8", 2))
+			return &_binary_p8_cronus_dtb_o_start;
+		else if (!strncmp(pdbg_backend_option, "p9", 2))
+			return &_binary_p9_cronus_dtb_o_start;
+		else {
+			pdbg_log(PDBG_ERROR, "Invalid device type specified\n");
+			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
 			return NULL;
 		}
 

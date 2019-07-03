@@ -53,7 +53,8 @@ enum pdbg_target_status {PDBG_TARGET_UNKNOWN = 0, PDBG_TARGET_ENABLED,
 			 PDBG_TARGET_NONEXISTENT, PDBG_TARGET_RELEASED};
 
 enum pdbg_backend { PDBG_DEFAULT_BACKEND = 0, PDBG_BACKEND_FSI, PDBG_BACKEND_I2C,
-		    PDBG_BACKEND_KERNEL, PDBG_BACKEND_FAKE, PDBG_BACKEND_HOST };
+		    PDBG_BACKEND_KERNEL, PDBG_BACKEND_FAKE, PDBG_BACKEND_HOST,
+		    PDBG_BACKEND_CRONUS };
 
 #define pdbg_for_each_compatible(parent, target, compat)		\
         for (target = NULL;                                             \
