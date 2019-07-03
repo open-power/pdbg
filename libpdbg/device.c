@@ -623,7 +623,17 @@ uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 
 void pdbg_targets_init(void *fdt)
 {
+	/* Root node needs to be valid when this function returns */
 	pdbg_dt_root = dt_new_node("", NULL, 0);
+
+	if (!fdt)
+		fdt = pdbg_default_dtb();
+
+	if (!fdt) {
+		pdbg_log(PDBG_ERROR, "Could not find a system device tree\n");
+		return;
+	}
+
 	dt_expand(fdt);
 }
 

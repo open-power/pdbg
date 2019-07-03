@@ -61,4 +61,6 @@ bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 extern struct list_head empty_list;
 extern struct list_head target_classes;
 
+const char *pdbg_get_backend_option(void);
+
 #endif

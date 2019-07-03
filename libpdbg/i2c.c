@@ -131,7 +131,11 @@ int i2c_target_probe(struct pdbg_target *target)
 	const char *bus;
 	int addr;
 
-	bus = pdbg_target_property(&pib->target, "bus", NULL);
+	bus = pdbg_get_backend_option();
+
+	if (!bus)
+		bus = pdbg_target_property(&pib->target, "bus", NULL);
+
 	if (!bus)
 		bus = "/dev/i2c4";
 

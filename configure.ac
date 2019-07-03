@@ -3,6 +3,7 @@ AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 
 AC_PROG_CC
+AM_PROG_AS
 AC_PROG_LIBTOOL
 
 AC_PATH_PROG([M4], [m4])

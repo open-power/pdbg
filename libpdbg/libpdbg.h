@@ -52,6 +52,9 @@ enum pdbg_target_status {PDBG_TARGET_UNKNOWN = 0, PDBG_TARGET_ENABLED,
 			 PDBG_TARGET_DISABLED, PDBG_TARGET_MUSTEXIST,
 			 PDBG_TARGET_NONEXISTENT, PDBG_TARGET_RELEASED};
 
+enum pdbg_backend { PDBG_DEFAULT_BACKEND = 0, PDBG_BACKEND_FSI, PDBG_BACKEND_I2C,
+		    PDBG_BACKEND_KERNEL, PDBG_BACKEND_FAKE, PDBG_BACKEND_HOST };
+
 #define pdbg_for_each_compatible(parent, target, compat)		\
         for (target = NULL;                                             \
              (target = __pdbg_next_compatible_node(parent, target, compat)) != NULL;)
@@ -103,6 +106,8 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target);
 void pdbg_target_release(struct pdbg_target *target);
 enum pdbg_target_status pdbg_target_status(struct pdbg_target *target);
 void pdbg_target_status_set(struct pdbg_target *target, enum pdbg_target_status status);
+int pdbg_set_backend(enum pdbg_backend backend, const char *backend_option);
+void *pdbg_default_dtb(void);
 uint32_t pdbg_target_index(struct pdbg_target *target);
 char *pdbg_target_path(const struct pdbg_target *target);
 struct pdbg_target *pdbg_target_from_path(struct pdbg_target *target, const char *path);

@@ -55,20 +55,23 @@ EXTRA_DIST = \
 	tests/test_driver.sh \
 	$(PDBG_TESTS)
 
-if TARGET_ARM
 DT_ARM = p8-fsi.dts p8-i2c.dts p8-kernel.dts \
 	 p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts
+
+if TARGET_ARM
 ARCH_FLAGS="-DTARGET_ARM=1"
 endif
 
-if TARGET_PPC
 DT_PPC = p8-host.dts p9-host.dts
+
+if TARGET_PPC
 ARCH_FLAGS="-DTARGET_PPC=1"
 endif
 
 DT = fake.dts $(DT_ARM) $(DT_PPC)
 
-DT_objects = $(DT:.dts=.dtb.o)
+DT_objects = $(DT:.dts=.dtb.lo)
+DT_sources = $(DT:.dts=.dtb.S)
 DT_headers = $(DT:.dts=.dt.h)
 
 optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
@@ -127,6 +130,7 @@ pdbg_CFLAGS += -DDISABLE_GDBSERVER
 endif
 
 src/main.c: $(DT_headers)
+libpdbg/dtb.c: $(DT_headers)
 
 src/pdbg-gdb_parser.$(OBJEXT): CFLAGS+=-Wno-unused-const-variable
 
@@ -138,6 +142,7 @@ pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 lib_LTLIBRARIES = libpdbg.la
 
 libpdbg_la_SOURCES = \
+	$(DT_sources) \
 	libpdbg/adu.c \
 	libpdbg/backend.h \
 	libpdbg/bitutils.h \
@@ -149,6 +154,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/debug.c \
 	libpdbg/debug.h \
 	libpdbg/device.c \
+	libpdbg/dtb.c \
 	libpdbg/fake.c \
 	libpdbg/host.c \
 	libpdbg/htm.c \
@@ -254,10 +260,15 @@ p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
 %.dt.h: %.dts
 	$(GEN_V)$(srcdir)/generate_dt_header.sh $< > $@
 
+%.dtb.S: %.dtb
+	$(GEN_V)$(CPP) $(srcdir)/template.S \
+	-DSYMBOL_PREFIX=$(shell basename $< .S | tr '.-' '_')_o -DFILENAME=\"$<\" -o \
+	$@
+
 %.dtb.o: %.dtb
 	$(AM_V_CC)$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell basename $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
 
 %.c: %.rl
 	$(RAGEL_V)$(RAGEL) -o $@ $<
 
-MOSTLYCLEANFILES = *.dtb *.dts *.dt.h p9-fsi.dtsi src/gdb_parser.c
+MOSTLYCLEANFILES = *.dtb.S *.dtb *.dts *.dt.h p9-fsi.dtsi src/gdb_parser.c
