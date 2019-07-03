@@ -204,6 +204,7 @@ int thread_start(struct pdbg_target *target);
 int thread_step(struct pdbg_target *target, int steps);
 int thread_stop(struct pdbg_target *target);
 int thread_sreset(struct pdbg_target *target);
+int thread_sreset_all(void);
 struct thread_state thread_status(struct pdbg_target *target);
 
 int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);

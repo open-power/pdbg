@@ -154,6 +154,18 @@ int thread_sreset(struct pdbg_target *thread_target)
 	return thread->sreset(thread);
 }
 
+int thread_sreset_all(void)
+{
+	struct pdbg_target *thread;
+	int rc = 0;
+
+	pdbg_for_each_class_target("thread", thread) {
+		rc |= thread_sreset(thread);
+	}
+
+	return rc;
+}
+
 /*
  * RAMs the opcodes in *opcodes and store the results of each opcode
  * into *results. *results must point to an array the same size as
