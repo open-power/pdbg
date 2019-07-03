@@ -162,6 +162,7 @@ static void print_usage(void)
 	printf("\t-a, --all\n");
 	printf("\t\tRun command on all possible processors/chips/threads (default)\n");
 	printf("\t-b, --backend=backend\n");
+	printf("\t\tcronus:\tA backend based on cronus server\n");
 	printf("\t\tfsi:\tAn experimental backend that uses\n");
 	printf("\t\t\tbit-banging to access the host processor\n");
 	printf("\t\t\tvia the FSI bus.\n");
@@ -403,6 +404,8 @@ static bool parse_options(int argc, char *argv[])
 				backend = PDBG_BACKEND_FAKE;
 			} else if (strcmp(optarg, "host") == 0) {
 				backend = PDBG_BACKEND_HOST;
+			} else if (strcmp(optarg, "cronus") == 0) {
+				backend = PDBG_BACKEND_CRONUS;
 			} else {
 				fprintf(stderr, "Invalid backend '%s'\n", optarg);
 				opt_error = true;
