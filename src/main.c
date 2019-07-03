@@ -33,9 +33,7 @@
 #include <libpdbg.h>
 #include <target.h>
 
-#include "main.h"
 #include "htm.h"
-#include "options.h"
 #include "optcmd.h"
 #include "progress.h"
 #include "pdbgproxy.h"
@@ -64,7 +62,7 @@
 
 #define THREADS_PER_CORE	8
 
-static enum backend backend = KERNEL;
+static enum pdbg_backend backend = PDBG_DEFAULT_BACKEND;
 
 static char const *device_node;
 static int i2c_addr = 0x50;
@@ -394,20 +392,19 @@ static bool parse_options(int argc, char *argv[])
 
 		case 'b':
 			if (strcmp(optarg, "fsi") == 0) {
-				backend = FSI;
+				backend = PDBG_BACKEND_FSI;
 			} else if (strcmp(optarg, "i2c") == 0) {
-				backend = I2C;
+				backend = PDBG_BACKEND_I2C;
 			} else if (strcmp(optarg, "kernel") == 0) {
-				backend = KERNEL;
+				backend = PDBG_BACKEND_KERNEL;
 				/* TODO: use device node to point at a slave
 				 * other than the first? */
 			} else if (strcmp(optarg, "fake") == 0) {
-				backend = FAKE;
+				backend = PDBG_BACKEND_FAKE;
 			} else if (strcmp(optarg, "host") == 0) {
-				backend = HOST;
+				backend = PDBG_BACKEND_HOST;
 			} else {
 				fprintf(stderr, "Invalid backend '%s'\n", optarg);
-				print_backends(stderr);
 				opt_error = true;
 			}
 			break;
@@ -531,96 +528,6 @@ static bool parse_options(int argc, char *argv[])
 	return true;
 }
 
-static bool target_selection(void)
-{
-	switch (backend) {
-#ifdef TARGET_ARM
-	case I2C:
-		pdbg_targets_init(&_binary_p8_i2c_dtb_o_start);
-		/* Set device for I2C backend */
-		if (device_node) {
-			struct pdbg_target *pib;
-			const size_t len = strlen(device_node) + 1 /* include last null */;
-			pdbg_for_each_class_target("pib", pib) {
-				pdbg_target_set_property(pib, "bus", device_node, len);
-			}
-		}
-		break;
-
-	case FSI:
-		if (device_node == NULL) {
-			PR_ERROR("FSI backend requires a device type\n");
-			return false;
-		}
-		if (!strcmp(device_node, "p8"))
-			pdbg_targets_init(&_binary_p8_fsi_dtb_o_start);
-		else if (!strcmp(device_node, "p9w"))
-			pdbg_targets_init(&_binary_p9w_fsi_dtb_o_start);
-		else if (!strcmp(device_node, "p9r"))
-			pdbg_targets_init(&_binary_p9r_fsi_dtb_o_start);
-		else if (!strcmp(device_node, "p9z"))
-			pdbg_targets_init(&_binary_p9z_fsi_dtb_o_start);
-		else {
-			PR_ERROR("Invalid device type specified\n");
-			return false;
-		}
-		break;
-
-	case KERNEL:
-		if (device_node == NULL) {
-			PR_ERROR("kernel backend requires a device type\n");
-                        return false;
-		}
-		if (!strcmp(device_node, "p8"))
-			pdbg_targets_init(&_binary_p8_kernel_dtb_o_start);
-		else
-			pdbg_targets_init(&_binary_p9_kernel_dtb_o_start);
-		break;
-
-#endif
-
-#ifdef TARGET_PPC
-	case HOST:
-		if (device_node == NULL) {
-			PR_ERROR("Host backend requires a device type\n");
-			return false;
-		}
-		if (!strcmp(device_node, "p8"))
-			pdbg_targets_init(&_binary_p8_host_dtb_o_start);
-		else if (!strcmp(device_node, "p9"))
-			pdbg_targets_init(&_binary_p9_host_dtb_o_start);
-		else {
-			PR_ERROR("Unsupported device type for host backend\n");
-			return false;
-		}
-		break;
-#endif
-
-	case FAKE:
-		pdbg_targets_init(&_binary_fake_dtb_o_start);
-		break;
-
-	default:
-		/* parse_options deals with parsing user input, so it should be
-		 * impossible to get here */
-		assert(0);
-		return false;
-	}
-
-	if (pathsel_count) {
-		if (!path_target_parse(pathsel, pathsel_count))
-			return false;
-	}
-
-	if (!path_target_present()) {
-		printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
-		printf("Alternatively run 'pdbg -a probe' to get a list of all valid targets\n");
-		return false;
-	}
-
-	return true;
-}
-
 static void print_target(struct pdbg_target *target, int level)
 {
 	int i;
@@ -677,11 +584,6 @@ int main(int argc, char *argv[])
 	optcmd_cmd_t *cmd;
 	struct pdbg_target *target;
 
-	backend = default_backend();
-
-	if (!device_node)
-		device_node = default_target(backend);
-
 	if (!parse_options(argc, argv))
 		return 1;
 
@@ -690,9 +592,21 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	/* Disable unselected targets */
-	if (!target_selection())
+	if (backend)
+		pdbg_set_backend(backend, device_node);
+
+	pdbg_targets_init(NULL);
+
+	if (pathsel_count) {
+		if (!path_target_parse(pathsel, pathsel_count))
+			return 1;
+	}
+
+	if (!path_target_present()) {
+		printf("No valid targets found or specified. Try adding -p/-c/-t options to specify a target.\n");
+		printf("Alternatively run 'pdbg -a probe' to get a list of all valid targets\n");
 		return 1;
+	}
 
 	/* Probe all selected targets */
 	for_each_path_target(target) {

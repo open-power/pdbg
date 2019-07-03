@@ -70,7 +70,6 @@ endif
 
 DT = fake.dts $(DT_ARM) $(DT_PPC)
 
-DT_objects = $(DT:.dts=.dtb.lo)
 DT_sources = $(DT:.dts=.dtb.S)
 DT_headers = $(DT:.dts=.dt.h)
 
@@ -106,16 +105,6 @@ pdbg_SOURCES = \
 	src/util.c \
 	src/util.h
 
-if TARGET_ARM
-pdbg_SOURCES += src/options_arm.c
-else
-if TARGET_PPC
-pdbg_SOURCES += src/options_ppc.c
-else
-pdbg_SOURCES += src/options_def.c
-endif
-endif
-
 pdbg_CFLAGS = -I$(top_srcdir)/libpdbg -Wall -Werror -DGIT_SHA1=\"${GIT_SHA1}\" \
 	      $(ARCH_FLAGS)
 
@@ -129,12 +118,11 @@ else
 pdbg_CFLAGS += -DDISABLE_GDBSERVER
 endif
 
-src/main.c: $(DT_headers)
 libpdbg/dtb.c: $(DT_headers)
 
 src/pdbg-gdb_parser.$(OBJEXT): CFLAGS+=-Wno-unused-const-variable
 
-pdbg_LDADD = $(DT_objects) libpdbg.la libccan.a \
+pdbg_LDADD = libpdbg.la libccan.a \
 	-L.libs -lrt
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
@@ -206,24 +194,24 @@ endif
 libpdbg_target_test_SOURCES = src/tests/libpdbg_target_test.c
 libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
 libpdbg_target_test_LDFLAGS = $(libpdbg_test_ldflags)
-libpdbg_target_test_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+libpdbg_target_test_LDADD = $(libpdbg_test_ldadd)
 
 src/tests/libpdbg_target_test.c: fake.dt.h
 
 libpdbg_probe_test1_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test1_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=1
 libpdbg_probe_test1_LDFLAGS = $(libpdbg_test_ldflags)
-libpdbg_probe_test1_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+libpdbg_probe_test1_LDADD = $(libpdbg_test_ldadd)
 
 libpdbg_probe_test2_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test2_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=2
 libpdbg_probe_test2_LDFLAGS = $(libpdbg_test_ldflags)
-libpdbg_probe_test2_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+libpdbg_probe_test2_LDADD = $(libpdbg_test_ldadd)
 
 libpdbg_probe_test3_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test3_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=3
 libpdbg_probe_test3_LDFLAGS = $(libpdbg_test_ldflags)
-libpdbg_probe_test3_LDADD = fake.dtb.o $(libpdbg_test_ldadd)
+libpdbg_probe_test3_LDADD = $(libpdbg_test_ldadd)
 
 src/tests/libpdbg_probe_test.c: fake.dt.h
 

@@ -19,8 +19,6 @@
 
 #include <libpdbg.h>
 
-enum backend { FSI, I2C, KERNEL, FAKE, HOST };
-
 static inline bool target_is_disabled(struct pdbg_target *target)
 {
 	return pdbg_target_status(target) == PDBG_TARGET_DISABLED ||
