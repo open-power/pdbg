@@ -535,8 +535,8 @@ static int emulate_sreset(struct thread *thread)
 	printf("emulate sreset begin\n");
 	CHECK_ERR(p8_get_hid0(chip, &hid0));
 	printf("emulate sreset HILE=%d\n", !!(hid0 & HID0_HILE));
-	CHECK_ERR(ram_getnia(&thread->target, &old_nia));
-	CHECK_ERR(ram_getmsr(&thread->target, &old_msr));
+	CHECK_ERR(thread_getnia(&thread->target, &old_nia));
+	CHECK_ERR(thread_getmsr(&thread->target, &old_msr));
 	new_nia = 0x100;
 	new_msr = (old_msr & ~(MSR_PR | MSR_IR | MSR_DR | MSR_FE0 | MSR_FE1 | MSR_EE | MSR_RI)) | MSR_HV;
 	if (hid0 & HID0_HILE)
@@ -545,10 +545,10 @@ static int emulate_sreset(struct thread *thread)
 		new_msr &= ~MSR_LE;
 	printf("emulate sreset old NIA: 0x%016" PRIx64 " MSR: 0x%016" PRIx64 "\n", old_nia, old_msr);
 	printf("emulate sreset new NIA: 0x%016" PRIx64 " MSR: 0x%016" PRIx64 "\n", new_nia, new_msr);
-	CHECK_ERR(ram_putspr(&thread->target, SPR_SRR0, old_nia));
-	CHECK_ERR(ram_putspr(&thread->target, SPR_SRR1, old_msr));
-	CHECK_ERR(ram_putnia(&thread->target, new_nia));
-	CHECK_ERR(ram_putmsr(&thread->target, new_msr));
+	CHECK_ERR(thread_putspr(&thread->target, SPR_SRR0, old_nia));
+	CHECK_ERR(thread_putspr(&thread->target, SPR_SRR1, old_msr));
+	CHECK_ERR(thread_putnia(&thread->target, new_nia));
+	CHECK_ERR(thread_putmsr(&thread->target, new_msr));
 	printf("emulate sreset done\n");
 
 	return 0;

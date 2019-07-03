@@ -172,25 +172,28 @@ struct thread_regs {
 	uint64_t ppr;
 };
 
-int ram_putmsr(struct pdbg_target *target, uint64_t val);
-int ram_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value);
-int ram_putnia(struct pdbg_target *target, uint64_t val);
-int ram_putspr(struct pdbg_target *target, int spr, uint64_t val);
-int ram_putgpr(struct pdbg_target *target, int spr, uint64_t val);
-int ram_getmsr(struct pdbg_target *target, uint64_t *val);
-int ram_getcr(struct pdbg_target *thread,  uint32_t *value);
-int ram_putcr(struct pdbg_target *thread,  uint32_t value);
-int ram_getnia(struct pdbg_target *target, uint64_t *val);
-int ram_getspr(struct pdbg_target *target, int spr, uint64_t *val);
-int ram_getgpr(struct pdbg_target *target, int gpr, uint64_t *val);
+int thread_putmsr(struct pdbg_target *target, uint64_t val);
+int thread_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value);
+int thread_putnia(struct pdbg_target *target, uint64_t val);
+int thread_putspr(struct pdbg_target *target, int spr, uint64_t val);
+int thread_putgpr(struct pdbg_target *target, int spr, uint64_t val);
+int thread_getmsr(struct pdbg_target *target, uint64_t *val);
+int thread_getcr(struct pdbg_target *thread,  uint32_t *value);
+int thread_putcr(struct pdbg_target *thread,  uint32_t value);
+int thread_getnia(struct pdbg_target *target, uint64_t *val);
+int thread_getspr(struct pdbg_target *target, int spr, uint64_t *val);
+int thread_getgpr(struct pdbg_target *target, int gpr, uint64_t *val);
+int thread_getxer(struct pdbg_target *thread, uint64_t *value);
+int thread_putxer(struct pdbg_target *thread, uint64_t value);
+int thread_getregs(struct pdbg_target *target, struct thread_regs *regs);
+
 int ram_start_thread(struct pdbg_target *target);
 int ram_step_thread(struct pdbg_target *target, int steps);
 int ram_stop_thread(struct pdbg_target *target);
 int ram_sreset_thread(struct pdbg_target *target);
 int ram_state_thread(struct pdbg_target *target, struct thread_regs *regs);
 struct thread_state thread_status(struct pdbg_target *target);
-int ram_getxer(struct pdbg_target *thread, uint64_t *value);
-int ram_putxer(struct pdbg_target *thread, uint64_t value);
+
 int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
 
 enum pdbg_sleep_state {PDBG_THREAD_STATE_RUN, PDBG_THREAD_STATE_DOZE,

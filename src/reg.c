@@ -69,18 +69,18 @@ static int putprocreg(struct pdbg_target *target, int reg, uint64_t *value)
 	int rc;
 
 	if (reg == REG_MSR)
-		rc = ram_putmsr(target, *value);
+		rc = thread_putmsr(target, *value);
 	else if (reg == REG_NIA)
-		rc = ram_putnia(target, *value);
+		rc = thread_putnia(target, *value);
 	else if (reg == REG_XER)
-		rc = ram_putxer(target, *value);
+		rc = thread_putxer(target, *value);
 	else if (reg == REG_CR) {
 		u32 = *value;
-		rc = ram_putcr(target, u32);
+		rc = thread_putcr(target, u32);
 	} else if (reg > REG_R31)
-		rc = ram_putspr(target, reg - REG_R31, *value);
+		rc = thread_putspr(target, reg - REG_R31, *value);
 	else if (reg >= 0 && reg <= 31)
-		rc = ram_putgpr(target, reg, *value);
+		rc = thread_putgpr(target, reg, *value);
 	else
 		assert(0);
 
@@ -93,18 +93,18 @@ static int getprocreg(struct pdbg_target *target, uint32_t reg, uint64_t *value)
 	int rc;
 
 	if (reg == REG_MSR)
-		rc = ram_getmsr(target, value);
+		rc = thread_getmsr(target, value);
 	else if (reg == REG_NIA)
-		rc = ram_getnia(target, value);
+		rc = thread_getnia(target, value);
 	else if (reg == REG_XER)
-		rc = ram_getxer(target, value);
+		rc = thread_getxer(target, value);
 	else if (reg == REG_CR) {
-		rc = ram_getcr(target, &u32);
+		rc = thread_getcr(target, &u32);
 		*value = u32;
 	} else if (reg > REG_R31)
-		rc = ram_getspr(target, reg - REG_R31, value);
+		rc = thread_getspr(target, reg - REG_R31, value);
 	else if (reg >= 0 && reg <= 31)
-		rc = ram_getgpr(target, reg, value);
+		rc = thread_getgpr(target, reg, value);
 	else
 		assert(0);
 

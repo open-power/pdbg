@@ -110,7 +110,7 @@ static void get_gprs(uint64_t *stack, void *priv)
 	struct thread_regs regs;
 	int i;
 
-	if(ram_state_thread(thread_target, &regs))
+	if(thread_getregs(thread_target, &regs))
 		PR_ERROR("Error reading gprs\n");
 
 	for (i = 0; i < 32; i++) {
@@ -129,7 +129,7 @@ static void get_spr(uint64_t *stack, void *priv)
 	switch (stack[0]) {
 	case 0x40:
 		/* Get PC/NIA */
-		if (ram_getnia(thread_target, &value))
+		if (thread_getnia(thread_target, &value))
 			PR_ERROR("Error reading NIA\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
@@ -137,7 +137,7 @@ static void get_spr(uint64_t *stack, void *priv)
 
 	case 0x41:
 		/* Get MSR */
-		if (ram_getmsr(thread_target, &value))
+		if (thread_getmsr(thread_target, &value))
 			PR_ERROR("Error reading MSR\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
@@ -145,7 +145,7 @@ static void get_spr(uint64_t *stack, void *priv)
 
 	case 0x42:
 		/* Get CR */
-		if (ram_getcr(thread_target, (uint32_t *)&value))
+		if (thread_getcr(thread_target, (uint32_t *)&value))
 			PR_ERROR("Error reading CR \n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
@@ -153,7 +153,7 @@ static void get_spr(uint64_t *stack, void *priv)
 
 	case 0x43:
 		/* Get LR */
-		if (ram_getspr(thread_target, 8, &value))
+		if (thread_getspr(thread_target, 8, &value))
 			PR_ERROR("Error reading LR\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
@@ -161,7 +161,7 @@ static void get_spr(uint64_t *stack, void *priv)
 
 	case 0x44:
 		/* Get CTR */
-		if (ram_getspr(thread_target, 9, &value))
+		if (thread_getspr(thread_target, 9, &value))
 			PR_ERROR("Error reading CTR\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
@@ -230,7 +230,7 @@ static void get_mem(uint64_t *stack, void *priv)
 	} else {
 		/* Virtual address */
 		for (i = 0; i < len; i += sizeof(uint64_t)) {
-			if (ram_getmem(thread_target, addr, &data[i/sizeof(uint64_t)])) {
+			if (thread_getmem(thread_target, addr, &data[i/sizeof(uint64_t)])) {
 				PR_ERROR("Fault reading memory\n");
 				err = 2;
 				break;
@@ -353,9 +353,9 @@ static void poll(void)
 		}
 
 		/* Restore NIA */
-		if (ram_getnia(thread_target, &nia))
+		if (thread_getnia(thread_target, &nia))
 			PR_ERROR("Error during getnia\n");
-		if (ram_putnia(thread_target, nia - 4))
+		if (thread_putnia(thread_target, nia - 4))
 			PR_ERROR("Error during putnia\n");
 		send_response(fd, TRAP);
 		break;
@@ -524,7 +524,7 @@ static int gdbserver(uint16_t port)
 	}
 
 	/* Check endianess in MSR */
-	rc = ram_getmsr(thread, &msr);
+	rc = thread_getmsr(thread, &msr);
 	if (rc) {
 		PR_ERROR("Couldn't read the MSR. Are all threads on this chiplet quiesced?\n");
 		return 1;

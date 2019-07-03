@@ -227,7 +227,7 @@ int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes,
 /*
  * Get gpr value. Chip must be stopped.
  */
-int ram_getgpr(struct pdbg_target *thread, int gpr, uint64_t *value)
+int thread_getgpr(struct pdbg_target *thread, int gpr, uint64_t *value)
 {
 	uint64_t opcodes[] = {mtspr(277, gpr)};
 	uint64_t results[] = {0};
@@ -237,7 +237,7 @@ int ram_getgpr(struct pdbg_target *thread, int gpr, uint64_t *value)
 	return 0;
 }
 
-int ram_putgpr(struct pdbg_target *thread, int gpr, uint64_t value)
+int thread_putgpr(struct pdbg_target *thread, int gpr, uint64_t value)
 {
 	uint64_t opcodes[] = {mfspr(gpr, 277)};
 	uint64_t results[] = {value};
@@ -247,7 +247,7 @@ int ram_putgpr(struct pdbg_target *thread, int gpr, uint64_t value)
 	return 0;
 }
 
-int ram_getnia(struct pdbg_target *thread, uint64_t *value)
+int thread_getnia(struct pdbg_target *thread, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfnia(0), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
@@ -264,7 +264,7 @@ int ram_getnia(struct pdbg_target *thread, uint64_t *value)
  * This is a hack and should be made much cleaner once we have target
  * specific putspr commands.
  */
-int ram_putnia(struct pdbg_target *thread, uint64_t value)
+int thread_putnia(struct pdbg_target *thread, uint64_t value)
 {
 	uint64_t opcodes[] = {	mfspr(1, 8),	/* mflr r1 */
 				mfspr(0, 277),	/* value -> r0 */
@@ -277,7 +277,7 @@ int ram_putnia(struct pdbg_target *thread, uint64_t value)
 	return 0;
 }
 
-int ram_getspr(struct pdbg_target *thread, int spr, uint64_t *value)
+int thread_getspr(struct pdbg_target *thread, int spr, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfspr(0, spr), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
@@ -287,7 +287,7 @@ int ram_getspr(struct pdbg_target *thread, int spr, uint64_t *value)
 	return 0;
 }
 
-int ram_putspr(struct pdbg_target *thread, int spr, uint64_t value)
+int thread_putspr(struct pdbg_target *thread, int spr, uint64_t value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mtspr(spr, 0)};
 	uint64_t results[] = {value, 0};
@@ -296,7 +296,7 @@ int ram_putspr(struct pdbg_target *thread, int spr, uint64_t value)
 	return 0;
 }
 
-int ram_getmsr(struct pdbg_target *thread, uint64_t *value)
+int thread_getmsr(struct pdbg_target *thread, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfmsr(0), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
@@ -306,7 +306,7 @@ int ram_getmsr(struct pdbg_target *thread, uint64_t *value)
 	return 0;
 }
 
-int ram_getcr(struct pdbg_target *thread, uint32_t *value)
+int thread_getcr(struct pdbg_target *thread, uint32_t *value)
 {
 
 	uint64_t opcodes[] = {mfocrf(0, 0), mtspr(277, 0), mfocrf(0, 1), mtspr(277, 0),
@@ -328,7 +328,7 @@ int ram_getcr(struct pdbg_target *thread, uint32_t *value)
 	return 0;
 }
 
-int ram_putcr(struct pdbg_target *thread, uint32_t value)
+int thread_putcr(struct pdbg_target *thread, uint32_t value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mtocrf(0, 0), mtocrf(1, 0),
 			      mtocrf(2, 0), mtocrf(3, 0), mtocrf(4, 0),
@@ -340,7 +340,7 @@ int ram_putcr(struct pdbg_target *thread, uint32_t value)
 	return 0;
 }
 
-int ram_putmsr(struct pdbg_target *thread, uint64_t value)
+int thread_putmsr(struct pdbg_target *thread, uint64_t value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mtmsr(0)};
 	uint64_t results[] = {value, 0};
@@ -349,7 +349,7 @@ int ram_putmsr(struct pdbg_target *thread, uint64_t value)
 	return 0;
 }
 
-int ram_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value)
+int thread_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfspr(0, 277), mfspr(1, 277), ld(0, 0, 1), mtspr(277, 0)};
 	uint64_t results[] = {0xdeaddeaddeaddead, addr, 0, 0};
@@ -359,7 +359,7 @@ int ram_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value)
 	return 0;
 }
 
-int ram_getxer(struct pdbg_target *thread_target, uint64_t *value)
+int thread_getxer(struct pdbg_target *thread_target, uint64_t *value)
 {
 
 	struct thread *thread;
@@ -372,7 +372,7 @@ int ram_getxer(struct pdbg_target *thread_target, uint64_t *value)
 	return 0;
 }
 
-int ram_putxer(struct pdbg_target *thread_target, uint64_t value)
+int thread_putxer(struct pdbg_target *thread_target, uint64_t value)
 {
 	struct thread *thread;
 
@@ -396,7 +396,7 @@ int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t rin
 	return chiplet->getring(chiplet, ring_addr, ring_len, result);
 }
 
-int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
+int thread_getregs(struct pdbg_target *thread, struct thread_regs *regs)
 {
 	struct thread_regs _regs;
 	struct thread *t;
@@ -417,117 +417,117 @@ int ram_state_thread(struct pdbg_target *thread, struct thread_regs *regs)
 	 * can help to diagnose checkstop issues with ramming to print as
 	 * we go. Once it's more robust and tested, maybe.
 	 */
-	ram_getnia(thread, &regs->nia);
+	thread_getnia(thread, &regs->nia);
 	printf("NIA   : 0x%016" PRIx64 "\n", regs->nia);
 
-	ram_getspr(thread, 28, &regs->cfar);
+	thread_getspr(thread, 28, &regs->cfar);
 	printf("CFAR  : 0x%016" PRIx64 "\n", regs->cfar);
 
-	ram_getmsr(thread, &regs->msr);
+	thread_getmsr(thread, &regs->msr);
 	printf("MSR   : 0x%016" PRIx64 "\n", regs->msr);
 
-	ram_getspr(thread, 8, &regs->lr);
+	thread_getspr(thread, 8, &regs->lr);
 	printf("LR    : 0x%016" PRIx64 "\n", regs->lr);
 
-	ram_getspr(thread, 9, &regs->ctr);
+	thread_getspr(thread, 9, &regs->ctr);
 	printf("CTR   : 0x%016" PRIx64 "\n", regs->ctr);
 
-	ram_getspr(thread, 815, &regs->tar);
+	thread_getspr(thread, 815, &regs->tar);
 	printf("TAR   : 0x%016" PRIx64 "\n", regs->tar);
 
-	ram_getcr(thread, &regs->cr);
+	thread_getcr(thread, &regs->cr);
 	printf("CR    : 0x%08" PRIx32 "\n", regs->cr);
 
-	ram_getxer(thread, &regs->xer);
+	thread_getxer(thread, &regs->xer);
 	printf("XER   : 0x%08" PRIx64 "\n", regs->xer);
 
 	printf("GPRS  :\n");
 	for (i = 0; i < 32; i++) {
-		ram_getgpr(thread, i, &regs->gprs[i]);
+		thread_getgpr(thread, i, &regs->gprs[i]);
 		printf(" 0x%016" PRIx64 "", regs->gprs[i]);
 		if (i % 4 == 3)
 			printf("\n");
 	}
 
-	ram_getspr(thread, 318, &regs->lpcr);
+	thread_getspr(thread, 318, &regs->lpcr);
 	printf("LPCR  : 0x%016" PRIx64 "\n", regs->lpcr);
 
-	ram_getspr(thread, 464, &regs->ptcr);
+	thread_getspr(thread, 464, &regs->ptcr);
 	printf("PTCR  : 0x%016" PRIx64 "\n", regs->ptcr);
 
-	ram_getspr(thread, 319, &regs->lpidr);
+	thread_getspr(thread, 319, &regs->lpidr);
 	printf("LPIDR : 0x%016" PRIx64 "\n", regs->lpidr);
 
-	ram_getspr(thread, 48, &regs->pidr);
+	thread_getspr(thread, 48, &regs->pidr);
 	printf("PIDR  : 0x%016" PRIx64 "\n", regs->pidr);
 
-	ram_getspr(thread, 190, &regs->hfscr);
+	thread_getspr(thread, 190, &regs->hfscr);
 	printf("HFSCR : 0x%016" PRIx64 "\n", regs->hfscr);
 
-	ram_getspr(thread, 306, &value);
+	thread_getspr(thread, 306, &value);
 	regs->hdsisr = value;
 	printf("HDSISR: 0x%08" PRIx32 "\n", regs->hdsisr);
 
-	ram_getspr(thread, 307, &regs->hdar);
+	thread_getspr(thread, 307, &regs->hdar);
 	printf("HDAR  : 0x%016" PRIx64 "\n", regs->hdar);
 
-	ram_getspr(thread, 339, &value);
+	thread_getspr(thread, 339, &value);
 	regs->heir = value;
 	printf("HEIR : 0x%016" PRIx32 "\n", regs->heir);
 
-	ram_getspr(thread, 1008, &regs->hid);
+	thread_getspr(thread, 1008, &regs->hid);
 	printf("HID0 : 0x%016" PRIx64 "\n", regs->hid);
 
-	ram_getspr(thread, 314, &regs->hsrr0);
+	thread_getspr(thread, 314, &regs->hsrr0);
 	printf("HSRR0 : 0x%016" PRIx64 "\n", regs->hsrr0);
 
-	ram_getspr(thread, 315, &regs->hsrr1);
+	thread_getspr(thread, 315, &regs->hsrr1);
 	printf("HSRR1 : 0x%016" PRIx64 "\n", regs->hsrr1);
 
-	ram_getspr(thread, 310, &regs->hdec);
+	thread_getspr(thread, 310, &regs->hdec);
 	printf("HDEC  : 0x%016" PRIx64 "\n", regs->hdec);
 
-	ram_getspr(thread, 304, &regs->hsprg0);
+	thread_getspr(thread, 304, &regs->hsprg0);
 	printf("HSPRG0: 0x%016" PRIx64 "\n", regs->hsprg0);
 
-	ram_getspr(thread, 305, &regs->hsprg1);
+	thread_getspr(thread, 305, &regs->hsprg1);
 	printf("HSPRG1: 0x%016" PRIx64 "\n", regs->hsprg1);
 
-	ram_getspr(thread, 153, &regs->fscr);
+	thread_getspr(thread, 153, &regs->fscr);
 	printf("FSCR  : 0x%016" PRIx64 "\n", regs->fscr);
 
-	ram_getspr(thread, 18, &value);
+	thread_getspr(thread, 18, &value);
 	regs->dsisr = value;
 	printf("DSISR : 0x%08" PRIx32 "\n", regs->dsisr);
 
-	ram_getspr(thread, 19, &regs->dar);
+	thread_getspr(thread, 19, &regs->dar);
 	printf("DAR   : 0x%016" PRIx64 "\n", regs->dar);
 
-	ram_getspr(thread, 26, &regs->srr0);
+	thread_getspr(thread, 26, &regs->srr0);
 	printf("SRR0  : 0x%016" PRIx64 "\n", regs->srr0);
 
-	ram_getspr(thread, 27, &regs->srr1);
+	thread_getspr(thread, 27, &regs->srr1);
 	printf("SRR1  : 0x%016" PRIx64 "\n", regs->srr1);
 
-	ram_getspr(thread, 22, &regs->dec);
+	thread_getspr(thread, 22, &regs->dec);
 	printf("DEC   : 0x%016" PRIx64 "\n", regs->dec);
 
-	ram_getspr(thread, 268, &regs->tb);
+	thread_getspr(thread, 268, &regs->tb);
 	printf("TB    : 0x%016" PRIx64 "\n", regs->tb);
 
-	ram_getspr(thread, 272, &regs->sprg0);
+	thread_getspr(thread, 272, &regs->sprg0);
 	printf("SPRG0 : 0x%016" PRIx64 "\n", regs->sprg0);
 
-	ram_getspr(thread, 273, &regs->sprg1);
+	thread_getspr(thread, 273, &regs->sprg1);
 	printf("SPRG1 : 0x%016" PRIx64 "\n", regs->sprg1);
 
-	ram_getspr(thread, 274, &regs->sprg2);
+	thread_getspr(thread, 274, &regs->sprg2);
 	printf("SPRG2 : 0x%016" PRIx64 "\n", regs->sprg2);
 
-	ram_getspr(thread, 275, &regs->sprg3);
+	thread_getspr(thread, 275, &regs->sprg3);
 	printf("SPRG3 : 0x%016" PRIx64 "\n", regs->sprg3);
 
-	ram_getspr(thread, 896, &regs->ppr);
+	thread_getspr(thread, 896, &regs->ppr);
 	printf("PPR   : 0x%016" PRIx64 "\n", regs->ppr);
 
 	CHECK_ERR(t->ram_destroy(t));
