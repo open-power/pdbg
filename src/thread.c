@@ -149,7 +149,7 @@ do_pc:
 	return 0;
 }
 
-static int thread_start(void)
+static int thr_start(void)
 {
 	struct pdbg_target *target;
 	int count = 0;
@@ -158,15 +158,15 @@ static int thread_start(void)
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		ram_start_thread(target);
+		thread_start(target);
 		count++;
 	}
 
 	return count;
 }
-OPTCMD_DEFINE_CMD(start, thread_start);
+OPTCMD_DEFINE_CMD(start, thr_start);
 
-static int thread_step(uint64_t steps)
+static int thr_step(uint64_t steps)
 {
 	struct pdbg_target *target;
 	int count = 0;
@@ -175,15 +175,15 @@ static int thread_step(uint64_t steps)
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		ram_step_thread(target, (int)steps);
+		thread_step(target, (int)steps);
 		count++;
 	}
 
 	return count;
 }
-OPTCMD_DEFINE_CMD_WITH_ARGS(step, thread_step, (DATA));
+OPTCMD_DEFINE_CMD_WITH_ARGS(step, thr_step, (DATA));
 
-static int thread_stop(void)
+static int thr_stop(void)
 {
 	struct pdbg_target *target;
 	int count = 0;
@@ -192,13 +192,13 @@ static int thread_stop(void)
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		ram_stop_thread(target);
+		thread_stop(target);
 		count++;
 	}
 
 	return count;
 }
-OPTCMD_DEFINE_CMD(stop, thread_stop);
+OPTCMD_DEFINE_CMD(stop, thr_stop);
 
 
 static int print_one_thread(struct pdbg_target *thread)
@@ -295,7 +295,7 @@ static int thread_status_print(void)
 }
 OPTCMD_DEFINE_CMD(threadstatus, thread_status_print);
 
-static int thread_sreset(void)
+static int thr_sreset(void)
 {
 	struct pdbg_target *target;
 	int count = 0;
@@ -304,13 +304,13 @@ static int thread_sreset(void)
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		ram_sreset_thread(target);
+		thread_sreset(target);
 		count++;
 	}
 
 	return count;
 }
-OPTCMD_DEFINE_CMD(sreset, thread_sreset);
+OPTCMD_DEFINE_CMD(sreset, thr_sreset);
 
 
 struct reg_flags {
@@ -334,7 +334,7 @@ static int thread_regs_print(struct reg_flags flags)
 		       pdbg_target_index(core),
 		       pdbg_target_index(thread));
 
-		if (ram_state_thread(thread, &regs))
+		if (thread_getregs(thread, &regs))
 			continue;
 
 		if (flags.do_backtrace) {

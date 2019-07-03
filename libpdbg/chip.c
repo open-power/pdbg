@@ -118,7 +118,7 @@ struct thread_state thread_status(struct pdbg_target *target)
 /*
  * Single step the thread count instructions.
  */
-int ram_step_thread(struct pdbg_target *thread_target, int count)
+int thread_step(struct pdbg_target *thread_target, int count)
 {
 	struct thread *thread;
 
@@ -127,7 +127,7 @@ int ram_step_thread(struct pdbg_target *thread_target, int count)
 	return thread->step(thread, count);
 }
 
-int ram_start_thread(struct pdbg_target *thread_target)
+int thread_start(struct pdbg_target *thread_target)
 {
 	struct thread *thread;
 
@@ -136,7 +136,7 @@ int ram_start_thread(struct pdbg_target *thread_target)
 	return thread->start(thread);
 }
 
-int ram_stop_thread(struct pdbg_target *thread_target)
+int thread_stop(struct pdbg_target *thread_target)
 {
 	struct thread *thread;
 
@@ -145,7 +145,7 @@ int ram_stop_thread(struct pdbg_target *thread_target)
 	return thread->stop(thread);
 }
 
-int ram_sreset_thread(struct pdbg_target *thread_target)
+int thread_sreset(struct pdbg_target *thread_target)
 {
 	struct thread *thread;
 

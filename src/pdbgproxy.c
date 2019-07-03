@@ -307,14 +307,14 @@ out:
 
 static void v_conts(uint64_t *stack, void *priv)
 {
-	ram_step_thread(thread_target, 1);
+	thread_step(thread_target, 1);
 	send_response(fd, TRAP);
 }
 
 #define VCONT_POLL_DELAY 100000
 static void v_contc(uint64_t *stack, void *priv)
 {
-	ram_start_thread(thread_target);
+	thread_start(thread_target);
 	state = SIGNAL_WAIT;
 	poll_interval = 1;
 }
@@ -322,7 +322,7 @@ static void v_contc(uint64_t *stack, void *priv)
 static void interrupt(uint64_t *stack, void *priv)
 {
 	PR_INFO("Interrupt\n");
-	ram_stop_thread(thread_target);
+	thread_stop(thread_target);
 	send_response(fd, TRAP);
 
 	return;

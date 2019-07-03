@@ -187,15 +187,6 @@ int thread_getxer(struct pdbg_target *thread, uint64_t *value);
 int thread_putxer(struct pdbg_target *thread, uint64_t value);
 int thread_getregs(struct pdbg_target *target, struct thread_regs *regs);
 
-int ram_start_thread(struct pdbg_target *target);
-int ram_step_thread(struct pdbg_target *target, int steps);
-int ram_stop_thread(struct pdbg_target *target);
-int ram_sreset_thread(struct pdbg_target *target);
-int ram_state_thread(struct pdbg_target *target, struct thread_regs *regs);
-struct thread_state thread_status(struct pdbg_target *target);
-
-int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
-
 enum pdbg_sleep_state {PDBG_THREAD_STATE_RUN, PDBG_THREAD_STATE_DOZE,
 		       PDBG_THREAD_STATE_NAP, PDBG_THREAD_STATE_SLEEP,
 		       PDBG_THREAD_STATE_STOP};
@@ -208,6 +199,14 @@ struct thread_state {
 	enum pdbg_sleep_state sleep_state;
 	enum pdbg_smt_state smt_state;
 };
+
+int thread_start(struct pdbg_target *target);
+int thread_step(struct pdbg_target *target, int steps);
+int thread_stop(struct pdbg_target *target);
+int thread_sreset(struct pdbg_target *target);
+struct thread_state thread_status(struct pdbg_target *target);
+
+int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
 
 int htm_start(struct pdbg_target *target);
 int htm_stop(struct pdbg_target *target);
