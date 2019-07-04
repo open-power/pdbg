@@ -63,9 +63,12 @@ static int cronus_probe(struct pdbg_target *target)
 {
 	const char *tmp, *server = NULL;
 
-	tmp = strchr(pdbg_get_backend_option(), '@');
-	if (tmp && tmp[1] != '\0')
-		server = tmp + 1;
+	tmp = pdbg_get_backend_option();
+	if (tmp) {
+		tmp = strchr(tmp, '@');
+		if (tmp && tmp[1] != '\0')
+			server = tmp + 1;
+	}
 
 	if (!server)
 		server = pdbg_target_property(target, "server", NULL);
