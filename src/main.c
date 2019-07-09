@@ -43,23 +43,6 @@
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
 
-#include "fake.dt.h"
-
-#ifdef TARGET_ARM
-#include "p8-i2c.dt.h"
-#include "p8-fsi.dt.h"
-#include "p8-kernel.dt.h"
-#include "p9w-fsi.dt.h"
-#include "p9r-fsi.dt.h"
-#include "p9z-fsi.dt.h"
-#include "p9-kernel.dt.h"
-#endif
-
-#ifdef TARGET_PPC
-#include "p8-host.dt.h"
-#include "p9-host.dt.h"
-#endif
-
 #define THREADS_PER_CORE	8
 
 static enum pdbg_backend backend = PDBG_DEFAULT_BACKEND;
