@@ -55,20 +55,18 @@ EXTRA_DIST = \
 	tests/test_driver.sh \
 	$(PDBG_TESTS)
 
-DT_ARM = p8-fsi.dts p8-i2c.dts p8-kernel.dts \
-	 p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts
-
 if TARGET_ARM
 ARCH_FLAGS="-DTARGET_ARM=1"
 endif
-
-DT_PPC = p8-host.dts p9-host.dts
 
 if TARGET_PPC
 ARCH_FLAGS="-DTARGET_PPC=1"
 endif
 
-DT = fake.dts p8-cronus.dts p9-cronus.dts $(DT_ARM) $(DT_PPC)
+DT = fake.dts p8-cronus.dts p9-cronus.dts \
+     p8-fsi.dts p8-i2c.dts p8-kernel.dts \
+     p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts \
+     p8-host.dts p9-host.dts
 
 DT_sources = $(DT:.dts=.dtb.S)
 DT_headers = $(DT:.dts=.dt.h)
