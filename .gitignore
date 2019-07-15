@@ -31,7 +31,6 @@ config.sub
 *.lo
 ltmain.sh
 libtool
-m4
 *.dtsi
 *.dts
 *.dt.h
@@ -41,3 +40,8 @@ optcmd_test
 *.log
 test-driver
 src/gdb_parser.c
+libtool.m4
+ltoptions.m4
+ltsugar.m4
+ltversion.m4
+lt~obsolete.m4
