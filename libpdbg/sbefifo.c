@@ -87,68 +87,28 @@ static int sbefifo_op_write(struct sbefifo *sbefifo, void *buf, size_t buflen)
 	return 0;
 }
 
-static int sbefifo_op_ffdc_read(uint8_t *buf, uint32_t buflen)
+static void sbefifo_ffdc_clear(struct sbefifo *sbefifo)
 {
-	int offset = 0;
-	uint32_t header, value;
-	uint16_t magic, len_words;
-	int i;
-
-	if (buflen < 4)
-		return -1;
-
-	/* End of ffdc data */
-	if (buflen == 4)
-		return 0;
-
-	header = be32toh(*(uint32_t *)(buf + offset));
-	offset += 4;
-
-	magic = header >> 16;
-	if (magic != 0xffdc) {
-		PR_ERROR("sbefifo: ffdc expected 0xffdc, got 0x%04x\n", magic);
-		return -1;
+	sbefifo->status = 0;
+	if (sbefifo->ffdc) {
+		free(sbefifo->ffdc);
+		sbefifo->ffdc = NULL;
+		sbefifo->ffdc_len = 0;
 	}
-
-	len_words = header & 0xffff;
-	if (offset + len_words * 4 > buflen)
-		return -1;
-
-	value = be32toh(*(uint32_t *)(buf + offset));
-	offset += 4;
-
-	PR_ERROR("FFDC: Sequence = %u\n", value >> 16);
-	PR_ERROR("FFDC: Command = 0x%08x\n", value & 0xffff);
-
-	value = be32toh(*(uint32_t *)(buf + offset));
-	offset += 4;
-
-	PR_ERROR("FFDC: RC = 0x%08x\n", value);
-
-	for (i=0; i<len_words-3; i++) {
-		value = be32toh(*(uint32_t *)(buf + offset));
-		offset += 4;
-
-		PR_ERROR("FFDC: Data: 0x%08x\n", value);
-	}
-
-	return offset;
 }
 
-static int sbefifo_op_ffdc(uint8_t *buf, uint32_t buflen)
+static void sbefifo_ffdc_set(struct sbefifo *sbefifo, uint8_t *buf, uint32_t buflen, uint32_t status)
 {
-	uint32_t offset = 0;
-	int rc;
+	sbefifo->status = status;
 
-	while (1) {
-		rc = sbefifo_op_ffdc_read(buf + offset, buflen - offset);
-		if (rc <= 0)
-			break;
-
-		offset += rc;
+	sbefifo->ffdc = malloc(buflen);
+	if (!sbefifo->ffdc) {
+		PR_ERROR("sbefifo: Failed to store FFDC data\n");
+		return;
 	}
 
-	return rc;
+	memcpy(sbefifo->ffdc, buf, buflen);
+	sbefifo->ffdc_len = buflen;
 }
 
 static int sbefifo_op(struct sbefifo *sbefifo,
@@ -161,6 +121,8 @@ static int sbefifo_op(struct sbefifo *sbefifo,
 	uint32_t word_offset, offset;
 	uint16_t value;
 	int rc;
+
+	sbefifo_ffdc_clear(sbefifo);
 
 	assert(msg_len > 0);
 
@@ -218,7 +180,7 @@ static int sbefifo_op(struct sbefifo *sbefifo,
 		return 0;
 	} else {
 		PR_ERROR("sbefifo: Operation failed, response=0x%08x\n", resp[1]);
-		sbefifo_op_ffdc(buf + offset, buflen - offset);
+		sbefifo_ffdc_set(sbefifo, buf + offset, buflen - offset - 4, resp[1]);
 	}
 
 fail:

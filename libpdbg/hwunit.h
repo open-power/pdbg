@@ -71,6 +71,9 @@ struct sbefifo {
 	int (*mem_read)(struct sbefifo *, uint64_t, uint8_t *, uint64_t, bool);
 	int (*mem_write)(struct sbefifo *, uint64_t, uint8_t *, uint64_t, bool);
 	int fd;
+	uint32_t status;
+	uint8_t *ffdc;
+	uint32_t ffdc_len;
 };
 #define target_to_sbefifo(x) container_of(x, struct sbefifo, target)
 
