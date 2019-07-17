@@ -47,6 +47,13 @@
 				 device-path = "/dev/scom2";
 				 include(p9-pib.dts.m4)dnl
 			};
+
+			sbefifo@2400 { /* Bogus address */
+				reg = <0x0 0x2400 0x7>;
+				index = <0x1>;
+				compatible = "ibm,kernel-sbefifo";
+				device-path = "/dev/sbefifo2";
+			};
 		};
 	};
 };
