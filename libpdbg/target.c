@@ -295,6 +295,17 @@ int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 	return sbefifo->istep(sbefifo, major, minor);
 }
 
+int sbe_chipop(struct pdbg_target *target, uint32_t *msg, uint32_t msg_len, uint8_t **out, uint32_t *out_len, uint32_t *status)
+{
+	struct sbefifo *sbefifo;
+
+	sbefifo = pib_to_sbefifo(target);
+	if (!sbefifo)
+		return -1;
+
+	return sbefifo->chipop(sbefifo, msg, msg_len, out, out_len, status);
+}
+
 uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct sbefifo *sbefifo;
