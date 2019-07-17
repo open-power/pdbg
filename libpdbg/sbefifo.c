@@ -111,6 +111,14 @@ static void sbefifo_ffdc_set(struct sbefifo *sbefifo, uint8_t *buf, uint32_t buf
 	sbefifo->ffdc_len = buflen;
 }
 
+static uint32_t sbefifo_ffdc_get(struct sbefifo *sbefifo, const uint8_t **ffdc, uint32_t *ffdc_len)
+{
+	*ffdc = sbefifo->ffdc;
+	*ffdc_len = sbefifo->ffdc_len;
+
+	return sbefifo->status;
+}
+
 static int sbefifo_op(struct sbefifo *sbefifo,
 		      uint32_t *msg, size_t msg_len, uint16_t cmd,
 		      size_t out_len, uint8_t **out)
@@ -366,6 +374,7 @@ struct sbefifo kernel_sbefifo = {
 	.istep = sbefifo_op_istep,
 	.mem_read = sbefifo_op_getmem,
 	.mem_write = sbefifo_op_putmem,
+	.ffdc_get = sbefifo_ffdc_get,
 	.fd = -1,
 };
 DECLARE_HW_UNIT(kernel_sbefifo);
