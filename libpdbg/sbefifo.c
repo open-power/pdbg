@@ -23,6 +23,24 @@
 #include "hwunit.h"
 #include "debug.h"
 
+#define SBEFIFO_CMD_CLASS_CONTROL        0xA100
+#define   SBEFIFO_CMD_EXECUTE_ISTEP      0x0001
+
+#define SBEFIFO_CMD_CLASS_MEMORY         0xA400
+#define   SBEFIFO_CMD_GET_MEMORY         0x0001
+#define   SBEFIFO_CMD_PUT_MEMORY         0x0002
+
+#define SBEFIFO_MEMORY_FLAG_PROC         0x0001
+#define SBEFIFO_MEMORY_FLAG_PBA          0x0002
+#define SBEFIFO_MEMORY_FLAG_AUTO_INCR    0x0004
+#define SBEFIFO_MEMORY_FLAG_ECC_REQ      0x0008
+#define SBEFIFO_MEMORY_FLAG_TAG_REQ      0x0010
+#define SBEFIFO_MEMORY_FLAG_FAST_MODE    0x0020
+#define SBEFIFO_MEMORY_FLAG_LCO_MODE     0x0040 // only for putmem
+#define SBEFIFO_MEMORY_FLAG_CI           0x0080
+#define SBEFIFO_MEMORY_FLAG_PASSTHRU     0x0100
+#define SBEFIFO_MEMORY_FLAG_CACHEINJECT  0x0200 // only for putmem
+
 static void sbefifo_op_dump(const char *prefix, uint8_t *buf, size_t buflen)
 {
 	int i;
@@ -218,7 +236,7 @@ static int sbefifo_op_istep(struct sbefifo *sbefifo,
 
 	PR_NOTICE("sbefifo: istep %u.%u\n", major, minor);
 
-	cmd = 0xa101;
+	cmd = SBEFIFO_CMD_CLASS_CONTROL | SBEFIFO_CMD_EXECUTE_ISTEP;
 	step = (major & 0xff) << 16 | (minor & 0xff);
 
 	msg[0] = htobe32(3);	// number of words
@@ -261,8 +279,11 @@ static int sbefifo_op_getmem(struct sbefifo *sbefifo,
 	PR_NOTICE("sbefifo: getmem addr=0x%016" PRIx64 ", len=%u\n",
 		  start_addr, len);
 
-	cmd = 0xa401;
-	flags = ci ? 0x0081 : 0x0002;
+	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_GET_MEMORY;
+	if (ci)
+		flags = SBEFIFO_MEMORY_FLAG_PROC | SBEFIFO_MEMORY_FLAG_CI;
+	else
+		flags = SBEFIFO_MEMORY_FLAG_PBA;
 
 	msg[0] = htobe32(6);	// number of words
 	msg[1] = htobe32(cmd);
@@ -324,8 +345,11 @@ static int sbefifo_op_putmem(struct sbefifo *sbefifo,
 
 	PR_NOTICE("sbefifo: putmem addr=0x%016"PRIx64", len=%u\n", addr, len);
 
-	cmd = 0xa402;
-	flags = ci ? 0x0081 : 0x0002;
+	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_PUT_MEMORY;
+	if (ci)
+		flags = SBEFIFO_MEMORY_FLAG_PROC | SBEFIFO_MEMORY_FLAG_CI;
+	else
+		flags = SBEFIFO_MEMORY_FLAG_PBA;
 
 	msg[0] = htobe32(msg_len/4);	// number of words
 	msg[1] = htobe32(cmd);
