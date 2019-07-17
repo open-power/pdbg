@@ -30,6 +30,9 @@
 #define   SBEFIFO_CMD_GET_MEMORY         0x0001
 #define   SBEFIFO_CMD_PUT_MEMORY         0x0002
 
+#define SBEFIFO_CMD_CLASS_INSTRUCTION    0xA700
+#define   SBEFIFO_CMD_CONTROL_INSN       0x0001
+
 #define SBEFIFO_MEMORY_FLAG_PROC         0x0001
 #define SBEFIFO_MEMORY_FLAG_PBA          0x0002
 #define SBEFIFO_MEMORY_FLAG_AUTO_INCR    0x0004
@@ -40,6 +43,11 @@
 #define SBEFIFO_MEMORY_FLAG_CI           0x0080
 #define SBEFIFO_MEMORY_FLAG_PASSTHRU     0x0100
 #define SBEFIFO_MEMORY_FLAG_CACHEINJECT  0x0200 // only for putmem
+
+#define SBEFIFO_INSN_OP_START            0x0
+#define SBEFIFO_INSN_OP_STOP             0x1
+#define SBEFIFO_INSN_OP_STEP             0x2
+#define SBEFIFO_INSN_OP_SRESET           0x3
 
 static void sbefifo_op_dump(const char *prefix, uint8_t *buf, size_t buflen)
 {
@@ -369,6 +377,59 @@ static int sbefifo_op_putmem(struct sbefifo *sbefifo,
 	return 0;
 }
 
+static int sbefifo_op_control(struct sbefifo *sbefifo,
+			      uint32_t core_id, uint32_t thread_id,
+			      uint32_t oper)
+{
+	uint8_t *out;
+	uint32_t msg[3];
+	uint32_t cmd, op, out_len, status;
+	int rc;
+
+	PR_NOTICE("sbefifo: control c:0x%x, t=%u\n, op=%u\n", core_id, thread_id, oper);
+
+	op = ((core_id & 0xff) << 8) | ((thread_id & 0x0f) << 4) | (oper & 0x0f);
+	cmd = SBEFIFO_CMD_CLASS_INSTRUCTION | SBEFIFO_CMD_CONTROL_INSN;
+
+	msg[0] = htobe32(3);	// number of words
+	msg[1] = htobe32(cmd);
+	msg[2] = htobe32(op);
+
+	out_len = 0;
+	rc = sbefifo_op(sbefifo, msg, sizeof(msg), cmd, &out, &out_len, &status);
+	if (rc)
+		return rc;
+
+	if (out_len > 0)
+		free(out);
+
+	return 0;
+}
+
+static int sbefifo_op_thread_start(struct sbefifo *sbefifo,
+				   uint32_t core_id, uint32_t thread_id)
+{
+	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_START);
+}
+
+static int sbefifo_op_thread_stop(struct sbefifo *sbefifo,
+				  uint32_t core_id, uint32_t thread_id)
+{
+	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_STOP);
+}
+
+static int sbefifo_op_thread_step(struct sbefifo *sbefifo,
+				  uint32_t core_id, uint32_t thread_id)
+{
+	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_STEP);
+}
+
+static int sbefifo_op_thread_sreset(struct sbefifo *sbefifo,
+				    uint32_t core_id, uint32_t thread_id)
+{
+	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_SRESET);
+}
+
 static int sbefifo_probe(struct pdbg_target *target)
 {
 	struct sbefifo *sf = target_to_sbefifo(target);
@@ -396,6 +457,10 @@ struct sbefifo kernel_sbefifo = {
 	.istep = sbefifo_op_istep,
 	.mem_read = sbefifo_op_getmem,
 	.mem_write = sbefifo_op_putmem,
+	.thread_start = sbefifo_op_thread_start,
+	.thread_stop = sbefifo_op_thread_stop,
+	.thread_step = sbefifo_op_thread_step,
+	.thread_sreset = sbefifo_op_thread_sreset,
 	.ffdc_get = sbefifo_ffdc_get,
 	.fd = -1,
 };

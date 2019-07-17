@@ -70,6 +70,10 @@ struct sbefifo {
 	int (*istep)(struct sbefifo *, uint32_t major, uint32_t minor);
 	int (*mem_read)(struct sbefifo *, uint64_t, uint8_t *, uint64_t, bool);
 	int (*mem_write)(struct sbefifo *, uint64_t, uint8_t *, uint64_t, bool);
+	int (*thread_start)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
+	int (*thread_stop)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
+	int (*thread_step)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
+	int (*thread_sreset)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
 	uint32_t (*ffdc_get)(struct sbefifo *, const uint8_t **, uint32_t *);
 	int fd;
 	uint32_t status;
