@@ -239,6 +239,7 @@ int opb_read(struct pdbg_target *target, uint32_t addr, uint32_t *data);
 int opb_write(struct pdbg_target *target, uint32_t addr, uint32_t data);
 
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor);
+uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len);
 
 typedef void (*pdbg_progress_tick_t)(uint64_t cur, uint64_t end);
 

@@ -295,6 +295,17 @@ int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 	return sbefifo->istep(sbefifo, major, minor);
 }
 
+uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len)
+{
+	struct sbefifo *sbefifo;
+
+	sbefifo = pib_to_sbefifo(target);
+	if (!sbefifo)
+		return -1;
+
+	return sbefifo->ffdc_get(sbefifo, ffdc, ffdc_len);
+}
+
 struct pdbg_target *require_target_parent(struct pdbg_target *target)
 {
 	assert(target->parent);
