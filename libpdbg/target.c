@@ -265,13 +265,33 @@ int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_
 	return rc;
 }
 
+struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
+{
+	struct pdbg_target *sbefifo;
+	uint32_t index;
+
+	assert(pdbg_target_is_class(pib, "pib"));
+	index = pdbg_target_index(pib);
+
+	pdbg_for_each_class_target("sbefifo", sbefifo) {
+		if (pdbg_target_index(sbefifo) == index)
+			continue;
+
+		if (pdbg_target_probe(sbefifo) == PDBG_TARGET_ENABLED)
+			return target_to_sbefifo(sbefifo);
+	}
+
+	return NULL;
+}
+
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 {
 	struct sbefifo *sbefifo;
 
-	assert(pdbg_target_is_class(target, "sbefifo"));
+	sbefifo = pib_to_sbefifo(target);
+	if (!sbefifo)
+		return -1;
 
-	sbefifo = target_to_sbefifo(target);
 	return sbefifo->istep(sbefifo, major, minor);
 }
 
