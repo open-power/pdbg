@@ -156,8 +156,26 @@ int thread_sreset(struct pdbg_target *thread_target)
 
 int thread_sreset_all(void)
 {
-	struct pdbg_target *thread;
-	int rc = 0;
+	struct pdbg_target *pib, *thread;
+	int rc = 0, count = 0;
+
+	pdbg_for_each_class_target("pib", pib) {
+		struct sbefifo *sbefifo;
+
+		sbefifo = pib_to_sbefifo(pib);
+		if (!sbefifo)
+			break;
+
+		/*
+		 * core_id = 0xff (all SMT4 cores)
+		 * thread_id = 0xf (all 4 threads in the SMT4 core)
+		 */
+		rc |= sbefifo->thread_sreset(sbefifo, 0xff, 0xf);
+		count++;
+	}
+
+	if (count > 0)
+		return rc;
 
 	pdbg_for_each_class_target("thread", thread) {
 		rc |= thread_sreset(thread);
