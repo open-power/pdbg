@@ -153,6 +153,20 @@ int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 	return rc;
 }
 
+int pib_write_mask(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data, uint64_t mask)
+{
+	uint64_t value;
+	int rc;
+
+	rc = pib_read(pib_dt, addr, &value);
+	if (rc)
+		return rc;
+
+	value = (value & ~mask) | (data & mask);
+
+	return pib_write(pib_dt, addr, value);
+}
+
 /* Wait for a SCOM register addr to match value & mask == data */
 int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t data)
 {

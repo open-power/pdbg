@@ -132,6 +132,7 @@ int fsi_write_mask(struct pdbg_target *target, uint32_t addr, uint32_t val, uint
 
 int pib_read(struct pdbg_target *target, uint64_t addr, uint64_t *val);
 int pib_write(struct pdbg_target *target, uint64_t addr, uint64_t val);
+int pib_write_mask(struct pdbg_target *target, uint64_t addr, uint64_t val, uint64_t mask);
 int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t data);
 
 struct thread_regs {
