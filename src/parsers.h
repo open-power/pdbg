@@ -10,6 +10,7 @@
 #define DATA32 (parse_number32, NULL)
 #define DATA16 (parse_number16, NULL)
 #define DEFAULT_DATA(default) (parse_number64, default)
+#define DEFAULT_DATA32(default) (parse_number32, default)
 #define GPR (parse_gpr, NULL)
 #define SPR (parse_spr, NULL)
 
