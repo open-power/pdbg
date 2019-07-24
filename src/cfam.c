@@ -47,16 +47,23 @@ static int getcfam(uint32_t addr)
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(getcfam, getcfam, (ADDRESS32));
 
-static int putcfam(uint32_t addr, uint32_t data)
+static int putcfam(uint32_t addr, uint32_t data, uint32_t mask)
 {
 	struct pdbg_target *target;
 	int count = 0;
 
 	for_each_path_target_class("fsi", target) {
+		int rc;
+
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		if (fsi_write(target, addr, data)) {
+		if (mask == 0xffffffff)
+			rc = fsi_write(target, addr, data);
+		else
+			rc = fsi_write_mask(target, addr, data, mask);
+
+		if (rc) {
 			printf("p%d: failed\n", pdbg_target_index(target));
 			continue;
 		}
@@ -66,4 +73,4 @@ static int putcfam(uint32_t addr, uint32_t data)
 
 	return count;
 }
-OPTCMD_DEFINE_CMD_WITH_ARGS(putcfam, putcfam, (ADDRESS32, DATA32));
+OPTCMD_DEFINE_CMD_WITH_ARGS(putcfam, putcfam, (ADDRESS32, DATA32, DEFAULT_DATA32("0xffffffff")));
