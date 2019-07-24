@@ -217,6 +217,20 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 	return fsi->write(fsi, addr64, data);
 }
 
+int fsi_write_mask(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data, uint32_t mask)
+{
+	uint32_t value;
+	int rc;
+
+	rc = fsi_read(fsi_dt, addr, &value);
+	if (rc)
+		return rc;
+
+	value = (value & ~mask) | (data & mask);
+
+	return fsi_write(fsi_dt, addr, value);
+}
+
 int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, uint8_t block_size, bool ci)
 {
 	int rc = -1;

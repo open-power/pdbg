@@ -128,6 +128,7 @@ struct pdbg_target *pdbg_address_absolute(struct pdbg_target *target, uint64_t *
 /* Procedures */
 int fsi_read(struct pdbg_target *target, uint32_t addr, uint32_t *val);
 int fsi_write(struct pdbg_target *target, uint32_t addr, uint32_t val);
+int fsi_write_mask(struct pdbg_target *target, uint32_t addr, uint32_t val, uint32_t mask);
 
 int pib_read(struct pdbg_target *target, uint64_t addr, uint64_t *val);
 int pib_write(struct pdbg_target *target, uint64_t addr, uint64_t val);
