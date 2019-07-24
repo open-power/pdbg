@@ -88,6 +88,7 @@ int putscom(uint64_t addr, uint64_t data, uint64_t mask)
 	for_each_path_target(target) {
 		struct pdbg_target *addr_base;
 		uint64_t xlate_addr;
+		int rc;
 
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
@@ -102,8 +103,12 @@ int putscom(uint64_t addr, uint64_t data, uint64_t mask)
 		xlate_addr = addr;
 		addr_base = pdbg_address_absolute(target, &xlate_addr);
 
-		/* TODO: Restore the <mask> functionality */
-		if (pib_write(target, addr, data)) {
+		if (mask == 0xffffffffffffffffULL)
+			rc = pib_write(target, addr, data);
+		else
+			rc = pib_write_mask(target, addr, data, mask);
+
+		if (rc) {
 			printf("p%d: 0x%016" PRIx64 " failed (%s)\n", pdbg_target_index(addr_base), xlate_addr, path);
 			free(path);
 			continue;
