@@ -386,7 +386,7 @@ static int sbefifo_op_control(struct sbefifo *sbefifo,
 	uint32_t cmd, op, out_len, status;
 	int rc;
 
-	PR_NOTICE("sbefifo: control c:0x%x, t=%u\n, op=%u\n", core_id, thread_id, oper);
+	PR_NOTICE("sbefifo: control c:0x%x, t=0x%x, op=%u\n", core_id, thread_id, oper);
 
 	op = ((core_id & 0xff) << 8) | ((thread_id & 0x0f) << 4) | (oper & 0x0f);
 	cmd = SBEFIFO_CMD_CLASS_INSTRUCTION | SBEFIFO_CMD_CONTROL_INSN;
