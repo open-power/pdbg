@@ -178,6 +178,9 @@ int thread_sreset_all(void)
 		return rc;
 
 	pdbg_for_each_class_target("thread", thread) {
+		if (pdbg_target_status(thread) != PDBG_TARGET_ENABLED)
+			continue;
+
 		rc |= thread_sreset(thread);
 	}
 
