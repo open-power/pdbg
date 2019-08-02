@@ -157,7 +157,7 @@ static int kernel_pib_getscom(struct pib *pib, uint64_t addr, uint64_t *value)
 	rc = pread(pib->fd, value, 8, addr);
 	if (rc < 0) {
 		rc = errno;
-		PR_ERROR("Failed to read scom");
+		PR_DEBUG("Failed to read scom addr 0x%016"PRIx64"\n", addr);
 		return rc;
 	}
 	return 0;
@@ -170,7 +170,7 @@ static int kernel_pib_putscom(struct pib *pib, uint64_t addr, uint64_t value)
 	rc = pwrite(pib->fd, &value, 8, addr);
 	if (rc < 0) {
 		rc = errno;
-		PR_ERROR("Failed to write scom");
+		PR_DEBUG("Failed to write scom addr 0x%016"PRIx64"\n", addr);
 		return rc;
 	}
 	return 0;
