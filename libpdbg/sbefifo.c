@@ -146,7 +146,7 @@ static int sbefifo_op(struct sbefifo *sbefifo,
 	 * Allocate extra memory for FFDC (SBEFIFO_MAX_FFDC_SIZE = 0x2000)
 	 * Use *out_len as a hint to expected reply length
 	 */
-	buflen = *out_len + 0x2000 ;
+	buflen = (*out_len + 0x2000 + 3) & (uint32_t)~3;
 	buf = malloc(buflen);
 	assert(buf);
 
