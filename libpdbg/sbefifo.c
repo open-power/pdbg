@@ -383,12 +383,17 @@ static int sbefifo_op_control(struct sbefifo *sbefifo,
 {
 	uint8_t *out;
 	uint32_t msg[3];
-	uint32_t cmd, op, out_len, status;
+	uint32_t cmd, op, out_len, status, mode = 0;
 	int rc;
 
-	PR_NOTICE("sbefifo: control c:0x%x, t=0x%x, op=%u\n", core_id, thread_id, oper);
+	/* Enforce special-wakeup for thread stop and sreset */
+	if ((oper & 0xf) == SBEFIFO_INSN_OP_STOP ||
+	    (oper & 0xf) == SBEFIFO_INSN_OP_SRESET)
+		mode = 0x2;
 
-	op = ((core_id & 0xff) << 8) | ((thread_id & 0x0f) << 4) | (oper & 0x0f);
+	PR_NOTICE("sbefifo: control c:0x%x, t:0x%x, op:%u mode:%u\n", core_id, thread_id, oper, mode);
+
+	op = (mode << 16) | ((core_id & 0xff) << 8) | ((thread_id & 0x0f) << 4) | (oper & 0x0f);
 	cmd = SBEFIFO_CMD_CLASS_INSTRUCTION | SBEFIFO_CMD_CONTROL_INSN;
 
 	msg[0] = htobe32(3);	// number of words
