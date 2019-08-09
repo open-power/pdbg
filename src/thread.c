@@ -155,6 +155,11 @@ static int thr_start(void)
 	struct pdbg_target *target;
 	int count = 0;
 
+	if (path_target_all_selected("thread", NULL)) {
+		thread_start_all();
+		return 1;
+	}
+
 	for_each_path_target_class("thread", target) {
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
@@ -172,6 +177,15 @@ static int thr_step(uint64_t steps)
 	struct pdbg_target *target;
 	int count = 0;
 
+	if (path_target_all_selected("thread", NULL)) {
+		int i;
+
+		for (i=0; i<count; i++)
+			thread_step_all();
+
+		return 1;
+	}
+
 	for_each_path_target_class("thread", target) {
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
@@ -188,6 +202,11 @@ static int thr_stop(void)
 {
 	struct pdbg_target *target;
 	int count = 0;
+
+	if (path_target_all_selected("thread", NULL)) {
+		thread_stop_all();
+		return 1;
+	}
 
 	for_each_path_target_class("thread", target) {
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
@@ -300,6 +319,11 @@ static int thr_sreset(void)
 {
 	struct pdbg_target *target;
 	int count = 0;
+
+	if (path_target_all_selected("thread", NULL)) {
+		thread_sreset_all();
+		return 1;
+	}
 
 	for_each_path_target_class("thread", target) {
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
