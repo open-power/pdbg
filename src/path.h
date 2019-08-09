@@ -51,6 +51,15 @@ bool path_target_add(struct pdbg_target *target);
 bool path_target_selected(struct pdbg_target *target);
 
 /**
+ * @brief Check if all the targets of specific class are selected
+ *
+ * @param[in]  classname Class name
+ * @param[in]  parent Parent target
+ * @return true if all the targets are selected, false otherwise
+ */
+bool path_target_all_selected(const char *classname, struct pdbg_target *parent);
+
+/**
  * @brief Print the list of path targets to stdout
  */
 void path_target_dump(void);

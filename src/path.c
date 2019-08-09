@@ -321,6 +321,21 @@ bool path_target_selected(struct pdbg_target *target)
 	return false;
 }
 
+bool path_target_all_selected(const char *classname, struct pdbg_target *parent)
+{
+	struct pdbg_target *target;
+
+	if (!parent)
+		parent = pdbg_target_root();
+
+	pdbg_for_each_target(classname, parent, target) {
+		if (!path_target_selected(target))
+			return false;
+	}
+
+	return true;
+}
+
 void path_target_dump(void)
 {
 	struct pdbg_target *target;
