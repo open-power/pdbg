@@ -204,6 +204,9 @@ int thread_start(struct pdbg_target *target);
 int thread_step(struct pdbg_target *target, int steps);
 int thread_stop(struct pdbg_target *target);
 int thread_sreset(struct pdbg_target *target);
+int thread_start_all(void);
+int thread_step_all(void);
+int thread_stop_all(void);
 int thread_sreset_all(void);
 struct thread_state thread_status(struct pdbg_target *target);
 
