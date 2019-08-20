@@ -365,7 +365,7 @@ static int thread_regs_print(struct reg_flags flags)
 		if (flags.do_backtrace) {
 			struct pdbg_target *adu;
 
-			pdbg_for_each_class_target("adu", adu) {
+			pdbg_for_each_class_target("mem", adu) {
 				if (pdbg_target_probe(adu) == PDBG_TARGET_ENABLED) {
 					dump_stack(&regs, adu);
 					break;

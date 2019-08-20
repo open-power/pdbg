@@ -111,7 +111,7 @@ uint8_t blog2(uint8_t x)
 	}
 }
 
-static int adu_read(struct adu *adu, uint64_t start_addr, uint8_t *output,
+static int adu_read(struct mem *adu, uint64_t start_addr, uint8_t *output,
 		    uint64_t size, uint8_t block_size, bool ci)
 {
 	uint8_t *output0;
@@ -164,10 +164,10 @@ static int adu_read(struct adu *adu, uint64_t start_addr, uint8_t *output,
 int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	       uint8_t *output, uint64_t size)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, false);
 }
@@ -175,10 +175,10 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *output, uint64_t size)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, true);
 }
@@ -186,10 +186,10 @@ int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *output, uint64_t size, uint8_t blocksize)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	/* There is no equivalent for cachable memory as blocksize
 	 * does not apply to cachable reads */
@@ -199,15 +199,15 @@ int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 		 uint8_t *output, uint64_t size, bool ci)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, ci);
 }
 
-static int adu_write(struct adu *adu, uint64_t start_addr, uint8_t *input,
+static int adu_write(struct mem *adu, uint64_t start_addr, uint8_t *input,
 		     uint64_t size, uint8_t block_size, bool ci)
 {
 	int rc = 0, tsize;
@@ -248,10 +248,10 @@ static int adu_write(struct adu *adu, uint64_t start_addr, uint8_t *input,
 int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	       uint8_t *input, uint64_t size)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, false);
 }
@@ -259,10 +259,10 @@ int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *input, uint64_t size)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, true);
 }
@@ -270,10 +270,10 @@ int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 int adu_putmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *input, uint64_t size, uint8_t block_size)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, block_size, true);
 }
@@ -281,15 +281,15 @@ int adu_putmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 		 uint8_t *input, uint64_t size, bool ci)
 {
-	struct adu *adu;
+	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "adu"));
-	adu = target_to_adu(adu_target);
+	assert(!strcmp(adu_target->class, "mem"));
+	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, ci);
 }
 
-static int adu_lock(struct adu *adu)
+static int adu_lock(struct mem *adu)
 {
 	uint64_t val;
 
@@ -304,7 +304,7 @@ static int adu_lock(struct adu *adu)
 	return 0;
 }
 
-static int adu_unlock(struct adu *adu)
+static int adu_unlock(struct mem *adu)
 {
 	uint64_t val;
 
@@ -321,7 +321,7 @@ static int adu_unlock(struct adu *adu)
 	return 0;
 }
 
-static int adu_reset(struct adu *adu)
+static int adu_reset(struct mem *adu)
 {
 	uint64_t val;
 
@@ -332,7 +332,7 @@ static int adu_reset(struct adu *adu)
 	return 0;
 }
 
-static int p8_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data,
+static int p8_adu_getmem(struct mem *adu, uint64_t addr, uint64_t *data,
 			 int ci, uint8_t block_size)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
@@ -394,7 +394,7 @@ out:
 
 }
 
-int p8_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size,
+int p8_adu_putmem(struct mem *adu, uint64_t addr, uint64_t data, int size,
 		  int ci, uint8_t block_size)
 {
 	int rc = 0;
@@ -455,7 +455,7 @@ out:
 	return rc;
 }
 
-static int p9_adu_getmem(struct adu *adu, uint64_t addr, uint64_t *data,
+static int p9_adu_getmem(struct mem *adu, uint64_t addr, uint64_t *data,
 			 int ci, uint8_t block_size)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
@@ -512,7 +512,7 @@ retry:
 	return 0;
 }
 
-static int p9_adu_putmem(struct adu *adu, uint64_t addr, uint64_t data, int size,
+static int p9_adu_putmem(struct mem *adu, uint64_t addr, uint64_t data, int size,
 			 int ci, uint8_t block_size)
 {
 	uint64_t ctrl_reg, cmd_reg, val;
@@ -569,11 +569,11 @@ retry:
 	return 0;
 }
 
-static struct adu p8_adu = {
+static struct mem p8_adu = {
 	.target = {
 		.name =	"POWER8 ADU",
 		.compatible = "ibm,power8-adu",
-		.class = "adu",
+		.class = "mem",
 	},
 	.getmem = p8_adu_getmem,
 	.putmem = p8_adu_putmem,
@@ -582,11 +582,11 @@ static struct adu p8_adu = {
 };
 DECLARE_HW_UNIT(p8_adu);
 
-static struct adu p9_adu = {
+static struct mem p9_adu = {
 	.target = {
 		.name =	"POWER9 ADU",
 		.compatible = "ibm,power9-adu",
-		.class = "adu",
+		.class = "mem",
 	},
 	.getmem = p9_adu_getmem,
 	.putmem = p9_adu_putmem,

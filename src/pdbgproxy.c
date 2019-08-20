@@ -532,7 +532,7 @@ static int gdbserver(uint16_t port)
 	littleendian = 0x01 & msr;
 
 	/* Select ADU target */
-	pdbg_for_each_class_target("adu", adu) {
+	pdbg_for_each_class_target("mem", adu) {
 		if (pdbg_target_probe(adu) == PDBG_TARGET_ENABLED)
 			break;
 	}

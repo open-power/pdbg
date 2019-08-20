@@ -112,7 +112,7 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 		goto done;
 	}
 
-	pdbg_for_each_class_target("adu", target) {
+	pdbg_for_each_class_target("mem", target) {
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
 
@@ -205,7 +205,7 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 		goto done;
 	}
 
-	pdbg_for_each_class_target("adu", target) {
+	pdbg_for_each_class_target("mem", target) {
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
 			continue;
 

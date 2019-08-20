@@ -782,7 +782,7 @@ static int __do_htm_start(struct htm *htm, bool wrap)
 	/*
 	 * Instead of the HTM_TRIG_START, this is where you might want
 	 * to call do_adu_magic()
-	 * for_each_child_target("adu", core, do_adu_magic, NULL, NULL);
+	 * for_each_child_target("mem", core, do_adu_magic, NULL, NULL);
 	 * see what I mean?
 	 */
 

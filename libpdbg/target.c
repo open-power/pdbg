@@ -250,7 +250,7 @@ int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_
 	int rc = -1;
 
 	assert(pdbg_target_is_class(target, "sbefifo") ||
-	       pdbg_target_is_class(target, "adu"));
+	       pdbg_target_is_class(target, "mem"));
 
 	if (pdbg_target_is_class(target, "sbefifo")) {
 		struct sbefifo *sbefifo;
@@ -259,11 +259,11 @@ int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_
 		rc = sbefifo->mem_read(sbefifo, addr, output, size, ci);
 	}
 
-	if (pdbg_target_is_class(target, "adu")) {
-		struct adu *adu;
+	if (pdbg_target_is_class(target, "mem")) {
+		struct mem *mem;
 
-		adu = target_to_adu(target);
-		rc = adu->read(adu, addr, output, size, block_size, ci);
+		mem = target_to_mem(target);
+		rc = mem->read(mem, addr, output, size, block_size, ci);
 	}
 
 	return rc;
@@ -274,7 +274,7 @@ int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_
 	int rc = -1;
 
 	assert(pdbg_target_is_class(target, "sbefifo") ||
-	       pdbg_target_is_class(target, "adu"));
+	       pdbg_target_is_class(target, "mem"));
 
 	if (pdbg_target_is_class(target, "sbefifo")) {
 		struct sbefifo *sbefifo;
@@ -283,11 +283,11 @@ int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_
 		rc = sbefifo->mem_write(sbefifo, addr, input, size, ci);
 	}
 
-	if (pdbg_target_is_class(target, "adu")) {
-		struct adu *adu;
+	if (pdbg_target_is_class(target, "mem")) {
+		struct mem *mem;
 
-		adu = target_to_adu(target);
-		rc = adu->write(adu, addr, input, size, block_size, ci);
+		mem = target_to_mem(target);
+		rc = mem->write(mem, addr, input, size, block_size, ci);
 	}
 
 	return rc;

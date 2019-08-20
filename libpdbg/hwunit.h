@@ -56,14 +56,14 @@ struct htm {
 };
 #define target_to_htm(x) container_of(x, struct htm, target)
 
-struct adu {
+struct mem {
 	struct pdbg_target target;
-	int (*getmem)(struct adu *, uint64_t, uint64_t *, int, uint8_t);
-	int (*putmem)(struct adu *, uint64_t, uint64_t, int, int, uint8_t);
-	int (*read)(struct adu *, uint64_t, uint8_t *, uint64_t, uint8_t, bool);
-	int (*write)(struct adu *, uint64_t, uint8_t *, uint64_t, uint8_t, bool);
+	int (*getmem)(struct mem *, uint64_t, uint64_t *, int, uint8_t);
+	int (*putmem)(struct mem *, uint64_t, uint64_t, int, int, uint8_t);
+	int (*read)(struct mem *, uint64_t, uint8_t *, uint64_t, uint8_t, bool);
+	int (*write)(struct mem *, uint64_t, uint8_t *, uint64_t, uint8_t, bool);
 };
-#define target_to_adu(x) container_of(x, struct adu, target)
+#define target_to_mem(x) container_of(x, struct mem, target)
 
 struct sbefifo {
 	struct pdbg_target target;
@@ -151,4 +151,3 @@ struct xbus {
 #define target_to_xbus(x) container_of(x, struct xbus, target)
 
 #endif /* __HWUNIT_H */
-
