@@ -36,11 +36,6 @@ reg = <0x0 HEX(CHIPLET_BASE($1)) 0xfffff>;
 }')dnl
 
 
-adu@90000 {
-	  compatible = "ibm,power9-adu";
-	  reg = <0x0 0x90000 0x5>;
-};
-
 htm@5012880 {
 	compatible = "ibm,power9-nhtm";
 	reg = <0x0 0x5012880 0x40>;

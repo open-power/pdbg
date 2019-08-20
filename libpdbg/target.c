@@ -247,48 +247,26 @@ int fsi_write_mask(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data, uin
 
 int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, uint8_t block_size, bool ci)
 {
+	struct mem *mem;
 	int rc = -1;
 
-	assert(pdbg_target_is_class(target, "sbefifo") ||
-	       pdbg_target_is_class(target, "mem"));
+	assert(pdbg_target_is_class(target, "mem"));
 
-	if (pdbg_target_is_class(target, "sbefifo")) {
-		struct sbefifo *sbefifo;
-
-		sbefifo = target_to_sbefifo(target);
-		rc = sbefifo->mem_read(sbefifo, addr, output, size, ci);
-	}
-
-	if (pdbg_target_is_class(target, "mem")) {
-		struct mem *mem;
-
-		mem = target_to_mem(target);
-		rc = mem->read(mem, addr, output, size, block_size, ci);
-	}
+	mem = target_to_mem(target);
+	rc = mem->read(mem, addr, output, size, block_size, ci);
 
 	return rc;
 }
 
 int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size, uint8_t block_size, bool ci)
 {
+	struct mem *mem;
 	int rc = -1;
 
-	assert(pdbg_target_is_class(target, "sbefifo") ||
-	       pdbg_target_is_class(target, "mem"));
+	assert(pdbg_target_is_class(target, "mem"));
 
-	if (pdbg_target_is_class(target, "sbefifo")) {
-		struct sbefifo *sbefifo;
-
-		sbefifo = target_to_sbefifo(target);
-		rc = sbefifo->mem_write(sbefifo, addr, input, size, ci);
-	}
-
-	if (pdbg_target_is_class(target, "mem")) {
-		struct mem *mem;
-
-		mem = target_to_mem(target);
-		rc = mem->write(mem, addr, input, size, block_size, ci);
-	}
+	mem = target_to_mem(target);
+	rc = mem->write(mem, addr, input, size, block_size, ci);
 
 	return rc;
 }

@@ -244,9 +244,9 @@ static int sbefifo_op_istep(struct sbefifo *sbefifo,
 	return 0;
 }
 
-static int sbefifo_op_getmem(struct sbefifo *sbefifo,
+static int sbefifo_op_getmem(struct mem *sbefifo,
 			     uint64_t addr, uint8_t *data, uint64_t size,
-			     bool ci)
+			     uint8_t block_size, bool ci)
 {
 	uint8_t *out;
 	uint64_t start_addr, end_addr;
@@ -256,6 +256,11 @@ static int sbefifo_op_getmem(struct sbefifo *sbefifo,
 	int rc;
 
 	align = ci ? 8 : 128;
+
+	if (block_size && block_size != 8) {
+		PR_ERROR("sbefifo: Only 8 byte block sizes are supported\n");
+		return -1;
+	};
 
 	start_addr = addr & (~(uint64_t)(align-1));
 	end_addr = (addr + size + (align-1)) & (~(uint64_t)(align-1));
@@ -285,7 +290,8 @@ static int sbefifo_op_getmem(struct sbefifo *sbefifo,
 	msg[5] = htobe32(len);
 
 	out_len = len + 4;
-	rc = sbefifo_op(sbefifo, msg, sizeof(msg), cmd, &out, &out_len, &status);
+	rc = sbefifo_op(target_to_sbefifo(sbefifo->target.parent), msg, sizeof(msg), cmd,
+			&out, &out_len, &status);
 	if (rc)
 		return rc;
 
@@ -304,9 +310,9 @@ static int sbefifo_op_getmem(struct sbefifo *sbefifo,
 	return 0;
 }
 
-static int sbefifo_op_putmem(struct sbefifo *sbefifo,
+static int sbefifo_op_putmem(struct mem *sbefifo,
 			     uint64_t addr, uint8_t *data, uint64_t size,
-			     bool ci)
+			     uint8_t block_size, bool ci)
 {
 	uint8_t *out;
 	uint32_t *msg;
@@ -315,6 +321,11 @@ static int sbefifo_op_putmem(struct sbefifo *sbefifo,
 	int rc;
 
 	align = ci ? 8 : 128;
+
+	if (block_size && block_size != 8) {
+		PR_ERROR("sbefifo: Only 8 byte block sizes are supported\n");
+		return -1;
+	};
 
 	if (addr & (align-1)) {
 		PR_ERROR("sbefifo: Address must be aligned to %d bytes\n", align);
@@ -353,7 +364,8 @@ static int sbefifo_op_putmem(struct sbefifo *sbefifo,
 	memcpy(&msg[6], data, len);
 
 	out_len = 4;
-	rc = sbefifo_op(sbefifo, msg, msg_len, cmd, &out, &out_len, &status);
+	rc = sbefifo_op(target_to_sbefifo(sbefifo->target.parent), msg, msg_len, cmd,
+			&out, &out_len, &status);
 	if (rc)
 		return rc;
 
@@ -484,6 +496,17 @@ static int sbefifo_probe(struct pdbg_target *target)
 	return 0;
 }
 
+struct mem sbefifo_mem = {
+	.target = {
+		.name = "SBE FIFO Chip-op based memory access",
+		.compatible = "ibm,sbefifo-mem",
+		.class = "mem",
+	},
+	.read = sbefifo_op_getmem,
+	.write = sbefifo_op_putmem,
+};
+DECLARE_HW_UNIT(sbefifo_mem);
+
 struct sbefifo kernel_sbefifo = {
 	.target = {
 		.name =	"Kernel based FSI SBE FIFO",
@@ -492,8 +515,6 @@ struct sbefifo kernel_sbefifo = {
 		.probe = sbefifo_probe,
 	},
 	.istep = sbefifo_op_istep,
-	.mem_read = sbefifo_op_getmem,
-	.mem_write = sbefifo_op_putmem,
 	.thread_start = sbefifo_op_thread_start,
 	.thread_stop = sbefifo_op_thread_stop,
 	.thread_step = sbefifo_op_thread_step,
@@ -508,4 +529,5 @@ __attribute__((constructor))
 static void register_sbefifo(void)
 {
 	pdbg_hwunit_register(&kernel_sbefifo_hw_unit);
+	pdbg_hwunit_register(&sbefifo_mem_hw_unit);
 }

@@ -28,6 +28,10 @@
 			index = <0x0>;
 			compatible = "ibm,kernel-sbefifo";
 			device-path = "/dev/sbefifo1";
+
+			sbefifo-mem@0 {
+				      compatible = "ibm,sbefifo-mem";
+			};
 		};
 
 		hmfsi@100000 {
@@ -53,6 +57,10 @@
 				index = <0x1>;
 				compatible = "ibm,kernel-sbefifo";
 				device-path = "/dev/sbefifo2";
+
+				sbefifo-mem@0 {
+				      compatible = "ibm,sbefifo-mem";
+				};
 			};
 		};
 	};
