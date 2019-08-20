@@ -574,11 +574,11 @@ static int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_nod
 	return nextoffset;
 }
 
-static void dt_expand(const void *fdt)
+static void dt_expand(void *root, const void *fdt)
 {
 	PR_DEBUG("FDT: Parsing fdt @%p\n", fdt);
 
-	if (dt_expand_node(pdbg_dt_root, fdt, 0) < 0)
+	if (dt_expand_node(root, fdt, 0) < 0)
 		abort();
 }
 
@@ -634,7 +634,7 @@ void pdbg_targets_init(void *fdt)
 		return;
 	}
 
-	dt_expand(fdt);
+	dt_expand(pdbg_dt_root, fdt);
 }
 
 char *pdbg_target_path(const struct pdbg_target *target)
