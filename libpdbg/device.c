@@ -64,60 +64,79 @@ static const char *take_name(const char *name)
 	return name;
 }
 
-static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
+/* Adds information representing an actual target */
+static struct pdbg_target *dt_pdbg_target_new(const void *fdt, int node_offset)
 {
+	struct pdbg_target *target;
+	struct pdbg_target_class *target_class;
 	const struct hw_unit_info *hw_info = NULL;
 	const struct fdt_property *prop;
-	struct pdbg_target *node;
-	size_t size = sizeof(*node);
+	size_t size;
 
-	if (fdt) {
-		prop = fdt_get_property(fdt, node_offset, "compatible", NULL);
-		if (prop) {
-			int i, prop_len = fdt32_to_cpu(prop->len);
+	prop = fdt_get_property(fdt, node_offset, "compatible", NULL);
+	if (prop) {
+		int i, prop_len = fdt32_to_cpu(prop->len);
 
-			/*
-			 * If I understand correctly, the property we have
-			 * here can be a stringlist with a few compatible
-			 * strings
-			 */
-			i = 0;
-			while (i < prop_len) {
-				hw_info = pdbg_hwunit_find_compatible(&prop->data[i]);
-				if (hw_info) {
-					size = hw_info->size;
-					break;
-				}
-
-				i += strlen(&prop->data[i]) + 1;
+		/*
+		 * If I understand correctly, the property we have
+		 * here can be a stringlist with a few compatible
+		 * strings
+		 */
+		i = 0;
+		while (i < prop_len) {
+			hw_info = pdbg_hwunit_find_compatible(&prop->data[i]);
+			if (hw_info) {
+				size = hw_info->size;
+				break;
 			}
+
+			i += strlen(&prop->data[i]) + 1;
 		}
 	}
 
-	node = calloc(1, size);
-	if (!node) {
+	if (!hw_info)
+		/* Couldn't find anything implementing this target */
+		return NULL;
+
+	target = calloc(1, size);
+	if (!target) {
 		prerror("Failed to allocate node\n");
 		abort();
 	}
 
-	if (hw_info) {
-		struct pdbg_target_class *target_class;
+	/* hw_info->hw_unit points to a per-target struct type. This
+	 * works because the first member in the per-target struct is
+	 * guaranteed to be the struct pdbg_target (see the comment
+	 * above DECLARE_HW_UNIT). */
+	memcpy(target, hw_info->hw_unit, size);
+	target_class = get_target_class(target->class);
+	list_add_tail(&target_class->targets, &target->class_link);
 
-		/* hw_info->hw_unit points to a per-target struct type. This
-		 * works because the first member in the per-target struct is
-		 * guaranteed to be the struct pdbg_target (see the comment
-		 * above DECLARE_HW_UNIT). */
-		memcpy(node, hw_info->hw_unit, size);
-		target_class = get_target_class(node->class);
-		list_add_tail(&target_class->targets, &node->class_link);
+	return target;
+}
+
+static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
+{
+	struct pdbg_target *node = NULL;
+	size_t size = sizeof(*node);
+
+	if (fdt)
+		node = dt_pdbg_target_new(fdt, node_offset);
+
+	if (!node)
+		node = calloc(1, size);
+
+	if (!node) {
+		prerror("Failed to allocate node\n");
+		abort();
 	}
 
 	node->dn_name = take_name(name);
 	node->parent = NULL;
 	list_head_init(&node->properties);
 	list_head_init(&node->children);
-	/* FIXME: locking? */
 	node->phandle = ++last_phandle;
+
 	return node;
 }
 
