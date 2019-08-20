@@ -356,18 +356,18 @@ struct pdbg_target_class *require_target_class(const char *name)
 }
 
 /* Returns the existing class or allocates space for a new one */
-struct pdbg_target_class *get_target_class(const char *name)
+struct pdbg_target_class *get_target_class(struct pdbg_target *target)
 {
 	struct pdbg_target_class *target_class;
 
-	if ((target_class = find_target_class(name)))
+	if ((target_class = find_target_class(target->class)))
 		return target_class;
 
 	/* Need to allocate a new class */
-	PR_DEBUG("Allocating %s target class\n", name);
+	PR_DEBUG("Allocating %s target class\n", target->class);
 	target_class = calloc(1, sizeof(*target_class));
 	assert(target_class);
-	target_class->name = strdup(name);
+	target_class->name = strdup(target->class);
 	list_head_init(&target_class->targets);
 	list_add_tail(&target_classes, &target_class->class_head_link);
 	return target_class;

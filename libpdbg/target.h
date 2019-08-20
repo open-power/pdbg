@@ -55,7 +55,7 @@ struct pdbg_target {
 struct pdbg_target *require_target_parent(struct pdbg_target *target);
 struct pdbg_target_class *find_target_class(const char *name);
 struct pdbg_target_class *require_target_class(const char *name);
-struct pdbg_target_class *get_target_class(const char *name);
+struct pdbg_target_class *get_target_class(struct pdbg_target *target);
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 
 extern struct list_head empty_list;

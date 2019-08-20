@@ -109,7 +109,7 @@ static struct pdbg_target *dt_pdbg_target_new(const void *fdt, int node_offset)
 	 * guaranteed to be the struct pdbg_target (see the comment
 	 * above DECLARE_HW_UNIT). */
 	memcpy(target, hw_info->hw_unit, size);
-	target_class = get_target_class(target->class);
+	target_class = get_target_class(target);
 	list_add_tail(&target_class->targets, &target->class_link);
 
 	return target;
