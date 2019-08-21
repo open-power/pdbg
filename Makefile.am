@@ -129,7 +129,7 @@ pdbg_LDADD = libpdbg.la libccan.a \
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 
 lib_LTLIBRARIES = libpdbg.la
-noinst_LTLIBRARIES = libcronus.la
+noinst_LTLIBRARIES = libcronus.la libsbefifo.la
 
 libcronus_la_SOURCES = \
 	libcronus/buffer.c \
@@ -141,6 +141,22 @@ libcronus_la_SOURCES = \
 	libcronus/libcronus_private.h \
 	libcronus/request.c \
 	libcronus/scom.c
+
+libsbefifo_la_SOURCES = \
+	libsbefifo/cmd_array.c \
+	libsbefifo/cmd_control.c \
+	libsbefifo/cmd_generic.c \
+	libsbefifo/cmd_instruction.c \
+	libsbefifo/cmd_memory.c \
+	libsbefifo/cmd_mpipl.c \
+	libsbefifo/cmd_register.c \
+	libsbefifo/cmd_ring.c \
+	libsbefifo/cmd_scom.c \
+	libsbefifo/connect.c \
+	libsbefifo/ffdc.c \
+	libsbefifo/libsbefifo.h \
+	libsbefifo/operation.c \
+	libsbefifo/sbefifo_private.h
 
 libpdbg_la_SOURCES = \
 	$(DT_sources) \
