@@ -49,7 +49,7 @@ static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 	uint16_t flags;
 	int rc;
 
-	align = ci ? 8 : 128;
+	align = 8;
 
 	if (block_size && block_size != 8) {
 		PR_ERROR("sbefifo: Only 8 byte block sizes are supported\n");
@@ -70,10 +70,9 @@ static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 	PR_NOTICE("sbefifo: getmem addr=0x%016" PRIx64 ", len=%u\n",
 		  start_addr, len);
 
+	flags = SBEFIFO_MEMORY_FLAG_PROC;
 	if (ci)
-		flags = SBEFIFO_MEMORY_FLAG_PROC | SBEFIFO_MEMORY_FLAG_CI;
-	else
-		flags = SBEFIFO_MEMORY_FLAG_PBA;
+		flags |= SBEFIFO_MEMORY_FLAG_CI;
 
 	rc = sbefifo_mem_get(sbefifo->sf_ctx, start_addr, len, flags, &out);
 
@@ -97,7 +96,7 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 	uint16_t flags;
 	int rc;
 
-	align = ci ? 8 : 128;
+	align = 8;
 
 	if (block_size && block_size != 8) {
 		PR_ERROR("sbefifo: Only 8 byte block sizes are supported\n");
@@ -123,10 +122,9 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 
 	PR_NOTICE("sbefifo: putmem addr=0x%016"PRIx64", len=%u\n", addr, len);
 
+	flags = SBEFIFO_MEMORY_FLAG_PROC;
 	if (ci)
-		flags = SBEFIFO_MEMORY_FLAG_PROC | SBEFIFO_MEMORY_FLAG_CI;
-	else
-		flags = SBEFIFO_MEMORY_FLAG_PBA;
+		flags |= SBEFIFO_MEMORY_FLAG_CI;
 
 	rc = sbefifo_mem_put(sbefifo->sf_ctx, addr, data, len, flags);
 
