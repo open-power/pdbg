@@ -72,7 +72,6 @@ struct sbefifo {
 	int (*thread_stop)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
 	int (*thread_step)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
 	int (*thread_sreset)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
-	int (*chipop)(struct sbefifo *, uint32_t *, uint32_t, uint8_t **, uint32_t *, uint32_t *);
 	uint32_t (*ffdc_get)(struct sbefifo *, const uint8_t **, uint32_t *);
 	int fd;
 	uint32_t status;

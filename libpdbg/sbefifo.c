@@ -447,38 +447,6 @@ static int sbefifo_op_thread_sreset(struct sbefifo *sbefifo,
 	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_SRESET);
 }
 
-static int sbefifo_op_chipop(struct sbefifo *sbefifo,
-			     uint32_t *msg, uint32_t msg_len,
-			     uint8_t **out, uint32_t *out_len, uint32_t *status)
-{
-	uint32_t len, cmd, op;
-	int rc;
-
-	assert(msg_len > 3);
-
-	len = be32toh(msg[0]);
-	cmd = be32toh(msg[1]);
-	op = be32toh(msg[2]);
-
-	PR_NOTICE("sbefifo: chipop command=%u, op=%u\n", cmd, op);
-
-	if (len != msg_len) {
-		PR_ERROR("sbefifo: chipop: Invalid msg length, expected %u, got %u\n",
-			 len, msg_len);
-		return -1;
-	}
-
-	/* Limit the expected data to 64K */
-	if (*out_len > 0x10000)
-		*out_len = 0x10000;
-
-	rc = sbefifo_op(sbefifo, msg, msg_len, cmd, out, out_len, status);
-	if (rc)
-		return rc;
-
-	return 0;
-}
-
 static int sbefifo_probe(struct pdbg_target *target)
 {
 	struct sbefifo *sf = target_to_sbefifo(target);
@@ -519,7 +487,6 @@ struct sbefifo kernel_sbefifo = {
 	.thread_stop = sbefifo_op_thread_stop,
 	.thread_step = sbefifo_op_thread_step,
 	.thread_sreset = sbefifo_op_thread_sreset,
-	.chipop = sbefifo_op_chipop,
 	.ffdc_get = sbefifo_ffdc_get,
 	.fd = -1,
 };
