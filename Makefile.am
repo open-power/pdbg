@@ -191,7 +191,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/xbus.c
 
 libpdbg_la_CFLAGS = -Wall -Werror
-libpdbg_la_LIBADD = libcronus.la
+libpdbg_la_LIBADD = libcronus.la libsbefifo.la
 
 if BUILD_LIBFDT
 libpdbg_la_CFLAGS += -I$(top_srcdir)/libfdt

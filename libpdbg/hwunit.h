@@ -73,10 +73,7 @@ struct sbefifo {
 	int (*thread_step)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
 	int (*thread_sreset)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
 	uint32_t (*ffdc_get)(struct sbefifo *, const uint8_t **, uint32_t *);
-	int fd;
-	uint32_t status;
-	uint8_t *ffdc;
-	uint32_t ffdc_len;
+	struct sbefifo_context *sf_ctx;
 };
 #define target_to_sbefifo(x) container_of(x, struct sbefifo, target)
 
