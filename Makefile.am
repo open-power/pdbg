@@ -161,7 +161,6 @@ libsbefifo_la_SOURCES = \
 libpdbg_la_SOURCES = \
 	$(DT_sources) \
 	libpdbg/adu.c \
-	libpdbg/backend.h \
 	libpdbg/bitutils.h \
 	libpdbg/bmcfsi.c \
 	libpdbg/cfam.c \
