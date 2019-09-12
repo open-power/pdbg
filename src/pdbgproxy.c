@@ -23,7 +23,6 @@
 #include "main.h"
 #include "optcmd.h"
 #include "debug.h"
-#include "chip.h"
 #include "path.h"
 
 #ifndef DISABLE_GDBSERVER
