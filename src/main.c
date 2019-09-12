@@ -31,7 +31,6 @@
 #include <config.h>
 
 #include <libpdbg.h>
-#include <target.h>
 
 #include "htm.h"
 #include "optcmd.h"
