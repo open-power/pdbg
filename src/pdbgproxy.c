@@ -16,7 +16,7 @@
 #include <errno.h>
 #include <ccan/array_size/array_size.h>
 
-#include <operations.h>
+#include <bitutils.h>
 #include <hwunit.h>
 
 #include "pdbgproxy.h"

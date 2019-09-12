@@ -16,8 +16,6 @@
 #ifndef __OPERATIONS_H
 #define __OPERATIONS_H
 
-#include "bitutils.h"
-#include "target.h"
 #include "debug.h"
 
 #define PRINT_ERR PR_DEBUG("failed\n");
