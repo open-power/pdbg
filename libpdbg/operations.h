@@ -55,7 +55,6 @@
 
 #define MXSPR_SPR(opcode) (((opcode >> 16) & 0x1f) | ((opcode >> 6) & 0x3e0))
 
-enum fsi_system_type {FSI_SYSTEM_P8, FSI_SYSTEM_P9W, FSI_SYSTEM_P9R, FSI_SYSTEM_P9Z};
 enum chip_type get_chip_type(uint64_t chip_id);
 
 #endif
