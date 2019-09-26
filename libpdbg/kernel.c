@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _GNU_SOURCE
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,10 +30,36 @@
 #include "operations.h"
 #include "hwunit.h"
 
-#define FSI_SCAN_PATH "/sys/bus/platform/devices/gpio-fsi/fsi0/rescan"
-#define FSI_CFAM_PATH "/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/raw"
+#define OPENFSI_LEGACY_PATH "/sys/bus/platform/devices/gpio-fsi/"
+#define OPENFSI_PATH "/sys/class/fsi-master/"
 
 int fsi_fd;
+const char *fsi_base;
+
+const char *kernel_get_fsi_path(void)
+{
+	int rc;
+
+	if (fsi_base)
+		return fsi_base;
+
+	rc = access(OPENFSI_PATH, F_OK);
+	if (rc == 0) {
+		fsi_base = OPENFSI_PATH;
+		return fsi_base;
+	}
+
+	rc = access(OPENFSI_LEGACY_PATH, F_OK);
+	if (rc == 0) {
+		fsi_base = OPENFSI_LEGACY_PATH;
+		return fsi_base;
+	}
+
+	/* This is an error, but callers use this function when probing */
+	PR_DEBUG("Failed to find kernel FSI path\n");
+
+	return NULL;
+}
 
 static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 {
@@ -42,7 +69,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
 		rc = errno;
-		PR_WARNING("Failed to seek %s", FSI_CFAM_PATH);
+		PR_WARNING("seek failed: %s\n", strerror(errno));
 		return rc;
 	}
 
@@ -53,7 +80,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 			/* We expect reads of 0xc09 to occasionally
 			 * fail as the probing code uses it to see
 			 * if anything is present on the link. */
-			PR_ERROR("Failed to read from 0x%08" PRIx32 " (%016" PRIx32 ")", (uint32_t) addr, addr64);
+			PR_ERROR("Failed to read from 0x%08" PRIx32 " (%016" PRIx32 ")\n", (uint32_t) addr, addr64);
 		return rc;
 	}
 	*value = be32toh(tmp);
@@ -69,7 +96,7 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 	rc = lseek(fsi_fd, addr, SEEK_SET);
 	if (rc < 0) {
 		rc = errno;
-		PR_WARNING("Failed to seek %s", FSI_CFAM_PATH);
+		PR_WARNING("seek failed: %s\n", strerror(errno));
 		return rc;
 	}
 
@@ -77,7 +104,7 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 	rc = write(fsi_fd, &tmp, 4);
 	if (rc < 0) {
 		rc = errno;
-		PR_ERROR("Failed to write to 0x%08" PRIx32 " (%016" PRIx32 ")", addr, addr64);
+		PR_ERROR("Failed to write to 0x%08" PRIx32 " (%016" PRIx32 ")\n", addr, addr64);
 		return rc;
 	}
 
@@ -97,18 +124,27 @@ static void kernel_fsi_destroy(struct pdbg_target *target)
 static void kernel_fsi_scan_devices(void)
 {
 	const char one = '1';
+	char *path;
 	int rc, fd;
 
-	fd = open(FSI_SCAN_PATH, O_WRONLY | O_SYNC);
+	rc = asprintf(&path, "%s/fsi0/rescan", kernel_get_fsi_path());
+	if (rc < 0) {
+		PR_ERROR("Unable create fsi path\n");
+		return;
+	}
+
+	fd = open(path, O_WRONLY | O_SYNC);
 	if (fd < 0) {
-		PR_ERROR("Unable to open %s", FSI_SCAN_PATH);
+		PR_ERROR("Unable to open %s\n", path);
+		free(path);
 		return;
 	}
 
 	rc = write(fd, &one, sizeof(one));
 	if (rc < 0)
-		PR_ERROR("Unable to write to %s", FSI_SCAN_PATH);
+		PR_ERROR("Unable to write to %s\n", path);
 
+	free(path);
 	close(fd);
 }
 
@@ -116,12 +152,22 @@ int kernel_fsi_probe(struct pdbg_target *target)
 {
 	if (!fsi_fd) {
 		int tries = 5;
+		int rc;
+		char *path;
+
+		rc = asprintf(&path, "%s/fsi0/slave@00:00/raw", kernel_get_fsi_path());
+		if (rc < 0) {
+			PR_ERROR("Unable create fsi path\n");
+			return rc;
+		}
 
 		while (tries) {
 			/* Open first raw device */
-			fsi_fd = open(FSI_CFAM_PATH, O_RDWR | O_SYNC);
-			if (fsi_fd >= 0)
+			fsi_fd = open(path, O_RDWR | O_SYNC);
+			if (fsi_fd >= 0) {
+				free(path);
 				return 0;
+			}
 			tries--;
 
 			/* Scan */
@@ -129,7 +175,8 @@ int kernel_fsi_probe(struct pdbg_target *target)
 			sleep(1);
 		}
 		if (fsi_fd < 0) {
-			PR_ERROR("Unable to open %s", FSI_CFAM_PATH);
+			PR_ERROR("Unable to open %s\n", path);
+			free(path);
 			return -1;
 		}
 

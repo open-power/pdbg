@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -68,8 +69,7 @@ static enum pdbg_backend default_backend(void)
 	if (rc == 0) /* AMI BMC */
 		return PDBG_BACKEND_I2C;
 
-	rc = access(OPENFSI_BMC, F_OK);
-	if (rc == 0) /* Kernel interface. OpenBMC */
+	if (kernel_get_fsi_path() != NULL) /* Kernel interface. OpenBMC */
 		return PDBG_BACKEND_KERNEL;
 
 	return PDBG_BACKEND_FAKE;
@@ -134,7 +134,16 @@ static void *bmc_target(void)
 
 	if (!pdbg_backend_option) {
 		/* Try and determine the correct device type */
-		cfam_id_file = fopen(FSI_CFAM_ID, "r");
+		char *path;
+
+		rc = asprintf(&path, "%s/fsi0/slave@00:00/cfam_id", kernel_get_fsi_path());
+		if (rc < 0) {
+			pdbg_log(PDBG_ERROR, "Unable create fsi path");
+			return NULL;
+		}
+
+		cfam_id_file = fopen(path, "r");
+		free(path);
 		if (!cfam_id_file) {
 			pdbg_log(PDBG_ERROR, "Unabled to open CFAM ID file\n");
 			return NULL;
