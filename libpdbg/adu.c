@@ -344,7 +344,7 @@ static int p8_adu_getmem(struct mem *adu, uint64_t addr, uint64_t *data,
 	if (ci) {
 		/* Do cache inhibited access */
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_CI_PARTIAL_READ);
-		block_size = (blog2(block_size) + 1) << 1;
+		block_size = (blog2(block_size) + 1);
 	} else {
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_READ);
 		block_size = 0;
@@ -405,10 +405,9 @@ int p8_adu_putmem(struct mem *adu, uint64_t addr, uint64_t data, int size,
 	if (ci) {
 		/* Do cache inhibited access */
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_CI_PARTIAL_WRITE);
-		block_size = (blog2(block_size) + 1) << 1;
+		block_size = (blog2(block_size) + 1);
 	} else {
 		ctrl_reg = SETFIELD(P8_FBC_ALTD_TTYPE, ctrl_reg, P8_TTYPE_DMA_PARTIAL_WRITE);
-		block_size <<= 1;
 	}
 	ctrl_reg = SETFIELD(P8_FBC_ALTD_TSIZE, ctrl_reg, block_size);
 
