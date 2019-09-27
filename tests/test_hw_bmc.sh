@@ -64,7 +64,7 @@ do_skip ()
 
 
 echo -n "Checking if the host is up... "
-output=$(run_over_ssh /usr/sbin/obmcutil state | grep CurrentHostState)
+output=$(run_over_ssh obmcutil state | grep CurrentHostState)
 rc=$?
 if [ $rc -ne 0 ] || \
     [ "$output" = "CurrentHostState    : xyz.openbmc_project.State.Host.HostState.Running" ] ; then
