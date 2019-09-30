@@ -124,10 +124,14 @@ static void kernel_fsi_destroy(struct pdbg_target *target)
 static void kernel_fsi_scan_devices(void)
 {
 	const char one = '1';
+	const char *kernel_path = kernel_get_fsi_path();
 	char *path;
 	int rc, fd;
 
-	rc = asprintf(&path, "%s/fsi0/rescan", kernel_get_fsi_path());
+	if (!kernel_path)
+		return;
+
+	rc = asprintf(&path, "%s/fsi0/rescan", kernel_path);
 	if (rc < 0) {
 		PR_ERROR("Unable create fsi path\n");
 		return;
@@ -153,7 +157,11 @@ int kernel_fsi_probe(struct pdbg_target *target)
 	if (!fsi_fd) {
 		int tries = 5;
 		int rc;
+		const char *kernel_path = kernel_get_fsi_path();
 		char *path;
+
+		if (!kernel_path)
+			return -1;
 
 		rc = asprintf(&path, "%s/fsi0/slave@00:00/raw", kernel_get_fsi_path());
 		if (rc < 0) {
