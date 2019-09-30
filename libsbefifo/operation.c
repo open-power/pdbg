@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#include <endian.h>
 
 #include "sbefifo_private.h"
 
