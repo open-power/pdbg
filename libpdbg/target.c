@@ -467,3 +467,9 @@ void pdbg_target_priv_set(struct pdbg_target *target, void *priv)
 {
 	target->priv = priv;
 }
+
+/* For virtual nodes, compatible property is not set */
+bool target_is_virtual(struct pdbg_target *target)
+{
+	return (!target->compatible);
+}

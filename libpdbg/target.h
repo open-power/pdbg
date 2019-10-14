@@ -64,5 +64,6 @@ extern struct list_head target_classes;
 const char *pdbg_get_backend_option(void);
 
 struct sbefifo *pib_to_sbefifo(struct pdbg_target *target);
+bool target_is_virtual(struct pdbg_target *target);
 
 #endif
