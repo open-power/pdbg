@@ -208,10 +208,10 @@ static bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root)
 	return true;
 }
 
-static char *dt_get_path(const struct pdbg_target *node)
+static char *dt_get_path(struct pdbg_target *node)
 {
 	unsigned int len = 0;
-	const struct pdbg_target *n;
+	struct pdbg_target *n;
 	char *path, *p;
 
 	/* Dealing with NULL is for test/debug purposes */
@@ -445,7 +445,7 @@ static struct pdbg_target *dt_next(const struct pdbg_target *root,
 	return NULL;
 }
 
-static const struct dt_property *dt_require_property(const struct pdbg_target *node,
+static const struct dt_property *dt_require_property(struct pdbg_target *node,
 						     const char *name, int wanted_len)
 {
 	const struct dt_property *p = dt_find_property(node, name);
@@ -656,7 +656,7 @@ void pdbg_targets_init(void *fdt)
 	dt_expand(pdbg_dt_root, fdt);
 }
 
-char *pdbg_target_path(const struct pdbg_target *target)
+char *pdbg_target_path(struct pdbg_target *target)
 {
 	return dt_get_path(target);
 }
