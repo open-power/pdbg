@@ -513,12 +513,30 @@ static bool parse_options(int argc, char *argv[])
 	return true;
 }
 
+static bool child_enabled(struct pdbg_target *target)
+{
+	struct pdbg_target *child;
+
+	pdbg_for_each_child_target(target, child) {
+		if (child_enabled(child))
+			return true;
+
+		if (pdbg_target_status(child) == PDBG_TARGET_ENABLED)
+			return true;
+	}
+
+	return false;
+}
+
 static void print_target(struct pdbg_target *target, int level)
 {
 	int i;
 	struct pdbg_target *next;
 	enum pdbg_target_status status;
 	const char *classname;
+
+	if (level == 0 && !child_enabled(target))
+		return;
 
 	/* Does this target actually exist? */
 	status = pdbg_target_status(target);
