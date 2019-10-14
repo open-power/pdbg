@@ -219,6 +219,7 @@ static char *dt_get_path(struct pdbg_target *node)
 		return strdup("<NULL>");
 
 	for (n = node; n; n = n->parent) {
+		n = target_to_virtual(n, false);
 		len += strlen(n->dn_name);
 		if (n->parent || n == node)
 			len++;
@@ -227,6 +228,7 @@ static char *dt_get_path(struct pdbg_target *node)
 	assert(path);
 	p = path + len;
 	for (n = node; n; n = n->parent) {
+		n = target_to_virtual(n, false);
 		len = strlen(n->dn_name);
 		p -= len;
 		memcpy(p, n->dn_name, len);
