@@ -275,7 +275,7 @@ static struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char 
 	struct pdbg_target *n;
 	const char *pn, *pa = NULL, *p = path, *nn = NULL, *na = NULL;
 	unsigned int pnl, pal, nnl, nal;
-	bool match;
+	bool match, vnode;
 
 	/* Walk path components */
 	while (*p) {
@@ -284,6 +284,9 @@ static struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char 
 		if (pnl == 0 && pal == 0)
 			break;
 
+		vnode = false;
+
+again:
 		/* Compare with each child node */
 		match = false;
 		list_for_each(&root->children, n, list) {
@@ -300,10 +303,16 @@ static struct pdbg_target *dt_find_by_path(struct pdbg_target *root, const char 
 		}
 
 		/* No child match */
-		if (!match)
+		if (!match) {
+			if (!vnode && root->vnode) {
+				vnode = true;
+				root = root->vnode;
+				goto again;
+			}
 			return NULL;
+		}
 	}
-	return root;
+	return target_to_real(root, false);
 }
 
 static struct dt_property *dt_find_property(const struct pdbg_target *node,
