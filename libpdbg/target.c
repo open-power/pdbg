@@ -312,12 +312,6 @@ uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t
 	return sbefifo->ffdc_get(sbefifo, ffdc, ffdc_len);
 }
 
-struct pdbg_target *require_target_parent(struct pdbg_target *target)
-{
-	assert(target->parent);
-	return target->parent;
-}
-
 /* Finds the given class. Returns NULL if not found. */
 struct pdbg_target_class *find_target_class(const char *name)
 {
