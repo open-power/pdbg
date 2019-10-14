@@ -198,32 +198,42 @@ uint32_t pdbg_target_index(struct pdbg_target *target)
 }
 
 /* Find a target parent from the given class */
-struct pdbg_target *pdbg_target_parent(const char *class, struct pdbg_target *target)
+struct pdbg_target *target_parent(const char *klass, struct pdbg_target *target, bool system)
 {
 	struct pdbg_target *parent;
 
-	if (!class)
-		return get_parent(target, true);
+	if (!klass)
+		return get_parent(target, system);
 
-	for (parent = get_parent(target, true); parent && get_parent(parent, true); parent = get_parent(parent, true)) {
+	for (parent = get_parent(target, system); parent && get_parent(parent, system); parent = get_parent(parent, system)) {
 		const char *tclass = pdbg_target_class_name(parent);
 
 		if (!tclass)
 			continue;
 
-		if (!strcmp(class, tclass))
+		if (!strcmp(klass, tclass))
 			return parent;
 	}
 
 	return NULL;
 }
 
-struct pdbg_target *pdbg_target_require_parent(const char *class, struct pdbg_target *target)
+struct pdbg_target *pdbg_target_parent(const char *klass, struct pdbg_target *target)
 {
-	struct pdbg_target *parent = pdbg_target_parent(class, target);
+	return target_parent(klass, target, true);
+}
+
+struct pdbg_target *require_target_parent(const char *klass, struct pdbg_target *target, bool system)
+{
+	struct pdbg_target *parent = target_parent(klass, target, system);
 
 	assert(parent);
 	return parent;
+}
+
+struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_target *target)
+{
+	return require_target_parent(klass, target, true);
 }
 
 /* Searched up the tree for the first target of the right class and returns its index */
