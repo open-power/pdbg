@@ -360,7 +360,7 @@ struct pdbg_target_class *get_target_class(struct pdbg_target *target)
  * exist but don't */
 enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 {
-	struct pdbg_target *parent;
+	struct pdbg_target *parent, *vnode;
 	enum pdbg_target_status status;
 
 	assert(target);
@@ -374,7 +374,7 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 		 * it's status won't have changed */
 		   return status;
 
-	parent = target->parent;
+	parent = get_parent(target, false);
 	if (parent) {
 		/* Recurse up the tree to probe and set parent target status */
 		pdbg_target_probe(parent);
@@ -405,6 +405,11 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 			break;
 		}
 	}
+
+	/* Make sure any virtual nodes are also probed */
+	vnode = target_to_virtual(target, true);
+	if (vnode)
+		pdbg_target_probe(vnode);
 
 	/* At this point any parents must exist and have already been probed */
 	if (target->probe && target->probe(target)) {
