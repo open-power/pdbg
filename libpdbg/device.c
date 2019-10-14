@@ -173,26 +173,26 @@ static int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target
 	return strcmp(a->dn_name, b->dn_name);
 }
 
-static bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root)
+static bool dt_attach_node(struct pdbg_target *parent, struct pdbg_target *child)
 {
 	struct pdbg_target *node = NULL;
 
-	assert(!root->parent);
+	assert(!child->parent);
 
 	if (list_empty(&parent->children)) {
-		list_add(&parent->children, &root->list);
-		root->parent = parent;
+		list_add(&parent->children, &child->list);
+		child->parent = parent;
 
 		return true;
 	}
 
 	dt_for_each_child(parent, node) {
-		int cmp = dt_cmp_subnodes(node, root);
+		int cmp = dt_cmp_subnodes(node, child);
 
 		/* Look for duplicates */
 		if (cmp == 0) {
 			prerror("DT: %s failed, duplicate %s\n",
-				__func__, root->dn_name);
+				__func__, child->dn_name);
 			return false;
 		}
 
@@ -202,8 +202,8 @@ static bool dt_attach_root(struct pdbg_target *parent, struct pdbg_target *root)
 			break;
 	}
 
-	list_add_before(&parent->children, &root->list, &node->list);
-	root->parent = parent;
+	list_add_before(&parent->children, &child->list, &node->list);
+	child->parent = parent;
 
 	return true;
 }
@@ -583,7 +583,7 @@ static int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_nod
 			 * going for now, we may ultimately want to
 			 * assert
 			 */
-			(void)dt_attach_root(node, child);
+			(void)dt_attach_node(node, child);
 			break;
 		case FDT_END:
 			return -1;
