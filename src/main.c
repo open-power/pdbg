@@ -529,10 +529,10 @@ static void print_target(struct pdbg_target *target, int level)
 		printf("    ");
 
 	classname = pdbg_target_class_name(target);
-	if (!classname)
-		return;
-
-	printf("%s%d: %s", classname, pdbg_target_index(target), pdbg_target_name(target));
+	if (classname)
+		printf("%s%d: %s", classname, pdbg_target_index(target), pdbg_target_name(target));
+	else
+		printf("%s:", pdbg_target_dn_name(target));
 	if (path_target_selected(target))
 		printf(" (*)");
 	printf("\n");
