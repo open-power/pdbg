@@ -604,7 +604,7 @@ static int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_nod
 	return nextoffset;
 }
 
-static void dt_expand(void *root, const void *fdt)
+static void dt_expand(struct pdbg_target *root, const void *fdt)
 {
 	PR_DEBUG("FDT: Parsing fdt @%p\n", fdt);
 
@@ -749,9 +749,6 @@ skip:
 
 void pdbg_targets_init(void *fdt)
 {
-	/* Root node needs to be valid when this function returns */
-	pdbg_dt_root = dt_new_node("", NULL, 0);
-
 	if (!fdt)
 		fdt = pdbg_default_dtb();
 
@@ -760,7 +757,12 @@ void pdbg_targets_init(void *fdt)
 		return;
 	}
 
+	/* Root node needs to be valid when this function returns */
+	pdbg_dt_root = dt_new_node("", NULL, 0);
+	assert(pdbg_dt_root);
+
 	dt_expand(pdbg_dt_root, fdt);
+
 	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);
 }
 
