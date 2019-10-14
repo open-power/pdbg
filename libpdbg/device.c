@@ -766,6 +766,9 @@ bool pdbg_targets_init(void *fdt)
 	if (!pdbg_dt_root)
 		return false;
 
+	if (dtb.backend)
+		dt_expand(pdbg_dt_root, dtb.backend);
+
 	dt_expand(pdbg_dt_root, dtb.system);
 
 	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);

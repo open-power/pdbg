@@ -243,6 +243,7 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb)
 	char *fdt = getenv("PDBG_DTB");
 
 	*dtb = (struct pdbg_dtb) {
+		.backend = NULL,
 		.system = NULL,
 	};
 

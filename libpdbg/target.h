@@ -54,6 +54,7 @@ struct pdbg_target {
 };
 
 struct pdbg_dtb {
+	void *backend;
 	void *system;
 };
 
