@@ -23,7 +23,8 @@ test_run pdbg -b fake probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -37,6 +38,8 @@ fsi0: Fake FSI (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc1:
+    fsi1: Fake FSI (*)
     pib1: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -50,6 +53,8 @@ fsi0: Fake FSI (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc2:
+    fsi2: Fake FSI (*)
     pib2: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -63,6 +68,8 @@ fsi0: Fake FSI (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc3:
+    fsi3: Fake FSI (*)
     pib3: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -76,6 +83,8 @@ fsi0: Fake FSI (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc4:
+    fsi4: Fake FSI (*)
     pib4: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -89,6 +98,8 @@ fsi0: Fake FSI (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc5:
+    fsi5: Fake FSI (*)
     pib5: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -102,6 +113,8 @@ fsi0: Fake FSI (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc6:
+    fsi6: Fake FSI (*)
     pib6: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -115,6 +128,8 @@ fsi0: Fake FSI (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc7:
+    fsi7: Fake FSI (*)
     pib7: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -135,7 +150,8 @@ test_run pdbg -b fake -a probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -156,35 +172,50 @@ test_run pdbg -b fake -p0 -a probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc1:
+    fsi1: Fake FSI (*)
     pib1: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc2:
+    fsi2: Fake FSI (*)
     pib2: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc3:
+    fsi3: Fake FSI (*)
     pib3: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc4:
+    fsi4: Fake FSI (*)
     pib4: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc5:
+    fsi5: Fake FSI (*)
     pib5: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc6:
+    fsi6: Fake FSI (*)
     pib6: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
             thread1: Fake Thread (*)
+proc7:
+    fsi7: Fake FSI (*)
     pib7: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -196,7 +227,8 @@ test_run pdbg -b fake -c0 -a probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -206,6 +238,8 @@ fsi0: Fake FSI (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc1:
+    fsi1: Fake FSI (*)
     pib1: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -215,6 +249,8 @@ fsi0: Fake FSI (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc2:
+    fsi2: Fake FSI (*)
     pib2: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -224,6 +260,8 @@ fsi0: Fake FSI (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc3:
+    fsi3: Fake FSI (*)
     pib3: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -233,6 +271,8 @@ fsi0: Fake FSI (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc4:
+    fsi4: Fake FSI (*)
     pib4: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -242,6 +282,8 @@ fsi0: Fake FSI (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc5:
+    fsi5: Fake FSI (*)
     pib5: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -251,6 +293,8 @@ fsi0: Fake FSI (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc6:
+    fsi6: Fake FSI (*)
     pib6: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -260,6 +304,8 @@ fsi0: Fake FSI (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc7:
+    fsi7: Fake FSI (*)
     pib7: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -276,7 +322,8 @@ test_run pdbg -b fake -t0 -a probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core2: Fake Core (*)
             thread0: Fake Thread (*)
@@ -288,7 +335,8 @@ test_run pdbg -b fake -p0 -c2 -a probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core2: Fake Core (*)
             thread1: Fake Thread (*)
@@ -299,19 +347,28 @@ test_run pdbg -b fake -p0 -c2 -t1 -a probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI
+proc1:
+    fsi1: Fake FSI (*)
     pib1: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
+proc2:
+    fsi2: Fake FSI (*)
     pib2: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
+proc3:
+    fsi3: Fake FSI (*)
     pib3: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
+proc5:
+    fsi5: Fake FSI (*)
     pib5: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
+proc6:
+    fsi6: Fake FSI (*)
     pib6: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -322,7 +379,8 @@ test_run pdbg -b fake -p1-3,5,5-6 -c0 -t0 probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
 EOF
 
@@ -371,7 +429,8 @@ test_run pdbg -b fake -t0 -p0 probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core0: Fake Core (*)
 EOF
@@ -381,7 +440,8 @@ test_run pdbg -b fake -c0 -p0 probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI (*)
+proc0:
+    fsi0: Fake FSI (*)
     pib0: Fake PIB (*)
         core0: Fake Core (*)
             thread0: Fake Thread (*)
@@ -392,22 +452,29 @@ test_run pdbg -b fake -t0 -c0 -p0 probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI
+proc1:
+    fsi1: Fake FSI (*)
     pib1: Fake PIB (*)
         core1: Fake Core (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc3:
+    fsi3: Fake FSI (*)
     pib3: Fake PIB (*)
         core1: Fake Core (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc5:
+    fsi5: Fake FSI (*)
     pib5: Fake PIB (*)
         core1: Fake Core (*)
             thread0: Fake Thread (*)
         core3: Fake Core (*)
             thread0: Fake Thread (*)
+proc7:
+    fsi7: Fake FSI (*)
     pib7: Fake PIB (*)
         core1: Fake Core (*)
             thread0: Fake Thread (*)
@@ -420,22 +487,29 @@ test_run pdbg -b fake -p1,3,5,7,9 -c1,3,5 -t0,2 probe
 
 
 test_result 0 <<EOF
-fsi0: Fake FSI
+proc1:
+    fsi1: Fake FSI (*)
     pib1: Fake PIB (*)
         core1: Fake Core (*)
             thread1: Fake Thread (*)
         core3: Fake Core (*)
             thread1: Fake Thread (*)
+proc3:
+    fsi3: Fake FSI (*)
     pib3: Fake PIB (*)
         core1: Fake Core (*)
             thread1: Fake Thread (*)
         core3: Fake Core (*)
             thread1: Fake Thread (*)
+proc5:
+    fsi5: Fake FSI (*)
     pib5: Fake PIB (*)
         core1: Fake Core (*)
             thread1: Fake Thread (*)
         core3: Fake Core (*)
             thread1: Fake Thread (*)
+proc7:
+    fsi7: Fake FSI (*)
     pib7: Fake PIB (*)
         core1: Fake Core (*)
             thread1: Fake Thread (*)

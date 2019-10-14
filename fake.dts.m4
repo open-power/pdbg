@@ -1,3 +1,5 @@
+define(`CONCAT', `$1$2')dnl
+
 dnl
 dnl forloop([var], [start], [end], [iterator])
 dnl
@@ -47,55 +49,67 @@ forloop(`i', `0', eval(`$3-1'), `dump_thread(i)')
 dump_core_post()')
 
 dnl
-dnl dump_processor_pre([index], [addr])
+dnl dump_processor_pre([index])
 dnl
-define(`dump_processor_pre',
-`
-      pib@$2 {
+define(`dump_processor_pre',`dnl
+     pib {
         #address-cells = <0x1>;
-        #size-cells = <0x1>;
-        compatible = "ibm,fake-pib";
-        reg = <0x$2 0x0>;
-        index = <0x$1>;')
+        #size-cells = <0x1>;')
 
 dnl
 dnl dump_processor_post()
 dnl
-define(`dump_processor_post', `      };
+define(`dump_processor_post', `    };
 ')dnl
 
 dnl
-dnl dump_processor([index], [addr], [num_cores], [num_threads])
+dnl dump_processor([index], [num_cores], [num_threads])
 dnl
 define(`dump_processor',dnl
-`dump_processor_pre(`$1', `$2')
-forloop(`i', `0', eval(`$3-1'), `dump_core(i, eval(10000+(i+1)*10), $4)')
+`dump_processor_pre(`$1')
+forloop(`i', `0', eval(`$2-1'), `dump_core(i, eval(10000+(i+1)*10), $3)')
 dump_processor_post()')
 
 dnl
-dnl dump_fsi_pre([index], [addr])
+dnl dump_backend([index], [addr])
 dnl
-define(`dump_fsi_pre',
-`
+define(`dump_backend',dnl
+`define(`pib_addr', eval(`$2+100'))dnl
+
     fsi@$2 {
       #address-cells = <0x1>;
       #size-cells = <0x1>;
       compatible = "ibm,fake-fsi";
-      reg = <0x$2 0x0>;
-      index = <0x$1>;')
+      system-path = "/proc$1/fsi";
+      reg = <0x0 0x0>;
+      index = <0x$1>;
+
+      CONCAT(pib@,pib_addr) {
+        #address-cells = <0x1>;
+        #size-cells = <0x1>;
+        compatible = "ibm,fake-pib";
+        system-path = "/proc$1/pib";
+        reg = <CONCAT(0x,pib_addr) 0x0>;
+        index = <0x$1>;
+      };
+    };
+
+')dnl
+
 
 dnl
-dnl dump_fsi_post()
+dnl dump_system([num_processors], [num_cores], [num_threads])
 dnl
-define(`dump_fsi_post', `    };')
+define(`dump_system',
+`forloop(`i', `0', eval(`$1-1'), `dump_backend(i, eval(20000+i*1000))')
+forloop(`i', `0', eval(`$1-1'),dnl
+`
+    CONCAT(proc,i) {
+      index = < CONCAT(0x,i) >;
 
-dnl
-dnl dump_fsi([index], [addr], [num_processors], [num_cores], [num_threads])
-dnl
-define(`dump_fsi',
-`dump_fsi_pre(`$1', `$2')
-forloop(`i', `0', eval(`$3-1'), `dump_processor(i, eval(10000+i*1000), $4, $5)')
-dump_fsi_post()')
+dump_processor(i, $2, $3)
+    };
+')')
 divert`'dnl
 
 /dts-v1/;
@@ -103,5 +117,5 @@ divert`'dnl
 / {
     #address-cells = <0x1>;
     #size-cells = <0x1>;
-dump_fsi(0, 0, 8, 4, 2)
+dump_system(8, 4, 2)
 };

@@ -129,6 +129,12 @@ static void test2(void)
 
 	for_each_target(root, check_status, PDBG_TARGET_UNKNOWN);
 
+	pdbg_for_each_class_target("fsi", target) {
+		status = pdbg_target_probe(target);
+		assert(status == PDBG_TARGET_ENABLED);
+
+		for_target_to_root(target, check_status, PDBG_TARGET_ENABLED);
+	}
 	pdbg_for_each_class_target("pib", target) {
 		status = pdbg_target_probe(target);
 		assert(status == PDBG_TARGET_ENABLED);
@@ -170,6 +176,13 @@ static void test2(void)
 	}
 	pdbg_for_each_class_target("thread", target) {
 		check_status(target, PDBG_TARGET_RELEASED);
+	}
+
+	pdbg_for_each_class_target("pib", target) {
+		pdbg_target_release(target);
+	}
+	pdbg_for_each_class_target("pib", target) {
+		for_each_target(target, check_status, PDBG_TARGET_RELEASED);
 	}
 
 	pdbg_for_each_class_target("fsi", target) {

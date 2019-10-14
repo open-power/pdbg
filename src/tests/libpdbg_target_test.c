@@ -72,7 +72,7 @@ int main(void)
 	assert(root);
 
 	count = count_class_target("fsi");
-	assert(count == 1);
+	assert(count == 8);
 
 	count = count_class_target("pib");
 	assert(count == 8);
@@ -83,7 +83,28 @@ int main(void)
 	count = count_class_target("thread");
 	assert(count == 64);
 
+	pdbg_for_each_child_target(root, parent) {
+		name = pdbg_target_dn_name(parent);
+		assert(strncmp(name, "proc", 4) == 0);
+
+		pdbg_for_each_target("pib", parent, target) {
+			name = pdbg_target_class_name(target);
+			assert(!strcmp(name, "pib"));
+		}
+
+		pdbg_for_each_target("fsi", parent, target) {
+			name = pdbg_target_class_name(target);
+			assert(!strcmp(name, "fsi"));
+		}
+	};
+
 	pdbg_for_each_class_target("fsi", target) {
+		parent = pdbg_target_parent(NULL, target);
+		assert(parent);
+
+		name = pdbg_target_dn_name(parent);
+		assert(strncmp(name, "proc", 4) == 0);
+
 		parent = pdbg_target_parent("fsi", target);
 		assert(parent == NULL);
 
@@ -97,19 +118,19 @@ int main(void)
 		assert(parent == NULL);
 
 		count = count_child_target(target);
-		assert(count == 8);
+		assert(count == 0);
 
 		count = count_target(target, "fsi");
 		assert(count == 1);
 
 		count = count_target(target, "pib");
-		assert(count == 8);
+		assert(count == 0);
 
 		count = count_target(target, "core");
-		assert(count == 32);
+		assert(count == 0);
 
 		count = count_target(target, "thread");
-		assert(count == 64);
+		assert(count == 0);
 
 		name = pdbg_target_name(target);
 		assert(!strcmp(name, "Fake FSI"));
@@ -122,11 +143,14 @@ int main(void)
 	}
 
 	pdbg_for_each_class_target("pib", target) {
-		parent = pdbg_target_parent("fsi", target);
+		parent = pdbg_target_parent(NULL, target);
 		assert(parent);
 
-		parent2 = pdbg_target_require_parent("fsi", target);
-		assert(parent == parent2);
+		name = pdbg_target_dn_name(parent);
+		assert(strncmp(name, "proc", 4) == 0);
+
+		parent = pdbg_target_parent("fsi", target);
+		assert(parent == NULL);
 
 		parent = pdbg_target_parent("pib", target);
 		assert(parent == NULL);
@@ -167,10 +191,7 @@ int main(void)
 		uint32_t index;
 
 		parent = pdbg_target_parent("fsi", target);
-		assert(parent);
-
-		parent2 = pdbg_target_require_parent("fsi", target);
-		assert(parent == parent2);
+		assert(parent == NULL);
 
 		parent = pdbg_target_parent("pib", target);
 		assert(parent);
@@ -216,10 +237,7 @@ int main(void)
 
 	pdbg_for_each_class_target("thread", target) {
 		parent = pdbg_target_parent("fsi", target);
-		assert(parent);
-
-		parent2 = pdbg_target_require_parent("fsi", target);
-		assert(parent == parent2);
+		assert(parent == NULL);
 
 		parent = pdbg_target_parent("pib", target);
 		assert(parent);
