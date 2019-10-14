@@ -15,15 +15,20 @@ libpdbg_tests = libpdbg_target_test \
 		libpdbg_probe_test3
 
 bin_PROGRAMS = pdbg
-check_PROGRAMS = $(libpdbg_tests) optcmd_test hexdump_test cronus_proxy
+check_PROGRAMS = $(libpdbg_tests) libpdbg_dtree_test \
+		 optcmd_test hexdump_test cronus_proxy
 
 PDBG_TESTS = \
 	tests/test_selection.sh 	\
 	tests/test_selection2.sh 	\
 	tests/test_hw_bmc.sh		\
-	tests/test_hexdump.sh
+	tests/test_hexdump.sh		\
+	tests/test_tree.sh		\
+	tests/test_tree2.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
+
+tests/test_tree2.sh: fake2.dtb
 
 test: $(libpdbg_tests)
 
@@ -245,6 +250,11 @@ libpdbg_probe_test3_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_probe_test3_LDADD = $(libpdbg_test_ldadd)
 
 src/tests/libpdbg_probe_test.c: fake.dt.h
+
+libpdbg_dtree_test_SOURCES = src/tests/libpdbg_dtree_test.c
+libpdbg_dtree_test_CFLAGS = $(libpdbg_test_cflags)
+libpdbg_dtree_test_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_dtree_test_LDADD = $(libpdbg_test_ldadd)
 
 M4_V = $(M4_V_$(V))
 M4_V_ = $(M4_V_$(AM_DEFAULT_VERBOSITY))
