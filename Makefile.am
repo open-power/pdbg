@@ -72,7 +72,7 @@ endif
 DT = fake.dts fake2.dts p8-cronus.dts p9-cronus.dts \
      p8-fsi.dts p8-i2c.dts p8-kernel.dts \
      p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts \
-     p8-host.dts p9-host.dts p8.dts
+     p8-host.dts p9-host.dts p8.dts p9.dts
 
 DT_sources = $(DT:.dts=.dtb.S)
 DT_headers = $(DT:.dts=.dt.h)
