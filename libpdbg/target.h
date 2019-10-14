@@ -50,6 +50,7 @@ struct pdbg_target {
 	bool probed;
 	struct list_node class_link;
 	void *priv;
+	struct pdbg_target *vnode;
 };
 
 struct pdbg_target_class *find_target_class(const char *name);
