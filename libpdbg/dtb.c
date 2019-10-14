@@ -44,6 +44,9 @@
 #include "p8-cronus.dt.h"
 #include "p9-cronus.dt.h"
 
+#include "p8.dt.h"
+#include "p9.dt.h"
+
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
 #define OPENFSI_BMC "/sys/bus/platform/devices/gpio-fsi/fsi0/"
 #define FSI_CFAM_ID "/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/cfam_id"
@@ -86,13 +89,22 @@ static void ppc_target(struct pdbg_dtb *dtb)
 
 	if (pdbg_backend_option) {
 		if (!strcmp(pdbg_backend_option, "p8")) {
-			dtb->system = &_binary_p8_host_dtb_o_start;
-			return;
+			if (!dtb->backend)
+				dtb->backend = &_binary_p8_host_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9")) {
-			dtb->system = &_binary_p9_host_dtb_o_start;
-			return;
+			if (!dtb->backend)
+				dtb->backend = &_binary_p9_host_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p9_dtb_o_start;
+		} else {
+			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
+			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9'\n");
 		}
-	}
+
+ 		return;
+ 	}
 
 	cpuinfo = fopen("/proc/cpuinfo", "r");
 	if (!cpuinfo)
@@ -119,67 +131,87 @@ static void ppc_target(struct pdbg_dtb *dtb)
 
 	if (strncmp(pos, "POWER8", 6) == 0) {
 		pdbg_log(PDBG_INFO, "Found a POWER8 PPC host system\n");
-		dtb->system = &_binary_p8_host_dtb_o_start;
-	}
-
-	if (strncmp(pos, "POWER9", 6) == 0) {
+		if (!dtb->backend)
+			dtb->backend = &_binary_p8_host_dtb_o_start;
+		if (!dtb->system)
+			dtb->system = &_binary_p8_dtb_o_start;
+	} else if (strncmp(pos, "POWER9", 6) == 0) {
 		pdbg_log(PDBG_INFO, "Found a POWER9 PPC host system\n");
-		dtb->system = &_binary_p9_host_dtb_o_start;
-	}
-
-	pdbg_log(PDBG_ERROR, "Unsupported CPU type '%s'\n", pos);
+		if (!dtb->backend)
+			dtb->backend = &_binary_p9_host_dtb_o_start;
+		if (!dtb->system)
+			dtb->system = &_binary_p9_dtb_o_start;
+	} else {
+		pdbg_log(PDBG_ERROR, "Unsupported CPU type '%s'\n", pos);
+ 	}
 }
 
 static void bmc_target(struct pdbg_dtb *dtb)
 {
 	FILE *cfam_id_file;
+	char *path;
 	uint32_t cfam_id = 0;
 	uint32_t chip_id = 0;
 	int rc;
 
-	if (!pdbg_backend_option) {
-		/* Try and determine the correct device type */
-		char *path;
-
-		rc = asprintf(&path, "%s/fsi0/slave@00:00/cfam_id", kernel_get_fsi_path());
-		if (rc < 0) {
-			pdbg_log(PDBG_ERROR, "Unable create fsi path");
-			return;
+	if (pdbg_backend_option) {
+		if (!strcmp(pdbg_backend_option, "p8")) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p8_kernel_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p8_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p9")) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p9_kernel_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p9_dtb_o_start;
+		} else {
+			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
+			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9'\n");
 		}
 
-		cfam_id_file = fopen(path, "r");
-		free(path);
-		if (!cfam_id_file) {
-			pdbg_log(PDBG_ERROR, "Unabled to open CFAM ID file\n");
-			return;
-		}
-
-		rc = fscanf(cfam_id_file, "0x%" PRIx32, &cfam_id);
-		if (rc != 1) {
-			pdbg_log(PDBG_ERROR, "Unable to read CFAM ID: %s", strerror(errno));
-		}
-		fclose(cfam_id_file);
-		chip_id = (cfam_id >> 4) & 0xff;
-	} else {
-		if (!strcmp(pdbg_backend_option, "p9"))
-			chip_id = CHIP_ID_P9;
-		else if (!strcmp(pdbg_backend_option, "p8"))
-			chip_id = CHIP_ID_P8;
-		else
-			pdbg_log(PDBG_WARNING, "Invalid OpenBMC system type '%s' specified\n",
-				 pdbg_backend_option);
+		return;
 	}
+
+	/* Try and determine the correct device type */
+	rc = asprintf(&path, "%s/fsi0/slave@00:00/cfam_id", kernel_get_fsi_path());
+	if (rc < 0) {
+		pdbg_log(PDBG_ERROR, "Unable create fsi path");
+		return;
+	}
+
+	cfam_id_file = fopen(path, "r");
+	free(path);
+	if (!cfam_id_file) {
+		pdbg_log(PDBG_ERROR, "Unabled to open CFAM ID file\n");
+		return;
+	}
+
+	rc = fscanf(cfam_id_file, "0x%" PRIx32, &cfam_id);
+	if (rc != 1) {
+		pdbg_log(PDBG_ERROR, "Unable to read CFAM ID: %s", strerror(errno));
+		fclose(cfam_id_file);
+		return;
+	}
+	fclose(cfam_id_file);
+	chip_id = (cfam_id >> 4) & 0xff;
 
 	switch(chip_id) {
 	case CHIP_ID_P9:
 		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
-		dtb->system = &_binary_p9_kernel_dtb_o_start;
+		if (!dtb->backend)
+			dtb->backend = &_binary_p9_kernel_dtb_o_start;
+		if (!dtb->system)
+			dtb->system = &_binary_p9_dtb_o_start;
 		break;
 
 	case CHIP_ID_P8:
 	case CHIP_ID_P8P:
 		pdbg_log(PDBG_INFO, "Found a POWER8/8+ OpenBMC based system\n");
-		dtb->system = &_binary_p8_kernel_dtb_o_start;
+		if (!dtb->backend)
+			dtb->backend = &_binary_p8_kernel_dtb_o_start;
+		if (!dtb->system)
+			dtb->system = &_binary_p8_dtb_o_start;
 		break;
 
 	default:
@@ -240,17 +272,23 @@ const char *pdbg_get_backend_option(void)
  * the fdt that is most likely to work on the system. */
 void pdbg_default_dtb(struct pdbg_dtb *dtb)
 {
-	char *fdt = getenv("PDBG_DTB");
+	char *fdt;
 
 	*dtb = (struct pdbg_dtb) {
 		.backend = NULL,
 		.system = NULL,
 	};
 
-	if (fdt) {
+	fdt = getenv("PDBG_BACKEND_DTB");
+	if (fdt)
+		dtb->backend = mmap_dtb(fdt);
+
+	fdt = getenv("PDBG_DTB");
+	if (fdt)
 		dtb->system = mmap_dtb(fdt);
+
+	if (dtb->backend && dtb->system)
 		return;
-	}
 
 	if (!pdbg_backend)
 		pdbg_backend = default_backend();
@@ -262,8 +300,12 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb)
 
 	case PDBG_BACKEND_I2C:
 		/* I2C is only supported on POWER8 */
-		pdbg_log(PDBG_INFO, "Found a POWER8 AMI BMC based system\n");
-		dtb->system = &_binary_p8_i2c_dtb_o_start;
+		if (!dtb->backend) {
+			pdbg_log(PDBG_INFO, "Found a POWER8 AMI BMC based system\n");
+			dtb->backend = &_binary_p8_i2c_dtb_o_start;
+		}
+		if (!dtb->system)
+			dtb->system = &_binary_p8_dtb_o_start;
 		break;
 
 	case PDBG_BACKEND_KERNEL:
@@ -272,44 +314,58 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb)
 
 	case PDBG_BACKEND_FSI:
 		if (!pdbg_backend_option) {
-			pdbg_log(PDBG_ERROR, "No device type specified\n");
+			pdbg_log(PDBG_ERROR, "No system type specified\n");
 			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9r/p9w/p9z'\n");
 			return;
 		}
 
-		if (!strcmp(pdbg_backend_option, "p8"))
-			dtb->system = &_binary_p8_fsi_dtb_o_start;
-		else if (!strcmp(pdbg_backend_option, "p9w"))
-			dtb->system = &_binary_p9w_fsi_dtb_o_start;
-		else if (!strcmp(pdbg_backend_option, "p9r"))
-			dtb->system = &_binary_p9r_fsi_dtb_o_start;
-		else if (!strcmp(pdbg_backend_option, "p9z"))
-			dtb->system = &_binary_p9z_fsi_dtb_o_start;
-		else {
-			pdbg_log(PDBG_ERROR, "Invalid device type specified\n");
+		if (!strcmp(pdbg_backend_option, "p8")) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p8_fsi_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p8_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p9w")) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p9w_fsi_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p9_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p9r")) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p9r_fsi_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p9_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p9z")) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p9z_fsi_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p9_dtb_o_start;
+		} else {
+			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9r/p9w/p9z'\n");
-			return;
 		}
-
 		break;
 
 	case PDBG_BACKEND_CRONUS:
 		if (!pdbg_backend_option) {
-			pdbg_log(PDBG_ERROR, "No device type specified\n");
+			pdbg_log(PDBG_ERROR, "No system type specified\n");
 			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
 			return;
 		}
 
-		if (!strncmp(pdbg_backend_option, "p8", 2))
-			dtb->system = &_binary_p8_cronus_dtb_o_start;
-		else if (!strncmp(pdbg_backend_option, "p9", 2))
-			dtb->system = &_binary_p9_cronus_dtb_o_start;
-		else {
-			pdbg_log(PDBG_ERROR, "Invalid device type specified\n");
+		if (!strncmp(pdbg_backend_option, "p8", 2)) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p8_cronus_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p8_dtb_o_start;
+		} else if (!strncmp(pdbg_backend_option, "p9", 2)) {
+			if (!dtb->backend)
+				dtb->backend = &_binary_p9_cronus_dtb_o_start;
+			if (!dtb->system)
+				dtb->system = &_binary_p9_dtb_o_start;
+		} else {
+			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
-			return;
 		}
-
 		break;
 
 	default:
