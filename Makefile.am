@@ -35,6 +35,7 @@ AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror -O2
 
 EXTRA_DIST = \
 	fake.dts.m4 \
+	fake2.dts.m4 \
 	p8-fsi.dts.m4 \
 	p8-host.dts.m4 \
 	p8-i2c.dts.m4 \
@@ -63,7 +64,7 @@ if TARGET_PPC
 ARCH_FLAGS="-DTARGET_PPC=1"
 endif
 
-DT = fake.dts p8-cronus.dts p9-cronus.dts \
+DT = fake.dts fake2.dts p8-cronus.dts p9-cronus.dts \
      p8-fsi.dts p8-i2c.dts p8-kernel.dts \
      p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts \
      p8-host.dts p9-host.dts
