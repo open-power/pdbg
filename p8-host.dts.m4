@@ -4,7 +4,7 @@ define(`CHIP',`pib@$1 {
 	      compatible = "ibm,host-pib";
 	      reg = <$1>;
 	      index = <$1>;
-	      include(p8-pib.dts.m4)dnl
+	      system-path = "/proc$1/pib";
 	}')dnl
 
 /dts-v1/;

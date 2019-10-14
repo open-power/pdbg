@@ -44,6 +44,7 @@ CORE(14, 14)')dnl
 adu@2020000 {
 	compatible = "ibm,power8-adu";
 	reg = <0x0 0x2020000 0x4>;
+	device_tree_path = "CONCAT(/mem,PROC_ID)";
 };
 
 nhtm@2010880 {
