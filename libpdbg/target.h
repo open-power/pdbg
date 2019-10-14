@@ -53,6 +53,7 @@ struct pdbg_target {
 	struct pdbg_target *vnode;
 };
 
+struct pdbg_target *get_parent(struct pdbg_target *target, bool system);
 struct pdbg_target_class *find_target_class(const char *name);
 struct pdbg_target_class *require_target_class(const char *name);
 struct pdbg_target_class *get_target_class(struct pdbg_target *target);

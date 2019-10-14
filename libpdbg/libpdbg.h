@@ -19,7 +19,7 @@ struct pdbg_target_class;
 struct pdbg_target *__pdbg_next_compatible_node(struct pdbg_target *root,
                                                 struct pdbg_target *prev,
                                                 const char *compat);
-struct pdbg_target *__pdbg_next_target(const char *klass, struct pdbg_target *parent, struct pdbg_target *last);
+struct pdbg_target *__pdbg_next_target(const char *klass, struct pdbg_target *parent, struct pdbg_target *last, bool system);
 struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct pdbg_target *last, bool system);
 
 /*
@@ -61,14 +61,14 @@ enum pdbg_backend { PDBG_DEFAULT_BACKEND = 0, PDBG_BACKEND_FSI, PDBG_BACKEND_I2C
              (target = __pdbg_next_compatible_node(parent, target, compat)) != NULL;)
 
 #define pdbg_for_each_target(class, parent, target)			\
-	for (target = __pdbg_next_target(class, parent, NULL);		\
+	for (target = __pdbg_next_target(class, parent, NULL, true);	\
 	     target;							\
-	     target = __pdbg_next_target(class, parent, target))
+	     target = __pdbg_next_target(class, parent, target, true))
 
 #define pdbg_for_each_class_target(class, target)		\
-	for (target = __pdbg_next_target(class, NULL, NULL);	\
+	for (target = __pdbg_next_target(class, NULL, NULL, true);	\
 	     target;						\
-	     target = __pdbg_next_target(class, NULL, target))
+	     target = __pdbg_next_target(class, NULL, target, true))
 
 #define pdbg_for_each_child_target(parent, target)	      \
 	for (target = __pdbg_next_child_target(parent, NULL, true); \

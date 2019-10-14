@@ -6,7 +6,36 @@
 
 static pdbg_progress_tick_t progress_tick;
 
-struct pdbg_target *__pdbg_next_target(const char *class, struct pdbg_target *parent, struct pdbg_target *last)
+struct pdbg_target *get_parent(struct pdbg_target *target, bool system)
+{
+	struct pdbg_target *parent;
+
+	if (!target)
+		return NULL;
+
+	/*
+	 * To find a parent in the system tree:
+	 *   - If a target is real, map it to possible virtual target
+	 *   - Calculate the parent
+	 *   - If the parent is virtual, map it to real target
+	 *
+	 * To find a parent in the backend tree:
+	 *   - Target will be real or virtual without mapped real node
+	 *   - Calculate the parent
+	 *   - If the parent is virtual, map it to real target
+	 */
+	if (system)
+		target = target_to_virtual(target, false);
+
+	parent = target->parent;
+
+	if (!parent)
+		return NULL;
+
+	return target_to_real(parent, false);
+}
+
+struct pdbg_target *__pdbg_next_target(const char *class, struct pdbg_target *parent, struct pdbg_target *last, bool system)
 {
 	struct pdbg_target *next, *tmp;
 	struct pdbg_target_class *target_class;
@@ -33,7 +62,7 @@ retry:
 		return next;
 	else {
 		/* Check if this target is a child of the given parent */
-		for (tmp = next; tmp && next->parent && tmp != parent; tmp = tmp->parent) {}
+		for (tmp = next; tmp && get_parent(tmp, system) && tmp != parent; tmp = get_parent(tmp, system)) {}
 		if (tmp == parent)
 			return next;
 		else {
@@ -160,7 +189,7 @@ uint32_t pdbg_target_index(struct pdbg_target *target)
 {
 	struct pdbg_target *dn;
 
-	for (dn = target; dn && dn->index == -1; dn = dn->parent);
+	for (dn = target; dn && dn->index == -1; dn = get_parent(dn, true));
 
 	if (!dn)
 		return -1;
@@ -174,10 +203,15 @@ struct pdbg_target *pdbg_target_parent(const char *class, struct pdbg_target *ta
 	struct pdbg_target *parent;
 
 	if (!class)
-		return target->parent;
+		return get_parent(target, true);
 
-	for (parent = target->parent; parent && parent->parent; parent = parent->parent) {
-		if (!strcmp(class, pdbg_target_class_name(parent)))
+	for (parent = get_parent(target, true); parent && get_parent(parent, true); parent = get_parent(parent, true)) {
+		const char *tclass = pdbg_target_class_name(parent);
+
+		if (!tclass)
+			continue;
+
+		if (!strcmp(class, tclass))
 			return parent;
 	}
 

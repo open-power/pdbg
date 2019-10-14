@@ -277,10 +277,10 @@ static int thread_status_print(void)
 		assert(path_target_add(pib));
 	}
 
-	pib = __pdbg_next_target("pib", pdbg_target_root(), NULL);
+	pib = __pdbg_next_target("pib", pdbg_target_root(), NULL, true);
 	assert(pib);
 
-	core = __pdbg_next_target("core", pib, NULL);
+	core = __pdbg_next_target("core", pib, NULL, true);
 	assert(core);
 
 	pdbg_for_each_target("thread", core, thread)
