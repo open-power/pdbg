@@ -80,14 +80,14 @@
 
 static uint64_t thread_read(struct thread *thread, uint64_t addr, uint64_t *data)
 {
-	struct pdbg_target *chip = require_target_parent(&thread->target);
+	struct pdbg_target *chip = pdbg_target_require_parent("core", &thread->target);
 
 	return pib_read(chip, addr, data);
 }
 
 static uint64_t thread_write(struct thread *thread, uint64_t addr, uint64_t data)
 {
-	struct pdbg_target *chip = require_target_parent(&thread->target);
+	struct pdbg_target *chip = pdbg_target_require_parent("core", &thread->target);
 
 	return pib_write(chip, addr, data);
 }
