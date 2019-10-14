@@ -651,6 +651,102 @@ uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 	return dt_get_number(p->prop, na);
 }
 
+static struct pdbg_target *dt_new_virtual(struct pdbg_target *root, const char *system_path)
+{
+	char *parent_path, *sep;
+	struct pdbg_target *parent, *vnode;
+
+	parent_path = strdup(system_path);
+	assert(parent_path);
+
+	sep = strrchr(parent_path, '/');
+	if (!sep || sep[1] == '\0') {
+		PR_ERROR("Invalid path reference \"%s\"\n", system_path);
+		free(parent_path);
+		return NULL;
+	}
+
+	*sep = '\0';
+
+	parent = dt_find_by_path(root, parent_path);
+	if (!parent) {
+		PR_ERROR("Invalid path reference \"%s\"\n", system_path);
+		free(parent_path);
+		return NULL;
+	}
+
+	vnode = dt_new_node(sep+1, NULL, 0);
+	assert(vnode);
+
+	free(parent_path);
+
+	if (!dt_attach_node(parent, vnode)) {
+		free(vnode);
+		return NULL;
+	}
+
+	PR_DEBUG("Created virtual node %s\n", system_path);
+	return vnode;
+}
+
+static void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode)
+{
+	struct dt_property *prop = NULL, *next;
+
+	node->vnode = vnode;
+	vnode->vnode = node;
+
+	/* Move any properties on virtual node to real node */
+	list_for_each_safe(&vnode->properties, prop, next, list) {
+		if (!strcmp(prop->name, "#address-cells") || !strcmp(prop->name, "#size-cells"))
+			continue;
+
+		list_del(&prop->list);
+		list_add_tail(&node->properties, &prop->list);
+	}
+}
+
+static void pdbg_targets_init_virtual(struct pdbg_target *node, struct pdbg_target *root)
+{
+	struct pdbg_target *vnode, *child = NULL;
+	const char *system_path;
+	size_t len;
+
+	system_path = (const char *)pdbg_target_property(node, "system-path", &len);
+	if (!system_path)
+		goto skip;
+
+	/*
+	 * A virtual node identifies the attachment point of a node in the
+	 * system tree.
+	 */
+	vnode = dt_find_by_path(root, system_path);
+	if (!vnode)
+		vnode = dt_new_virtual(root, system_path);
+
+	/* If virtual node does not exist, or cannot be created, skip */
+	if (!vnode)
+		goto skip;
+
+	assert(target_is_virtual(vnode));
+
+	/*
+	 * If virtual node is not linked, then link with node;
+	 * otherwise skip
+	 */
+	if (!vnode->vnode)
+		dt_link_virtual(node, vnode);
+
+skip:
+	list_for_each(&node->children, child, list) {
+		/* If a virtual node is already linked, skip */
+		if (target_is_virtual(child) && child->vnode)
+			continue;
+
+		pdbg_targets_init_virtual(child, root);
+	}
+}
+
 void pdbg_targets_init(void *fdt)
 {
 	/* Root node needs to be valid when this function returns */
@@ -665,6 +761,7 @@ void pdbg_targets_init(void *fdt)
 	}
 
 	dt_expand(pdbg_dt_root, fdt);
+	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);
 }
 
 char *pdbg_target_path(struct pdbg_target *target)
