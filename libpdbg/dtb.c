@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include "libpdbg.h"
+#include "target.h"
 
 #include "fake.dt.h"
 

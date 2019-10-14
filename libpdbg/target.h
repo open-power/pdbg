@@ -64,6 +64,7 @@ bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 extern struct list_head empty_list;
 extern struct list_head target_classes;
 
+void *pdbg_default_dtb(void);
 const char *pdbg_get_backend_option(void);
 
 struct sbefifo *pib_to_sbefifo(struct pdbg_target *target);

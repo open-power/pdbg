@@ -108,7 +108,6 @@ void pdbg_target_release(struct pdbg_target *target);
 enum pdbg_target_status pdbg_target_status(struct pdbg_target *target);
 void pdbg_target_status_set(struct pdbg_target *target, enum pdbg_target_status status);
 bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option);
-void *pdbg_default_dtb(void);
 uint32_t pdbg_target_index(struct pdbg_target *target);
 char *pdbg_target_path(struct pdbg_target *target);
 struct pdbg_target *pdbg_target_from_path(struct pdbg_target *target, const char *path);
