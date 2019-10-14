@@ -83,10 +83,12 @@ static void *ppc_target(void)
 	char line[256];
 	FILE *cpuinfo;
 
-	if (!strcmp(pdbg_backend_option, "p8"))
-		return &_binary_p8_host_dtb_o_start;
-	else if (!strcmp(pdbg_backend_option, "p9"))
-		return &_binary_p9_host_dtb_o_start;
+	if (pdbg_backend_option) {
+		if (!strcmp(pdbg_backend_option, "p8"))
+			return &_binary_p8_host_dtb_o_start;
+		else if (!strcmp(pdbg_backend_option, "p9"))
+			return &_binary_p9_host_dtb_o_start;
+	}
 
 	cpuinfo = fopen("/proc/cpuinfo", "r");
 	if (!cpuinfo)
