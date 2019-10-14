@@ -29,7 +29,7 @@
 /* Check if a target has scom region */
 static bool scommable(struct pdbg_target *target)
 {
-	char *classname;
+	const char *classname;
 
 	classname = pdbg_target_class_name(target);
 	if (!strcmp(classname, "pib") ||

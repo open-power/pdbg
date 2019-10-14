@@ -518,7 +518,7 @@ static void print_target(struct pdbg_target *target, int level)
 	int i;
 	struct pdbg_target *next;
 	enum pdbg_target_status status;
-	char *classname;
+	const char *classname;
 
 	/* Does this target actually exist? */
 	status = pdbg_target_status(target);

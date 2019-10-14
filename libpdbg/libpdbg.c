@@ -120,12 +120,12 @@ uint32_t pdbg_parent_index(struct pdbg_target *target, char *class)
 		return -1;
 }
 
-char *pdbg_target_class_name(struct pdbg_target *target)
+const char *pdbg_target_class_name(struct pdbg_target *target)
 {
 	return target->class;
 }
 
-char *pdbg_target_name(struct pdbg_target *target)
+const char *pdbg_target_name(struct pdbg_target *target)
 {
 	return target->name;
 }
