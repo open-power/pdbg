@@ -473,3 +473,15 @@ bool target_is_virtual(struct pdbg_target *target)
 {
 	return (!target->compatible);
 }
+
+/* Map virtual target to real target */
+struct pdbg_target *target_to_real(struct pdbg_target *target, bool strict)
+{
+	if (!target->compatible && target->vnode)
+		return target->vnode;
+
+	if (strict)
+		return NULL;
+
+	return target;
+}
