@@ -596,7 +596,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (backend)
-		pdbg_set_backend(backend, device_node);
+		if (!pdbg_set_backend(backend, device_node))
+			return 1;
 
 	if (!pdbg_targets_init(NULL))
 		return 1;

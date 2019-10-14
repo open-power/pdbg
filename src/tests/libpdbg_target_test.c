@@ -65,7 +65,7 @@ int main(void)
 	const char *name;
 	int count, i;
 
-	pdbg_set_backend(PDBG_BACKEND_FAKE, NULL);
+	assert(pdbg_set_backend(PDBG_BACKEND_FAKE, NULL));
 	assert(pdbg_targets_init(NULL));
 
 	root = pdbg_target_root();

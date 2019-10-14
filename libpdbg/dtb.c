@@ -216,12 +216,17 @@ fail:
 	return NULL;
 }
 
-int pdbg_set_backend(enum pdbg_backend backend, const char *backend_option)
+bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option)
 {
+	if (pdbg_target_root()) {
+		pdbg_log(PDBG_ERROR, "pdbg_set_backend() must be called before pdbg_targets_init()\n");
+		return false;
+	}
+
 	pdbg_backend = backend;
 	pdbg_backend_option = backend_option;
 
-	return 0;
+	return true;
 }
 
 const char *pdbg_get_backend_option(void)

@@ -73,7 +73,7 @@ static void test1(void)
 {
 	struct pdbg_target *root, *target;
 
-	pdbg_set_backend(PDBG_BACKEND_FAKE, NULL);
+	assert(pdbg_set_backend(PDBG_BACKEND_FAKE, NULL));
 	assert(pdbg_targets_init(NULL));
 
 	root = pdbg_target_root();
@@ -121,7 +121,7 @@ static void test2(void)
 	struct pdbg_target *root, *target;
 	enum pdbg_target_status status;
 
-	pdbg_set_backend(PDBG_BACKEND_FAKE, NULL);
+	assert(pdbg_set_backend(PDBG_BACKEND_FAKE, NULL));
 	assert(pdbg_targets_init(NULL));
 
 	root = pdbg_target_root();
@@ -198,7 +198,7 @@ static void test3(void)
 	struct pdbg_target *root, *target;
 	enum pdbg_target_status status;
 
-	pdbg_set_backend(PDBG_BACKEND_FAKE, NULL);
+	assert(pdbg_set_backend(PDBG_BACKEND_FAKE, NULL));
 	assert(pdbg_targets_init(NULL));
 
 	root = pdbg_target_root();
