@@ -43,18 +43,102 @@ retry:
 	}
 }
 
-struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct pdbg_target *last)
+static struct pdbg_target *target_map_child(struct pdbg_target *next, bool system)
 {
-	if (!parent || list_empty(&parent->children))
+	/*
+	 * Map a target in system tree:
+	 *
+	 * - If there is no virtual node assiociated, then return the target
+	 *   (the target itself can be virtual or real)
+	 *
+	 * - If there is virtual node associated,
+	 *     - If the target is virtual, return the associated node
+	 *     - If the target is real, return NULL
+	 *       (this target is already covered by previous condition)
+	 *
+	 * Map a target in backend tree:
+	 *
+	 *  - If the target is real, return the target
+	 *
+	 *  - If the target is virtual, return NULL
+	 *    (no virtual nodes in backend tree)
+	 */
+	if (system) {
+		if (!next->vnode)
+			return next;
+		else
+			if (target_is_virtual(next))
+				return next->vnode;
+	} else {
+		if (!target_is_virtual(next))
+			return next;
+	}
+
+	return NULL;
+}
+
+struct pdbg_target *__pdbg_next_child_target(struct pdbg_target *parent, struct pdbg_target *last, bool system)
+{
+	struct pdbg_target *next, *child = NULL;
+
+	if (!parent)
 		return NULL;
 
-	if (!last)
-		return list_top(&parent->children, struct pdbg_target, list);
+	/*
+	 * Parent node can be virtual or real.
+	 *
+	 * If the parent node doesn't have any children,
+	 *    - If there is associated virtual node,
+	 *        Use that node as parent
+	 *
+	 *    - If there is no associated virtual node,
+	 *        No children
+	 */
+	if (list_empty(&parent->children)) {
+		if (parent->vnode)
+			parent = parent->vnode;
+		else
+			return NULL;
+	}
 
-	if (last->list.next == &parent->children.n)
+	 /*
+	 * If the parent node has children,
+	 *    - Traverse the children
+	 *       (map the children in system or backend tree)
+	 */
+	if (!last) {
+		list_for_each(&parent->children, child, list)
+			if ((next = target_map_child(child, system)))
+				return next;
+
+		return NULL;
+	}
+
+	/*
+	 * In a system tree traversal, virtual targets with associated
+	 * nodes, get mapped to real targets.
+	 *
+	 * When the last child is specified:
+	 *   - If in a system tree traverse, and
+	 *     the last child has associated node, and
+	 *     the last child is real
+	 *        Then the last child is not the actual child of the parent
+	 *          (the associated virtual node is the actual child)
+	 */
+	if (system)
+		last = target_to_virtual(last, false);
+
+	if (last == list_tail(&parent->children, struct pdbg_target, list))
 		return NULL;
 
-	return list_entry(last->list.next, struct pdbg_target, list);
+	child = last;
+	do {
+		child = list_entry(child->list.next, struct pdbg_target, list);
+		if ((next = target_map_child(child, system)))
+			return next;
+	} while (child != list_tail(&parent->children, struct pdbg_target, list));
+
+	return NULL;
 }
 
 enum pdbg_target_status pdbg_target_status(struct pdbg_target *target)
