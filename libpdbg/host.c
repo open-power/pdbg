@@ -85,9 +85,10 @@ static int host_pib_probe(struct pdbg_target *target)
 	struct pib *pib = target_to_pib(target);
 	int fd;
 	char *access_fn;
-	uint32_t index;
+	uint32_t chip;
 
-	index = pdbg_target_index(target);
+	if (pdbg_target_u32_property(target, "reg", &chip))
+		return -1;
 
 	/* This check should probably be done earlier */
 	if (access(XSCOM_BASE_PATH, F_OK) == -1)
@@ -97,7 +98,7 @@ static int host_pib_probe(struct pdbg_target *target)
 		PR_ERROR("You may need to re-run the command as root.\n");
 	}
 
-	if (asprintf(&access_fn, "%s/%08x/access", XSCOM_BASE_PATH, index) < 0)
+	if (asprintf(&access_fn, "%s/%08x/access", XSCOM_BASE_PATH, chip) < 0)
 		return -1;
 
 	fd = open(access_fn, O_RDWR);
