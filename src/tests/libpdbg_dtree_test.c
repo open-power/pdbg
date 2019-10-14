@@ -101,7 +101,7 @@ int main(int argc, const char **argv)
 		usage();
 	}
 
-	pdbg_targets_init(NULL);
+	assert(pdbg_targets_init(NULL));
 
 	target = pdbg_target_from_path(NULL, argv[3]);
 	if (!target)

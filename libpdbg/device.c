@@ -747,23 +747,25 @@ skip:
 	}
 }
 
-void pdbg_targets_init(void *fdt)
+bool pdbg_targets_init(void *fdt)
 {
 	if (!fdt)
 		fdt = pdbg_default_dtb();
 
 	if (!fdt) {
 		pdbg_log(PDBG_ERROR, "Could not find a system device tree\n");
-		return;
+		return false;
 	}
 
 	/* Root node needs to be valid when this function returns */
 	pdbg_dt_root = dt_new_node("", NULL, 0);
-	assert(pdbg_dt_root);
+	if (!pdbg_dt_root)
+		return false;
 
 	dt_expand(pdbg_dt_root, fdt);
 
 	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);
+	return true;
 }
 
 char *pdbg_target_path(struct pdbg_target *target)

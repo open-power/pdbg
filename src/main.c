@@ -598,7 +598,8 @@ int main(int argc, char *argv[])
 	if (backend)
 		pdbg_set_backend(backend, device_node);
 
-	pdbg_targets_init(NULL);
+	if (!pdbg_targets_init(NULL))
+		return 1;
 
 	if (pathsel_count) {
 		if (!path_target_parse(pathsel, pathsel_count))
