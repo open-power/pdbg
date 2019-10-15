@@ -1,4 +1,4 @@
-AC_INIT([pdbg], [2.3])
+AC_INIT([pdbg], [2.4])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 
