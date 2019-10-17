@@ -34,7 +34,7 @@ static int istep(uint32_t major, uint32_t minor)
 		return 0;
 	}
 
-	for_each_path_target_class("sbefifo", target) {
+	for_each_path_target_class("pib", target) {
 		int rc;
 
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
