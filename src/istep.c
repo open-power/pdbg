@@ -20,18 +20,40 @@
 #include "optcmd.h"
 #include "path.h"
 
+struct istep_data {
+	int major;
+	int minor_first;
+	int minor_last;
+} istep_data[] = {
+	{ 2, 2, 17 },
+	{ 3, 1, 22 },
+	{ 4, 1, 34 },
+	{ 5, 1,  2 },
+	{ 0, 0, 0  },
+};
+
 static int istep(uint32_t major, uint32_t minor)
 {
 	struct pdbg_target *target;
-	int count = 0;
+	int count = 0, i;
 
 	if (major < 2 || major > 5) {
 		fprintf(stderr, "Istep major should be 2 to 5\n");
 		return 0;
 	}
-	if (major == 2 && minor == 1) {
-		fprintf(stderr, "Istep 2 minor should be > 1\n");
-		return 0;
+
+	for (i=0; istep_data[i].major != 0; i++) {
+		if (istep_data[i].major != major)
+			continue;
+
+		if (minor < istep_data[i].minor_first ||
+		    minor > istep_data[i].minor_last) {
+			fprintf(stderr, "Istep %d minor should be %d to %d\n",
+				major,
+				istep_data[i].minor_first,
+				istep_data[i].minor_last);
+			return 0;
+		}
 	}
 
 	for_each_path_target_class("pib", target) {
