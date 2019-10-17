@@ -36,6 +36,7 @@ static int istep(uint32_t major, uint32_t minor)
 {
 	struct pdbg_target *target;
 	int count = 0, i;
+	int first = minor, last = minor;
 
 	if (major < 2 || major > 5) {
 		fprintf(stderr, "Istep major should be 2 to 5\n");
@@ -45,6 +46,12 @@ static int istep(uint32_t major, uint32_t minor)
 	for (i=0; istep_data[i].major != 0; i++) {
 		if (istep_data[i].major != major)
 			continue;
+
+		if (minor == 0) {
+			first = istep_data[i].minor_first;
+			last = istep_data[i].minor_last;
+			break;
+		}
 
 		if (minor < istep_data[i].minor_first ||
 		    minor > istep_data[i].minor_last) {
@@ -62,11 +69,17 @@ static int istep(uint32_t major, uint32_t minor)
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		rc = sbe_istep(target, major, minor);
-		if (!rc)
-			count++;
+		for (i = first; i <= last ; i++) {
+			printf("Running istep %d.%d\n", major, i);
+			rc = sbe_istep(target, major, i);
+			if (rc)
+				goto fail;
+		}
+
+		count++;
 	}
 
+fail:
 	return count;
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(istep, istep, (DATA32, DATA32));
