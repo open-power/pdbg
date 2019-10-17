@@ -280,7 +280,7 @@ struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
 	index = pdbg_target_index(pib);
 
 	pdbg_for_each_class_target("sbefifo", sbefifo) {
-		if (pdbg_target_index(sbefifo) == index)
+		if (pdbg_target_index(sbefifo) != index)
 			continue;
 
 		if (pdbg_target_probe(sbefifo) == PDBG_TARGET_ENABLED)
