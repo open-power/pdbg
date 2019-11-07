@@ -53,6 +53,26 @@ int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out)
 	return 0;
 }
 
+int sbefifo_connect_transport(sbefifo_transport_fn transport, void *priv, struct sbefifo_context **out)
+{
+	struct sbefifo_context *sctx;
+
+	sctx = malloc(sizeof(struct sbefifo_context));
+	if (!sctx) {
+		fprintf(stderr, "Memory allocation error\n");
+		return ENOMEM;
+	}
+
+	*sctx = (struct sbefifo_context) {
+		.fd = -1,
+		.transport = transport,
+		.priv = priv,
+	};
+
+	*out = sctx;
+	return 0;
+}
+
 void sbefifo_disconnect(struct sbefifo_context *sctx)
 {
 	if (sctx->fd != -1)

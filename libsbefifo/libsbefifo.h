@@ -55,6 +55,7 @@ typedef int (*sbefifo_transport_fn)(uint8_t *msg, uint32_t msg_len,
 				    void *private_data);
 
 int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out);
+int sbefifo_connect_transport(sbefifo_transport_fn transport, void *priv, struct sbefifo_context **out);
 void sbefifo_disconnect(struct sbefifo_context *sctx);
 
 int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
