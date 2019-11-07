@@ -23,147 +23,185 @@
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
-int sbefifo_get_ffdc(struct sbefifo_context *sctx, uint8_t **ffdc, uint32_t *ffdc_len)
+static int sbefifo_get_ffdc_push(uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *out;
-	uint32_t msg[2];
-	uint32_t cmd, out_len;
-	int rc;
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
 
 	cmd = SBEFIFO_CMD_CLASS_GENERIC | SBEFIFO_CMD_GET_FFDC;
 
-	msg[0] = htobe32(2);	// number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_get_ffdc_pull(uint8_t *buf, uint32_t buflen, uint8_t **ffdc, uint32_t *ffdc_len)
+{
+	*ffdc_len = buflen;
+	*ffdc = buf;
+
+	return 0;
+}
+
+int sbefifo_get_ffdc(struct sbefifo_context *sctx, uint8_t **ffdc, uint32_t *ffdc_len)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_get_ffdc_push(&msg, &msg_len);
+	if (rc)
+		return rc;
 
 	/* We don't know how much data to expect, let's assume it's less than 32K */
 	out_len = 0x8000;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
 	if (rc)
 		return rc;
 
-	*ffdc_len = out_len;
-	if (out_len > 0) {
-		*ffdc = malloc(out_len);
-		if (! *ffdc) {
-			free(out);
-			return ENOMEM;
-		}
-		memcpy(*ffdc, out, out_len);
-
-		free(out);
-	} else {
-		*ffdc = NULL;
-	}
-
-	return 0;
+	rc = sbefifo_get_ffdc_pull(out, out_len, ffdc, ffdc_len);
+	return rc;
 }
 
-int sbefifo_get_capabilities(struct sbefifo_context *sctx, uint32_t *version, char **commit_id, uint32_t **caps, uint32_t *caps_count)
+static int sbefifo_get_capabilities_push(uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *out;
-	uint32_t msg[2];
-	uint32_t cmd, out_len;
-	uint32_t i;
-	int rc;
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
 
 	cmd = SBEFIFO_CMD_CLASS_GENERIC | SBEFIFO_CMD_GET_CAPABILITY;
 
-	msg[0] = htobe32(2);	// number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 
-	out_len = 23 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
-	if (rc)
-		return rc;
-
-	if (out_len != 23 * 4) {
-		free(out);
-		return EPROTO;
-	}
-
-	*version = be32toh(*(uint32_t *) &out[0]);
-
-	*commit_id = malloc(9);
-	if (! *commit_id) {
-		free(out);
-		return ENOMEM;
-	}
-	memcpy(*commit_id, &out[4], 8);
-	(*commit_id)[8] = '\0';
-
-	*caps = malloc(20 * 4);
-	if (! *caps) {
-		free(out);
-		return ENOMEM;
-	}
-
-	*caps_count = 20;
-	for (i=0; i<20; i++)
-		(*caps)[i] = be32toh(*(uint32_t *) &out[12+i*4]);
-
-	free(out);
+	*buf = (uint8_t *)msg;
 	return 0;
 }
 
-int sbefifo_get_frequencies(struct sbefifo_context *sctx, uint32_t **freq, uint32_t *freq_count)
+static int sbefifo_get_capabilities_pull(uint8_t *buf, uint32_t buflen, uint32_t *version, char **commit_id, char **release_tag, uint32_t **caps, uint32_t *caps_count)
 {
-	uint8_t *out;
-	uint32_t msg[2];
-	uint32_t cmd, out_len;
+	uint32_t i;
+
+	if (buflen != 26 * sizeof(uint32_t))
+		return EPROTO;
+
+	*version = be32toh(*(uint32_t *) &buf[0]);
+
+	*commit_id = malloc(9);
+	if (! *commit_id)
+		return ENOMEM;
+
+	memcpy(*commit_id, &buf[4], 8);
+	(*commit_id)[8] = '\0';
+
+	*release_tag = malloc(21);
+	if (! *release_tag)
+		return ENOMEM;
+
+	memcpy(*release_tag, &buf[12], 20);
+	(*release_tag)[20] = '\0';
+
+	*caps = malloc(20 * sizeof(uint32_t));
+	if (! *caps)
+		return ENOMEM;
+
+	*caps_count = 20;
+	for (i=0; i<20; i++)
+		(*caps)[i] = be32toh(*(uint32_t *) &buf[32+i*4]);
+
+	return 0;
+}
+
+int sbefifo_get_capabilities(struct sbefifo_context *sctx, uint32_t *version, char **commit_id, char **release_tag, uint32_t **caps, uint32_t *caps_count)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
 	int rc;
 
-	cmd = SBEFIFO_CMD_CLASS_GENERIC | SBEFIFO_CMD_GET_FREQUENCY;
-
-	msg[0] = htobe32(2);	// number of words
-	msg[1] = htobe32(cmd);
-
-	out_len = 8 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
+	rc = sbefifo_get_capabilities_push(&msg, &msg_len);
 	if (rc)
 		return rc;
 
-	*freq_count = out_len / 4;
-	if (*freq_count > 0) {
-		uint32_t i;
+	/*
+	 * Major/minor version - 1 word
+	 * GIT Sha - 1 word
+	 * Release tag - 5 words
+	 * Capabilities - 20 words
+	 */
+	out_len = 27 * sizeof(uint32_t);
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
 
-		*freq = malloc(*freq_count * 4);
-		if (! *freq) {
-			free(out);
-			return ENOMEM;
-		}
-
-		for (i=0; i<*freq_count; i++)
-			(*freq)[i] = be32toh(*(uint32_t *) &out[i*4]);
-
+	rc = sbefifo_get_capabilities_pull(out, out_len, version, commit_id, release_tag, caps, caps_count);
+	if (out)
 		free(out);
-	} else {
-		*freq = NULL;
-	}
+
+	return rc;
+}
+
+static int sbefifo_quiesce_push(uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
+	cmd = SBEFIFO_CMD_CLASS_GENERIC | SBEFIFO_CMD_QUIESCE;
+
+	msg[0] = htobe32(nwords);
+	msg[1] = htobe32(cmd);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_quiesce_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != 0)
+		return EPROTO;
 
 	return 0;
 }
 
 int sbefifo_quiesce(struct sbefifo_context *sctx)
 {
-	uint8_t *out;
-	uint32_t msg[2];
-	uint32_t cmd, out_len;
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
 	int rc;
 
-	cmd = SBEFIFO_CMD_CLASS_GENERIC | SBEFIFO_CMD_GET_FREQUENCY;
-
-	msg[0] = htobe32(2);	// number of words
-	msg[1] = htobe32(cmd);
-
-	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
+	rc = sbefifo_quiesce_push(&msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len != 0) {
-		free(out);
-		return EPROTO;
-	}
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
 
-	return 0;
+	rc = sbefifo_quiesce_pull(out, out_len);
+	if (out)
+		free(out);
+
+	return rc;
 }

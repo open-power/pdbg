@@ -54,8 +54,7 @@
 #define SBEFIFO_CMD_CLASS_GENERIC        0xA800
 #define   SBEFIFO_CMD_GET_FFDC             0x01
 #define   SBEFIFO_CMD_GET_CAPABILITY       0x02
-#define   SBEFIFO_CMD_GET_FREQUENCY        0x03
-#define   SBEFIFO_CMD_QUIESCE              0x05
+#define   SBEFIFO_CMD_QUIESCE              0x03
 
 #define SBEFIFO_CMD_CLASS_MPIPL          0xA900
 #define SBEFIFO_CMD_ENTER_MPIPL            0x01
