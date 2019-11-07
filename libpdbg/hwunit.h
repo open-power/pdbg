@@ -79,6 +79,7 @@ struct chipop {
 struct sbefifo {
 	struct pdbg_target target;
 	struct sbefifo_context *sf_ctx;
+	struct sbefifo_context * (*get_sbefifo_context)(struct sbefifo *);
 };
 #define target_to_sbefifo(x) container_of(x, struct sbefifo, target)
 

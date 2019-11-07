@@ -150,6 +150,11 @@ static int sbefifo_op_thread_sreset(struct chipop *chipop,
 	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_SRESET);
 }
 
+static struct sbefifo_context *sbefifo_op_get_context(struct sbefifo *sbefifo)
+{
+	return sbefifo->sf_ctx;
+}
+
 static int sbefifo_probe(struct pdbg_target *target)
 {
 	struct sbefifo *sf = target_to_sbefifo(target);
@@ -209,6 +214,7 @@ static struct sbefifo kernel_sbefifo = {
 		.probe = sbefifo_probe,
 		.release = sbefifo_release,
 	},
+	.get_sbefifo_context = sbefifo_op_get_context,
 };
 DECLARE_HW_UNIT(kernel_sbefifo);
 
