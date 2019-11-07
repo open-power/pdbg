@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <errno.h>
 
 #include <libcronus/libcronus.h>
+#include <libsbefifo/libsbefifo.h>
 
 #include "hwunit.h"
 #include "debug.h"
@@ -138,6 +137,47 @@ static int cronus_fsi_write(struct fsi *fsi, uint32_t addr, uint32_t value)
 	return 0;
 }
 
+static struct sbefifo_context *cronus_sbefifo_context(struct sbefifo *sbefifo)
+{
+	return sbefifo->sf_ctx;
+}
+
+static int cronus_sbefifo_transport(uint8_t *msg, uint32_t msg_len,
+				    uint8_t *out, uint32_t *out_len,
+				    void *priv)
+{
+	struct sbefifo *sf = (struct sbefifo *)priv;
+
+	return cronus_submit(cctx, pdbg_target_index(&sf->target),
+			     msg, msg_len, out, out_len);
+}
+
+static int cronus_sbefifo_probe(struct pdbg_target *target)
+{
+	struct sbefifo *sf = target_to_sbefifo(target);
+	int rc;
+
+	rc = cronus_probe(target);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_connect_transport(cronus_sbefifo_transport, sf, &sf->sf_ctx);
+	if (rc) {
+		PR_ERROR("Unable to initialize sbefifo driver\n");
+		return rc;
+	}
+
+	return 0;
+}
+
+static void cronus_sbefifo_release(struct pdbg_target *target)
+{
+	struct sbefifo *sf = target_to_sbefifo(target);
+
+	sbefifo_disconnect(sf->sf_ctx);
+	cronus_release(target);
+}
+
 static struct pib cronus_pib = {
 	.target = {
 		.name =	"Cronus Client based PIB",
@@ -164,9 +204,22 @@ static struct fsi cronus_fsi = {
 };
 DECLARE_HW_UNIT(cronus_fsi);
 
+static struct sbefifo cronus_sbefifo = {
+	.target = {
+		.name =	"Cronus Client based SBE FIFO",
+		.compatible = "ibm,cronus-sbefifo",
+		.class = "sbefifo_transport",
+		.probe = cronus_sbefifo_probe,
+		.release = cronus_sbefifo_release,
+	},
+	.get_sbefifo_context = cronus_sbefifo_context,
+};
+DECLARE_HW_UNIT(cronus_sbefifo);
+
 __attribute__((constructor))
 static void register_cronus(void)
 {
 	pdbg_hwunit_register(&cronus_pib_hw_unit);
 	pdbg_hwunit_register(&cronus_fsi_hw_unit);
+	pdbg_hwunit_register(&cronus_sbefifo_hw_unit);
 }
