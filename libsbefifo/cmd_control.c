@@ -22,29 +22,57 @@
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
-int sbefifo_istep_execute(struct sbefifo_context *sctx, uint8_t major, uint8_t minor)
+static int sbefifo_istep_execute_push(uint8_t major, uint8_t minor, uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *out;
-	uint32_t msg[3];
-	uint32_t cmd, step, out_len;
-	int rc;
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+	uint32_t step;
+
+	nwords = 3;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
 
 	cmd = SBEFIFO_CMD_CLASS_CONTROL | SBEFIFO_CMD_EXECUTE_ISTEP;
+
 	step = (major << 16) | minor;
 
-	msg[0] = htobe32(3);	// number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(step);
 
-	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_istep_execute_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != 0)
+		return EPROTO;
+
+	return 0;
+}
+
+int sbefifo_istep_execute(struct sbefifo_context *sctx, uint8_t major, uint8_t minor)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_istep_execute_push(major, minor, &msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len != 0) {
-		free(out);
-		return EPROTO;
-	}
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
 
-	return 0;
+	rc = sbefifo_istep_execute_pull(out, out_len);
+	if (out)
+		free(out);
+
+	return rc;
 }
