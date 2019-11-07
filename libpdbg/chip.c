@@ -160,17 +160,17 @@ int thread_step_all(void)
 	int rc = 0, count = 0;
 
 	pdbg_for_each_class_target("pib", pib) {
-		struct sbefifo *sbefifo;
+		struct chipop *chipop;
 
-		sbefifo = pib_to_sbefifo(pib);
-		if (!sbefifo)
+		chipop = pib_to_chipop(pib);
+		if (!chipop)
 			break;
 
 		/*
 		 * core_id = 0xff (all SMT4 cores)
 		 * thread_id = 0xf (all 4 threads in the SMT4 core)
 		 */
-		rc |= sbefifo->thread_step(sbefifo, 0xff, 0xf);
+		rc |= chipop->thread_step(chipop, 0xff, 0xf);
 		count++;
 	}
 
@@ -193,17 +193,17 @@ int thread_start_all(void)
 	int rc = 0, count = 0;
 
 	pdbg_for_each_class_target("pib", pib) {
-		struct sbefifo *sbefifo;
+		struct chipop *chipop;
 
-		sbefifo = pib_to_sbefifo(pib);
-		if (!sbefifo)
+		chipop = pib_to_chipop(pib);
+		if (!chipop)
 			break;
 
 		/*
 		 * core_id = 0xff (all SMT4 cores)
 		 * thread_id = 0xf (all 4 threads in the SMT4 core)
 		 */
-		rc |= sbefifo->thread_start(sbefifo, 0xff, 0xf);
+		rc |= chipop->thread_start(chipop, 0xff, 0xf);
 		count++;
 	}
 
@@ -226,17 +226,17 @@ int thread_stop_all(void)
 	int rc = 0, count = 0;
 
 	pdbg_for_each_class_target("pib", pib) {
-		struct sbefifo *sbefifo;
+		struct chipop *chipop;
 
-		sbefifo = pib_to_sbefifo(pib);
-		if (!sbefifo)
+		chipop = pib_to_chipop(pib);
+		if (!chipop)
 			break;
 
 		/*
 		 * core_id = 0xff (all SMT4 cores)
 		 * thread_id = 0xf (all 4 threads in the SMT4 core)
 		 */
-		rc |= sbefifo->thread_stop(sbefifo, 0xff, 0xf);
+		rc |= chipop->thread_stop(chipop, 0xff, 0xf);
 		count++;
 	}
 
@@ -259,17 +259,17 @@ int thread_sreset_all(void)
 	int rc = 0, count = 0;
 
 	pdbg_for_each_class_target("pib", pib) {
-		struct sbefifo *sbefifo;
+		struct chipop *chipop;
 
-		sbefifo = pib_to_sbefifo(pib);
-		if (!sbefifo)
+		chipop = pib_to_chipop(pib);
+		if (!chipop)
 			break;
 
 		/*
 		 * core_id = 0xff (all SMT4 cores)
 		 * thread_id = 0xf (all 4 threads in the SMT4 core)
 		 */
-		rc |= sbefifo->thread_sreset(sbefifo, 0xff, 0xf);
+		rc |= chipop->thread_sreset(chipop, 0xff, 0xf);
 		count++;
 	}
 

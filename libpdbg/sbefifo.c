@@ -25,19 +25,6 @@
 #include "hwunit.h"
 #include "debug.h"
 
-static uint32_t sbefifo_op_ffdc_get(struct sbefifo *sbefifo, const uint8_t **ffdc, uint32_t *ffdc_len)
-{
-	return sbefifo_ffdc_get(sbefifo->sf_ctx, ffdc, ffdc_len);
-}
-
-static int sbefifo_op_istep(struct sbefifo *sbefifo,
-			    uint32_t major, uint32_t minor)
-{
-	PR_NOTICE("sbefifo: istep %u.%u\n", major, minor);
-
-	return sbefifo_istep_execute(sbefifo->sf_ctx, major & 0xff, minor & 0xff);
-}
-
 static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 			     uint64_t addr, uint8_t *data, uint64_t size,
 			     uint8_t block_size, bool ci)
@@ -105,10 +92,28 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 	return 0;
 }
 
-static int sbefifo_op_control(struct sbefifo *sbefifo,
+static uint32_t sbefifo_op_ffdc_get(struct chipop *chipop, const uint8_t **ffdc, uint32_t *ffdc_len)
+{
+	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+
+	return sbefifo_ffdc_get(sbefifo->sf_ctx, ffdc, ffdc_len);
+}
+
+static int sbefifo_op_istep(struct chipop *chipop,
+			    uint32_t major, uint32_t minor)
+{
+	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+
+	PR_NOTICE("sbefifo: istep %u.%u\n", major, minor);
+
+	return sbefifo_istep_execute(sbefifo->sf_ctx, major & 0xff, minor & 0xff);
+}
+
+static int sbefifo_op_control(struct chipop *chipop,
 			      uint32_t core_id, uint32_t thread_id,
 			      uint32_t oper)
 {
+	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
 	uint8_t mode = 0;
 
 	/* Enforce special-wakeup for thread stop and sreset */
@@ -121,28 +126,28 @@ static int sbefifo_op_control(struct sbefifo *sbefifo,
 	return sbefifo_control_insn(sbefifo->sf_ctx, core_id & 0xff, thread_id & 0xff, oper & 0xff, mode);
 }
 
-static int sbefifo_op_thread_start(struct sbefifo *sbefifo,
+static int sbefifo_op_thread_start(struct chipop *chipop,
 				   uint32_t core_id, uint32_t thread_id)
 {
-	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_START);
+	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_START);
 }
 
-static int sbefifo_op_thread_stop(struct sbefifo *sbefifo,
+static int sbefifo_op_thread_stop(struct chipop *chipop,
 				  uint32_t core_id, uint32_t thread_id)
 {
-	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_STOP);
+	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_STOP);
 }
 
-static int sbefifo_op_thread_step(struct sbefifo *sbefifo,
+static int sbefifo_op_thread_step(struct chipop *chipop,
 				  uint32_t core_id, uint32_t thread_id)
 {
-	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_STEP);
+	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_STEP);
 }
 
-static int sbefifo_op_thread_sreset(struct sbefifo *sbefifo,
+static int sbefifo_op_thread_sreset(struct chipop *chipop,
 				    uint32_t core_id, uint32_t thread_id)
 {
-	return sbefifo_op_control(sbefifo, core_id, thread_id, SBEFIFO_INSN_OP_SRESET);
+	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_SRESET);
 }
 
 static int sbefifo_probe(struct pdbg_target *target)
@@ -181,6 +186,21 @@ static struct mem sbefifo_mem = {
 };
 DECLARE_HW_UNIT(sbefifo_mem);
 
+static struct chipop sbefifo_chipop = {
+	.target = {
+		.name = "SBE FIFO Chip-op engine",
+		.compatible = "ibm,sbefifo-chipop",
+		.class = "chipop",
+	},
+	.ffdc_get = sbefifo_op_ffdc_get,
+	.istep = sbefifo_op_istep,
+	.thread_start = sbefifo_op_thread_start,
+	.thread_stop = sbefifo_op_thread_stop,
+	.thread_step = sbefifo_op_thread_step,
+	.thread_sreset = sbefifo_op_thread_sreset,
+};
+DECLARE_HW_UNIT(sbefifo_chipop);
+
 static struct sbefifo kernel_sbefifo = {
 	.target = {
 		.name =	"Kernel based FSI SBE FIFO",
@@ -189,12 +209,6 @@ static struct sbefifo kernel_sbefifo = {
 		.probe = sbefifo_probe,
 		.release = sbefifo_release,
 	},
-	.istep = sbefifo_op_istep,
-	.thread_start = sbefifo_op_thread_start,
-	.thread_stop = sbefifo_op_thread_stop,
-	.thread_step = sbefifo_op_thread_step,
-	.thread_sreset = sbefifo_op_thread_sreset,
-	.ffdc_get = sbefifo_op_ffdc_get,
 };
 DECLARE_HW_UNIT(kernel_sbefifo);
 
@@ -202,5 +216,6 @@ __attribute__((constructor))
 static void register_sbefifo(void)
 {
 	pdbg_hwunit_register(&kernel_sbefifo_hw_unit);
+	pdbg_hwunit_register(&sbefifo_chipop_hw_unit);
 	pdbg_hwunit_register(&sbefifo_mem_hw_unit);
 }

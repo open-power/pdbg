@@ -290,26 +290,45 @@ struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
 	return NULL;
 }
 
+struct chipop *pib_to_chipop(struct pdbg_target *pib)
+{
+	struct pdbg_target *chipop;
+	uint32_t index;
+
+	assert(pdbg_target_is_class(pib, "pib"));
+	index = pdbg_target_index(pib);
+
+	pdbg_for_each_class_target("chipop", chipop) {
+		if (pdbg_target_index(chipop) != index)
+			continue;
+
+		if (pdbg_target_probe(chipop) == PDBG_TARGET_ENABLED)
+			return target_to_chipop(chipop);
+	}
+
+	return NULL;
+}
+
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 {
-	struct sbefifo *sbefifo;
+	struct chipop *chipop;
 
-	sbefifo = pib_to_sbefifo(target);
-	if (!sbefifo)
+	chipop = pib_to_chipop(target);
+	if (!chipop)
 		return -1;
 
-	return sbefifo->istep(sbefifo, major, minor);
+	return chipop->istep(chipop, major, minor);
 }
 
 uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
-	struct sbefifo *sbefifo;
+	struct chipop *chipop;
 
-	sbefifo = pib_to_sbefifo(target);
-	if (!sbefifo)
+	chipop = pib_to_chipop(target);
+	if (!chipop)
 		return -1;
 
-	return sbefifo->ffdc_get(sbefifo, ffdc, ffdc_len);
+	return chipop->ffdc_get(chipop, ffdc, ffdc_len);
 }
 
 /* Finds the given class. Returns NULL if not found. */

@@ -65,14 +65,19 @@ struct mem {
 };
 #define target_to_mem(x) container_of(x, struct mem, target)
 
+struct chipop {
+	struct pdbg_target target;
+	uint32_t (*ffdc_get)(struct chipop *, const uint8_t **, uint32_t *);
+	int (*istep)(struct chipop *, uint32_t major, uint32_t minor);
+	int (*thread_start)(struct chipop *, uint32_t core_id, uint32_t thread_id);
+	int (*thread_stop)(struct chipop *, uint32_t core_id, uint32_t thread_id);
+	int (*thread_step)(struct chipop *, uint32_t core_id, uint32_t thread_id);
+	int (*thread_sreset)(struct chipop *, uint32_t core_id, uint32_t thread_id);
+};
+#define target_to_chipop(x) container_of(x, struct chipop, target)
+
 struct sbefifo {
 	struct pdbg_target target;
-	int (*istep)(struct sbefifo *, uint32_t major, uint32_t minor);
-	int (*thread_start)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
-	int (*thread_stop)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
-	int (*thread_step)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
-	int (*thread_sreset)(struct sbefifo *, uint32_t core_id, uint32_t thread_id);
-	uint32_t (*ffdc_get)(struct sbefifo *, const uint8_t **, uint32_t *);
 	struct sbefifo_context *sf_ctx;
 };
 #define target_to_sbefifo(x) container_of(x, struct sbefifo, target)
