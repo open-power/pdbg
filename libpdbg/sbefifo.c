@@ -94,6 +94,72 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 	return 0;
 }
 
+static int sbefifo_op_getmem_pba(struct mem *sbefifo_mem,
+				 uint64_t addr, uint8_t *data, uint64_t size,
+				 uint8_t block_size, bool ci)
+{
+	struct sbefifo *sbefifo = target_to_sbefifo(sbefifo_mem->target.parent);
+	uint8_t *out;
+	uint32_t len;
+	uint16_t flags;
+	int rc;
+
+	if (size > 0xffffffff) {
+		PR_ERROR("sbefifo: Invalid size for getmempba\n");
+		return EINVAL;
+	}
+
+	len = size & 0xffffffff;
+
+	PR_NOTICE("sbefifo: getmempba addr=0x%016" PRIx64 ", len=%u\n", addr, len);
+
+	flags = SBEFIFO_MEMORY_FLAG_PBA;
+	if (ci)
+		flags |= SBEFIFO_MEMORY_FLAG_CI;
+
+	rc = sbefifo_mem_get(sbefifo->sf_ctx, addr, len, flags, &out);
+	if (rc)
+		return rc;
+
+	pdbg_progress_tick(len, len);
+
+	memcpy(data, out, len);
+	free(out);
+
+	return 0;
+}
+
+static int sbefifo_op_putmem_pba(struct mem *sbefifo_mem,
+				 uint64_t addr, uint8_t *data, uint64_t size,
+				 uint8_t block_size, bool ci)
+{
+	struct sbefifo *sbefifo = target_to_sbefifo(sbefifo_mem->target.parent);
+	uint32_t len;
+	uint16_t flags;
+	int rc;
+
+	if (size > 0xffffffff) {
+		PR_ERROR("sbefifo: Invalid size for putmempba\n");
+		return EINVAL;
+	}
+
+	len = size & 0xffffffff;
+
+	PR_NOTICE("sbefifo: putmempba addr=0x%016"PRIx64", len=%u\n", addr, len);
+
+	flags = SBEFIFO_MEMORY_FLAG_PBA;
+	if (ci)
+		flags |= SBEFIFO_MEMORY_FLAG_CI;
+
+	rc = sbefifo_mem_put(sbefifo->sf_ctx, addr, data, len, flags);
+	if (rc)
+		return rc;
+
+	pdbg_progress_tick(len, len);
+
+	return 0;
+}
+
 static uint32_t sbefifo_op_ffdc_get(struct chipop *chipop, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
@@ -196,6 +262,17 @@ static struct mem sbefifo_mem = {
 };
 DECLARE_HW_UNIT(sbefifo_mem);
 
+static struct mem sbefifo_pba = {
+	.target = {
+		.name = "SBE FIFO Chip-op based memory access",
+		.compatible = "ibm,sbefifo-mem-pba",
+		.class = "mem",
+	},
+	.read = sbefifo_op_getmem_pba,
+	.write = sbefifo_op_putmem_pba,
+};
+DECLARE_HW_UNIT(sbefifo_pba);
+
 static struct chipop sbefifo_chipop = {
 	.target = {
 		.name = "SBE FIFO Chip-op engine",
@@ -229,4 +306,5 @@ static void register_sbefifo(void)
 	pdbg_hwunit_register(&kernel_sbefifo_hw_unit);
 	pdbg_hwunit_register(&sbefifo_chipop_hw_unit);
 	pdbg_hwunit_register(&sbefifo_mem_hw_unit);
+	pdbg_hwunit_register(&sbefifo_pba_hw_unit);
 }
