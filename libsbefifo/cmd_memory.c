@@ -24,77 +24,78 @@
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
-int sbefifo_mem_get(struct sbefifo_context *sctx, uint64_t addr, uint32_t size, uint16_t flags, uint8_t **data)
+static int sbefifo_mem_get_push(uint64_t addr, uint32_t size, uint16_t flags, uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *out;
+	uint32_t *msg;
 	uint64_t start_addr, end_addr;
-	uint32_t msg[6];
-	uint32_t cmd, out_len;
-	uint32_t align, offset, len, extra_bytes, i, j;
-	int rc;
-	bool do_tag = false, do_ecc = false;
+	uint32_t nwords, cmd;
+	uint32_t align, len;
 
-	if (flags & SBEFIFO_MEMORY_FLAG_PROC) {
+	if (flags & SBEFIFO_MEMORY_FLAG_PROC)
 		align = 8;
-
-		if (flags & SBEFIFO_MEMORY_FLAG_ECC_REQ)
-			do_ecc = true;
-
-		if (flags & SBEFIFO_MEMORY_FLAG_TAG_REQ)
-			do_tag = true;
-
-	} else if (flags & SBEFIFO_MEMORY_FLAG_PBA) {
+	else if (flags & SBEFIFO_MEMORY_FLAG_PBA)
 		align = 128;
-	} else {
+	else
 		return EINVAL;
-	}
 
 	start_addr = addr & (~(uint64_t)(align-1));
 	end_addr = (addr + size + (align-1)) & (~(uint64_t)(align-1));
 
-	if (end_addr - start_addr > 0xffffffff)
+	if (end_addr - start_addr > UINT32_MAX)
 		return EINVAL;
 
-	offset = addr - start_addr;
+	nwords = 6;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
 	len = end_addr - start_addr;
-
-	extra_bytes = 0;
-	if (do_tag)
-		extra_bytes = len / 8;
-
-	if (do_ecc)
-		extra_bytes = len / 8;
 
 	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_GET_MEMORY;
 
-	msg[0] = htobe32(6);	// number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(flags);
 	msg[3] = htobe32(start_addr >> 32);
 	msg[4] = htobe32(start_addr & 0xffffffff);
 	msg[5] = htobe32(len);
 
-	out_len = len + extra_bytes + 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 6 * 4, &out, &out_len);
-	if (rc)
-		return rc;
+	*buf = (uint8_t *)msg;
+	return 0;
+}
 
-	if (out_len != len + extra_bytes + 4) {
-		free(out);
+static int sbefifo_mem_get_pull(uint8_t *buf, uint32_t buflen, uint64_t addr, uint32_t size, uint32_t flags, uint8_t **data)
+{
+	uint64_t start_addr, offset;
+	uint32_t align, len, i, j;
+	bool do_tag = false, do_ecc = false;
+
+	if (buflen < 4)
 		return EPROTO;
-	}
 
-	len = be32toh(*(uint32_t *) &out[out_len-4]);
+	len = be32toh(*(uint32_t *) &buf[buflen-4]);
 	*data = malloc(len);
-	if (! *data) {
-		free(out);
+	if (! *data)
 		return ENOMEM;
-	}
+
+	if (flags & SBEFIFO_MEMORY_FLAG_ECC_REQ)
+		do_ecc = true;
+
+	if (flags & SBEFIFO_MEMORY_FLAG_TAG_REQ)
+		do_tag = true;
+
+	if (flags & SBEFIFO_MEMORY_FLAG_PROC)
+		align = 8;
+	else if (flags & SBEFIFO_MEMORY_FLAG_PBA)
+		align = 128;
+	else
+		return EINVAL;
 
 	i = 0;
 	j = 0;
 	while (i < len) {
-		memcpy((void *)&(*data)[j], (void *)&out[i], 8);
+		memcpy((void *)&(*data)[j], (void *)&buf[i], 8);
 		i += 8;
 		j += 8;
 
@@ -104,23 +105,55 @@ int sbefifo_mem_get(struct sbefifo_context *sctx, uint64_t addr, uint32_t size, 
 		if (do_ecc)
 			i++;
 	}
-	if (i < len)
-		memcpy((void *)&(*data)[j], (void *)&out[i], len - i);
 
-	memmove(*data, *data + offset, size);
+	start_addr = addr & (~(uint64_t)(align-1));
+	offset = addr - start_addr;
+	if (offset)
+		memmove(*data, *data + offset, size);
 
-	free(out);
 	return 0;
 }
 
-int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, uint32_t data_len, uint16_t flags)
+int sbefifo_mem_get(struct sbefifo_context *sctx, uint64_t addr, uint32_t size, uint16_t flags, uint8_t **data)
 {
-	uint8_t *out;
-	uint32_t nwords = (data_len+3)/4;
-	uint32_t msg[6+nwords];
-	uint32_t cmd, out_len;
-	uint32_t align;
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	uint32_t len, extra_bytes;
 	int rc;
+
+	rc = sbefifo_mem_get_push(addr, size, flags, &msg, &msg_len);
+	if (rc)
+		return rc;
+
+	/* length is 6th word in the request */
+	len = be32toh(*(uint32_t *)(msg + 20));
+	extra_bytes = 0;
+
+	if (flags & SBEFIFO_MEMORY_FLAG_ECC_REQ)
+		extra_bytes = len / 8;
+
+	if (flags & SBEFIFO_MEMORY_FLAG_TAG_REQ)
+		extra_bytes = len / 8;
+
+	out_len = len + extra_bytes + 4;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+
+	rc = sbefifo_mem_get_pull(out, out_len, addr, size, flags, data);
+	if (out)
+		free(out);
+
+	return rc;
+}
+
+static int sbefifo_mem_put_push(uint64_t addr, uint8_t *data, uint32_t data_len, uint16_t flags, uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+	uint32_t align;
 
 	if (flags & SBEFIFO_MEMORY_FLAG_PROC)
 		align = 8;
@@ -132,9 +165,18 @@ int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, 
 	if (addr & (align-1))
 		return EINVAL;
 
+	if (data_len & (align-1))
+		return EINVAL;
+
+	nwords = 6 + data_len/4;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
 	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_PUT_MEMORY;
 
-	msg[0] = htobe32(6 + nwords); // number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(flags);
 	msg[3] = htobe32(addr >> 32);
@@ -142,74 +184,132 @@ int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, 
 	msg[5] = htobe32(data_len);
 	memcpy(&msg[6], data, data_len);
 
-	out_len = 1 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, (6+nwords) * 4, &out, &out_len);
-	if (rc)
-		return rc;
-
-	if (out_len != 4) {
-		free(out);
-		return EPROTO;
-	}
-
-	free(out);
+	*buf = (uint8_t *)msg;
 	return 0;
 }
 
-int sbefifo_occsram_get(struct sbefifo_context *sctx, uint32_t addr, uint32_t size, uint8_t mode, uint8_t **data, uint32_t *data_len)
+static int sbefifo_mem_put_pull(uint8_t *buf, uint32_t buflen)
 {
-	uint8_t *out;
-	uint32_t start_addr, end_addr;
-	uint32_t msg[5];
-	uint32_t cmd, out_len;
-	uint32_t align, offset, len;
+	if (buflen != sizeof(uint32_t))
+		return EPROTO;
+
+	return 0;
+}
+
+int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, uint32_t data_len, uint16_t flags)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
 	int rc;
+
+	rc = sbefifo_mem_put_push(addr, data, data_len, flags, &msg, &msg_len);
+	if (rc)
+		return rc;
+
+	out_len = 1 * 4;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_mem_put_pull(out, out_len);
+	if (out)
+		free(out);
+
+	return rc;
+}
+
+static int sbefifo_occsram_get_push(uint32_t addr, uint32_t size, uint8_t mode, uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+	uint32_t start_addr, end_addr;
+	uint32_t align, len;
 
 	align = 8;
 	start_addr = addr & (~(uint32_t)(align-1));
 	end_addr = (addr + size + (align-1)) & (~(uint32_t)(align-1));
 
-	offset = addr - start_addr;
+	if (end_addr < start_addr)
+		return EINVAL;
+
+	nwords = 5;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
 	len = end_addr - start_addr;
 
 	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_GET_OCCSRAM;
 
-	msg[0] = htobe32(5);	// number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(mode);
 	msg[3] = htobe32(start_addr);
 	msg[4] = htobe32(len);
 
-	out_len = len + 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 5 * 4, &out, &out_len);
-	if (rc)
-		return rc;
-
-	if (out_len != len + 4) {
-		free(out);
-		return EPROTO;
-	}
-
-	*data_len = be32toh(*(uint32_t *) &out[out_len-4]);
-	*data = malloc(*data_len);
-	if (! *data) {
-		free(out);
-		return ENOMEM;
-	}
-	memcpy(*data, out + offset, size);
-
-	free(out);
+	*buf = (uint8_t *)msg;
 	return 0;
 }
 
-int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *data, uint32_t data_len, uint8_t mode)
+static int sbefifo_occsram_get_pull(uint8_t *buf, uint32_t buflen, uint32_t addr, uint32_t size, uint8_t **data, uint32_t *data_len)
 {
-	uint8_t *out;
-	uint32_t nwords = (data_len+3)/4;
-	uint32_t msg[5+nwords];
-	uint32_t cmd, out_len;
-	uint32_t align;
+	uint32_t start_addr;
+	uint32_t align, offset;
+
+	if (buflen < 4)
+		return EPROTO;
+
+	*data_len = be32toh(*(uint32_t *) &buf[buflen-4]);
+	if (*data_len < size)
+		return EPROTO;
+
+	*data = malloc(size);
+	if (! *data)
+		return ENOMEM;
+
+	align = 8;
+	start_addr = addr & (~(uint32_t)(align-1));
+	offset = addr - start_addr;
+
+	memcpy(*data, buf + offset, size);
+
+	return 0;
+}
+
+int sbefifo_occsram_get(struct sbefifo_context *sctx, uint32_t addr, uint32_t size, uint8_t mode, uint8_t **data, uint32_t *data_len)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	uint32_t len;
 	int rc;
+
+	rc = sbefifo_occsram_get_push(addr, size, mode, &msg, &msg_len);
+	if (rc)
+		return rc;
+
+	/* length is 5th word in the request */
+	len = be32toh(*(uint32_t *)(msg + 16));
+
+	out_len = len + 4;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_occsram_get_pull(out, out_len, addr, size, data, data_len);
+	if (out)
+		free(out);
+
+	return rc;
+}
+
+static int sbefifo_occsram_put_push(uint32_t addr, uint8_t *data, uint32_t data_len, uint8_t mode, uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+	uint32_t align;
 
 	align = 8;
 
@@ -219,25 +319,52 @@ int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *da
 	if (data_len & (align-1))
 		return EINVAL;
 
+	nwords = 5 + data_len/4;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
 	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_PUT_OCCSRAM;
 
-	msg[0] = htobe32(5 + nwords); // number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(mode);
 	msg[3] = htobe32(addr);
 	msg[4] = htobe32(data_len);
-	memcpy(&msg[6], data, data_len);
+	memcpy(&msg[5], data, data_len);
 
-	out_len = 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, (5+nwords) * 4, &out, &out_len);
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_occsram_put_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != sizeof(uint32_t))
+		return EPROTO;
+
+	return 0;
+}
+
+int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *data, uint32_t data_len, uint8_t mode)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_occsram_put_push(addr, data, data_len, mode, &msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len != 4) {
-		free(out);
-		return EPROTO;
-	}
+	out_len = 4;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
 
-	free(out);
-	return 0;
+	rc = sbefifo_occsram_put_pull(out, out_len);
+	if (out)
+		free(out);
+
+	return rc;
 }
