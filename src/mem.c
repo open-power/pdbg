@@ -82,7 +82,7 @@ static uint8_t *read_stdin(size_t *size)
 	return buf;
 }
 
-static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bool raw)
+static int _getmem(const char *mem_prefix, uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bool raw)
 {
 	struct pdbg_target *target;
 	uint8_t *buf;
@@ -100,7 +100,7 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 		char mem_path[128];
 		struct pdbg_target *mem;
 
-		sprintf(mem_path, "/mem%u", pdbg_target_index(target));
+		sprintf(mem_path, "/%s%u", mem_prefix, pdbg_target_index(target));
 
 		mem = pdbg_target_from_path(NULL, mem_path);
 		if (!mem)
@@ -139,21 +139,21 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 static int getmem(uint64_t addr, uint64_t size, struct mem_flags flags)
 {
 	if (flags.ci)
-		return _getmem(addr, size, 8, true, flags.raw);
+		return _getmem("mem", addr, size, 8, true, flags.raw);
 	else
-		return _getmem(addr, size, 0, false, flags.raw);
+		return _getmem("mem", addr, size, 0, false, flags.raw);
 }
 OPTCMD_DEFINE_CMD_WITH_FLAGS(getmem, getmem, (ADDRESS, DATA),
 			     mem_flags, (MEM_CI_FLAG, MEM_RAW_FLAG));
 
 static int getmemio(uint64_t addr, uint64_t size, uint8_t block_size, struct mem_io_flags flags)
 {
-	return _getmem(addr, size, block_size, true, flags.raw);
+	return _getmem("mem", addr, size, block_size, true, flags.raw);
 }
 OPTCMD_DEFINE_CMD_WITH_FLAGS(getmemio, getmemio, (ADDRESS, DATA, BLOCK_SIZE),
 			     mem_io_flags, (MEM_RAW_FLAG));
 
-static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
+static int _putmem(const char *mem_prefix, uint64_t addr, uint8_t block_size, bool ci)
 {
 	uint8_t *buf;
 	size_t buflen;
@@ -167,7 +167,7 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 		char mem_path[128];
 		struct pdbg_target *mem;
 
-		sprintf(mem_path, "/mem%u", pdbg_target_index(target));
+		sprintf(mem_path, "/%s%u", mem_prefix, pdbg_target_index(target));
 
 		mem = pdbg_target_from_path(NULL, mem_path);
 		if (!mem)
@@ -200,14 +200,14 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 static int putmem(uint64_t addr, struct mem_flags flags)
 {
 	if (flags.ci)
-		return _putmem(addr, 8, true);
+		return _putmem("mem", addr, 8, true);
 	else
-		return _putmem(addr, 0, false);
+		return _putmem("mem", addr, 0, false);
 }
 OPTCMD_DEFINE_CMD_WITH_FLAGS(putmem, putmem, (ADDRESS), mem_flags, (MEM_CI_FLAG));
 
 static int putmemio(uint64_t addr, uint8_t block_size)
 {
-	return _putmem(addr, block_size, true);
+	return _putmem("mem", addr, block_size, true);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putmemio, putmemio, (ADDRESS, BLOCK_SIZE));
