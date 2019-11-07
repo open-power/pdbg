@@ -30,6 +30,7 @@
 #include "optcmd.h"
 #include "parsers.h"
 #include "util.h"
+#include "path.h"
 
 #define PR_ERROR(x, args...) \
 	pdbg_log(PDBG_ERROR, x, ##args)
@@ -95,17 +96,26 @@ static int _getmem(uint64_t addr, uint64_t size, uint8_t block_size, bool ci, bo
 	buf = malloc(size);
 	assert(buf);
 
-	pdbg_for_each_class_target("mem", target) {
-		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+	for_each_path_target_class("pib", target) {
+		char mem_path[128];
+		struct pdbg_target *mem;
+
+		sprintf(mem_path, "/mem%u", pdbg_target_index(target));
+
+		mem = pdbg_target_from_path(NULL, mem_path);
+		if (!mem)
+			continue;
+
+		if (pdbg_target_probe(mem) != PDBG_TARGET_ENABLED)
 			continue;
 
 		pdbg_set_progress_tick(progress_tick);
 		progress_init();
-		rc = mem_read(target, addr, buf, size, block_size, ci);
+		rc = mem_read(mem, addr, buf, size, block_size, ci);
 		progress_end();
 		if (rc) {
 			PR_ERROR("Unable to read memory from %s\n",
-				 pdbg_target_path(target));
+				 pdbg_target_path(mem));
 			continue;
 		}
 
@@ -153,17 +163,26 @@ static int _putmem(uint64_t addr, uint8_t block_size, bool ci)
 	buf = read_stdin(&buflen);
 	assert(buf);
 
-	pdbg_for_each_class_target("mem", target) {
-		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+	for_each_path_target_class("pib", target) {
+		char mem_path[128];
+		struct pdbg_target *mem;
+
+		sprintf(mem_path, "/mem%u", pdbg_target_index(target));
+
+		mem = pdbg_target_from_path(NULL, mem_path);
+		if (!mem)
+			continue;
+
+		if (pdbg_target_probe(mem) != PDBG_TARGET_ENABLED)
 			continue;
 
 		pdbg_set_progress_tick(progress_tick);
 		progress_init();
-		rc = mem_write(target, addr, buf, buflen, block_size, ci);
+		rc = mem_write(mem, addr, buf, buflen, block_size, ci);
 		progress_end();
 		if (rc) {
 			printf("Unable to write memory using %s\n",
-			       pdbg_target_path(target));
+			       pdbg_target_path(mem));
 			continue;
 		}
 
