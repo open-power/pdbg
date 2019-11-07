@@ -65,7 +65,7 @@ int cronus_getcfam(struct cronus_context *cctx,
 	cbuf_write_uint32(&cbuf_request, sizeof(devstr));
 	cbuf_write(&cbuf_request, (uint8_t *)devstr, sizeof(devstr));
 
-	ret = cronus_request(cctx, key, &cbuf_request, &cbuf_reply);
+	ret = cronus_request(cctx, key, 0, &cbuf_request, &cbuf_reply);
 	if (ret) {
 		fprintf(stderr, "Failed to talk to server\n");
 		return ret;
@@ -148,7 +148,7 @@ int cronus_putcfam(struct cronus_context *cctx,
 	cbuf_write_uint32(&cbuf_request, 8 * sizeof(uint32_t)); // length in bits
 	cbuf_write_uint32(&cbuf_request, value);
 
-	ret = cronus_request(cctx, key, &cbuf_request, &cbuf_reply);
+	ret = cronus_request(cctx, key, 0, &cbuf_request, &cbuf_reply);
 	if (ret) {
 		fprintf(stderr, "Failed to talk to server\n");
 		return ret;

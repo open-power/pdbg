@@ -26,12 +26,12 @@
 #include "libcronus_private.h"
 
 int cronus_request(struct cronus_context *cctx,
-		   uint32_t key,
+		   uint32_t key, uint32_t out_len,
 		   struct cronus_buffer *request,
 		   struct cronus_buffer *reply)
 {
-	uint8_t buf[1024], *ptr;
-	size_t len = 0;
+	uint8_t *buf, *ptr;
+	size_t len = 0, buflen;
 	ssize_t n;
 	int ret;
 
@@ -41,25 +41,34 @@ int cronus_request(struct cronus_context *cctx,
 	ptr = cbuf_finish(request, &len);
 	assert(len > 0);
 
+	buflen = 1024 + out_len;
+	buf = malloc(buflen);
+	if (!buf)
+		return ENOMEM;
+
 	n = write(cctx->fd, ptr, len);
 	if (n == -1) {
+		free(buf);
 		ret = errno;
 		perror("write");
 		return ret;
 	}
 	if (n != len) {
+		free(buf);
 		fprintf(stderr, "Short write (%zu of %zu) to server\n", n, len);
 		return EIO;
 	}
 
-	n = read(cctx->fd, buf, sizeof(buf));
+	n = read(cctx->fd, buf, buflen);
 	if (n == -1) {
+		free(buf);
 		ret = errno;
 		perror("read");
 		return ret;
 	}
 
 	ret = cbuf_new_from_buf(reply, buf, n);
+	free(buf);
 	if (ret)
 		return ret;
 

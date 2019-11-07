@@ -43,7 +43,7 @@ struct cronus_reply {
 uint32_t cronus_key(struct cronus_context *cctx);
 
 int cronus_request(struct cronus_context *cctx,
-		   uint32_t key,
+		   uint32_t key, uint32_t out_len,
 		   struct cronus_buffer *request,
 		   struct cronus_buffer *reply);
 int cronus_parse_reply(uint32_t key,
