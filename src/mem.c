@@ -146,6 +146,16 @@ static int getmem(uint64_t addr, uint64_t size, struct mem_flags flags)
 OPTCMD_DEFINE_CMD_WITH_FLAGS(getmem, getmem, (ADDRESS, DATA),
 			     mem_flags, (MEM_CI_FLAG, MEM_RAW_FLAG));
 
+static int getmempba(uint64_t addr, uint64_t size, struct mem_flags flags)
+{
+	if (flags.ci)
+		return _getmem("mempba", addr, size, 0, true, flags.raw);
+	else
+		return _getmem("mempba", addr, size, 0, false, flags.raw);
+}
+OPTCMD_DEFINE_CMD_WITH_FLAGS(getmempba, getmempba, (ADDRESS, DATA),
+			     mem_flags, (MEM_CI_FLAG, MEM_RAW_FLAG));
+
 static int getmemio(uint64_t addr, uint64_t size, uint8_t block_size, struct mem_io_flags flags)
 {
 	return _getmem("mem", addr, size, block_size, true, flags.raw);
@@ -205,6 +215,15 @@ static int putmem(uint64_t addr, struct mem_flags flags)
 		return _putmem("mem", addr, 0, false);
 }
 OPTCMD_DEFINE_CMD_WITH_FLAGS(putmem, putmem, (ADDRESS), mem_flags, (MEM_CI_FLAG));
+
+static int putmempba(uint64_t addr, struct mem_flags flags)
+{
+	if (flags.ci)
+		return _putmem("mempba", addr, 0, true);
+	else
+		return _putmem("mempba", addr, 0, false);
+}
+OPTCMD_DEFINE_CMD_WITH_FLAGS(putmempba, putmempba, (ADDRESS), mem_flags, (MEM_CI_FLAG));
 
 static int putmemio(uint64_t addr, uint8_t block_size)
 {

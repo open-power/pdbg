@@ -72,6 +72,7 @@ extern struct optcmd_cmd
 	optcmd_getring, optcmd_start, optcmd_stop, optcmd_step,
 	optcmd_threadstatus, optcmd_sreset, optcmd_regs, optcmd_probe,
 	optcmd_getmem, optcmd_putmem, optcmd_getmemio, optcmd_putmemio,
+	optcmd_getmempba, optcmd_putmempba,
 	optcmd_getxer, optcmd_putxer, optcmd_getcr, optcmd_putcr,
 	optcmd_gdbserver, optcmd_istep;
 
@@ -82,6 +83,7 @@ static struct optcmd_cmd *cmds[] = {
 	&optcmd_getring, &optcmd_start, &optcmd_stop, &optcmd_step,
 	&optcmd_threadstatus, &optcmd_sreset, &optcmd_regs, &optcmd_probe,
 	&optcmd_getmem, &optcmd_putmem, &optcmd_getmemio, &optcmd_putmemio,
+	&optcmd_getmempba, &optcmd_putmempba,
 	&optcmd_getxer, &optcmd_putxer, &optcmd_getcr, &optcmd_putcr,
 	&optcmd_gdbserver, &optcmd_istep,
 };
@@ -118,8 +120,10 @@ static struct action actions[] = {
 	{ "getscom", "<address>", "Read system scom" },
 	{ "putscom", "<address> <value> [<mask>]", "Write system scom" },
 	{ "getmem",  "<address> <count> [--ci] [--raw]", "Read system memory" },
+	{ "getmempba",  "<address> <count> [--ci] [--raw]", "Read system memory" },
 	{ "getmemio", "<address> <count> <block size> [--raw]", "Read memory cache inhibited with specified transfer size" },
-	{ "putmem",  "<address>", "Write to system memory" },
+	{ "putmem",  "<address> [--ci]", "Write to system memory" },
+	{ "putmempba",  "<address> [--ci]", "Write to system memory" },
 	{ "putmemio", "<address> <block size>", "Write system memory cache inhibited with specified transfer size" },
 	{ "threadstatus", "", "Print the status of a thread" },
 	{ "sreset",  "", "Reset" },
