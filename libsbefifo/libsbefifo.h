@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#define ESBEFIFO	201
+
 #define SBEFIFO_PRI_SUCCESS           0x00000000
 #define SBEFIFO_PRI_INVALID_COMMAND   0x00010000
 #define SBEFIFO_PRI_INVALID_DATA      0x00020000
@@ -50,6 +52,13 @@ struct sbefifo_context;
 
 int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out);
 void sbefifo_disconnect(struct sbefifo_context *sctx);
+
+int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
+			 uint8_t *buf, uint32_t buflen,
+			 uint8_t **out, uint32_t *out_len);
+int sbefifo_operation(struct sbefifo_context *sctx,
+		      uint8_t *msg, uint32_t msg_len,
+		      uint8_t **out, uint32_t *out_len);
 
 uint32_t sbefifo_ffdc_get(struct sbefifo_context *sctx, const uint8_t **ffdc, uint32_t *ffdc_len);
 void sbefifo_ffdc_dump(struct sbefifo_context *sctx);

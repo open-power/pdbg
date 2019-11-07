@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <endian.h>
 
+#include "libsbefifo.h"
 #include "sbefifo_private.h"
 
 static int sbefifo_read(struct sbefifo_context *sctx, void *buf, size_t *buflen)
@@ -54,21 +55,77 @@ static int sbefifo_write(struct sbefifo_context *sctx, void *buf, size_t buflen)
 	return 0;
 }
 
+int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
+			 uint8_t *buf, uint32_t buflen,
+			 uint8_t **out, uint32_t *out_len)
+{
+	uint32_t offset_word, header_word, status_word;
+	uint32_t offset;
+
+	sbefifo_ffdc_clear(sctx);
+
+	/*
+	 * At least 3 words are expected in response
+	 *   - header word
+	 *   - status word
+	 *   - header offset word
+	 */
+	if (buflen < 3 * sizeof(uint32_t)) {
+		LOG("reply: cmd=%08x, len=%u\n", cmd, buflen);
+		return EPROTO;
+	}
+
+	/* Last word is header offset (in words) */
+	offset_word = be32toh(*(uint32_t *) &buf[buflen-4]);
+	offset = buflen - (offset_word * 4);
+
+	*out_len = offset;
+
+	header_word = be32toh(*(uint32_t *) &buf[offset]);
+	offset += 4;
+
+	status_word = be32toh(*(uint32_t *) &buf[offset]);
+	offset += 4;
+
+	if (header_word != (0xc0de0000 | cmd)) {
+		LOG("reply: cmd=%08x, len=%u, header=%08x\n", cmd, buflen, header_word);
+		return EPROTO;
+	}
+
+	LOG("reply: cmd=%08x, len=%u, status=%08x\n", cmd, buflen, status_word);
+
+	if (status_word) {
+		sbefifo_ffdc_set(sctx, status_word, buf + offset, buflen - offset-4);
+		return ESBEFIFO;
+	}
+
+	if (*out_len > 0) {
+		*out = malloc(*out_len);
+		if (! *out)
+			return ENOMEM;
+
+		memcpy(*out, buf, *out_len);
+	} else {
+		*out = NULL;
+	}
+
+	return 0;
+}
+
 int sbefifo_operation(struct sbefifo_context *sctx,
 		      uint8_t *msg, uint32_t msg_len,
 		      uint8_t **out, uint32_t *out_len)
 {
 	uint8_t *buf;
 	size_t buflen;
-	uint32_t offset_word, header_word, status_word;
-	uint32_t offset;
 	uint32_t cmd;
 	int rc;
 
 	assert(msg);
 	assert(msg_len > 0);
 
-	sbefifo_ffdc_clear(sctx);
+	if (sctx->fd == -1)
+		return ENOTCONN;
 
 	/*
 	 * Allocate extra memory for FFDC (SBEFIFO_MAX_FFDC_SIZE = 0x2000)
@@ -95,59 +152,7 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 		return rc;
 	}
 
-	/*
-	 * At least 3 words are expected in response
-	 *   - header word
-	 *   - status word
-	 *   - header offset word
-	 */
-	if (buflen < 3 * 4) {
-		LOG("reply: cmd=%08x, len=%u\n", cmd, buflen);
-		rc = EPROTO;
-		goto fail;
-	}
-
-	/* Last word is header offset (in words) */
-	offset_word = be32toh(*(uint32_t *) &buf[buflen-4]);
-	offset = buflen - (offset_word * 4);
-
-	*out_len = offset;
-
-	header_word = be32toh(*(uint32_t *) &buf[offset]);
-	offset += 4;
-
-	status_word = be32toh(*(uint32_t *) &buf[offset]);
-	offset += 4;
-
-	if (header_word != (0xc0de0000 | cmd)) {
-		LOG("reply: cmd=%08x, len=%u, header=%08x\n", cmd, buflen, header_word);
-		rc = EPROTO;
-		goto fail;
-	}
-
-	LOG("reply: cmd=%08x, len=%u, status=%08x\n", cmd, buflen, status_word);
-
-	if (status_word) {
-		sbefifo_ffdc_set(sctx, status_word, buf + offset, buflen - offset-4);
-		rc = 201;
-		goto fail;
-	}
-
-	if (*out_len > 0) {
-		*out = malloc(*out_len);
-		if (! *out) {
-			rc = ENOMEM;
-			goto fail;
-		}
-		memcpy(*out, buf, *out_len);
-	} else {
-		*out = NULL;
-	}
-
-	free(buf);
-	return 0;
-
-fail:
+	rc = sbefifo_parse_output(sctx, cmd, buf, buflen, out, out_len);
 	free(buf);
 	return rc;
 }
