@@ -716,6 +716,8 @@ static void pdbg_targets_init_virtual(struct pdbg_target *node, struct pdbg_targ
 	if (!system_path)
 		goto skip;
 
+	assert(!target_is_virtual(node));
+
 	/*
 	 * A virtual node identifies the attachment point of a node in the
 	 * system tree.
