@@ -44,44 +44,31 @@ static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(sbefifo_mem->target.parent);
 	uint8_t *out;
-	uint64_t start_addr, end_addr;
-	uint32_t align, offset, len;
+	uint32_t len;
 	uint16_t flags;
 	int rc;
 
-	align = 8;
-
-	if (block_size && block_size != 8) {
-		PR_ERROR("sbefifo: Only 8 byte block sizes are supported\n");
-		return -1;
-	};
-
-	start_addr = addr & (~(uint64_t)(align-1));
-	end_addr = (addr + size + (align-1)) & (~(uint64_t)(align-1));
-
-	if (end_addr - start_addr > UINT32_MAX) {
-		PR_ERROR("sbefifo: size too large\n");
-		return -EINVAL;
+	if (size > 0xffffffff) {
+		PR_ERROR("sbefifo: Invalid size for getmem\n");
+		return EINVAL;
 	}
 
-	offset = addr - start_addr;
-	len = end_addr - start_addr;
+	len = size & 0xffffffff;
 
 	PR_NOTICE("sbefifo: getmem addr=0x%016" PRIx64 ", len=%u\n",
-		  start_addr, len);
+		  addr, len);
 
 	flags = SBEFIFO_MEMORY_FLAG_PROC;
 	if (ci)
 		flags |= SBEFIFO_MEMORY_FLAG_CI;
 
-	rc = sbefifo_mem_get(sbefifo->sf_ctx, start_addr, len, flags, &out);
-
-	pdbg_progress_tick(len, len);
-
+	rc = sbefifo_mem_get(sbefifo->sf_ctx, addr, len, flags, &out);
 	if (rc)
 		return rc;
 
-	memcpy(data, out+offset, size);
+	pdbg_progress_tick(len, len);
+
+	memcpy(data, out, len);
 	free(out);
 
 	return 0;
@@ -92,30 +79,13 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 			     uint8_t block_size, bool ci)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(sbefifo_mem->target.parent);
-	uint32_t align, len;
+	uint32_t len;
 	uint16_t flags;
 	int rc;
 
-	align = 8;
-
-	if (block_size && block_size != 8) {
-		PR_ERROR("sbefifo: Only 8 byte block sizes are supported\n");
-		return -1;
-	};
-
-	if (addr & (align-1)) {
-		PR_ERROR("sbefifo: Address must be aligned to %d bytes\n", align);
-		return -1;
-	}
-
-	if (size & (align-1)) {
-		PR_ERROR("sbefifo: Data must be multiple of %d bytes\n", align);
-		return -1;
-	}
-
-	if (size > UINT32_MAX) {
-		PR_ERROR("sbefifo: size too large\n");
-		return -1;
+	if (size > 0xffffffff) {
+		PR_ERROR("sbefifo: Invalid size for putmem\n");
+		return EINVAL;
 	}
 
 	len = size & 0xffffffff;
@@ -127,10 +97,12 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 		flags |= SBEFIFO_MEMORY_FLAG_CI;
 
 	rc = sbefifo_mem_put(sbefifo->sf_ctx, addr, data, len, flags);
+	if (rc)
+		return rc;
 
 	pdbg_progress_tick(len, len);
 
-	return rc;
+	return 0;
 }
 
 static int sbefifo_op_control(struct sbefifo *sbefifo,
