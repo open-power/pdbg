@@ -23,80 +23,159 @@
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
-int sbefifo_mpipl_enter(struct sbefifo_context *sctx)
+static int sbefifo_mpipl_enter_push(uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *out;
-	uint32_t msg[2];
-	uint32_t cmd, out_len;
-	int rc;
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
 
 	cmd = SBEFIFO_CMD_CLASS_MPIPL | SBEFIFO_CMD_ENTER_MPIPL;
 
-	msg[0] = htobe32(2);	// number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 
-	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_mpipl_enter_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != 0)
+		return EPROTO;
+
+	return 0;
+}
+
+int sbefifo_mpipl_enter(struct sbefifo_context *sctx)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_mpipl_enter_push(&msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len != 0) {
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_mpipl_enter_pull(out, out_len);
+	if (out)
 		free(out);
+
+	return rc;
+}
+
+static int sbefifo_mpipl_continue_push(uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
+	cmd = SBEFIFO_CMD_CLASS_MPIPL | SBEFIFO_CMD_CONTINUE_MPIPL;
+
+	msg[0] = htobe32(nwords);
+	msg[1] = htobe32(cmd);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_mpipl_continue_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != 0)
 		return EPROTO;
-	}
 
 	return 0;
 }
 
 int sbefifo_mpipl_continue(struct sbefifo_context *sctx)
 {
-	uint8_t *out;
-	uint32_t msg[2];
-	uint32_t cmd, out_len;
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
 	int rc;
 
-	cmd = SBEFIFO_CMD_CLASS_MPIPL | SBEFIFO_CMD_CONTINUE_MPIPL;
-
-	msg[0] = htobe32(2);	// number of words
-	msg[1] = htobe32(cmd);
-
-	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
+	rc = sbefifo_mpipl_continue_push(&msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len != 0) {
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_mpipl_continue_pull(out, out_len);
+	if (out)
 		free(out);
+
+	return rc;
+}
+
+static int sbefifo_mpipl_stopclocks_push(uint16_t target_type, uint8_t chiplet_id, uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+	uint32_t target;
+
+	nwords = 3;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
+	cmd = SBEFIFO_CMD_CLASS_MPIPL | SBEFIFO_CMD_STOP_CLOCKS;
+
+	target = ((uint32_t)target_type << 16) | chiplet_id;
+
+	msg[0] = htobe32(nwords);
+	msg[1] = htobe32(cmd);
+	msg[2] = htobe32(target);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_mpipl_stopclocks_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != 0)
 		return EPROTO;
-	}
 
 	return 0;
 }
 
 int sbefifo_mpipl_stopclocks(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id)
 {
-	uint8_t *out;
-	uint32_t msg[3];
-	uint32_t cmd, out_len;
-	uint32_t target;
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
 	int rc;
 
-	cmd = SBEFIFO_CMD_CLASS_GENERIC | SBEFIFO_CMD_STOP_CLOCKS;
-	target = ((uint32_t)target_type << 16) | chiplet_id;
-
-	msg[0] = htobe32(3);	// number of words
-	msg[1] = htobe32(cmd);
-	msg[2] = htobe32(target);
-
-	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
+	rc = sbefifo_mpipl_stopclocks_push(target_type, chiplet_id, &msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len != 0) {
-		free(out);
-		return EPROTO;
-	}
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
 
-	return 0;
+	rc = sbefifo_mpipl_stopclocks_pull(out, out_len);
+	if (out)
+		free(out);
+
+	return rc;
 }
