@@ -30,6 +30,7 @@ static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 			     uint8_t block_size, bool ci)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(sbefifo_mem->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint8_t *out;
 	uint32_t len;
 	uint16_t flags;
@@ -49,7 +50,7 @@ static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 	if (ci)
 		flags |= SBEFIFO_MEMORY_FLAG_CI;
 
-	rc = sbefifo_mem_get(sbefifo->sf_ctx, addr, len, flags, &out);
+	rc = sbefifo_mem_get(sctx, addr, len, flags, &out);
 	if (rc)
 		return rc;
 
@@ -66,6 +67,7 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 			     uint8_t block_size, bool ci)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(sbefifo_mem->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint32_t len;
 	uint16_t flags;
 	int rc;
@@ -83,7 +85,7 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 	if (ci)
 		flags |= SBEFIFO_MEMORY_FLAG_CI;
 
-	rc = sbefifo_mem_put(sbefifo->sf_ctx, addr, data, len, flags);
+	rc = sbefifo_mem_put(sctx, addr, data, len, flags);
 	if (rc)
 		return rc;
 
@@ -95,18 +97,20 @@ static int sbefifo_op_putmem(struct mem *sbefifo_mem,
 static uint32_t sbefifo_op_ffdc_get(struct chipop *chipop, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 
-	return sbefifo_ffdc_get(sbefifo->sf_ctx, ffdc, ffdc_len);
+	return sbefifo_ffdc_get(sctx, ffdc, ffdc_len);
 }
 
 static int sbefifo_op_istep(struct chipop *chipop,
 			    uint32_t major, uint32_t minor)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 
 	PR_NOTICE("sbefifo: istep %u.%u\n", major, minor);
 
-	return sbefifo_istep_execute(sbefifo->sf_ctx, major & 0xff, minor & 0xff);
+	return sbefifo_istep_execute(sctx, major & 0xff, minor & 0xff);
 }
 
 static int sbefifo_op_control(struct chipop *chipop,
@@ -114,6 +118,7 @@ static int sbefifo_op_control(struct chipop *chipop,
 			      uint32_t oper)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint8_t mode = 0;
 
 	/* Enforce special-wakeup for thread stop and sreset */
@@ -123,7 +128,7 @@ static int sbefifo_op_control(struct chipop *chipop,
 
 	PR_NOTICE("sbefifo: control c:0x%x, t:0x%x, op:%u mode:%u\n", core_id, thread_id, oper, mode);
 
-	return sbefifo_control_insn(sbefifo->sf_ctx, core_id & 0xff, thread_id & 0xff, oper & 0xff, mode);
+	return sbefifo_control_insn(sctx, core_id & 0xff, thread_id & 0xff, oper & 0xff, mode);
 }
 
 static int sbefifo_op_thread_start(struct chipop *chipop,
