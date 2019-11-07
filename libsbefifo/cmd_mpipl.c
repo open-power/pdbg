@@ -36,7 +36,7 @@ int sbefifo_mpipl_enter(struct sbefifo_context *sctx)
 	msg[1] = htobe32(cmd);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -61,7 +61,7 @@ int sbefifo_mpipl_continue(struct sbefifo_context *sctx)
 	msg[1] = htobe32(cmd);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -89,7 +89,7 @@ int sbefifo_mpipl_stopclocks(struct sbefifo_context *sctx, uint16_t target_type,
 	msg[2] = htobe32(target);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

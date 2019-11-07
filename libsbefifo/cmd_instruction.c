@@ -41,7 +41,7 @@ int sbefifo_control_insn(struct sbefifo_context *sctx, uint8_t core_id, uint8_t 
 	msg[2] = htobe32(oper);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

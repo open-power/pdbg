@@ -40,7 +40,7 @@ int sbefifo_ring_get(struct sbefifo_context *sctx, uint32_t ring_addr, uint32_t 
 
 	/* multiples of 64 bits */
 	out_len = (ring_len_bits + 63) / 8;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 5 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 5 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -77,7 +77,7 @@ int sbefifo_ring_put(struct sbefifo_context *sctx, uint16_t ring_mode, uint8_t *
 	memcpy(&msg[3], ring_data, ring_data_len);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, (3+nwords) * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, (3+nwords) * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -107,7 +107,7 @@ int sbefifo_ring_put_from_image(struct sbefifo_context *sctx, uint16_t target, u
 	msg[3] = htobe32(ring_word);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

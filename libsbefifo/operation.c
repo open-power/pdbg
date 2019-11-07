@@ -55,13 +55,14 @@ static int sbefifo_write(struct sbefifo_context *sctx, void *buf, size_t buflen)
 }
 
 int sbefifo_operation(struct sbefifo_context *sctx,
-		      uint8_t *msg, uint32_t msg_len, uint16_t cmd,
+		      uint8_t *msg, uint32_t msg_len,
 		      uint8_t **out, uint32_t *out_len)
 {
 	uint8_t *buf;
 	size_t buflen;
 	uint32_t offset_word, header_word, status_word;
 	uint32_t offset;
+	uint32_t cmd;
 	int rc;
 
 	assert(msg);
@@ -77,6 +78,8 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 	buf = malloc(buflen);
 	if (!buf)
 		return ENOMEM;
+
+	cmd = be32toh(*(uint32_t *)(msg + 4));
 
 	LOG("request: cmd=%08x, len=%u\n", cmd, msg_len);
 

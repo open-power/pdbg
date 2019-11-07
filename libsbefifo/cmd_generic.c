@@ -37,7 +37,7 @@ int sbefifo_get_ffdc(struct sbefifo_context *sctx, uint8_t **ffdc, uint32_t *ffd
 
 	/* We don't know how much data to expect, let's assume it's less than 32K */
 	out_len = 0x8000;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -72,7 +72,7 @@ int sbefifo_get_capabilities(struct sbefifo_context *sctx, uint32_t *version, ch
 	msg[1] = htobe32(cmd);
 
 	out_len = 23 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -118,7 +118,7 @@ int sbefifo_get_frequencies(struct sbefifo_context *sctx, uint32_t **freq, uint3
 	msg[1] = htobe32(cmd);
 
 	out_len = 8 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -156,7 +156,7 @@ int sbefifo_quiesce(struct sbefifo_context *sctx)
 	msg[1] = htobe32(cmd);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 2 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

@@ -37,7 +37,7 @@ int sbefifo_istep_execute(struct sbefifo_context *sctx, uint8_t major, uint8_t m
 	msg[2] = htobe32(step);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

@@ -76,7 +76,7 @@ void sbefifo_ffdc_clear(struct sbefifo_context *sctx);
 void sbefifo_ffdc_set(struct sbefifo_context *sctx, uint32_t status, uint8_t *ffdc, uint32_t ffdc_len);
 
 int sbefifo_operation(struct sbefifo_context *sctx,
-		      uint8_t *msg, uint32_t msg_len, uint16_t cmd,
+		      uint8_t *msg, uint32_t msg_len,
 		      uint8_t **out, uint32_t *out_len);
 
 #ifdef LIBSBEFIFO_DEBUG

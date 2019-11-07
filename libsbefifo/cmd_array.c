@@ -41,7 +41,7 @@ int sbefifo_control_fast_array(struct sbefifo_context *sctx, uint16_t target_typ
 	msg[2] = htobe32(target);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -71,7 +71,7 @@ int sbefifo_control_trace_array(struct sbefifo_context *sctx, uint16_t target_ty
 	msg[3] = htobe32(oper);
 
 	out_len = 16 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 4 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 4 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

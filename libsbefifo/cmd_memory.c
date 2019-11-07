@@ -75,7 +75,7 @@ int sbefifo_mem_get(struct sbefifo_context *sctx, uint64_t addr, uint32_t size, 
 	msg[5] = htobe32(len);
 
 	out_len = len + extra_bytes + 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 6 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 6 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -143,7 +143,7 @@ int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, 
 	memcpy(&msg[6], data, data_len);
 
 	out_len = 1 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, (6+nwords) * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, (6+nwords) * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -181,7 +181,7 @@ int sbefifo_occsram_get(struct sbefifo_context *sctx, uint32_t addr, uint32_t si
 	msg[4] = htobe32(len);
 
 	out_len = len + 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 5 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 5 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -229,7 +229,7 @@ int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *da
 	memcpy(&msg[6], data, data_len);
 
 	out_len = 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, (5+nwords) * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, (5+nwords) * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

@@ -38,7 +38,7 @@ int sbefifo_scom_get(struct sbefifo_context *sctx, uint64_t addr, uint64_t *valu
 	msg[3] = htobe32(addr & 0xffffffff);
 
 	out_len = 2 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 4 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 4 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -73,7 +73,7 @@ int sbefifo_scom_put(struct sbefifo_context *sctx, uint64_t addr, uint64_t value
 	msg[3] = htobe32(value & 0xffffffff);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 6 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 6 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -103,7 +103,7 @@ int sbefifo_scom_modify(struct sbefifo_context *sctx, uint64_t addr, uint64_t va
 	msg[6] = htobe32(value & 0xffffffff);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 7 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 7 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -134,7 +134,7 @@ int sbefifo_scom_put_mask(struct sbefifo_context *sctx, uint64_t addr, uint64_t 
 	msg[7] = htobe32(mask & 0xffffffff);
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 8 * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, 8 * 4, &out, &out_len);
 	if (rc)
 		return rc;
 

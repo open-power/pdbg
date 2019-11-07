@@ -47,7 +47,7 @@ int sbefifo_register_get(struct sbefifo_context *sctx, uint8_t core_id, uint8_t 
 	}
 
 	out_len = reg_count * 8;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, (3+reg_count) * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, (3+reg_count) * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
@@ -102,7 +102,7 @@ int sbefifo_register_put(struct sbefifo_context *sctx, uint8_t core_id, uint8_t 
 	}
 
 	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, (3+3*reg_count) * 4, cmd, &out, &out_len);
+	rc = sbefifo_operation(sctx, (uint8_t *)msg, (3+3*reg_count) * 4, &out, &out_len);
 	if (rc)
 		return rc;
 
