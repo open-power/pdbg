@@ -30,8 +30,13 @@
 			device-path = "/dev/sbefifo1";
 
 			sbefifo-mem {
-				      compatible = "ibm,sbefifo-mem";
-				      system-path = "/mem0";
+				compatible = "ibm,sbefifo-mem";
+				system-path = "/mem0";
+			};
+
+			sbefifo-chipop {
+				compatible = "ibm,sbefifo-chipop";
+				index = <0x0>;
 			};
 		};
 
@@ -47,11 +52,11 @@
 			pib@1000 {
 				#address-cells = <0x2>;
 				#size-cells = <0x1>;
-				 reg = <0x0 0x1000 0x7>;
-				 index = <0x1>;
-				 compatible = "ibm,kernel-pib";
-				 device-path = "/dev/scom2";
-				 system-path = "/proc1/pib";
+				reg = <0x0 0x1000 0x7>;
+				index = <0x1>;
+				compatible = "ibm,kernel-pib";
+				device-path = "/dev/scom2";
+				system-path = "/proc1/pib";
 			};
 
 			sbefifo@2400 { /* Bogus address */
@@ -61,8 +66,13 @@
 				device-path = "/dev/sbefifo2";
 
 				sbefifo-mem {
-				      compatible = "ibm,sbefifo-mem";
-				      system-path = "/mem1";
+					compatible = "ibm,sbefifo-mem";
+					system-path = "/mem1";
+				};
+
+				sbefifo-chipop {
+					compatible = "ibm,sbefifo-chipop";
+					index = <0x1>;
 				};
 			};
 		};
