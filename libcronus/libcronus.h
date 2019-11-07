@@ -42,4 +42,11 @@ int cronus_putscom(struct cronus_context *cctx,
 		   uint64_t addr,
 		   uint64_t value);
 
+int cronus_submit(struct cronus_context *cctx,
+		  int pib_index,
+		  uint8_t *sbefifo_request,
+		  uint32_t request_len,
+		  uint8_t *sbefifo_reply,
+		  uint32_t *reply_len);
+
 #endif /* __LIBCRONUS_H__ */

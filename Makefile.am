@@ -146,6 +146,7 @@ libcronus_la_SOURCES = \
 	libcronus/libcronus.h \
 	libcronus/libcronus_private.h \
 	libcronus/request.c \
+	libcronus/sbefifo.c \
 	libcronus/scom.c
 
 libsbefifo_la_SOURCES = \
