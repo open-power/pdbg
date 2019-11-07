@@ -34,6 +34,11 @@
 				system-path = "/mem0";
 			};
 
+			sbefifo-pba {
+				compatible = "ibm,sbefifo-mem-pba";
+				system-path = "/mempba0";
+			};
+
 			sbefifo-chipop {
 				compatible = "ibm,sbefifo-chipop";
 				index = <0x0>;
@@ -68,6 +73,11 @@
 				sbefifo-mem {
 					compatible = "ibm,sbefifo-mem";
 					system-path = "/mem1";
+				};
+
+				sbefifo-pba {
+					compatible = "ibm,sbefifo-mem-pba";
+					system-path = "/mempba1";
 				};
 
 				sbefifo-chipop {
