@@ -55,6 +55,29 @@ static int sbefifo_write(struct sbefifo_context *sctx, void *buf, size_t buflen)
 	return 0;
 }
 
+static int sbefifo_transport(struct sbefifo_context *sctx, uint8_t *msg, uint32_t msg_len, uint8_t *out, uint32_t *out_len)
+{
+	int rc;
+	size_t buflen;
+
+	buflen = msg_len;
+	rc = sbefifo_write(sctx, msg, buflen);
+	if (rc) {
+		LOG("write: cmd=%08x, rc=%d\n", cmd, rc);
+		return rc;
+	}
+
+	buflen = *out_len;
+	rc = sbefifo_read(sctx, out, &buflen);
+	if (rc) {
+		LOG("read: cmd=%08x, buflen=%zu, rc=%d\n", cmd, buflen, rc);
+		return rc;
+	}
+
+	*out_len = buflen;
+	return 0;
+}
+
 int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
 			 uint8_t *buf, uint32_t buflen,
 			 uint8_t **out, uint32_t *out_len)
@@ -117,7 +140,7 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 		      uint8_t **out, uint32_t *out_len)
 {
 	uint8_t *buf;
-	size_t buflen;
+	uint32_t buflen;
 	uint32_t cmd;
 	int rc;
 
@@ -140,15 +163,9 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 
 	LOG("request: cmd=%08x, len=%u\n", cmd, msg_len);
 
-	rc = sbefifo_write(sctx, msg, msg_len);
+	rc = sbefifo_transport(sctx, msg, msg_len, buf, &buflen);
 	if (rc) {
-		LOG("write: cmd=%08x, rc=%d\n", cmd, rc);
-		return rc;
-	}
-
-	rc = sbefifo_read(sctx, buf, &buflen);
-	if (rc) {
-		LOG("read: cmd=%08x, buflen=%zu, rc=%d\n", cmd, buflen, rc);
+		free(buf);
 		return rc;
 	}
 
