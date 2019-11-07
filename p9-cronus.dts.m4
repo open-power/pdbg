@@ -24,4 +24,44 @@
 		index = <0x1>;
 		system-path = "/proc1/pib";
 	};
+
+	sbefifo0 {
+		index = <0x0>;
+		compatible = "ibm,cronus-sbefifo";
+
+		sbefifo-chipop {
+			compatible = "ibm,sbefifo-chipop";
+			index = <0x0>;
+		};
+
+		sbefifo-mem {
+			compatible = "ibm,sbefifo-mem";
+			system-path = "/mem0";
+		};
+
+		sbefifo-pba {
+			compatible = "ibm,sbefifo-mem-pba";
+			system-path = "/mempba0";
+		};
+	};
+
+	sbefifo1 {
+		index = <0x1>;
+		compatible = "ibm,cronus-sbefifo";
+
+		sbefifo-chipop {
+			compatible = "ibm,sbefifo-chipop";
+			index = <0x1>;
+		};
+
+		sbefifo-mem {
+			compatible = "ibm,sbefifo-mem";
+			system-path = "/mem1";
+		};
+
+		sbefifo-pba {
+			compatible = "ibm,sbefifo-mem-pba";
+			system-path = "/mempba1";
+		};
+	};
 };
