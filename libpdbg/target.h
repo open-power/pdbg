@@ -72,7 +72,6 @@ extern struct list_head target_classes;
 void pdbg_default_dtb(struct pdbg_dtb *pdtb);
 const char *pdbg_get_backend_option(void);
 
-struct sbefifo *pib_to_sbefifo(struct pdbg_target *target);
 struct chipop *pib_to_chipop(struct pdbg_target *target);
 bool target_is_virtual(struct pdbg_target *target);
 struct pdbg_target *target_to_real(struct pdbg_target *target, bool strict);
