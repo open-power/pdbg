@@ -191,6 +191,13 @@ static int sbefifo_probe(struct pdbg_target *target)
 	return 0;
 }
 
+static void sbefifo_release(struct pdbg_target *target)
+{
+	struct sbefifo *sf = target_to_sbefifo(target);
+
+	sbefifo_disconnect(sf->sf_ctx);
+}
+
 static struct mem sbefifo_mem = {
 	.target = {
 		.name = "SBE FIFO Chip-op based memory access",
@@ -208,6 +215,7 @@ static struct sbefifo kernel_sbefifo = {
 		.compatible = "ibm,kernel-sbefifo",
 		.class = "sbefifo",
 		.probe = sbefifo_probe,
+		.release = sbefifo_release,
 	},
 	.istep = sbefifo_op_istep,
 	.thread_start = sbefifo_op_thread_start,
