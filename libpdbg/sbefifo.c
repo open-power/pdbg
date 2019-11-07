@@ -191,7 +191,7 @@ static int sbefifo_probe(struct pdbg_target *target)
 	return 0;
 }
 
-struct mem sbefifo_mem = {
+static struct mem sbefifo_mem = {
 	.target = {
 		.name = "SBE FIFO Chip-op based memory access",
 		.compatible = "ibm,sbefifo-mem",
@@ -202,7 +202,7 @@ struct mem sbefifo_mem = {
 };
 DECLARE_HW_UNIT(sbefifo_mem);
 
-struct sbefifo kernel_sbefifo = {
+static struct sbefifo kernel_sbefifo = {
 	.target = {
 		.name =	"Kernel based FSI SBE FIFO",
 		.compatible = "ibm,kernel-sbefifo",
