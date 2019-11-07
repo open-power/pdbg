@@ -18,6 +18,7 @@
 #define __SBEFIFO_PRIVATE_H__
 
 #include <stdint.h>
+#include "libsbefifo.h"
 
 #define SBEFIFO_CMD_CLASS_CONTROL        0xA100
 #define   SBEFIFO_CMD_EXECUTE_ISTEP        0x01
@@ -63,6 +64,9 @@
 
 struct sbefifo_context {
 	int fd;
+
+	sbefifo_transport_fn transport;
+	void *priv;
 
 	uint32_t status;
 	uint8_t *ffdc;

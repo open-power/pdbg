@@ -147,7 +147,7 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 	assert(msg);
 	assert(msg_len > 0);
 
-	if (sctx->fd == -1)
+	if (!sctx->transport && sctx->fd == -1)
 		return ENOTCONN;
 
 	/*
@@ -163,7 +163,11 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 
 	LOG("request: cmd=%08x, len=%u\n", cmd, msg_len);
 
-	rc = sbefifo_transport(sctx, msg, msg_len, buf, &buflen);
+	if (sctx->transport)
+		rc = sctx->transport(msg, msg_len, buf, &buflen, sctx->priv);
+	else
+		rc = sbefifo_transport(sctx, msg, msg_len, buf, &buflen);
+
 	if (rc) {
 		free(buf);
 		return rc;

@@ -50,6 +50,10 @@
 
 struct sbefifo_context;
 
+typedef int (*sbefifo_transport_fn)(uint8_t *msg, uint32_t msg_len,
+				    uint8_t *out, uint32_t *out_len,
+				    void *private_data);
+
 int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out);
 void sbefifo_disconnect(struct sbefifo_context *sctx);
 
