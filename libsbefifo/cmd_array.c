@@ -23,78 +23,129 @@
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
-int sbefifo_control_fast_array(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id, uint8_t mode, uint64_t clock_cycle)
+static int sbefifo_control_fast_array_push(uint16_t target_type, uint8_t chiplet_id, uint8_t mode, uint64_t clock_cycle, uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *out;
-	uint32_t msg[3];
-	uint32_t cmd, out_len;
+	uint32_t *msg;
+	uint32_t nwords, cmd;
 	uint32_t target;
-	int rc;
+
+	nwords = 5;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
 
 	cmd = SBEFIFO_CMD_CLASS_ARRAY | SBEFIFO_CMD_FAST_ARRAY;
+
 	target = ((uint32_t)target_type << 16) |
 		 ((uint32_t)chiplet_id << 8) |
 		 ((uint32_t)(mode & 0x3));
 
-	msg[0] = htobe32(3);	// number of words
+	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(target);
+	msg[3] = htobe32(clock_cycle >> 32);
+	msg[4] = htobe32(clock_cycle & 0xffffffff);
 
-	out_len = 0;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, &out, &out_len);
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_control_fast_array_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != 0)
+		return EPROTO;
+
+	return 0;
+}
+
+int sbefifo_control_fast_array(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id, uint8_t mode, uint64_t clock_cycle)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_control_fast_array_push(target_type, chiplet_id, mode, clock_cycle, &msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len != 0) {
-		free(out);
-		return EPROTO;
-	}
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
 
+	rc = sbefifo_control_fast_array_pull(out, out_len);
+	if (out)
+		free(out);
+
+	return rc;
+}
+
+static int sbefifo_control_trace_array_push(uint16_t target_type, uint8_t chiplet_id, uint16_t array_id, uint16_t operation, uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+	uint32_t target, oper;
+
+	nwords = 4;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
+	cmd = SBEFIFO_CMD_CLASS_ARRAY | SBEFIFO_CMD_TRACE_ARRAY;
+
+	target = ((uint32_t)target_type << 16) | ((uint32_t)chiplet_id);
+	oper = ((uint32_t)array_id << 16) | ((uint32_t)operation);
+
+	msg[0] = htobe32(nwords);
+	msg[1] = htobe32(cmd);
+	msg[2] = htobe32(target);
+	msg[3] = htobe32(oper);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_control_trace_array_pull(uint8_t *buf, uint32_t buflen, uint8_t **trace_data, uint32_t *trace_data_len)
+{
+	if (buflen < 4)
+		return EPROTO;
+
+	*trace_data_len = 4 * be32toh(*(uint32_t *) &buf[buflen-4]);
+
+	if (buflen != *trace_data_len + 4)
+		return EPROTO;
+
+	*trace_data = malloc(*trace_data_len);
+	if (! *trace_data)
+		return ENOMEM;
+
+	memcpy(*trace_data, buf, *trace_data_len);
 	return 0;
 }
 
 int sbefifo_control_trace_array(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id, uint16_t array_id, uint16_t operation, uint8_t **trace_data, uint32_t *trace_data_len)
 {
-	uint8_t *out;
-	uint32_t msg[4];
-	uint32_t cmd, out_len;
-	uint32_t target, oper;
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
 	int rc;
 
-	cmd = SBEFIFO_CMD_CLASS_ARRAY | SBEFIFO_CMD_TRACE_ARRAY;
-	target = ((uint32_t)target_type << 16) | ((uint32_t)chiplet_id);
-	oper = ((uint32_t)array_id << 16) | ((uint32_t)operation);
-
-	msg[0] = htobe32(4);	// number of words
-	msg[1] = htobe32(cmd);
-	msg[2] = htobe32(target);
-	msg[3] = htobe32(oper);
-
-	out_len = 16 * 4;
-	rc = sbefifo_operation(sctx, (uint8_t *)msg, 4 * 4, &out, &out_len);
+	rc = sbefifo_control_trace_array_push(target_type, chiplet_id, array_id, operation, &msg, &msg_len);
 	if (rc)
 		return rc;
 
-	if (out_len < 4) {
+	/* The size of returned data is just a guess */
+	out_len = 16 * sizeof(uint32_t);
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_control_trace_array_pull(out, out_len, trace_data, trace_data_len);
+	if (out)
 		free(out);
-		return EPROTO;
-	}
 
-	*trace_data_len = 4 * be32toh(*(uint32_t *) &out[out_len-4]);
-
-	if (out_len != *trace_data_len + 4) {
-		free(out);
-		return EPROTO;
-	}
-
-	*trace_data = malloc(*trace_data_len);
-	if (! *trace_data) {
-		free(out);
-		return ENOMEM;
-	}
-
-	memcpy(*trace_data, out, *trace_data_len);
-
-	free(out);
-	return 0;
+	return rc;
 }
