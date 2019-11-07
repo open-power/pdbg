@@ -92,7 +92,7 @@ int sbefifo_ring_put(struct sbefifo_context *sctx, uint16_t ring_mode, uint8_t *
 int sbefifo_ring_put_from_image(struct sbefifo_context *sctx, uint16_t target, uint8_t chiplet_id, uint16_t ring_id, uint16_t ring_mode)
 {
 	uint8_t *out;
-	uint32_t msg[3];
+	uint32_t msg[4];
 	uint32_t cmd, out_len;
 	uint32_t target_word, ring_word;
 	int rc;
@@ -101,9 +101,10 @@ int sbefifo_ring_put_from_image(struct sbefifo_context *sctx, uint16_t target, u
 	target_word = ((uint32_t)target << 16) | (uint32_t)chiplet_id;
 	ring_word = ((uint32_t)ring_id << 16) | (uint32_t)ring_mode;
 
-	msg[0] = htobe32(3);	// number of words
-	msg[1] = htobe32(target_word);
-	msg[2] = htobe32(ring_word);
+	msg[0] = htobe32(4);	// number of words
+	msg[1] = htobe32(cmd);
+	msg[2] = htobe32(target_word);
+	msg[3] = htobe32(ring_word);
 
 	out_len = 0;
 	rc = sbefifo_operation(sctx, (uint8_t *)msg, 3 * 4, cmd, &out, &out_len);
