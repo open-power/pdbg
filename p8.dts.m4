@@ -30,6 +30,7 @@ define(`PROC_ID',`$1')dnl
 	PROC(5);
 	PROC(6);
 	PROC(7);
+	PROC(8);
 	PROC(9);
 	PROC(10);
 	PROC(11);
@@ -41,6 +42,7 @@ define(`PROC_ID',`$1')dnl
 	PROC(17);
 	PROC(18);
 	PROC(19);
+	PROC(20);
 	PROC(21);
 	PROC(22);
 	PROC(23);
