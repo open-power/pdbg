@@ -25,7 +25,8 @@ PDBG_TESTS = \
 	tests/test_hw_bmc.sh		\
 	tests/test_hexdump.sh		\
 	tests/test_tree.sh		\
-	tests/test_tree2.sh
+	tests/test_tree2.sh		\
+	tests/test_p9_fapi_translation.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
 
