@@ -150,4 +150,124 @@ struct xbus {
 };
 #define target_to_xbus(x) container_of(x, struct xbus, target)
 
+struct ex {
+	struct pdbg_target target;
+};
+#define target_to_ex(x) container_of(x, struct ex, target)
+
+struct mba {
+	struct pdbg_target target;
+};
+#define target_to_mba(x) container_of(x, struct mba, target)
+
+struct mcs {
+	struct pdbg_target target;
+};
+#define target_to_mcs(x) container_of(x, struct mcs, target)
+
+struct abus {
+	struct pdbg_target target;
+};
+#define target_to_abus(x) container_of(x, struct abus, target)
+
+struct l4 {
+	struct pdbg_target target;
+};
+#define target_to_l4(x) container_of(x, struct l4, target)
+
+struct eq {
+	struct pdbg_target target;
+};
+#define target_to_eq(x) container_of(x, struct eq, target)
+
+struct mca {
+	struct pdbg_target target;
+};
+#define target_to_mca(x) container_of(x, struct mca, target)
+
+struct mcbist {
+	struct pdbg_target target;
+};
+#define target_to_mcbist(x) container_of(x, struct mcbist, target)
+
+struct mi {
+	struct pdbg_target target;
+};
+#define target_to_mi(x) container_of(x, struct mi, target)
+
+struct dmi {
+	struct pdbg_target target;
+};
+#define target_to_dmi(x) container_of(x, struct dmi, target)
+
+struct obus {
+	struct pdbg_target target;
+};
+#define target_to_obus(x) container_of(x, struct obus, target)
+
+struct obus_brick {
+	struct pdbg_target target;
+};
+#define target_to_obus_brick(x) container_of(x, struct obus_brick, target)
+
+struct sbe {
+	struct pdbg_target target;
+};
+#define target_to_sbe(x) container_of(x, struct sbe, target)
+
+struct ppe {
+	struct pdbg_target target;
+};
+#define target_to_ppe(x) container_of(x, struct ppe, target)
+
+struct perv {
+	struct pdbg_target target;
+};
+#define target_to_perv(x) container_of(x, struct perv, target)
+
+struct pec {
+	struct pdbg_target target;
+};
+#define target_to_pec(x) container_of(x, struct pec, target)
+
+struct phb {
+	struct pdbg_target target;
+};
+#define target_to_phb(x) container_of(x, struct phb, target)
+
+struct mc {
+	struct pdbg_target target;
+};
+#define target_to_mc(x) container_of(x, struct mc, target)
+
+struct mem_port {
+	struct pdbg_target target;
+};
+#define target_to_mem_port(x) container_of(x, struct mem_port, target)
+
+struct nmmu {
+	struct pdbg_target target;
+};
+#define target_to_nmmu(x) container_of(x, struct nmmu, target)
+
+struct pau {
+	struct pdbg_target target;
+};
+#define target_to_pau(x) container_of(x, struct pau, target)
+
+struct iohs {
+	struct pdbg_target target;
+};
+#define target_to_iohs(x) container_of(x, struct iohs, target)
+
+struct fc {
+	struct pdbg_target target;
+};
+#define target_to_fc(x) container_of(x, struct fc, target)
+
+struct pauc {
+	struct pdbg_target target;
+};
+#define target_to_pauc(x) container_of(x, struct pauc, target)
+
 #endif /* __HWUNIT_H */

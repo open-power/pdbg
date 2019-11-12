@@ -191,10 +191,10 @@ libpdbg_la_SOURCES = \
 	libpdbg/operations.h \
 	libpdbg/p8chip.c \
 	libpdbg/p9chip.c \
+	libpdbg/p9_fapi_targets.c \
 	libpdbg/sbefifo.c \
 	libpdbg/target.c \
-	libpdbg/target.h \
-	libpdbg/xbus.c
+	libpdbg/target.h
 
 libpdbg_la_CFLAGS = -Wall -Werror
 libpdbg_la_LIBADD = libcronus.la libsbefifo.la
