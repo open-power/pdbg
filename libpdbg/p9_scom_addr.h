@@ -80,35 +80,223 @@ enum {
 	N2_IOPSI_0_RING_ID = 0x6    ///< IOPSI_0
 };
 
+enum {
+        N3_PSCM_RING_ID = 0x0,      ///< PSCOM
+        N3_PERV_RING_ID = 0x1,      ///< PERV
+        N3_MC01_0_RING_ID = 0x2,    ///< MC01_0
+        N3_NPU_0_RING_ID = 0x4,     ///< NPU_0
+        N3_NPU_1_RING_ID = 0x5,     ///< NPU_1
+        N3_PB_0_RING_ID = 0x6,      ///< PB_0
+        N3_PB_1_RING_ID = 0x7,      ///< PB_1
+        N3_PB_2_RING_ID = 0x8,      ///< PB_2
+        N3_PB_3_RING_ID = 0x9,      ///< PB_3
+        N3_BR_0_RING_ID = 0xa,      ///< BR_0
+        N3_MM_0_RING_ID = 0xb,      ///< MM_0
+        N3_INT_0_RING_ID = 0xc,     ///< INT_0
+        N3_PB_4_RING_ID = 0xd,      ///< PB_4
+        N3_PB_5_RING_ID = 0xe,      ///< PB_5
+        N3_NPU_2_RING_ID = 0xf,     ///< NPU_2
+};
+
+enum {
+        MC_PSCM_RING_ID = 0x0,      ///< PSCOM
+        MC_PERV_RING_ID = 0x1,      ///< PERV
+        MC_MC01_0_RING_ID = 0x2,    ///< MC01_0 / MC23_0
+        MC_MCTRA_0_RING_ID = 0x3,   ///< MCTRA01_0 / MCTRA23_0
+        MC_IOM01_0_RING_ID = 0x4,   ///< IOM01_0 / IOM45_0
+        MC_IOM01_1_RING_ID = 0x5,   ///< IOM01_1 / IOM45_1
+        MC_IOM23_0_RING_ID = 0x6,   ///< IOM23_0 / IOM67_0
+        MC_IOM23_1_RING_ID = 0x7,   ///< IOM23_1 / IOM67_1
+        MC_MC01_1_RING_ID = 0x8,    ///< MC01_1 / MC23_1
+};
+
+/* Cumulus mc rings */
+enum {
+        P9C_MC_PSCM_RING_ID  = 0x0,
+        P9C_MC_PERV_RING_ID  = 0x1,
+        P9C_MC_CHAN_RING_ID  = 0x2,
+        P9C_MC_MCTRA_RING_ID = 0x3,
+        P9C_MC_IO_RING_ID    = 0x4,
+        P9C_MC_PPE_RING_ID   = 0x5,
+        P9C_MC_BIST_RING_ID  = 0x8
+};
+
+enum {
+        PPE_SBE_RING_ID  = 0x00,
+        PPE_GPE0_RING_ID = 0x00,
+        PPE_GPE1_RING_ID = 0x08,
+        PPE_GPE2_RING_ID = 0x10,
+        PPE_GPE3_RING_ID = 0x18,
+};
+
+enum {
+        XB_PSCM_RING_ID = 0x0,      ///< PSCOM
+        XB_PERV_RING_ID = 0x1,      ///< PERV
+        XB_IOPPE_0_RING_ID = 0x2,   ///< IOPPE
+        XB_IOX_0_RING_ID = 0x3,     ///< IOX_0
+        XB_IOX_1_RING_ID = 0x4,     ///< IOX_1
+        XB_IOX_2_RING_ID = 0x5,     ///< IOX_2
+        XB_PBIOX_0_RING_ID = 0x6,   ///< PBIOX_0
+        XB_PBIOX_1_RING_ID = 0x7,   ///< PBIOX_1
+        XB_PBIOX_2_RING_ID = 0x8    ///< PBIOX_2
+};
+
+enum {
+        OB_PSCM_RING_ID = 0x0,      ///< PSCOM
+        OB_PERV_RING_ID = 0x1,      ///< PERV
+        OB_PBIOA_0_RING_ID = 0x2,   ///< PBIOA_0
+        OB_IOO_0_RING_ID = 0x3,     ///< IOO_0
+        OB_PPE_RING_ID = 0x4        ///< PPE
+};
+
+/*
+ * P9 PPE Chip Unit Instance Number enumeration
+ * PPE name        Nimbus    Cumulus   Axone
+ * SBE             0         0         0
+ * GPE0..3         10..13    10..13    10..13
+ * CME0            20..25    20..25    20..25
+ * CME1            30..35    30..35    30..35
+ * IO PPE (xbus)   40        40        40
+ * IO PPE (obus)   41,44     41..44    41,44
+ * IO PPE (dmi)    NA        45,46     NA
+ * Powerbus PPEs   50        50        50
+ * IO PPE (omi)    NA        NA        56..61
+ */
+enum
+{
+        PPE_SBE_CHIPUNIT_NUM         =  0,
+        PPE_GPE0_CHIPUNIT_NUM        = 10,
+        PPE_GPE3_CHIPUNIT_NUM        = 13,
+        PPE_EQ0_CME0_CHIPUNIT_NUM    = 20,   // Quad0-CME0
+        PPE_EQ5_CME0_CHIPUNIT_NUM    = 25,   // Quad5-CME0
+        PPE_EQ0_CME1_CHIPUNIT_NUM    = 30,   // Quad0-CME1
+        PPE_EQ5_CME1_CHIPUNIT_NUM    = 35,   // Quad5-CME1
+        PPE_IO_XBUS_CHIPUNIT_NUM     = 40,
+        PPE_IO_OB0_CHIPUNIT_NUM      = 41,
+        PPE_IO_OB1_CHIPUNIT_NUM      = 42,
+        PPE_IO_OB2_CHIPUNIT_NUM      = 43,
+        PPE_IO_OB3_CHIPUNIT_NUM      = 44,
+        PPE_IO_DMI0_CHIPUNIT_NUM     = 45,
+        PPE_IO_DMI1_CHIPUNIT_NUM     = 46,
+        PPE_PB0_CHIPUNIT_NUM         = 50,
+        PPE_PB2_CHIPUNIT_NUM         = 52,
+        PPE_OMI_CHIPUNIT_NUM         = 56,
+        PPE_LAST_CHIPUNIT_NUM        = PPE_OMI_CHIPUNIT_NUM,
+};
+
+enum {
+        GPREG_PORT_ID = 0x0,        ///< GP registers
+        UNIT_PORT_ID = 0x1,         ///< Functional registers
+        CME_PORT_ID = 0x2,          ///< CME registers
+        CC_PORT_ID = 0x3,           ///< Clock control registers
+        FIR_PORT_ID = 0x4,          ///< Common FIR registers
+        CPM_PORT_ID = 0x5,          ///< CPM registers
+        GPE_PORT_ID = 0x6,          ///< PPE GPE registers (For TP only)
+        SBE_PORT_ID = 0xE,          ///< SBE PM registers (For TP only)
+        PCBSLV_PORT_ID = 0xF        ///< PCB Slave registers
+};
+
+enum {
+        PPE_SBE_SAT_ID = 0x0,
+};
+
+enum {
+        PPE_GPE_SAT_ID = 0x0,
+};
+
+enum {
+        PPE_CME_SAT_ID = 0x0,
+};
+
+enum {
+        PPE_PB_SAT_ID = 0x0,
+};
+
+enum {
+        P9C_MC_PPE_SAT_ID = 0x1,
+};
+
+enum {
+        OB_IOO_SAT_ID = 0x0,
+        OB_PPE_SAT_ID = 0x1
+};
+
 /* Extract pervasive chiplet ID from SCOM address */
-static inline uint8_t get_chiplet_id(uint64_t addr)
+static uint8_t get_chiplet_id(uint64_t addr)
 {
 	return ((addr >> 24) & 0x3F);
 }
 
 /* Modify SCOM address to update pervasive chiplet ID */
-static inline uint64_t set_chiplet_id(uint64_t addr, uint8_t chiplet_id)
+static uint64_t set_chiplet_id(uint64_t addr, uint8_t chiplet_id)
 {
 	addr &= 0xFFFFFFFFC0FFFFFFULL;
 	addr |= ((chiplet_id & 0x3F) << 24);
 	return addr;
 }
 
+static uint8_t get_ring(uint64_t addr)
+{
+	return ((addr >> 10) & 0x3f);
+}
+
 /* Modify SCOM address to update ring field value */
-static inline uint64_t set_ring(uint64_t addr, uint8_t ring)
+static uint64_t set_ring(uint64_t addr, uint8_t ring)
 {
 	addr &= 0xFFFFFFFFFFFF03FFULL;
 	addr |= ((ring & 0x3F) << 10);
 	return addr;
 }
 
+static uint8_t get_sat_id(uint64_t addr)
+{
+	return ((addr >> 6) & 0xF);
+}
+
 /* Modify SCOM address to update satellite ID field */
-static inline uint64_t set_sat_id(uint64_t addr, uint8_t sat_id)
+static uint64_t set_sat_id(uint64_t addr, uint8_t sat_id)
 {
 	addr &= 0xFFFFFFFFFFFFFC3FULL;
 	addr |= ((sat_id & 0xF) << 6);
 	return addr;
 }
 
+static uint8_t get_rxtx_group_id(uint64_t addr)
+{
+	return (addr >> 37) & 0x3F;
+}
+
+static uint64_t set_rxtx_group_id(uint64_t addr, uint8_t grp_id)
+{
+	addr &= 0xFFFFF81FFFFFFFFFULL;
+	addr |= (grp_id & 0x3FULL) << 37;
+
+	return addr;
+}
+
+static uint8_t get_port(uint64_t addr)
+{
+	return ((addr >> 16) & 0xF);
+}
+
+static uint64_t set_port(uint64_t addr, uint8_t port)
+{
+	addr &= 0xFFFFFFFFFFF0FFFFULL;
+	addr |= ((port & 0xF) << 16);
+
+	return addr;
+}
+
+static uint8_t get_sat_offset(uint64_t addr)
+{
+	return addr & 0x3f;
+}
+
+static uint64_t set_sat_offset(uint64_t addr, uint8_t sat_offset)
+{
+	addr &= 0xFFFFFFFFFFFFFFC0ULL;
+	addr |= (sat_offset & 0x3F);
+	return addr;
+}
 
 #endif
