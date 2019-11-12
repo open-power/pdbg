@@ -72,10 +72,10 @@ endif
 DT = fake.dts fake2.dts p8-cronus.dts p9-cronus.dts \
      p8-fsi.dts p8-i2c.dts p8-kernel.dts \
      p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts p9-kernel.dts \
-     p8-host.dts p9-host.dts p8.dts p9.dts
+     p8-host.dts p9-host.dts p8.dts
 
-DT_sources = $(DT:.dts=.dtb.S)
-DT_headers = $(DT:.dts=.dt.h)
+DT_sources = $(DT:.dts=.dtb.S) p9.dtb.S
+DT_headers = $(DT:.dts=.dt.h) p9.dt.h
 
 optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
 optcmd_test_CFLAGS = -Wall -g
@@ -301,4 +301,4 @@ p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
 %.c: %.rl
 	$(RAGEL_V)$(RAGEL) -o $@ $<
 
-MOSTLYCLEANFILES = *.dtb.S *.dtb *.dts *.dt.h p9-fsi.dtsi src/gdb_parser.c
+MOSTLYCLEANFILES = *.dtb.S *.dtb $(DT) *.dt.h p9-fsi.dtsi src/gdb_parser.c
