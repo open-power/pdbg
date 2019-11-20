@@ -5,6 +5,8 @@ ACLOCAL_AMFLAGS = -Im4
 
 lib_LTLIBRARIES = libfdt.la
 
+include_HEADERS = libfdt.h libfdt_env.h fdt.h
+
 libfdt_la_SOURCES = \
 	fdt_addresses.c \
 	fdt.c \
