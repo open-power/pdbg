@@ -9,9 +9,6 @@
 
 #include "p9_scominfo.H"
 
-#include "p9-kernel.dt.h"
-#include "p9.dt.h"
-
 #define MAX_INDEX 30
 
 int test_unit_translation(struct pdbg_target *target, p9ChipUnits_t cu, int index, uint64_t addr)
