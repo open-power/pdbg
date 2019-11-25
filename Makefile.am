@@ -303,8 +303,8 @@ p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
 	-DSYMBOL_PREFIX=$(shell basename $< .S | tr '.-' '_')_o -DFILENAME=\"$<\" -o \
 	$@
 
-%.dtb.o: %.dtb
-	$(AM_V_CC)$(CC) -c $(srcdir)/template.S -DSYMBOL_PREFIX=$(shell basename $@ | tr '.-' '_') -DFILENAME=\"$<\" -o $@
+%.dtb.o: %.dtb.S
+	$(AM_V_CC)$(CC) -o $@ $<
 
 %.c: %.rl
 	$(RAGEL_V)$(RAGEL) -o $@ $<
