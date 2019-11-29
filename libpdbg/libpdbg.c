@@ -223,6 +223,11 @@ struct pdbg_target *pdbg_target_parent(const char *klass, struct pdbg_target *ta
 	return target_parent(klass, target, true);
 }
 
+struct pdbg_target *pdbg_target_parent_virtual(const char *klass, struct pdbg_target *target)
+{
+	return target_parent(klass, target, false);
+}
+
 struct pdbg_target *require_target_parent(const char *klass, struct pdbg_target *target, bool system)
 {
 	struct pdbg_target *parent = target_parent(klass, target, system);

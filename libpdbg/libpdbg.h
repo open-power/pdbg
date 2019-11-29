@@ -78,6 +78,7 @@ enum pdbg_backend { PDBG_DEFAULT_BACKEND = 0, PDBG_BACKEND_FSI, PDBG_BACKEND_I2C
 /* Return the first parent target of the given class, or NULL if the given
  * target does not have a parent of the given class. */
 struct pdbg_target *pdbg_target_parent(const char *klass, struct pdbg_target *target);
+struct pdbg_target *pdbg_target_parent_virtual(const char *klass, struct pdbg_target *target);
 
 /* Same as above but instead of returning NULL causes an assert failure. */
 struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_target *target);
