@@ -69,7 +69,7 @@ bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 extern struct list_head empty_list;
 extern struct list_head target_classes;
 
-void pdbg_default_dtb(struct pdbg_dtb *pdtb);
+void pdbg_default_dtb(struct pdbg_dtb *pdtb, void *system_fdt);
 const char *pdbg_get_backend_option(void);
 
 struct chipop *pib_to_chipop(struct pdbg_target *target);

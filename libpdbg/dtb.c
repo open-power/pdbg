@@ -270,13 +270,13 @@ const char *pdbg_get_backend_option(void)
 
 /* Determines what platform we are running on and returns a pointer to
  * the fdt that is most likely to work on the system. */
-void pdbg_default_dtb(struct pdbg_dtb *dtb)
+void pdbg_default_dtb(struct pdbg_dtb *dtb, void *system_fdt)
 {
 	char *fdt;
 
 	*dtb = (struct pdbg_dtb) {
 		.backend = NULL,
-		.system = NULL,
+		.system = system_fdt,
 	};
 
 	fdt = getenv("PDBG_BACKEND_DTB");
