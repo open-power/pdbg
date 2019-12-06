@@ -53,11 +53,6 @@ struct pdbg_target {
 	struct pdbg_target *vnode;
 };
 
-struct pdbg_dtb {
-	void *backend;
-	void *system;
-};
-
 struct pdbg_target *get_parent(struct pdbg_target *target, bool system);
 struct pdbg_target *target_parent(const char *klass, struct pdbg_target *target, bool system);
 struct pdbg_target *require_target_parent(const char *klass, struct pdbg_target *target, bool system);
@@ -69,7 +64,6 @@ bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 extern struct list_head empty_list;
 extern struct list_head target_classes;
 
-void pdbg_default_dtb(struct pdbg_dtb *pdtb, void *system_fdt);
 const char *pdbg_get_backend_option(void);
 
 struct chipop *pib_to_chipop(struct pdbg_target *target);
