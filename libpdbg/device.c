@@ -774,9 +774,12 @@ bool pdbg_targets_init(void *fdt)
 	return true;
 }
 
-char *pdbg_target_path(struct pdbg_target *target)
+const char *pdbg_target_path(struct pdbg_target *target)
 {
-	return dt_get_path(target);
+	if (!target->path)
+		target->path = dt_get_path(target);
+
+	return target->path;
 }
 
 struct pdbg_target *pdbg_target_from_path(struct pdbg_target *target, const char *path)

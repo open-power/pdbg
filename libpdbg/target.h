@@ -36,6 +36,7 @@ struct pdbg_target {
 	char *name;
 	char *compatible;
 	char *class;
+	const char* path;
 	int (*probe)(struct pdbg_target *target);
 	void (*release)(struct pdbg_target *target);
 	uint64_t (*translate)(struct pdbg_target *target, uint64_t addr);

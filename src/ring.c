@@ -39,17 +39,12 @@ static int get_ring(uint64_t ring_addr, uint64_t ring_len)
 	assert(result);
 
 	for_each_path_target_class("chiplet", target) {
-		char *path;
 		int rc, i, len;
 
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		path = pdbg_target_path(target);
-		assert(path);
-
-		printf("%s: 0x%016" PRIx64 " = ", path, ring_addr);
-		free(path);
+		printf("%s: 0x%016" PRIx64 " = ", pdbg_target_path(target), ring_addr);
 
 		rc = getring(target, ring_addr, ring_len, result);
 		if (rc) {

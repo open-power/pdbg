@@ -43,7 +43,7 @@ static bool scommable(struct pdbg_target *target)
 int getscom(uint64_t addr)
 {
 	struct pdbg_target *target;
-	char *path;
+	const char *path;
 	uint64_t value;
 	int count = 0;
 
@@ -59,19 +59,15 @@ int getscom(uint64_t addr)
 		}
 
 		path = pdbg_target_path(target);
-		assert(path);
-
 		xlate_addr = addr;
 		addr_base = pdbg_address_absolute(target, &xlate_addr);
 
 		if (pib_read(target, addr, &value)) {
 			printf("p%d: 0x%016" PRIx64 " failed (%s)\n", pdbg_target_index(addr_base), xlate_addr, path);
-			free(path);
 			continue;
 		}
 
 		printf("p%d: 0x%016" PRIx64 " = 0x%016" PRIx64 " (%s)\n", pdbg_target_index(addr_base), xlate_addr, value, path);
-		free(path);
 		count++;
 	}
 
@@ -82,7 +78,7 @@ OPTCMD_DEFINE_CMD_WITH_ARGS(getscom, getscom, (ADDRESS));
 int putscom(uint64_t addr, uint64_t data, uint64_t mask)
 {
 	struct pdbg_target *target;
-	char *path;
+	const char *path;
 	int count = 0;
 
 	for_each_path_target(target) {
@@ -98,8 +94,6 @@ int putscom(uint64_t addr, uint64_t data, uint64_t mask)
 		}
 
 		path = pdbg_target_path(target);
-		assert(path);
-
 		xlate_addr = addr;
 		addr_base = pdbg_address_absolute(target, &xlate_addr);
 
@@ -110,7 +104,6 @@ int putscom(uint64_t addr, uint64_t data, uint64_t mask)
 
 		if (rc) {
 			printf("p%d: 0x%016" PRIx64 " failed (%s)\n", pdbg_target_index(addr_base), xlate_addr, path);
-			free(path);
 			continue;
 		}
 

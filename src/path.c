@@ -339,14 +339,9 @@ bool path_target_all_selected(const char *classname, struct pdbg_target *parent)
 void path_target_dump(void)
 {
 	struct pdbg_target *target;
-	char *path;
 
-	for_each_path_target(target) {
-		path = pdbg_target_path(target);
-		assert(path);
-		printf("%s\n", path);
-		free(path);
-	}
+	for_each_path_target(target)
+		printf("%s\n", pdbg_target_path(target));
 }
 
 struct pdbg_target *path_target_next(struct pdbg_target *prev)
