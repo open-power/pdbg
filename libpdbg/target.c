@@ -18,13 +18,18 @@ struct list_head target_classes = LIST_HEAD_INIT(target_classes);
  * final class name */
 static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, const char *name, uint64_t *addr)
 {
+	uint64_t old_addr = *addr;
+
 	/* Check class */
 	while (strcmp(target->class, name)) {
-
-		if (target->translate)
+		if (target->translate) {
 			*addr = target->translate(target, *addr);
-		else
+			target = target_parent(name, target, false);
+			assert(target);
+			break;
+		} else {
 			*addr += pdbg_target_address(target, NULL);
+		}
 
 		/* Keep walking the tree translating addresses */
 		target = get_parent(target, false);
@@ -34,6 +39,8 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 		assert(target != pdbg_target_root());
 	}
 
+	pdbg_log(PDBG_DEBUG, "Translating target addr 0x%" PRIx64 " -> 0x%" PRIx64 " on %s\n",
+		 old_addr, *addr, pdbg_target_path(target));
 	return target;
 }
 
