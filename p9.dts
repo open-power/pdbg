@@ -121,11 +121,11 @@
 				#address-cells = < 0x02 >;
 				#size-cells = < 0x01 >;
 
-				xbus0_0: xbus@0 {
+				xbus0_1: xbus@1 {
 					compatible = "ibm,power9-xbus";
-					index = < 0x00 >;
+					index = < 0x01 >;
 					reg = < 0x00 0x6000000 0xffffff >;
-					other-end = "/proc1/pib/chiplet@6000000/xbus@0";
+					other-end = "/proc1/pib/chiplet@6000000/xbus@1";
 				};
 			};
 
@@ -1622,11 +1622,11 @@
 				#address-cells = < 0x02 >;
 				#size-cells = < 0x01 >;
 
-				xbus1_0: xbus@0 {
+				xbus1_1: xbus@1 {
 					compatible = "ibm,power9-xbus";
-					index = < 0x00 >;
+					index = < 0x01 >;
 					reg = < 0x00 0x6000000 0xffffff >;
-					other-end = "/proc0/pib/chiplet@6000000/xbus@0";
+					other-end = "/proc0/pib/chiplet@6000000/xbus@1";
 				};
 			};
 

@@ -114,25 +114,11 @@ static uint64_t p9_xbus_translate(struct xbus *xbus, uint64_t addr)
 	}
 }
 
-static int p9_xbus_probe(struct pdbg_target *target)
-{
-	struct xbus *xbus = target_to_xbus(target);
-
-	if (pdbg_target_u32_property(&xbus->target, "ring-id", &xbus->ring_id)) {
-		printf("Unknown ring-id on %s@%d\n", pdbg_target_name(&xbus->target),
-		       pdbg_target_index(&xbus->target));
-		return -1;
-	}
-
-	return 0;
-}
-
 struct xbus p9_xbus = {
         .target = {
                 .name = "POWER9 xbus",
                 .compatible = "ibm,power9-xbus",
                 .class = "xbus",
-		.probe = p9_xbus_probe,
 		.translate = translate_cast(p9_xbus_translate),
         },
 };
