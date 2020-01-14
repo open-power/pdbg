@@ -36,7 +36,7 @@ reg = <0x0 HEX(CHIPLET_BASE($1)) 0xfffff>;
 }')dnl
 
 adu@90000 {
-	compatible = "ibm-power9-adu";
+	compatible = "ibm,power9-adu";
 	reg = <0x0 0x90000 0x50>;
 	system-path = "CONCAT(/mem,PROC_ID)";
 };

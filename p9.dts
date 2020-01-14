@@ -19,7 +19,7 @@
 			index = < 0x00 >;
 
 			adu@90000 {
-				compatible = "ibm-power9-adu";
+				compatible = "ibm,power9-adu";
 				reg = < 0x00 0x90000 0x50 >;
 				system-path = "/mem0";
 			};
