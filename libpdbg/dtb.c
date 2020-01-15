@@ -406,6 +406,26 @@ done:
 	return dtb;
 }
 
+static bool is_fdt_mapped(void *fdt, struct pdbg_mfile *mfile)
+{
+	if (mfile->fdt == fdt && mfile->fd != -1 && mfile->len != -1) {
+		return true;
+	}
+
+	return false;
+}
+
+bool pdbg_fdt_is_writeable(void *fdt)
+{
+	bool ok;
+
+	ok = is_fdt_mapped(fdt, &pdbg_dtb.system);
+	if (!ok)
+		ok = is_fdt_mapped(fdt, &pdbg_dtb.backend);
+
+	return ok;
+}
+
 static void close_dtb(struct pdbg_mfile *mfile)
 {
 	if (mfile->fd != -1 && mfile->len != -1 && mfile->fdt) {

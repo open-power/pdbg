@@ -80,6 +80,7 @@ extern struct list_head target_classes;
 
 struct pdbg_dtb *pdbg_default_dtb(void *system_fdt);
 const char *pdbg_get_backend_option(void);
+bool pdbg_fdt_is_writeable(void *fdt);
 
 struct chipop *pib_to_chipop(struct pdbg_target *target);
 bool target_is_virtual(struct pdbg_target *target);
