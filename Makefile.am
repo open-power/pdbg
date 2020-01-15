@@ -17,7 +17,8 @@ libpdbg_tests = libpdbg_target_test \
 bin_PROGRAMS = pdbg
 check_PROGRAMS = $(libpdbg_tests) libpdbg_dtree_test \
 		libpdbg_p9_fapi_translation_test \
-		optcmd_test hexdump_test cronus_proxy
+		optcmd_test hexdump_test cronus_proxy \
+		libpdbg_prop_test
 
 PDBG_TESTS = \
 	tests/test_selection.sh 	\
@@ -26,11 +27,13 @@ PDBG_TESTS = \
 	tests/test_hexdump.sh		\
 	tests/test_tree.sh		\
 	tests/test_tree2.sh		\
+	tests/test_prop.sh		\
 	tests/test_p9_fapi_translation.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
 
 tests/test_tree2.sh: fake2.dtb
+tests/test_prop.sh: fake.dtb
 
 test: $(libpdbg_tests)
 
@@ -265,6 +268,11 @@ libpdbg_p9_fapi_translation_test_CXXFLAGS = $(libpdbg_test_cflags)
 libpdbg_p9_fapi_translation_test_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_p9_fapi_translation_test_LDADD = $(libpdbg_test_ldadd)
 EXTRA_libpdbg_p9_fapi_translation_test_DEPENDENCIES = p9.dtb p9-kernel.dtb
+
+libpdbg_prop_test_SOURCES = src/tests/libpdbg_prop_test.c
+libpdbg_prop_test_CFLAGS = $(libpdbg_test_cflags)
+libpdbg_prop_test_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_prop_test_LDADD = $(libpdbg_test_ldadd)
 
 M4_V = $(M4_V_$(V))
 M4_V_ = $(M4_V_$(AM_DEFAULT_VERBOSITY))

@@ -91,6 +91,8 @@ define(`dump_backend',dnl
         system-path = "/proc$1/pib";
         reg = <CONCAT(0x,pib_addr) 0x0>;
         index = <0x$1>;
+	ATTR1 = <0xc0ffee>;
+	ATTR2 = "processor$1";
       };
     };
 
