@@ -56,9 +56,15 @@ struct pdbg_target {
 	struct pdbg_target *vnode;
 };
 
+struct pdbg_mfile {
+	int fd;
+	ssize_t len;
+	void *fdt;
+};
+
 struct pdbg_dtb {
-	void *backend;
-	void *system;
+	struct pdbg_mfile backend;
+	struct pdbg_mfile system;
 };
 
 struct pdbg_target *get_parent(struct pdbg_target *target, bool system);

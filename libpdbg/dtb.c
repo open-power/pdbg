@@ -58,7 +58,16 @@
 
 static enum pdbg_backend pdbg_backend = PDBG_DEFAULT_BACKEND;
 static const char *pdbg_backend_option;
-static struct pdbg_dtb pdbg_dtb;
+static struct pdbg_dtb pdbg_dtb = {
+	.backend = {
+		.fd = -1,
+		.len = -1,
+	},
+	.system = {
+		.fd = -1,
+		.len = -1,
+	},
+};
 
 /* Determines the most appropriate backend for the host system we are
  * running on. */
@@ -90,15 +99,15 @@ static void ppc_target(struct pdbg_dtb *dtb)
 
 	if (pdbg_backend_option) {
 		if (!strcmp(pdbg_backend_option, "p8")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p8_host_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p8_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p8_host_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p9_host_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p9_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p9_host_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9'\n");
@@ -132,16 +141,16 @@ static void ppc_target(struct pdbg_dtb *dtb)
 
 	if (strncmp(pos, "POWER8", 6) == 0) {
 		pdbg_log(PDBG_INFO, "Found a POWER8 PPC host system\n");
-		if (!dtb->backend)
-			dtb->backend = &_binary_p8_host_dtb_o_start;
-		if (!dtb->system)
-			dtb->system = &_binary_p8_dtb_o_start;
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_p8_host_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p8_dtb_o_start;
 	} else if (strncmp(pos, "POWER9", 6) == 0) {
 		pdbg_log(PDBG_INFO, "Found a POWER9 PPC host system\n");
-		if (!dtb->backend)
-			dtb->backend = &_binary_p9_host_dtb_o_start;
-		if (!dtb->system)
-			dtb->system = &_binary_p9_dtb_o_start;
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_p9_host_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p9_dtb_o_start;
 	} else {
 		pdbg_log(PDBG_ERROR, "Unsupported CPU type '%s'\n", pos);
  	}
@@ -157,15 +166,15 @@ static void bmc_target(struct pdbg_dtb *dtb)
 
 	if (pdbg_backend_option) {
 		if (!strcmp(pdbg_backend_option, "p8")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p8_kernel_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p8_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p8_kernel_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p9_kernel_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p9_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p9_kernel_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9'\n");
@@ -200,19 +209,19 @@ static void bmc_target(struct pdbg_dtb *dtb)
 	switch(chip_id) {
 	case CHIP_ID_P9:
 		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
-		if (!dtb->backend)
-			dtb->backend = &_binary_p9_kernel_dtb_o_start;
-		if (!dtb->system)
-			dtb->system = &_binary_p9_dtb_o_start;
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_p9_kernel_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p9_dtb_o_start;
 		break;
 
 	case CHIP_ID_P8:
 	case CHIP_ID_P8P:
 		pdbg_log(PDBG_INFO, "Found a POWER8/8+ OpenBMC based system\n");
-		if (!dtb->backend)
-			dtb->backend = &_binary_p8_kernel_dtb_o_start;
-		if (!dtb->system)
-			dtb->system = &_binary_p8_dtb_o_start;
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_p8_kernel_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p8_dtb_o_start;
 		break;
 
 	default:
@@ -221,11 +230,16 @@ static void bmc_target(struct pdbg_dtb *dtb)
 }
 
 /* Opens a dtb at the given path */
-static void *mmap_dtb(char *file, bool readonly)
+static void mmap_dtb(char *file, bool readonly, struct pdbg_mfile *mfile)
 {
 	int fd;
 	void *dtb;
 	struct stat statbuf;
+
+	*mfile = (struct pdbg_mfile) {
+		.fd = -1,
+		.len = -1,
+	};
 
 	if (readonly)
 		fd = open(file, O_RDONLY);
@@ -233,7 +247,7 @@ static void *mmap_dtb(char *file, bool readonly)
 		fd = open(file, O_RDWR);
 	if (fd < 0) {
 		pdbg_log(PDBG_ERROR, "Unable to open dtb file '%s'\n", file);
-		return NULL;
+		return;
 	}
 
 	if (fstat(fd, &statbuf) == -1) {
@@ -250,11 +264,15 @@ static void *mmap_dtb(char *file, bool readonly)
 		goto fail;
 	}
 
-	return dtb;
+	*mfile = (struct pdbg_mfile) {
+		.fd = fd,
+		.len = statbuf.st_size,
+		.fdt = dtb,
+	};
+	return;
 
 fail:
 	close(fd);
-	return NULL;
 }
 
 bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option)
@@ -282,20 +300,18 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 	struct pdbg_dtb *dtb = &pdbg_dtb;
 	char *fdt;
 
-	*dtb = (struct pdbg_dtb) {
-		.backend = NULL,
-		.system = system_fdt,
-	};
+	dtb->backend.fdt = NULL;
+	dtb->system.fdt = system_fdt;
 
 	fdt = getenv("PDBG_BACKEND_DTB");
 	if (fdt)
-		dtb->backend = mmap_dtb(fdt, false);
+		mmap_dtb(fdt, false, &dtb->backend);
 
 	fdt = getenv("PDBG_DTB");
 	if (fdt)
-		dtb->system = mmap_dtb(fdt, false);
+		mmap_dtb(fdt, false, &dtb->system);
 
-	if (dtb->backend && dtb->system)
+	if (dtb->backend.fdt && dtb->system.fdt)
 		goto done;
 
 	if (!pdbg_backend)
@@ -308,12 +324,12 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 
 	case PDBG_BACKEND_I2C:
 		/* I2C is only supported on POWER8 */
-		if (!dtb->backend) {
+		if (!dtb->backend.fdt) {
 			pdbg_log(PDBG_INFO, "Found a POWER8 AMI BMC based system\n");
-			dtb->backend = &_binary_p8_i2c_dtb_o_start;
+			dtb->backend.fdt = &_binary_p8_i2c_dtb_o_start;
 		}
-		if (!dtb->system)
-			dtb->system = &_binary_p8_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p8_dtb_o_start;
 		break;
 
 	case PDBG_BACKEND_KERNEL:
@@ -328,25 +344,25 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 		}
 
 		if (!strcmp(pdbg_backend_option, "p8")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p8_fsi_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p8_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p8_fsi_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9w")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p9w_fsi_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p9_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p9w_fsi_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9r")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p9r_fsi_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p9_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p9r_fsi_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9z")) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p9z_fsi_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p9_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p9z_fsi_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9r/p9w/p9z'\n");
@@ -361,15 +377,15 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 		}
 
 		if (!strncmp(pdbg_backend_option, "p8", 2)) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p8_cronus_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p8_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p8_cronus_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strncmp(pdbg_backend_option, "p9", 2)) {
-			if (!dtb->backend)
-				dtb->backend = &_binary_p9_cronus_dtb_o_start;
-			if (!dtb->system)
-				dtb->system = &_binary_p9_dtb_o_start;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p9_cronus_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
@@ -381,10 +397,26 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 		/* Fall through */
 
 	case PDBG_BACKEND_FAKE:
-		dtb->system = &_binary_fake_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_fake_dtb_o_start;
 		break;
 	}
 
 done:
 	return dtb;
+}
+
+static void close_dtb(struct pdbg_mfile *mfile)
+{
+	if (mfile->fd != -1 && mfile->len != -1 && mfile->fdt) {
+		munmap(mfile->fdt, mfile->len);
+		close(mfile->fd);
+	}
+}
+
+__attribute__((destructor))
+static void pdbg_close_targets(void)
+{
+	close_dtb(&pdbg_dtb.backend);
+	close_dtb(&pdbg_dtb.system);
 }

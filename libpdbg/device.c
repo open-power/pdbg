@@ -698,7 +698,7 @@ bool pdbg_targets_init(void *fdt)
 		return false;
 	}
 
-	if (!dtb->system) {
+	if (!dtb->system.fdt) {
 		pdbg_log(PDBG_ERROR, "Could not find a system device tree\n");
 		return false;
 	}
@@ -708,10 +708,10 @@ bool pdbg_targets_init(void *fdt)
 	if (!pdbg_dt_root)
 		return false;
 
-	if (dtb->backend)
-		dt_expand(pdbg_dt_root, dtb->backend);
+	if (dtb->backend.fdt)
+		dt_expand(pdbg_dt_root, dtb->backend.fdt);
 
-	dt_expand(pdbg_dt_root, dtb->system);
+	dt_expand(pdbg_dt_root, dtb->system.fdt);
 
 	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);
 	return true;
