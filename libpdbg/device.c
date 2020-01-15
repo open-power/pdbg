@@ -115,7 +115,7 @@ static struct pdbg_target *dt_pdbg_target_new(const void *fdt, int node_offset)
 	return target;
 }
 
-static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int node_offset)
+static struct pdbg_target *dt_new_node(const char *name, void *fdt, int node_offset)
 {
 	struct pdbg_target *node = NULL;
 	size_t size = sizeof(*node);
@@ -130,6 +130,9 @@ static struct pdbg_target *dt_new_node(const char *name, const void *fdt, int no
 		prerror("Failed to allocate node\n");
 		abort();
 	}
+
+	node->fdt = fdt;
+	node->fdt_offset = fdt ? node_offset : -1;
 
 	node->dn_name = take_name(name);
 	node->parent = NULL;
@@ -547,7 +550,7 @@ static enum pdbg_target_status str_to_status(const char *status)
 		assert(0);
 }
 
-static int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_node)
+static int dt_expand_node(struct pdbg_target *node, void *fdt, int fdt_node)
 {
 	const struct fdt_property *prop;
 	int offset, nextoffset, err;
@@ -604,7 +607,7 @@ static int dt_expand_node(struct pdbg_target *node, const void *fdt, int fdt_nod
 	return nextoffset;
 }
 
-static void dt_expand(struct pdbg_target *root, const void *fdt)
+static void dt_expand(struct pdbg_target *root, void *fdt)
 {
 	PR_DEBUG("FDT: Parsing fdt @%p\n", fdt);
 
