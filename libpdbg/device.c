@@ -320,17 +320,6 @@ again:
 	return target_to_real(root, false);
 }
 
-static struct dt_property *dt_find_property(const struct pdbg_target *node,
-					   const char *name)
-{
-	struct dt_property *i = NULL;
-
-	list_for_each(&node->properties, i, list)
-		if (strcmp(i->name, name) == 0)
-			return i;
-	return NULL;
-}
-
 static void dt_add_phandle(struct pdbg_target *node, const char *name,
 			   const void *val, size_t size)
 {
@@ -387,11 +376,11 @@ const void *pdbg_target_property(struct pdbg_target *target, const char *name, s
 	return buf;
 }
 
-static u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
+static u32 dt_property_get_cell(const void *prop, size_t len, u32 index)
 {
-	assert(prop->len >= (index+1)*sizeof(u32));
+	assert(len >= (index+1)*sizeof(u32));
 	/* Always aligned, so this works. */
-	return fdt32_to_cpu(((const u32 *)prop->prop)[index]);
+	return fdt32_to_cpu(((const u32 *)prop)[index]);
 }
 
 /* First child of this node. */
@@ -420,11 +409,14 @@ static struct pdbg_target *dt_next(const struct pdbg_target *root,
 	return NULL;
 }
 
-static const struct dt_property *dt_require_property(struct pdbg_target *node,
-						     const char *name, int wanted_len)
+static const void *dt_require_property(struct pdbg_target *node,
+				       const char *name, int wanted_len,
+				       size_t *prop_len)
 {
-	const struct dt_property *p = dt_find_property(node, name);
+	const void *p;
+	size_t len;
 
+	p = pdbg_target_property(node, name, &len);
 	if (!p) {
 		const char *path = dt_get_path(node);
 
@@ -432,16 +424,19 @@ static const struct dt_property *dt_require_property(struct pdbg_target *node,
 			path, name);
 		assert(false);
 	}
-	if (wanted_len >= 0 && p->len != wanted_len) {
+	if (wanted_len >= 0 && len != wanted_len) {
 		const char *path = dt_get_path(node);
 
 		prerror("DT: Unexpected property length %s/%s\n",
 			path, name);
 		prerror("DT: Expected len: %d got len: %zu\n",
-			wanted_len, p->len);
+			wanted_len, len);
 		assert(false);
 	}
 
+	if (prop_len) {
+		*prop_len = len;
+	}
 	return p;
 }
 
@@ -478,15 +473,18 @@ struct pdbg_target *__pdbg_next_compatible_node(struct pdbg_target *root,
         return NULL;
 }
 
-static uint32_t dt_prop_get_u32_def(const struct pdbg_target *node,
+static uint32_t dt_prop_get_u32_def(struct pdbg_target *node,
 				    const char *prop, uint32_t def)
 {
-        const struct dt_property *p = dt_find_property(node, prop);
+	const void *p;
+	size_t len;
 
+	p = pdbg_target_property(node, prop, &len);
         if (!p)
                 return def;
 
-        return dt_property_get_cell(p, 0);
+
+        return dt_property_get_cell(p, len, 0);
 }
 
 static enum pdbg_target_status str_to_status(const char *status)
@@ -602,17 +600,19 @@ static u32 dt_n_size_cells(const struct pdbg_target *node)
 
 uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 {
-	const struct dt_property *p;
+	const void *p;
+	size_t len;
+
 	u32 na = dt_n_address_cells(target);
 	u32 ns = dt_n_size_cells(target);
 	u32 n;
 
-	p = dt_require_property(target, "reg", -1);
+	p = dt_require_property(target, "reg", -1, &len);
 	n = (na + ns) * sizeof(u32);
-	assert(n <= p->len);
+	assert(n <= len);
 	if (out_size)
-		*out_size = dt_get_number(p->prop + na * sizeof(u32), ns);
-	return dt_get_number(p->prop, na);
+		*out_size = dt_get_number(p + na * sizeof(u32), ns);
+	return dt_get_number(p, na);
 }
 
 static struct pdbg_target *dt_new_virtual(struct pdbg_target *root, const char *system_path)
