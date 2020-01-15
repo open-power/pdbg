@@ -40,21 +40,6 @@ static uint32_t last_phandle = 0;
 
 static struct pdbg_target *pdbg_dt_root;
 
-/*
- * An in-memory representation of a node in the device tree.
- *
- * This is trivially flattened into an fdt.
- *
- * Note that the add_* routines will make a copy of the name if it's not
- * a read-only string (ie. usually a string literal).
- */
-struct dt_property {
-	struct list_node list;
-	const char *name;
-	size_t len;
-	char prop[/* len */];
-};
-
 static const char *take_name(const char *name)
 {
 	if (!is_rodata(name) && !(name = strdup(name))) {
