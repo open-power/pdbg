@@ -58,6 +58,7 @@
 
 static enum pdbg_backend pdbg_backend = PDBG_DEFAULT_BACKEND;
 static const char *pdbg_backend_option;
+static struct pdbg_dtb pdbg_dtb;
 
 /* Determines the most appropriate backend for the host system we are
  * running on. */
@@ -276,8 +277,9 @@ const char *pdbg_get_backend_option(void)
 
 /* Determines what platform we are running on and returns a pointer to
  * the fdt that is most likely to work on the system. */
-void pdbg_default_dtb(struct pdbg_dtb *dtb, void *system_fdt)
+struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 {
+	struct pdbg_dtb *dtb = &pdbg_dtb;
 	char *fdt;
 
 	*dtb = (struct pdbg_dtb) {
@@ -294,7 +296,7 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb, void *system_fdt)
 		dtb->system = mmap_dtb(fdt, false);
 
 	if (dtb->backend && dtb->system)
-		return;
+		goto done;
 
 	if (!pdbg_backend)
 		pdbg_backend = default_backend();
@@ -322,7 +324,7 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb, void *system_fdt)
 		if (!pdbg_backend_option) {
 			pdbg_log(PDBG_ERROR, "No system type specified\n");
 			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9r/p9w/p9z'\n");
-			return;
+			return NULL;
 		}
 
 		if (!strcmp(pdbg_backend_option, "p8")) {
@@ -355,7 +357,7 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb, void *system_fdt)
 		if (!pdbg_backend_option) {
 			pdbg_log(PDBG_ERROR, "No system type specified\n");
 			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
-			return;
+			return NULL;
 		}
 
 		if (!strncmp(pdbg_backend_option, "p8", 2)) {
@@ -382,4 +384,7 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb, void *system_fdt)
 		dtb->system = &_binary_fake_dtb_o_start;
 		break;
 	}
+
+done:
+	return dtb;
 }

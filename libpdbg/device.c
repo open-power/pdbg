@@ -754,11 +754,16 @@ skip:
 
 bool pdbg_targets_init(void *fdt)
 {
-	struct pdbg_dtb dtb;
+	struct pdbg_dtb *dtb;
 
-	pdbg_default_dtb(&dtb, fdt);
+	dtb = pdbg_default_dtb(fdt);
 
-	if (!dtb.system) {
+	if (!dtb) {
+		pdbg_log(PDBG_ERROR, "Could not determine system\n");
+		return false;
+	}
+
+	if (!dtb->system) {
 		pdbg_log(PDBG_ERROR, "Could not find a system device tree\n");
 		return false;
 	}
@@ -768,10 +773,10 @@ bool pdbg_targets_init(void *fdt)
 	if (!pdbg_dt_root)
 		return false;
 
-	if (dtb.backend)
-		dt_expand(pdbg_dt_root, dtb.backend);
+	if (dtb->backend)
+		dt_expand(pdbg_dt_root, dtb->backend);
 
-	dt_expand(pdbg_dt_root, dtb.system);
+	dt_expand(pdbg_dt_root, dtb->system);
 
 	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);
 	return true;
