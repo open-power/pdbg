@@ -349,34 +349,42 @@ static void dt_add_phandle(struct pdbg_target *node, const char *name,
 
 bool pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
 {
-	struct dt_property *p;
+	const void *p;
+	size_t len;
+	int ret;
 
-	if ((p = dt_find_property(target, name))) {
-		if (size != p->len) {
-			return false;
-		}
-
-		memcpy(p->prop, val, size);
-	} else {
+	p = pdbg_target_property(target, name, &len);
+	if (!p)
 		return false;
-	}
+
+	if (len != size)
+		return false;
+
+	ret = fdt_setprop_inplace(target->fdt, target->fdt_offset, name, val, size);
+	if (ret)
+		return false;
 
 	return true;
 }
 
-void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size)
+const void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size)
 {
-	struct dt_property *p;
+	const void *buf;
+	int buflen;
 
-	p = dt_find_property(target, name);
-	if (p) {
-		if (size)
-			*size = p->len;
-		return p->prop;
-	} else if (size)
-		*size = 0;
+	if (target->fdt_offset == -1) {
+		size ? *size = 0 : 0;
+		return NULL;
+	}
 
-	return NULL;
+	buf = fdt_getprop(target->fdt, target->fdt_offset, name, &buflen);
+	if (!buf) {
+		size ? *size = 0 : 0;
+		return NULL;
+	}
+
+	size ? *size = buflen : 0;
+	return buf;
 }
 
 static u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
@@ -439,10 +447,10 @@ static const struct dt_property *dt_require_property(struct pdbg_target *node,
 
 bool pdbg_target_compatible(struct pdbg_target *target, const char *compatible)
 {
-        char *c, *end;
+	const char *c, *end;
         size_t len;
 
-        c = pdbg_target_property(target, "compatible", &len);
+        c = (const char *)pdbg_target_property(target, "compatible", &len);
         if (!c)
                 return false;
 

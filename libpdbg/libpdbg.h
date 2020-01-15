@@ -87,7 +87,7 @@ struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_ta
 bool pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size);
 
 /* Get the given property and return the size */
-void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size);
+const void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size);
 int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val);
 int pdbg_target_u32_index(struct pdbg_target *target, const char *name, int index, uint32_t *val);
 uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *size);

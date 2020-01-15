@@ -270,7 +270,7 @@ const char *pdbg_target_dn_name(struct pdbg_target *target)
 
 int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint32_t *val)
 {
-	uint32_t *p;
+	const void *p;
 	size_t size;
 
 	p = pdbg_get_target_property(target, name, &size);
@@ -278,15 +278,15 @@ int pdbg_target_u32_property(struct pdbg_target *target, const char *name, uint3
 		return -1;
 
 	assert(size == 4);
-	*val = be32toh(*p);
+	*val = be32toh(*(uint32_t *)p);
 
 	return 0;
 }
 
 int pdbg_target_u32_index(struct pdbg_target *target, const char *name, int index, uint32_t *val)
 {
+	const void *p;
         size_t len;
-	uint32_t *p;
 
         p = pdbg_get_target_property(target, name, &len);
         if (!p)
@@ -298,7 +298,7 @@ int pdbg_target_u32_index(struct pdbg_target *target, const char *name, int inde
 	assert(!((uintptr_t) p & 0x3));
 
         /* Always aligned, so this works. */
-        *val = be32toh(p[index]);
+        *val = be32toh(((uint32_t *)p)[index]);
         return 0;
 }
 
