@@ -220,13 +220,16 @@ static void bmc_target(struct pdbg_dtb *dtb)
 }
 
 /* Opens a dtb at the given path */
-static void *mmap_dtb(char *file)
+static void *mmap_dtb(char *file, bool readonly)
 {
 	int fd;
 	void *dtb;
 	struct stat statbuf;
 
-	fd = open(file, O_RDONLY);
+	if (readonly)
+		fd = open(file, O_RDONLY);
+	else
+		fd = open(file, O_RDWR);
 	if (fd < 0) {
 		pdbg_log(PDBG_ERROR, "Unable to open dtb file '%s'\n", file);
 		return NULL;
@@ -237,7 +240,10 @@ static void *mmap_dtb(char *file)
 		goto fail;
 	}
 
-	dtb = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (readonly)
+		dtb = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	else
+		dtb = mmap(NULL, statbuf.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	if (dtb == MAP_FAILED) {
 		pdbg_log(PDBG_ERROR, "Failed top mmap file '%s'\n", file);
 		goto fail;
@@ -281,11 +287,11 @@ void pdbg_default_dtb(struct pdbg_dtb *dtb, void *system_fdt)
 
 	fdt = getenv("PDBG_BACKEND_DTB");
 	if (fdt)
-		dtb->backend = mmap_dtb(fdt);
+		dtb->backend = mmap_dtb(fdt, false);
 
 	fdt = getenv("PDBG_DTB");
 	if (fdt)
-		dtb->system = mmap_dtb(fdt);
+		dtb->system = mmap_dtb(fdt, false);
 
 	if (dtb->backend && dtb->system)
 		return;
