@@ -331,40 +331,9 @@ static struct dt_property *dt_find_property(const struct pdbg_target *node,
 	return NULL;
 }
 
-static struct dt_property *new_property(struct pdbg_target *node,
-					const char *name, size_t size)
+static void dt_add_phandle(struct pdbg_target *node, const char *name,
+			   const void *val, size_t size)
 {
-	struct dt_property *p = malloc(sizeof(*p) + size);
-	char *path;
-
-	if (!p) {
-		path = dt_get_path(node);
-		prerror("Failed to allocate property \"%s\" for %s of %zu bytes\n",
-			name, path, size);
-		free(path);
-		abort();
-	}
-	if (dt_find_property(node, name)) {
-		path = dt_get_path(node);
-		prerror("Duplicate property \"%s\" in node %s\n",
-			name, path);
-		free(path);
-		abort();
-
-	}
-
-	p->name = take_name(name);
-	p->len = size;
-	list_add_tail(&node->properties, &p->list);
-	return p;
-}
-
-static struct dt_property *dt_add_property(struct pdbg_target *node,
-				    const char *name,
-				    const void *val, size_t size)
-{
-	struct dt_property *p;
-
 	/*
 	 * Filter out phandle properties, we re-generate them
 	 * when flattening
@@ -375,13 +344,7 @@ static struct dt_property *dt_add_property(struct pdbg_target *node,
 		node->phandle = *(const u32 *)val;
 		if (node->phandle >= last_phandle)
 			last_phandle = node->phandle;
-		return NULL;
 	}
-
-	p = new_property(node, name, size);
-	if (size)
-		memcpy(p->prop, val, size);
-	return p;
 }
 
 bool pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
@@ -573,7 +536,7 @@ static int dt_expand_node(struct pdbg_target *node, void *fdt, int fdt_node)
 			if (strcmp("status", name) == 0)
 				node->status = str_to_status(prop->data);
 
-			dt_add_property(node, name, prop->data,
+			dt_add_phandle(node, name, prop->data,
 					fdt32_to_cpu(prop->len));
 			break;
 		case FDT_BEGIN_NODE:
@@ -684,19 +647,8 @@ static struct pdbg_target *dt_new_virtual(struct pdbg_target *root, const char *
 
 static void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode)
 {
-	struct dt_property *prop = NULL, *next;
-
 	node->vnode = vnode;
 	vnode->vnode = node;
-
-	/* Move any properties on virtual node to real node */
-	list_for_each_safe(&vnode->properties, prop, next, list) {
-		if (!strcmp(prop->name, "#address-cells") || !strcmp(prop->name, "#size-cells"))
-			continue;
-
-		list_del(&prop->list);
-		list_add_tail(&node->properties, &prop->list);
-	}
 }
 
 static void pdbg_targets_init_virtual(struct pdbg_target *node, struct pdbg_target *root)
