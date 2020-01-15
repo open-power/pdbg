@@ -384,31 +384,21 @@ static struct dt_property *dt_add_property(struct pdbg_target *node,
 	return p;
 }
 
-static void dt_resize_property(struct dt_property **prop, size_t len)
-{
-	size_t new_len = sizeof(**prop) + len;
-
-	*prop = realloc(*prop, new_len);
-
-	/* Fix up linked lists in case we moved. (note: not an empty list). */
-	(*prop)->list.next->prev = &(*prop)->list;
-	(*prop)->list.prev->next = &(*prop)->list;
-}
-
-void pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
+bool pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
 {
 	struct dt_property *p;
 
 	if ((p = dt_find_property(target, name))) {
-		if (size > p->len) {
-			dt_resize_property(&p, size);
-			p->len = size;
+		if (size != p->len) {
+			return false;
 		}
 
 		memcpy(p->prop, val, size);
 	} else {
-		dt_add_property(target, name, val, size);
+		return false;
 	}
+
+	return true;
 }
 
 void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size)
