@@ -81,7 +81,7 @@ result_filter ()
 {
 	sed -E -e 's#0x[[:xdigit:]]{16}#HEX16#g' \
 	    -E -e 's#0x[[:xdigit:]]{8}#HEX8#g' \
-	    -E -e 's#/.*fsi@0/pib@1000#PIB0PATH#'
+	    -E -e 's#/.*proc0/pib#PIB0PATH#'
 }
 
 test_result 0 <<EOF
@@ -115,4 +115,4 @@ DEADBEEF
 EOF
 
 do_skip
-test_run $PDBG -p0 getmem 0x31000000 0x8
+test_run $PDBG -p0 getmem --raw 0x31000000 0x8
