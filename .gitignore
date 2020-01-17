@@ -13,6 +13,7 @@ compile
 config.h.in
 configure
 depcomp
+doc/
 install-sh
 missing
 Makefile
