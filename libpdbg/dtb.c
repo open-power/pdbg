@@ -55,6 +55,7 @@
 #define CHIP_ID_P8  0xea
 #define CHIP_ID_P8P 0xd3
 #define CHIP_ID_P9  0xd1
+#define CHIP_ID_P9P 0xd9
 
 static enum pdbg_backend pdbg_backend = PDBG_DEFAULT_BACKEND;
 static const char *pdbg_backend_option;
@@ -208,6 +209,7 @@ static void bmc_target(struct pdbg_dtb *dtb)
 
 	switch(chip_id) {
 	case CHIP_ID_P9:
+	case CHIP_ID_P9P:
 		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
 		if (!dtb->backend.fdt)
 			dtb->backend.fdt = &_binary_p9_kernel_dtb_o_start;
