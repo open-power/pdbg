@@ -597,12 +597,18 @@ static int p9_chiplet_probe(struct pdbg_target *target)
         return 0;
 }
 
+static uint64_t p9_chiplet_translate(struct pdbg_target *target, uint64_t addr)
+{
+	return addr + pdbg_target_address(target, NULL);
+}
+
 static struct chiplet p9_chiplet = {
         .target = {
                 .name = "POWER9 Chiplet",
                 .compatible = "ibm,power9-chiplet",
                 .class = "chiplet",
                 .probe = p9_chiplet_probe,
+		.translate = p9_chiplet_translate,
         },
 	.getring = p9_chiplet_getring,
 };
