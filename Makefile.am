@@ -206,6 +206,7 @@ libpdbg_la_SOURCES = \
 
 libpdbg_la_CFLAGS = -Wall -Werror
 libpdbg_la_LIBADD = libcronus.la libsbefifo.la
+libpdbg_la_LDFLAGS = -version-info $(SONAME_CURRENT):$(SONAME_REVISION):$(SONAME_AGE)
 
 if BUILD_LIBFDT
 libpdbg_la_CFLAGS += -I$(top_srcdir)/libfdt
