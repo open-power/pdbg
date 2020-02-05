@@ -179,6 +179,22 @@ static int sbefifo_op_istep(struct chipop *chipop,
 	return sbefifo_istep_execute(sctx, major & 0xff, minor & 0xff);
 }
 
+static int sbefifo_op_mpipl_continue(struct chipop *chipop)
+{
+        struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+        struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+        return sbefifo_mpipl_continue(sctx);
+}
+
+static int sbefifo_op_mpipl_enter(struct chipop *chipop)
+{
+        struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+        struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+        return sbefifo_mpipl_enter(sctx);
+}
+
 static int sbefifo_op_control(struct chipop *chipop,
 			      uint32_t core_id, uint32_t thread_id,
 			      uint32_t oper)
@@ -281,6 +297,8 @@ static struct chipop sbefifo_chipop = {
 	},
 	.ffdc_get = sbefifo_op_ffdc_get,
 	.istep = sbefifo_op_istep,
+        .mpipl_enter = sbefifo_op_mpipl_enter,
+        .mpipl_continue = sbefifo_op_mpipl_continue,
 	.thread_start = sbefifo_op_thread_start,
 	.thread_stop = sbefifo_op_thread_stop,
 	.thread_step = sbefifo_op_thread_step,
