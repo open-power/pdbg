@@ -142,9 +142,62 @@ enum pdbg_target_status {
 	PDBG_TARGET_RELEASED,
 };
 
-enum pdbg_backend { PDBG_DEFAULT_BACKEND = 0, PDBG_BACKEND_FSI, PDBG_BACKEND_I2C,
-		    PDBG_BACKEND_KERNEL, PDBG_BACKEND_FAKE, PDBG_BACKEND_HOST,
-		    PDBG_BACKEND_CRONUS };
+
+/**
+ * @brief Describes the various methods (referred to as backends) for
+ * accessing hardware depending on where the code is executed.
+ *
+ * Some backends require extra parameters to correctly probe the hardware.
+ *
+ * If no backend is set, default backend will be determined depending on where
+ * the code is executed.
+ */
+enum pdbg_backend {
+	/**
+	 * The default backend, this will cause the backend to be determined
+	 * automatically.
+	 */
+	PDBG_DEFAULT_BACKEND = 0,
+
+	/**
+	 * The bit-banging backend using GPIO to directly access FSI bus.
+	 * This is experimental code and should not be used in production.
+	 */
+	PDBG_BACKEND_FSI,
+
+	/**
+	 * This is P8 only backend using i2c bus to probe the hardware.
+	 *
+	 * This backend requires the extra information about the path of
+	 * the i2c device to access the bus.
+	 */
+	PDBG_BACKEND_I2C,
+
+	/**
+	 * This is the default backend for BMC.  It uses BMC kernel drivers to
+	 * access the hardware.
+	 */
+	PDBG_BACKEND_KERNEL,
+
+	/**
+	 * This is a test backend.  It is used for testing code.
+	 */
+	PDBG_BACKEND_FAKE,
+
+	/**
+	 * This is the default backend for host.  It uses host kernel/skiboot
+	 * drivers to access the hardware.
+	 */
+	PDBG_BACKEND_HOST,
+
+	/**
+	 * This backend uses croserver to access hardware.
+	 *
+	 * This backend requires extra information about the system type and
+	 * the BMC network address / hostname.  For example p9@spoon2-bmc.
+	 */
+	PDBG_BACKEND_CRONUS,
+};
 
 /**
  * @brief Loop over compatible targets
@@ -214,13 +267,22 @@ enum pdbg_backend { PDBG_DEFAULT_BACKEND = 0, PDBG_BACKEND_FSI, PDBG_BACKEND_I2C
  */
 struct pdbg_target *pdbg_target_parent(const char *klass, struct pdbg_target *target);
 
+/**
+ * @brief Find a virtual target linked to target parent of the given class/type
+ * @param[in] klass the desired parent class
+ * @param[in] target the pdbg_target
+ * @return struct pdbg_target* the parent target of the given
+ * class. If the target does not have a parent of the given class
+ * returns NULL
+ */
 struct pdbg_target *pdbg_target_parent_virtual(const char *klass, struct pdbg_target *target);
 
 /**
  * @brief Find a target parent of the given class
  * @param[in] klass the given class
  * @param[in] target the pdbg_target
- * @return struct pdbg_target* the first parent target of the given class, otherwise assert out
+ * @return struct pdbg_target* the first parent target of the given class
+ *
  * @note Same as pdbg_target_parent() but instead of returning NULL
  * causes an assert failure when a parent target of the given
  * class/type doesn't exist.
@@ -228,12 +290,16 @@ struct pdbg_target *pdbg_target_parent_virtual(const char *klass, struct pdbg_ta
 struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_target *target);
 
 /**
- * @brief Set the given property. Will automatically add one if one doesn't exist
+ * @brief Overwrite the given property in device tree
  * @param[in] target pdbg_target to set the property on
  * @param[in] name name of the property to set
  * @param[in] val value of the property to set
  * @param[in] size size of the value in bytes
- * @return void
+ * @return true on success, false on failure
+ *
+ * This function will only modify the existing property in the device tree,
+ * provided the value is of the same length as the previous value stored in
+ * the device tree.
  */
 bool pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size);
 
@@ -330,9 +396,34 @@ uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *size);
 	(index == 0 ? pdbg_target_address(target, size) : assert(0))
 
 /**
+ * @brief Set the hardware access method
+ *
+ * @param[in]  backend the pdbg_backend backend
+ * @param[in]  backend_option extra information required by backend
+ *
+ * @return true on success, false if the backend information could not be
+ * parsed.
+ *
+ * Must be called before calling pdbg_targets_init().
+ */
+bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option);
+
+/**
  * @brief Initialises the targeting system from the given flattened device tree.
  *
+ * @param [in]  fdt The system device tree pointer, NULL to use default
+ * @return true on success, false on failure
+ *
  * Must be called prior to using any other libpdbg functions.
+ *
+ * Device tree can also be specified using PDBG_DTB environment variable
+ * pointing to system device tree.
+ *
+ * If the argument is NULL, then PDBG_DTB will override the default device
+ * tree.  If the argument is not NULL, then that will override the default
+ * device tree and device tree pointed by PDBG_DTB.
+ *
+ * @note This function can only be called once.
  */
 bool pdbg_targets_init(void *fdt);
 
@@ -414,8 +505,6 @@ enum pdbg_target_status pdbg_target_status(struct pdbg_target *target);
  * other states.
  */
 void pdbg_target_status_set(struct pdbg_target *target, enum pdbg_target_status status);
-
-bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option);
 
 /**
  * @brief Searches up the tree and returns the first valid index found
@@ -536,6 +625,14 @@ int fsi_read(struct pdbg_target *target, uint32_t addr, uint32_t *val);
  */
 int fsi_write(struct pdbg_target *target, uint32_t addr, uint32_t val);
 
+/**
+ * @brief Write a CFAM FSI register with a mask
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address offset relative to target
+ * @param[in] val the write data
+ * @param[in] mask The bits which are to be overwritten
+ * @return int 0 if successful, -1 otherwise
+ */
 int fsi_write_mask(struct pdbg_target *target, uint32_t addr, uint32_t val, uint32_t mask);
 
 /**
@@ -555,6 +652,15 @@ int pib_read(struct pdbg_target *target, uint64_t addr, uint64_t *val);
  * @return int 0 if successful, -1 otherwise
  */
 int pib_write(struct pdbg_target *target, uint64_t addr, uint64_t val);
+
+/**
+ * @brief Write a PIB SCOM register with a mask
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address offset relative to target
+ * @param[in] val the write data
+ * @param[in] mask The bits which are to be overwritten
+ * @return int 0 if successful, -1 otherwise
+ */
 int pib_write_mask(struct pdbg_target *target, uint64_t addr, uint64_t val, uint64_t mask);
 
 /**
@@ -791,10 +897,37 @@ int thread_stop(struct pdbg_target *target);
  */
 int thread_sreset(struct pdbg_target *target);
 
+/**
+ * @brief Start execution of all the threads
+ * @return 0 on success, -1 otherwise
+ */
 int thread_start_all(void);
+
+/**
+ * @brief Step execution on all the threads
+ * @return 0 on success, -1 otherwise
+ */
 int thread_step_all(void);
+
+/**
+ * @brief Stop execution on all the threads
+ * @return 0 on success, -1 otherwise
+ */
 int thread_stop_all(void);
+
+/**
+ * @brief sreset all the threads
+ * @return 0 on success, -1 otherwise
+ */
 int thread_sreset_all(void);
+
+/**
+ * @brief Return the thread status information
+ *
+ * @param[in]  target the thread target to operate on
+ *
+ * @return thread_state structure containing thread information
+ */
 struct thread_state thread_status(struct pdbg_target *target);
 
 int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
@@ -837,7 +970,9 @@ int htm_dump(struct pdbg_target *target, char *filename);
 int htm_record(struct pdbg_target *target, char *filename);
 
 /**
- * @brief Read memory using an ADU
+ * @brief DEPRECATED, do not use
+ *
+ * Read memory using an ADU
  * @param[in] target adu target to use
  * @param[in] addr physical address to read
  * @param[out] output buffer to hold the results of the read
@@ -851,7 +986,9 @@ int adu_getmem(struct pdbg_target *target, uint64_t addr,
 	       uint8_t *output, uint64_t size);
 
 /**
- * @brief Write memory using an ADU
+ * @brief DEPRECATED, do not use
+ *
+ * Write memory using an ADU
  * @param[in] target adu target to use
  * @param[in] addr physical address to read
  * @param[in] input buffer containing the values to write
@@ -865,7 +1002,9 @@ int adu_putmem(struct pdbg_target *target, uint64_t addr,
 	       uint8_t *input, uint64_t size);
 
 /**
- * @brief Read cache inhibited memory using an ADU
+ * @brief DEPRECATED, do not use
+ *
+ * Read cache inhibited memory using an ADU
  * @param[in] target adu target to use
  * @param[in] addr physical address to read
  * @param[out] output buffer to hold the results of the read
@@ -879,7 +1018,9 @@ int adu_getmem_ci(struct pdbg_target *target, uint64_t addr,
 		  uint8_t *output, uint64_t size);
 
 /**
- * @brief Write cache inhibited memory using an ADU
+ * @brief DEPRECATED, do not use
+ *
+ * Write cache inhibited memory using an ADU
  * @param[in] target adu target to use
  * @param[in] addr physical address to read
  * @param[in] input buffer containing the values to write
@@ -893,7 +1034,9 @@ int adu_putmem_ci(struct pdbg_target *target, uint64_t addr,
 		  uint8_t *input, uint64_t size);
 
 /**
- * @brief Read IO memory using an ADU
+ * @brief DEPRECATED, do not use
+ *
+ * Read IO memory using an ADU
  * @param[in] adu_target adu target to use
  * @param[in] start_addr physical address to read
  * @param[out] output buffer to hold the results of the read
@@ -909,7 +1052,9 @@ int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 		  uint8_t *output, uint64_t size, uint8_t blocksize);
 
 /**
- * @brief Write IO memory using an ADU
+ * @brief DEPRECATED, do not use
+ *
+ * Write IO memory using an ADU
  * @param[in] adu_target adu target to use
  * @param[in] start_addr physical address to read
  * @param[in] input buffer to hold the results of the read
@@ -936,7 +1081,42 @@ int __adu_getmem(struct pdbg_target *target, uint64_t addr, uint8_t *ouput,
 int __adu_putmem(struct pdbg_target *target, uint64_t addr, uint8_t *input,
 		 uint64_t size, bool ci);
 
+/**
+ * @brief Read memory using a mem class target (e.g. ADU)
+ *
+ * @param[in]  target the mem class target to operate on
+ * @param[in]  addr physical address to read
+ * @param[out] output buffer to hold the results of the read
+ * @param[in]  size size of the output buffer
+ * @param[in]  block_size hardware read size
+ * @param[in]  ci use cache inhibited access
+ *
+ * @return 0 on success, -1 on failure
+ *
+ * Uses the given mem class target to read size bytes starting at addr into
+ * the output buffer.  Cache inhibited memory can be accesssed by setting ci
+ * to true.  For reading IO memory, read commands must match the given block
+ * size.
+ */
 int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, uint8_t block_size, bool ci);
+
+/**
+ * @brief Write memory using a mem class target (e.g. ADU)
+ *
+ * @param[in]  target the mem class target to operate on
+ * @param[in]  addr physical address to write
+ * @param[in]  input buffer containing the values to write
+ * @param[in]  size size of the input buffer
+ * @param[in]  block_size hardware write size
+ * @param[in]  ci use cache inhibited access
+ *
+ * @return 0 on success, -1 on failure
+ *
+ * Uses the given mem class target to write size bytes from the input buffer
+ * to memory starting at addr.  Cache inhibited memory can be written by
+ * setting ci to true.  For writing IO memory, write commands must match given
+ * block size.
+ */
 int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_t size, uint8_t block_size, bool ci);
 
 /**
@@ -957,7 +1137,28 @@ int opb_read(struct pdbg_target *target, uint32_t addr, uint32_t *data);
  */
 int opb_write(struct pdbg_target *target, uint32_t addr, uint32_t data);
 
+/**
+ * @brief Execute IPL istep using SBE
+ *
+ * @param[in]  target pib target to operate on
+ * @param[in]  major istep major number
+ * @param[in]  minor istep minor number
+ *
+ * @return 0 on success, errno on failure
+ */
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor);
+
+/**
+ * @brief Get FFDC data if error is generated
+ *
+ * @param[in]  target pib target to operate on
+ * @param[out] ffdc pointer to output buffer to store ffdc data
+ * @param[out] ffdc_len the sizeof the ffdc data returned
+ *
+ * @return SBE error code, 0 if there is no ffdc data
+ *
+ * The ffdc data must be freed by caller.
+ */
 uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len);
 
 /**
