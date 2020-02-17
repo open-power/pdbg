@@ -264,7 +264,7 @@ static void mmap_dtb(char *file, bool readonly, struct pdbg_mfile *mfile)
 	else
 		dtb = mmap(NULL, statbuf.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	if (dtb == MAP_FAILED) {
-		pdbg_log(PDBG_ERROR, "Failed top mmap file '%s'\n", file);
+		pdbg_log(PDBG_ERROR, "Failed to mmap file '%s'\n", file);
 		goto fail;
 	}
 
