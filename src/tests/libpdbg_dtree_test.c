@@ -32,7 +32,6 @@ static void print_tree(struct pdbg_target *target, bool system, int level)
 {
 	struct pdbg_target *child;
 	const char *name;
-	char *path;
 	int i;
 
 	for (i=0; i<level; i++)
@@ -41,9 +40,7 @@ static void print_tree(struct pdbg_target *target, bool system, int level)
 	name = pdbg_target_dn_name(target);
 	if (!name || name[0] == '\0')
 		name = "/";
-	path = pdbg_target_path(target);
-	printf("%s (%s)\n", name, path);
-	free(path);
+	printf("%s (%s)\n", name, pdbg_target_path(target));
 
 	for_each_child(target, child, system)
 		print_tree(child, system, level+1);
