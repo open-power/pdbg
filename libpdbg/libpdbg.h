@@ -959,6 +959,20 @@ int opb_write(struct pdbg_target *target, uint32_t addr, uint32_t data);
 
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor);
 
+/**
+ * @brief Execute enter mpipl on the pib
+ * @param[in] pib target pdbg_target
+ * @return 0 on success, -1 otherwise
+ */
+int sbe_mpipl_enter(struct pdbg_target *target);
+
+/**
+ * @brief Execute continue mpipl on the pib
+ * @param[in] pib target pdbg_target
+ * @return 0 on success, -1 otherwise
+ */
+int sbe_mpipl_continue(struct pdbg_target *target);
+
 uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len);
 
 /**
