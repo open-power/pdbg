@@ -355,7 +355,7 @@ bool pdbg_target_set_property(struct pdbg_target *target, const char *name, cons
 	if (!p)
 		return false;
 
-	if (!target->fdt || !pdbg_fdt_is_writeable(target->fdt))
+	if (!target->fdt || pdbg_fdt_is_readonly(target->fdt))
 		return false;
 
 	if (len != size)

@@ -63,10 +63,12 @@ static struct pdbg_dtb pdbg_dtb = {
 	.backend = {
 		.fd = -1,
 		.len = -1,
+		.readonly = true,
 	},
 	.system = {
 		.fd = -1,
 		.len = -1,
+		.readonly = true,
 	},
 };
 
@@ -270,6 +272,7 @@ static void mmap_dtb(char *file, bool readonly, struct pdbg_mfile *mfile)
 		.fd = fd,
 		.len = statbuf.st_size,
 		.fdt = dtb,
+		.readonly = readonly,
 	};
 	return;
 
@@ -408,24 +411,15 @@ done:
 	return dtb;
 }
 
-static bool is_fdt_mapped(void *fdt, struct pdbg_mfile *mfile)
+bool pdbg_fdt_is_readonly(void *fdt)
 {
-	if (mfile->fdt == fdt && mfile->fd != -1 && mfile->len != -1) {
-		return true;
-	}
+	if (pdbg_dtb.system.fdt == fdt)
+		return pdbg_dtb.system.readonly;
 
-	return false;
-}
+	if (pdbg_dtb.backend.fdt == fdt)
+		return pdbg_dtb.backend.readonly;
 
-bool pdbg_fdt_is_writeable(void *fdt)
-{
-	bool ok;
-
-	ok = is_fdt_mapped(fdt, &pdbg_dtb.system);
-	if (!ok)
-		ok = is_fdt_mapped(fdt, &pdbg_dtb.backend);
-
-	return ok;
+	return true;
 }
 
 static void close_dtb(struct pdbg_mfile *mfile)
