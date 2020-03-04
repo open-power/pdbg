@@ -707,7 +707,7 @@ bool pdbg_targets_init(void *fdt)
 	}
 
 	/* Root node needs to be valid when this function returns */
-	pdbg_dt_root = dt_new_node("", NULL, 0);
+	pdbg_dt_root = dt_new_node("", dtb->system.fdt, 0);
 	if (!pdbg_dt_root)
 		return false;
 
