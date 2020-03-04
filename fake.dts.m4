@@ -54,7 +54,8 @@ dnl
 define(`dump_processor_pre',`dnl
      pib {
         #address-cells = <0x1>;
-        #size-cells = <0x1>;')
+        #size-cells = <0x1>;
+	ATTR2 = "processor$1";')
 
 dnl
 dnl dump_processor_post()
@@ -92,7 +93,6 @@ define(`dump_backend',dnl
         reg = <CONCAT(0x,pib_addr) 0x0>;
         index = <0x$1>;
 	ATTR1 = <0xc0ffee>;
-	ATTR2 = "processor$1";
       };
     };
 
