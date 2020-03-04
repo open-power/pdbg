@@ -321,30 +321,7 @@ static void dt_add_phandle(struct pdbg_target *node, const char *name,
 	}
 }
 
-bool pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
-{
-	const void *p;
-	size_t len;
-	int ret;
-
-	if (!target->fdt || !pdbg_fdt_is_writeable(target->fdt))
-		return false;
-
-	p = pdbg_target_property(target, name, &len);
-	if (!p)
-		return false;
-
-	if (len != size)
-		return false;
-
-	ret = fdt_setprop_inplace(target->fdt, target->fdt_offset, name, val, size);
-	if (ret)
-		return false;
-
-	return true;
-}
-
-const void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size)
+static const void *_target_property(struct pdbg_target *target, const char *name, size_t *size)
 {
 	const void *buf;
 	int buflen;
@@ -362,6 +339,44 @@ const void *pdbg_target_property(struct pdbg_target *target, const char *name, s
 
 	size ? *size = buflen : 0;
 	return buf;
+}
+
+bool pdbg_target_set_property(struct pdbg_target *target, const char *name, const void *val, size_t size)
+{
+	const void *p;
+	size_t len;
+	int ret;
+
+	p = _target_property(target, name, &len);
+	if (!p && target->vnode) {
+		target = target->vnode;
+		p = _target_property(target, name, &len);
+	}
+	if (!p)
+		return false;
+
+	if (!target->fdt || !pdbg_fdt_is_writeable(target->fdt))
+		return false;
+
+	if (len != size)
+		return false;
+
+	ret = fdt_setprop_inplace(target->fdt, target->fdt_offset, name, val, size);
+	if (ret)
+		return false;
+
+	return true;
+}
+
+const void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size)
+{
+	const void *p;
+
+	p = _target_property(target, name, size);
+	if (!p && target->vnode)
+		p = _target_property(target->vnode, name, size);
+
+	return p;
 }
 
 static u32 dt_property_get_cell(const void *prop, size_t len, u32 index)
