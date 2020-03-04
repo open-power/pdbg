@@ -308,6 +308,28 @@ int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 	return chipop->istep(chipop, major, minor);
 }
 
+int sbe_mpipl_enter(struct pdbg_target *target)
+{
+	struct chipop *chipop;
+
+	chipop = pib_to_chipop(target);
+	if (!chipop)
+		return -1;
+
+	return chipop->mpipl_enter(chipop);
+}
+
+int sbe_mpipl_continue(struct pdbg_target *target)
+{
+	struct chipop *chipop;
+
+	chipop = pib_to_chipop(target);
+	if (!chipop)
+		return -1;
+
+	return chipop->mpipl_continue(chipop);
+}
+
 uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct chipop *chipop;
