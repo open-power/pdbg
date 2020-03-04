@@ -69,6 +69,8 @@ struct chipop {
 	struct pdbg_target target;
 	uint32_t (*ffdc_get)(struct chipop *, const uint8_t **, uint32_t *);
 	int (*istep)(struct chipop *, uint32_t major, uint32_t minor);
+	int (*mpipl_enter)(struct chipop *);
+	int (*mpipl_continue)(struct chipop *);
 	int (*thread_start)(struct chipop *, uint32_t core_id, uint32_t thread_id);
 	int (*thread_stop)(struct chipop *, uint32_t core_id, uint32_t thread_id);
 	int (*thread_step)(struct chipop *, uint32_t core_id, uint32_t thread_id);
