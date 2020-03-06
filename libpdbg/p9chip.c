@@ -599,7 +599,7 @@ static int p9_chiplet_probe(struct pdbg_target *target)
 
 static uint64_t p9_chiplet_translate(struct pdbg_target *target, uint64_t addr)
 {
-	return addr + pdbg_target_address(target, NULL);
+	return (addr & 0xffffffffc0ffffffULL) + pdbg_target_address(target, NULL);
 }
 
 static struct chiplet p9_chiplet = {
