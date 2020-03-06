@@ -25,9 +25,10 @@ int test_unit_translation(struct pdbg_target *target, p9ChipUnits_t cu, int inde
 	fapi_addr = p9_scominfo_createChipUnitScomAddr(cu, index, addr, 0);
 
 	if (pdbg_addr != fapi_addr)
-		printf("PDBG Address 0x%016" PRIx64 " does not match FAPI Address 0x%016" PRIx64
-		       " for address 0x%016" PRIx64 " on target %s@%d\n",
-		       pdbg_addr, fapi_addr, addr, pdbg_target_path(target), index);
+		fprintf(stderr,
+			"PDBG Address 0x%016" PRIx64 " does not match FAPI Address 0x%016" PRIx64
+		        " for address 0x%016" PRIx64 " on target %s@%d\n",
+		        pdbg_addr, fapi_addr, addr, pdbg_target_path(target), index);
 
 	return pdbg_addr == fapi_addr;
 }
