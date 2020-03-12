@@ -66,10 +66,6 @@
 #define  CHIPLET_CLK_REGION_SEL_THOLD		PPC_BITMASK(48, 50)
 
 /* PCB Slave Registers */
-#define NET_CTRL0	0xf0040
-#define  NET_CTRL0_CHIPLET_ENABLE	PPC_BIT(0)
-#define  NET_CTRL0_FENCE_EN 		PPC_BIT(18)
-#define NET_CTRL0_WOR	0xf0042
 #define PPM_GPMMR	0xf0100
 #define PPM_SPWKUP_FSP	0xf010b
 #define PPM_SSHFSP	0xf0111
@@ -448,12 +444,6 @@ static int p9_core_probe(struct pdbg_target *target)
 	struct core *core = target_to_core(target);
 	int i = 0;
 	uint64_t value;
-
-	if (pib_read(target, NET_CTRL0, &value))
-		return -1;
-
-	if (!(value & NET_CTRL0_CHIPLET_ENABLE))
-		return -1;
 
 	CHECK_ERR(pib_write(target, PPM_SPWKUP_FSP, PPC_BIT(0)));
 	do {
