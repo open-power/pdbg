@@ -443,73 +443,6 @@ static struct thread p9_thread = {
 };
 DECLARE_HW_UNIT(p9_thread);
 
-#define HEADER_CHECK_DATA ((uint64_t) 0xc0ffee03 << 32)
-
-static int p9_chiplet_getring(struct chiplet *chiplet, uint64_t ring_addr, int64_t ring_len, uint32_t result[])
-{
-	uint64_t scan_type_addr;
-	uint64_t scan_data_addr;
-	uint64_t scan_header_addr;
-	uint64_t scan_type_data;
-	uint64_t set_pulse = 1;
-	uint64_t bits = 32;
-	uint64_t data;
-
-	/* We skip the first word in the results so we can write it later as it
-	 * should contain the header read out at the end */
-	int i = 0;
-
-	scan_type_addr = (ring_addr & 0x7fff0000) | 0x7;
-	scan_data_addr = (scan_type_addr & 0xffff0000) | 0x8000;
-	scan_header_addr = scan_data_addr & 0xffffe000;
-
-	scan_type_data = (ring_addr & 0xfff0) << 13;
-	scan_type_data |= 0x800 >> (ring_addr & 0xf);
-	scan_type_data <<= 32;
-
-	pib_write(&chiplet->target, scan_type_addr, scan_type_data);
-	pib_write(&chiplet->target, scan_header_addr, HEADER_CHECK_DATA);
-
-	/* The final 32 bit read is the header which we do at the end */
-	ring_len -= 32;
-	i = 1;
-
-	while (ring_len > 0) {
-		ring_len -= bits;
-		if (set_pulse) {
-			scan_data_addr |= 0x4000;
-			set_pulse = 0;
-		} else
-			scan_data_addr &= ~0x4000ULL;
-
-		scan_data_addr &= ~0xffull;
-		scan_data_addr |= bits;
-		pib_read(&chiplet->target, scan_data_addr, &data);
-
-		/* Discard lower 32 bits */
-		/* TODO: We always read 64-bits from the ring on P9 so we could
-		 * optimise here by reading 64-bits at a time, but I'm not
-		 * confident I've figured that out and 32-bits is what Hostboot
-		 * does and seems to work. */
-		data >>= 32;
-
-		/* Left-align data */
-		data <<= 32 - bits;
-		result[i++] = data;
-		if (ring_len > 0 && (ring_len < bits))
-			bits = ring_len;
-	}
-
-	pib_read(&chiplet->target, scan_header_addr | 0x20, &data);
-	data &= 0xffffffff00000000;
-	result[0] = data >> 32;
-	if (data != HEADER_CHECK_DATA)
-		printf("WARNING: Header check failed. Make sure you specified the right ring length!\n"
-		       "Ring data is probably corrupt now.\n");
-
-	return 0;
-}
-
 static int p9_core_probe(struct pdbg_target *target)
 {
 	struct core *core = target_to_core(target);
@@ -584,40 +517,9 @@ static struct core p9_core = {
 };
 DECLARE_HW_UNIT(p9_core);
 
-static int p9_chiplet_probe(struct pdbg_target *target)
-{
-        uint64_t value;
-
-        if (pib_read(target, NET_CTRL0, &value))
-                return -1;
-
-        if (!(value & NET_CTRL0_CHIPLET_ENABLE))
-                return -1;
-
-        return 0;
-}
-
-static uint64_t p9_chiplet_translate(struct pdbg_target *target, uint64_t addr)
-{
-	return (addr & 0xffffffffc0ffffffULL) + pdbg_target_address(target, NULL);
-}
-
-static struct chiplet p9_chiplet = {
-        .target = {
-                .name = "POWER9 Chiplet",
-                .compatible = "ibm,power9-chiplet",
-                .class = "chiplet",
-                .probe = p9_chiplet_probe,
-		.translate = p9_chiplet_translate,
-        },
-	.getring = p9_chiplet_getring,
-};
-DECLARE_HW_UNIT(p9_chiplet);
-
 __attribute__((constructor))
 static void register_p9chip(void)
 {
 	pdbg_hwunit_register(&p9_thread_hw_unit);
 	pdbg_hwunit_register(&p9_core_hw_unit);
-	pdbg_hwunit_register(&p9_chiplet_hw_unit);
 }
