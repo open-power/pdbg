@@ -110,8 +110,8 @@ test_run libpdbg_p9_fapi_translation_test ex
 
 
 test_result 0 <<EOF
-Testing /proc0/pib/chiplet@6000000/xbus@1  1
-Testing /proc1/pib/chiplet@6000000/xbus@1  1
+Testing /proc0/pib/chiplet@6000000/xbus@0  1
+Testing /proc1/pib/chiplet@6000000/xbus@0  1
 EOF
 
 test_run libpdbg_p9_fapi_translation_test xbus

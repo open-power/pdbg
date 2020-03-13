@@ -131,7 +131,7 @@
 				#address-cells = < 0x02 >;
 				#size-cells = < 0x01 >;
 
-				xbus0_1: xbus@1 {
+				xbus@0 {
 					compatible = "ibm,power9-xbus";
 					index = < 0x01 >;
 					reg = < 0x00 0x6000000 0xffffff >;
@@ -1762,7 +1762,7 @@
 				#address-cells = < 0x02 >;
 				#size-cells = < 0x01 >;
 
-				xbus1_1: xbus@1 {
+				xbus@0 {
 					compatible = "ibm,power9-xbus";
 					index = < 0x01 >;
 					reg = < 0x00 0x6000000 0xffffff >;
