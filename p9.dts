@@ -287,6 +287,16 @@
 					index = < 0x00 >;
 					reg = < 0x00 0xd000000 0xfffff >;
 				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x00 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x01 >;
+				};
 			};
 
 			chiplet@e000000 {
@@ -301,6 +311,16 @@
 					index = < 0x01 >;
 					reg = < 0x00 0xe000000 0xfffff >;
 				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x02 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x03 >;
+				};
 			};
 
 			chiplet@f000000 {
@@ -314,6 +334,16 @@
 					compatible = "ibm,power9-pec";
 					index = < 0x02 >;
 					reg = < 0x00 0xf000000 0xfffff >;
+				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x04 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x05 >;
 				};
 			};
 
@@ -1888,6 +1918,16 @@
 					index = < 0x00 >;
 					reg = < 0x00 0xd000000 0xfffff >;
 				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x00 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x01 >;
+				};
 			};
 
 			chiplet@e000000 {
@@ -1902,6 +1942,16 @@
 					index = < 0x01 >;
 					reg = < 0x00 0xe000000 0xfffff >;
 				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x02 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x03 >;
+				};
 			};
 
 			chiplet@f000000 {
@@ -1915,6 +1965,16 @@
 					compatible = "ibm,power9-pec";
 					index = < 0x02 >;
 					reg = < 0x00 0xf000000 0xfffff >;
+				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x04 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x05 >;
 				};
 			};
 
