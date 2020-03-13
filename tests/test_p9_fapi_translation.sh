@@ -135,9 +135,14 @@ test_run libpdbg_p9_fapi_translation_test nv
 
 
 test_result 0 <<EOF
+Testing /proc0/pib/chiplet@d000000/pec@d000000  0
+Testing /proc0/pib/chiplet@e000000/pec@e000000  1
+Testing /proc0/pib/chiplet@f000000/pec@f000000  2
+Testing /proc1/pib/chiplet@d000000/pec@d000000  0
+Testing /proc1/pib/chiplet@e000000/pec@e000000  1
+Testing /proc1/pib/chiplet@f000000/pec@f000000  2
 EOF
 
-test_skip
 test_run libpdbg_p9_fapi_translation_test pec
 
 
