@@ -182,22 +182,22 @@
 
 					mca0 {
 						compatible = "ibm,power9-mca";
-						index = < 0x00 >;
+						index = < 0x04 >;
 					};
 
 					mca1 {
 						compatible = "ibm,power9-mca";
-						index = < 0x01 >;
+						index = < 0x05 >;
 					};
 
 					mca2 {
 						compatible = "ibm,power9-mca";
-						index = < 0x02 >;
+						index = < 0x06 >;
 					};
 
 					mca3 {
 						compatible = "ibm,power9-mca";
-						index = < 0x03 >;
+						index = < 0x07 >;
 					};
 
 					mcbist {
@@ -1683,22 +1683,22 @@
 
 					mca0 {
 						compatible = "ibm,power9-mca";
-						index = < 0x00 >;
+						index = < 0x04 >;
 					};
 
 					mca1 {
 						compatible = "ibm,power9-mca";
-						index = < 0x01 >;
+						index = < 0x05 >;
 					};
 
 					mca2 {
 						compatible = "ibm,power9-mca";
-						index = < 0x02 >;
+						index = < 0x06 >;
 					};
 
 					mca3 {
 						compatible = "ibm,power9-mca";
-						index = < 0x03 >;
+						index = < 0x07 >;
 					};
 
 					mcbist {

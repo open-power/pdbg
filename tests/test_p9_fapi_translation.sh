@@ -198,18 +198,18 @@ Testing /proc0/pib/chiplet@7000000/mc@0/mca0  0
 Testing /proc0/pib/chiplet@7000000/mc@0/mca1  1
 Testing /proc0/pib/chiplet@7000000/mc@0/mca2  2
 Testing /proc0/pib/chiplet@7000000/mc@0/mca3  3
-Testing /proc0/pib/chiplet@8000000/mc@1/mca0  0
-Testing /proc0/pib/chiplet@8000000/mc@1/mca1  1
-Testing /proc0/pib/chiplet@8000000/mc@1/mca2  2
-Testing /proc0/pib/chiplet@8000000/mc@1/mca3  3
+Testing /proc0/pib/chiplet@8000000/mc@1/mca0  4
+Testing /proc0/pib/chiplet@8000000/mc@1/mca1  5
+Testing /proc0/pib/chiplet@8000000/mc@1/mca2  6
+Testing /proc0/pib/chiplet@8000000/mc@1/mca3  7
 Testing /proc1/pib/chiplet@7000000/mc@0/mca0  0
 Testing /proc1/pib/chiplet@7000000/mc@0/mca1  1
 Testing /proc1/pib/chiplet@7000000/mc@0/mca2  2
 Testing /proc1/pib/chiplet@7000000/mc@0/mca3  3
-Testing /proc1/pib/chiplet@8000000/mc@1/mca0  0
-Testing /proc1/pib/chiplet@8000000/mc@1/mca1  1
-Testing /proc1/pib/chiplet@8000000/mc@1/mca2  2
-Testing /proc1/pib/chiplet@8000000/mc@1/mca3  3
+Testing /proc1/pib/chiplet@8000000/mc@1/mca0  4
+Testing /proc1/pib/chiplet@8000000/mc@1/mca1  5
+Testing /proc1/pib/chiplet@8000000/mc@1/mca2  6
+Testing /proc1/pib/chiplet@8000000/mc@1/mca3  7
 EOF
 
 test_run libpdbg_p9_fapi_translation_test mca
