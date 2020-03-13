@@ -184,10 +184,14 @@ test_run libpdbg_p9_fapi_translation_test omi
 
 
 test_result 0 <<EOF
-Testing /proc0/pib/chiplet@3000000/n1/mcs1  1
+Testing /proc0/pib/chiplet@3000000/n1/mcs2  2
+Testing /proc0/pib/chiplet@3000000/n1/mcs3  3
 Testing /proc0/pib/chiplet@5000000/n3/mcs0  0
-Testing /proc1/pib/chiplet@3000000/n1/mcs1  1
+Testing /proc0/pib/chiplet@5000000/n3/mcs1  1
+Testing /proc1/pib/chiplet@3000000/n1/mcs2  2
+Testing /proc1/pib/chiplet@3000000/n1/mcs3  3
 Testing /proc1/pib/chiplet@5000000/n3/mcs0  0
+Testing /proc1/pib/chiplet@5000000/n3/mcs1  1
 EOF
 
 test_run libpdbg_p9_fapi_translation_test mcs

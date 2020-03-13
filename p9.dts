@@ -75,9 +75,14 @@
 					compatible = "ibm,power9-nest";
 					index = < 0x01 >;
 
-					mcs1 {
+					mcs2 {
 						compatible = "ibm,power9-mcs";
-						index = < 0x01 >;
+						index = < 0x02 >;
+					};
+
+					mcs3 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x03 >;
 					};
 				};
 			};
@@ -110,6 +115,11 @@
 					mcs0 {
 						compatible = "ibm,power9-mcs";
 						index = < 0x00 >;
+					};
+
+					mcs1 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x01 >;
 					};
 				};
 			};
@@ -1576,9 +1586,14 @@
 					compatible = "ibm,power9-nest";
 					index = < 0x01 >;
 
-					mcs1 {
+					mcs2 {
 						compatible = "ibm,power9-mcs";
-						index = < 0x01 >;
+						index = < 0x02 >;
+					};
+
+					mcs3 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x03 >;
 					};
 				};
 			};
@@ -1611,6 +1626,11 @@
 					mcs0 {
 						compatible = "ibm,power9-mcs";
 						index = < 0x00 >;
+					};
+
+					mcs1 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x01 >;
 					};
 				};
 			};
