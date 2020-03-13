@@ -1570,6 +1570,12 @@
 				compatible = "ibm,power9-nv";
 				index = < 0x05 >;
 			};
+
+			occ0 {
+				compatible = "ibm,power9-occ";
+				index = < 0x00 >;
+			};
+
 		};
 	};
 
@@ -3140,6 +3146,11 @@
 			nv5 {
 				compatible = "ibm,power9-nv";
 				index = < 0x05 >;
+			};
+
+			occ0 {
+				compatible = "ibm,power9-occ";
+				index = < 0x00 >;
 			};
 		};
 	};
