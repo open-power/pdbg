@@ -1630,6 +1630,90 @@
 				index = < 0x00 >;
 			};
 
+			sbe0 {
+				compatible = "ibm,power9-sbe";
+				index = < 0x00 >;
+			};
+
+			ppe0 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x00 >;
+			};
+
+			ppe1 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x0a >;
+			};
+
+			ppe2 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x0d >;
+			};
+
+			ppe3 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x14 >;
+			};
+
+			ppe4 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x19 >;
+			};
+
+			ppe5 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x1e >;
+			};
+
+			ppe6 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x28 >;
+			};
+
+			ppe7 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x29 >;
+			};
+
+			ppe8 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2a >;
+			};
+
+			ppe9 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2b >;
+			};
+
+			ppe10 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2c >;
+			};
+
+			ppe11 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2d >;
+			};
+
+			ppe12 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2e >;
+			};
+
+			ppe13 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x32 >;
+			};
+
+			ppe14 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x34 >;
+			};
+
+			ppe15 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x38 >;
+			};
 		};
 	};
 
@@ -3259,6 +3343,91 @@
 			occ0 {
 				compatible = "ibm,power9-occ";
 				index = < 0x00 >;
+			};
+
+			sbe0 {
+				compatible = "ibm,power9-sbe";
+				index = < 0x00 >;
+			};
+
+			ppe0 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x00 >;
+			};
+
+			ppe1 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x0a >;
+			};
+
+			ppe2 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x0d >;
+			};
+
+			ppe3 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x14 >;
+			};
+
+			ppe4 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x19 >;
+			};
+
+			ppe5 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x1e >;
+			};
+
+			ppe6 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x28 >;
+			};
+
+			ppe7 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x29 >;
+			};
+
+			ppe8 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2a >;
+			};
+
+			ppe9 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2b >;
+			};
+
+			ppe10 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2c >;
+			};
+
+			ppe11 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2d >;
+			};
+
+			ppe12 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2e >;
+			};
+
+			ppe13 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x32 >;
+			};
+
+			ppe14 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x34 >;
+			};
+
+			ppe15 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x38 >;
 			};
 		};
 	};

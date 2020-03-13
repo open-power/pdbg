@@ -338,9 +338,40 @@ test_run libpdbg_p9_fapi_translation_test chiplet
 
 
 test_result 0 <<EOF
+Testing /proc0/pib/ppe0  0
+Testing /proc0/pib/ppe1  10
+Testing /proc0/pib/ppe2  13
+Testing /proc0/pib/ppe3  20
+Testing /proc0/pib/ppe4  25
+Testing /proc0/pib/ppe5  30
+Testing /proc0/pib/ppe6  40
+Testing /proc0/pib/ppe7  41
+Testing /proc0/pib/ppe8  42
+Testing /proc0/pib/ppe9  43
+Testing /proc0/pib/ppe10  44
+Testing /proc0/pib/ppe11  45
+Testing /proc0/pib/ppe12  46
+Testing /proc0/pib/ppe13  50
+Testing /proc0/pib/ppe14  52
+Testing /proc0/pib/ppe15  56
+Testing /proc1/pib/ppe0  0
+Testing /proc1/pib/ppe1  10
+Testing /proc1/pib/ppe2  13
+Testing /proc1/pib/ppe3  20
+Testing /proc1/pib/ppe4  25
+Testing /proc1/pib/ppe5  30
+Testing /proc1/pib/ppe6  40
+Testing /proc1/pib/ppe7  41
+Testing /proc1/pib/ppe8  42
+Testing /proc1/pib/ppe9  43
+Testing /proc1/pib/ppe10  44
+Testing /proc1/pib/ppe11  45
+Testing /proc1/pib/ppe12  46
+Testing /proc1/pib/ppe13  50
+Testing /proc1/pib/ppe14  52
+Testing /proc1/pib/ppe15  56
 EOF
 
-test_skip
 test_run libpdbg_p9_fapi_translation_test ppe
 
 
