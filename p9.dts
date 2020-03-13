@@ -229,6 +229,21 @@
 					index = < 0x00 >;
 					reg = < 0x00 0x9000000 0xffffff >;
 				};
+
+				obrick0 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x00 >;
+				};
+
+				obrick1 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x01 >;
+				};
+
+				obrick2 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x02 >;
+				};
 			};
 
 			chiplet@c000000 {
@@ -242,6 +257,21 @@
 					compatible = "ibm,power9-obus";
 					index = < 0x03 >;
 					reg = < 0x00 0xc000000 0xffffff >;
+				};
+
+				obrick0 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x09 >;
+				};
+
+				obrick1 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x0a >;
+				};
+
+				obrick2 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x0b >;
 				};
 			};
 
@@ -1770,6 +1800,21 @@
 					index = < 0x00 >;
 					reg = < 0x00 0x9000000 0xffffff >;
 				};
+
+				obrick0 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x00 >;
+				};
+
+				obrick1 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x01 >;
+				};
+
+				obrick2 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x02 >;
+				};
 			};
 
 			chiplet@c000000 {
@@ -1783,6 +1828,21 @@
 					compatible = "ibm,power9-obus";
 					index = < 0x03 >;
 					reg = < 0x00 0xc000000 0xffffff >;
+				};
+
+				obrick0 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x09 >;
+				};
+
+				obrick1 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x0a >;
+				};
+
+				obrick2 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x0b >;
 				};
 			};
 
