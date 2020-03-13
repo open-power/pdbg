@@ -212,7 +212,7 @@
 
 					mcbist {
 						compatible = "ibm,power9-mcbist";
-						index = < 0x00 >;
+						index = < 0x01 >;
 					};
 				};
 			};
@@ -1888,7 +1888,7 @@
 
 					mcbist {
 						compatible = "ibm,power9-mcbist";
-						index = < 0x00 >;
+						index = < 0x01 >;
 					};
 				};
 			};

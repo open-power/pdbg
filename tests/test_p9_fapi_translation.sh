@@ -237,9 +237,9 @@ test_run libpdbg_p9_fapi_translation_test mca
 
 test_result 0 <<EOF
 Testing /proc0/pib/chiplet@7000000/mc@0/mcbist  0
-Testing /proc0/pib/chiplet@8000000/mc@1/mcbist  0
+Testing /proc0/pib/chiplet@8000000/mc@1/mcbist  1
 Testing /proc1/pib/chiplet@7000000/mc@0/mcbist  0
-Testing /proc1/pib/chiplet@8000000/mc@1/mcbist  0
+Testing /proc1/pib/chiplet@8000000/mc@1/mcbist  1
 EOF
 
 test_run libpdbg_p9_fapi_translation_test mcbist
