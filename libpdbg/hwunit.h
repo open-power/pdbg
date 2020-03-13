@@ -276,4 +276,9 @@ struct pauc {
 };
 #define target_to_pauc(x) container_of(x, struct pauc, target)
 
+struct capp {
+	struct pdbg_target target;
+};
+#define target_to_capp(x) container_of(x, struct capp, target)
+
 #endif /* __HWUNIT_H */
