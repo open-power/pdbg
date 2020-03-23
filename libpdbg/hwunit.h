@@ -46,6 +46,10 @@ const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat);
 	const struct hw_unit_info __used name ##_hw_unit =              \
 	{ .hw_unit = &name, .size = sizeof(name) };
 
+struct proc {
+	struct pdbg_target target;
+};
+
 struct htm {
 	struct pdbg_target target;
 	int (*start)(struct htm *);

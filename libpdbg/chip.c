@@ -666,3 +666,18 @@ int thread_getregs(struct pdbg_target *thread, struct thread_regs *regs)
 
 	return 0;
 }
+
+static struct proc proc = {
+	.target = {
+		.name = "Processor Module",
+		.compatible = "ibm,processor",
+		.class = "proc",
+	},
+};
+DECLARE_HW_UNIT(proc);
+
+__attribute__((constructor))
+static void register_proc(void)
+{
+	pdbg_hwunit_register(&proc_hw_unit);
+}
