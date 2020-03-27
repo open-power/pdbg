@@ -138,8 +138,10 @@ int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 		rc = pib_indirect_read(pib, target_addr, data);
 	else
 		rc = pib->read(pib, target_addr, data);
-	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
-		 target_addr, *data);
+
+	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
+		 rc, target_addr, *data, pdbg_target_path(&pib->target));
+
 	return rc;
 }
 
@@ -157,6 +159,10 @@ int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 		rc = pib_indirect_write(pib, target_addr, data);
 	else
 		rc = pib->write(pib, target_addr, data);
+
+	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
+		 rc, target_addr, data, pdbg_target_path(&pib->target));
+
 	return rc;
 }
 
