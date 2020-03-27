@@ -226,22 +226,31 @@ int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data)
 int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 {
 	struct fsi *fsi;
+	int rc;
 	uint64_t addr64 = addr;
 
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
 	fsi = target_to_fsi(fsi_dt);
-	return fsi->read(fsi, addr64, data);
+
+	rc = fsi->read(fsi, addr64, data);
+	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+		 rc, addr64, *data, pdbg_target_path(&fsi->target));
+	return rc;
 }
 
 int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 {
 	struct fsi *fsi;
+	int rc;
 	uint64_t addr64 = addr;
 
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
 	fsi = target_to_fsi(fsi_dt);
 
-	return fsi->write(fsi, addr64, data);
+	rc = fsi->write(fsi, addr64, data);
+	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+		 rc, addr64, data, pdbg_target_path(&fsi->target));
+	return rc;
 }
 
 int fsi_write_mask(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data, uint32_t mask)
