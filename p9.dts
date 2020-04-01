@@ -7,6 +7,7 @@
 	};
 
 	proc0 {
+		compatible = "ibm,power9-proc", "ibm,processor";
 		index = < 0x00 >;
 
 		fsi {
@@ -1722,6 +1723,7 @@
 	};
 
 	proc1 {
+		compatible = "ibm,power9-proc", "ibm,processor";
 		index = < 0x01 >;
 
 		fsi {

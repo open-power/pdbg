@@ -1,6 +1,7 @@
 define(`PROC',`
 define(`PROC_ID',`$1')dnl
 	proc$1 {
+		compatible = "ibm,power8-proc", "ibm,processor";
 		index = <$1>;
 
 		fsi {
