@@ -119,5 +119,11 @@ divert`'dnl
 / {
     #address-cells = <0x1>;
     #size-cells = <0x1>;
+    ATTR1 = [ 00 ];
+    ATTR2 = [ 00 00 ];
+    ATTR4 = <0x0>;
+    ATTR8 = <0x0 0x0>;
+    ATTR16 = <0x0 0x0 0x0 0x0>;
+
 dump_system(8, 4, 2)
 };
