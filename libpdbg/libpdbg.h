@@ -313,6 +313,79 @@ bool pdbg_target_set_property(struct pdbg_target *target, const char *name, cons
 const void *pdbg_target_property(struct pdbg_target *target, const char *name, size_t *size);
 
 /**
+ * @brief Overwrite the value of given attribute in device tree
+ *
+ * The attributes are treated as 1, 2, 4, or 8 byte integer arrays.
+ *
+ * @param[in] target pdbg_target to set the attribute on
+ * @param[in] name name of the attribute to set
+ * @param[in] size Size of element
+ * @param[in] count Number of elements in the buffer
+ * @param[in] val value of the attribute to set
+ * @return true on success, false on failure
+ *
+ * This function will update the attribute value provided the count of
+ * elements and the size of element matches.
+ */
+bool pdbg_target_set_attribute(struct pdbg_target *target, const char *name, uint32_t size, uint32_t count, const void *val);
+
+/**
+ * @brief Get the value of the given attribute from device tree
+ *
+ * The attributes are treated as 1, 2, 4, or 8 byte integer arrays.
+ *
+ * @param[in] target pdbg_target to get the attribute from
+ * @param[in] name name of the attribute to get
+ * @param[in] size Size of element
+ * @param[in] count Number of elements in the buffer
+ * @param[out] val value of the attribute
+ * @return true on success, false on failure
+ *
+ * This function will copy the attribute value in the given buffer, provided
+ * the count of elements and the size of element matches.
+ */
+bool pdbg_target_get_attribute(struct pdbg_target *target, const char *name, uint32_t size, uint32_t count, void *val);
+
+/**
+ * @brief Overwrite the value of given attribute in device tree
+ *
+ * The attribute value is treated as a packed stream of 1, 2, 4, or 8 byte
+ * integers.  The specification describes how the integers are packed.
+ *
+ * Example:
+ *    A stream of uint32_t, uint8_t, uint16_t, uint32_t is specified as
+ *    "4124".
+ *
+ * @param[in] target pdbg_target to set the attribute on
+ * @param[in] name name of the attribute to set
+ * @param[in] spec specification of packed integers
+ * @param[in] val value of the attribute to set
+ * @return true on success, false on failure
+ *
+ * This function will update the attribute value provided the size matches.
+ */
+bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, const void *val);
+
+/**
+ * @brief Get the value of the given attribute from device tree
+ *
+ * The attribute value is treated as a packed stream of 1, 2, 4, or 8 byte
+ * integers.  The specification describes how the integers are packed.
+ *
+ * @see pdbg_target_set_attribute_packed
+ *
+ * @param[in] target pdbg_target to get the attribute from
+ * @param[in] name name of the attribute to get
+ * @param[in] spec specification of packed integers
+ * @param[out] val value of the attribute
+ * @return true on success, false on failure
+ *
+ * This function will copy the attribute value in the given buffer, provided
+ * the specification matches.
+ */
+bool pdbg_target_get_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, void *val);
+
+/**
  * @brief Get the given property value as a uint32_t
  * @param[in] target pdbg_target to get the property from
  * @param[in] name name of the property to get

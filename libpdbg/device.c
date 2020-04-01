@@ -755,3 +755,230 @@ struct pdbg_target *pdbg_target_root(void)
 {
 	return pdbg_dt_root;
 }
+
+bool pdbg_target_set_attribute(struct pdbg_target *target, const char *name, uint32_t size, uint32_t count, const void *val)
+{
+	void *buf;
+	size_t total_size = count * size;
+	uint32_t i;
+	bool ok;
+
+	buf = malloc(total_size);
+	if (!buf)
+		return false;
+
+	if (size == 1) {
+		memcpy(buf, val, total_size);
+
+	} else if (size == 2) {
+		uint16_t *b = (uint16_t *)buf;
+		uint16_t *v = (uint16_t *)val;
+
+		for (i = 0; i < count; i++)
+			b[i] = htobe16(v[i]);
+
+	} else if (size == 4) {
+		uint32_t *b = (uint32_t *)buf;
+		uint32_t *v = (uint32_t *)val;
+
+		for (i = 0; i < count; i++)
+			b[i] = htobe32(v[i]);
+
+	} else if (size == 8) {
+		uint64_t *b = (uint64_t *)buf;
+		uint64_t *v = (uint64_t *)val;
+
+		for (i = 0; i < count; i++)
+			b[i] = htobe64(v[i]);
+
+	} else {
+		free(buf);
+		return false;
+	}
+
+	ok = pdbg_target_set_property(target, name, buf, total_size);
+	free(buf);
+
+	return ok;
+}
+
+bool pdbg_target_get_attribute(struct pdbg_target *target, const char *name, uint32_t size, uint32_t count, void *val)
+{
+	const void *buf;
+	size_t total_size;
+	uint32_t i;
+
+	buf = pdbg_target_property(target, name, &total_size);
+	if (!buf)
+		return false;
+
+	if (total_size != count * size)
+		return false;
+
+	if (size == 1) {
+		memcpy(val, buf, total_size);
+
+	} else if (size == 2) {
+		uint16_t *b = (uint16_t *)buf;
+		uint16_t *v = (uint16_t *)val;
+
+		for (i = 0; i < count; i++)
+			v[i] = be16toh(b[i]);
+
+	} else if (size == 4) {
+		uint32_t *b = (uint32_t *)buf;
+		uint32_t *v = (uint32_t *)val;
+
+		for (i = 0; i < count; i++)
+			v[i] = be32toh(b[i]);
+
+	} else if (size == 8) {
+		uint64_t *b = (uint64_t *)buf;
+		uint64_t *v = (uint64_t *)val;
+
+		for (i = 0; i < count; i++)
+			v[i] = be64toh(b[i]);
+
+	} else {
+		return false;
+	}
+
+	return true;
+}
+
+static size_t spec_size(const char *spec)
+{
+	size_t size = 0, i;
+
+	for (i = 0; i < strlen(spec); i++) {
+		char ch = spec[i];
+
+		if (ch == '1')
+			size += 1;
+		else if (ch == '2')
+			size += 2;
+		else if (ch == '4')
+			size += 4;
+		else if (ch == '8')
+			size += 8;
+		else
+			return -1;
+	}
+
+	return size;
+}
+
+bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, const void *val)
+{
+	void *buf;
+	size_t size, pos, i;
+	bool ok;
+
+	if (!spec || spec[0] == '\0')
+		return false;
+
+	size = spec_size(spec);
+	if (size <= 0)
+		return false;
+
+	buf = malloc(size);
+	if (!buf)
+		return false;
+
+	pos = 0;
+	for (i=0; i<strlen(spec); i++) {
+		char ch = spec[i];
+
+		if (ch == '1') {
+			uint8_t *b = (uint8_t *)buf + pos;
+			uint8_t *v = (uint8_t *)val + pos;
+
+			*b = *v;
+			pos += 1;
+
+		} else if (ch == '2') {
+			uint16_t *b = (uint16_t *)((uint8_t *)buf + pos);
+			uint16_t *v = (uint16_t *)((uint8_t *)val + pos);
+
+			*b = htobe16(*v);
+			pos += 2;
+
+		} else if (ch == '4') {
+			uint32_t *b = (uint32_t *)((uint8_t *)buf + pos);
+			uint32_t *v = (uint32_t *)((uint8_t *)val + pos);
+
+			*b = htobe32(*v);
+			pos += 4;
+
+		} else if (ch == '8') {
+			uint64_t *b = (uint64_t *)((uint8_t *)buf + pos);
+			uint64_t *v = (uint64_t *)((uint8_t *)val + pos);
+
+			*b = htobe64(*v);
+			pos += 8;
+
+		} else {
+			free(buf);
+			return false;
+		}
+	}
+
+	ok = pdbg_target_set_property(target, name, buf, size);
+	free(buf);
+
+	return ok;
+}
+
+bool pdbg_target_get_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, void *val)
+{
+	const void *buf;
+	size_t size, total_size, pos, i;
+
+	if (!spec || spec[0] == '\0')
+		return false;
+
+	buf = pdbg_target_property(target, name, &total_size);
+	if (!buf)
+		return false;
+
+	size = spec_size(spec);
+	if (total_size != size)
+		return false;
+
+	pos = 0;
+	for (i=0; i<strlen(spec); i++) {
+		char ch = spec[i];
+
+		if (ch == '1') {
+			uint8_t *b = (uint8_t *)buf + pos;
+			uint8_t *v = (uint8_t *)val + pos;
+
+			*v = *b;
+			pos += 1;
+
+		} else if (ch == '2') {
+			uint16_t *b = (uint16_t *)((uint8_t *)buf + pos);
+			uint16_t *v = (uint16_t *)((uint8_t *)val + pos);
+
+			*v = be16toh(*b);
+			pos += 2;
+
+		} else if (ch == '4') {
+			uint32_t *b = (uint32_t *)((uint8_t *)buf + pos);
+			uint32_t *v = (uint32_t *)((uint8_t *)val + pos);
+
+			*v = be32toh(*b);
+			pos += 4;
+
+		} else if (ch == '8') {
+			uint64_t *b = (uint64_t *)((uint8_t *)buf + pos);
+			uint64_t *v = (uint64_t *)((uint8_t *)val + pos);
+
+			*v = be64toh(*b);
+			pos += 8;
+
+		}
+	}
+
+	return true;
+}
