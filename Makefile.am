@@ -28,6 +28,8 @@ PDBG_TESTS = \
 	tests/test_tree.sh		\
 	tests/test_tree2.sh		\
 	tests/test_prop.sh		\
+	tests/test_attr_array.sh	\
+	tests/test_attr_packed.sh	\
 	tests/test_p9_fapi_translation.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
