@@ -24,8 +24,8 @@
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: libpdbg_fdt_test <path> read <prop> char|int\n");
-	fprintf(stderr, "       libpdbg_fdt_test <path> write <prop> char|int <value>\n");
+	fprintf(stderr, "Usage: libpdbg_prop_test <path> read <prop> char|int\n");
+	fprintf(stderr, "       libpdbg_prop_test <path> write <prop> char|int <value>\n");
 	exit(1);
 }
 
