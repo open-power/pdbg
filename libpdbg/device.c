@@ -703,6 +703,11 @@ bool pdbg_targets_init(void *fdt)
 {
 	struct pdbg_dtb *dtb;
 
+	if (pdbg_dt_root) {
+		pdbg_log(PDBG_ERROR, "pdbg_targets_init() must be called only once\n");
+		return false;
+	}
+
 	dtb = pdbg_default_dtb(fdt);
 
 	if (!dtb) {
