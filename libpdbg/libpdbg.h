@@ -497,11 +497,9 @@ bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option);
  * Must be called prior to using any other libpdbg functions.
  *
  * Device tree can also be specified using PDBG_DTB environment variable
- * pointing to system device tree.
- *
- * If the argument is NULL, then PDBG_DTB will override the default device
- * tree.  If the argument is not NULL, then that will override the default
- * device tree and device tree pointed by PDBG_DTB.
+ * pointing to system device tree.  If system device tree is specified using
+ * PDBG_DTB, then it will override the default device tree or the specified
+ * device tree.
  *
  * @note This function can only be called once.
  */
