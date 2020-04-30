@@ -670,7 +670,7 @@ int thread_getregs(struct pdbg_target *thread, struct thread_regs *regs)
 static struct proc proc = {
 	.target = {
 		.name = "Processor Module",
-		.compatible = "ibm,processor",
+		.compatible = "ibm,power-proc",
 		.class = "proc",
 	},
 };
