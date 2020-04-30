@@ -43,6 +43,7 @@
 #include "p9-host.dt.h"
 #include "p8-cronus.dt.h"
 #include "p9-cronus.dt.h"
+#include "p9-sbefifo.dt.h"
 
 #include "p8.dt.h"
 #include "p9.dt.h"
@@ -93,6 +94,8 @@ static enum pdbg_backend default_backend(void)
 			return PDBG_BACKEND_HOST;
 		else if (!strcmp(tmp, "cronus"))
 			return PDBG_BACKEND_CRONUS;
+		else if (!strcmp(tmp, "sbefifo"))
+			return PDBG_BACKEND_SBEFIFO;
 	}
 
 	rc = access(XSCOM_BASE_PATH, F_OK);
@@ -416,6 +419,24 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
+		}
+		break;
+
+	case PDBG_BACKEND_SBEFIFO:
+		if (!pdbg_backend_option) {
+			pdbg_log(PDBG_ERROR, "No system type specified\n");
+			pdbg_log(PDBG_ERROR, "Use p9\n");
+			return NULL;
+		}
+
+		if (!strcmp(pdbg_backend_option, "p9")) {
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p9_sbefifo_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
+		} else {
+			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
+			pdbg_log(PDBG_ERROR, "Use p9\n");
 		}
 		break;
 
