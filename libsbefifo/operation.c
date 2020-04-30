@@ -60,17 +60,18 @@ static int sbefifo_transport(struct sbefifo_context *sctx, uint8_t *msg, uint32_
 	int rc;
 	size_t buflen;
 
+
 	buflen = msg_len;
 	rc = sbefifo_write(sctx, msg, buflen);
 	if (rc) {
-		LOG("write: cmd=%08x, rc=%d\n", cmd, rc);
+		LOG("write: cmd=%08x, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), rc);
 		return rc;
 	}
 
 	buflen = *out_len;
 	rc = sbefifo_read(sctx, out, &buflen);
 	if (rc) {
-		LOG("read: cmd=%08x, buflen=%zu, rc=%d\n", cmd, buflen, rc);
+		LOG("read: cmd=%08x, buflen=%zu, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), buflen, rc);
 		return rc;
 	}
 
