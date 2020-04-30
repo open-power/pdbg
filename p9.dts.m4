@@ -1,3436 +1,653 @@
+define(`CONCAT', `$1$2')dnl
+
+dnl
+dnl CORE([index])
+dnl
+define(`THREAD',
+`
+	thread@$1 {
+		reg = <0x00>;
+		compatible = "ibm,power-thread", "ibm,power9-thread";
+		tid = <0x$1>;
+		index = <0x$1>;
+	};
+')dnl
+
+dnl
+dnl CORE([index])
+dnl
+define(`CORE',
+`
+	core@0 {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		reg = <0x00 0x00 0xfffff>;
+		compatible = "ibm,power-core", "ibm,power9-core";
+		index = <0x$1>;
+
+		THREAD(0)
+		THREAD(1)
+		THREAD(2)
+		THREAD(3)
+	};
+')dnl
+
+dnl
+dnl CHIPLET__([index])
+dnl
+define(`CHIPLET__',
+`define(`addr', CONCAT($1, 000000))dnl
+
+	CONCAT(chiplet@, addr) {
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power9-chiplet";
+		index = <0x$1>;
+
+')dnl
+
+dnl
+dnl CHIPLET_([index])
+dnl
+define(`CHIPLET_',
+`define(`addr', CONCAT($1, 000000))dnl
+
+	CONCAT(chiplet@, addr) {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power9-chiplet";
+		index = <0x$1>;
+
+')dnl
+
+dnl
+dnl EQ_([index])
+dnl
+define(`EQ_',
+`define(`chiplet_id', CONCAT(1, $1))dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	eq@$1 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power9-eq";
+		index = <$1>;
+
+')dnl
+
+dnl
+dnl EX_([eq_index, ex_index])
+dnl
+define(`EX_',
+`define(`chiplet_id', CONCAT(1, $1))dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	ex@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power9-ex";
+		index = <$2>;
+
+')dnl
+
+dnl
+dnl CHIP([index])
+dnl
+define(`CHIP',
+`
+	mem$1 {
+		index = < 0x$1 >;
+	};
+
+	proc$1 {
+		compatible = "ibm,power-proc", "ibm,power9-proc";
+		index = < 0x$1 >;
+
+		fsi {
+			index = < 0x$1 >;
+		};
+
+		pib {
+			#address-cells = < 0x02 >;
+			#size-cells = < 0x01 >;
+			index = < 0x$1 >;
+
+			adu@90000 {
+				compatible = "ibm,power9-adu";
+				reg = < 0x00 0x90000 0x50 >;
+				system-path = "/mem$1";
+			};
+
+			htm@5012880 {
+				compatible = "ibm,power9-nhtm";
+				reg = < 0x00 0x5012880 0x40 >;
+				index = < 0x$1 >;
+			};
+
+			htm@50128C0 {
+				compatible = "ibm,power9-nhtm";
+				reg = < 0x00 0x50128c0 0x40 >;
+				index = < 0x$1 >;
+			};
+
+			CHIPLET_(1)
+				tp@0 {
+					reg = < 0x00 0x1000000 0xfffff >;
+					compatible = "ibm,power9-tp";
+					index = < 0x00 >;
+				};
+			};
+
+			CHIPLET__(2)
+				n0 {
+					compatible = "ibm,power9-nest";
+					index = < 0x00 >;
+
+					capp0 {
+						compatible = "ibm,power9-capp";
+						index = < 0x00 >;
+					};
+				};
+			};
+
+			CHIPLET__(3)
+				n1 {
+					compatible = "ibm,power9-nest";
+					index = < 0x01 >;
+
+					mcs2 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x02 >;
+					};
+
+					mcs3 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x03 >;
+					};
+				};
+			};
+
+			CHIPLET__(4)
+				n2 {
+					compatible = "ibm,power9-nest";
+					index = < 0x02 >;
+
+					capp1 {
+						compatible = "ibm,power9-capp";
+						index = < 0x01 >;
+					};
+				};
+			};
+
+			CHIPLET__(5)
+				n3 {
+					compatible = "ibm,power9-nest";
+					index = < 0x03 >;
+
+					mcs0 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x00 >;
+					};
+
+					mcs1 {
+						compatible = "ibm,power9-mcs";
+						index = < 0x01 >;
+					};
+				};
+			};
+
+			CHIPLET_(6)
+				xbus$1_0: xbus@0 {
+					compatible = "ibm,power9-xbus";
+					index = < 0x01 >;
+					reg = < 0x00 0x6000000 0xfffff >;
+				};
+			};
+
+			CHIPLET_(7)
+				mc@0 {
+					reg = < 0x00 0x7000000 0xfffff >;
+					compatible = "ibm,power9-mc";
+					index = < 0x00 >;
+
+					mca0 {
+						compatible = "ibm,power9-mca";
+						index = < 0x00 >;
+					};
+
+					mca1 {
+						compatible = "ibm,power9-mca";
+						index = < 0x01 >;
+					};
+
+					mca2 {
+						compatible = "ibm,power9-mca";
+						index = < 0x02 >;
+					};
+
+					mca3 {
+						compatible = "ibm,power9-mca";
+						index = < 0x03 >;
+					};
+
+					mcbist {
+						compatible = "ibm,power9-mcbist";
+						index = < 0x00 >;
+					};
+				};
+			};
+
+			CHIPLET_(8)
+				mc@1 {
+					reg = < 0x00 0x8000000 0xfffff >;
+					compatible = "ibm,power9-mc";
+					index = < 0x01 >;
+
+					mca0 {
+						compatible = "ibm,power9-mca";
+						index = < 0x04 >;
+					};
+
+					mca1 {
+						compatible = "ibm,power9-mca";
+						index = < 0x05 >;
+					};
+
+					mca2 {
+						compatible = "ibm,power9-mca";
+						index = < 0x06 >;
+					};
+
+					mca3 {
+						compatible = "ibm,power9-mca";
+						index = < 0x07 >;
+					};
+
+					mcbist {
+						compatible = "ibm,power9-mcbist";
+						index = < 0x01 >;
+					};
+				};
+			};
+
+			CHIPLET_(9)
+				obus@0 {
+					reg = < 0x00 0x9000000 0xfffff >;
+					compatible = "ibm,power9-obus";
+					index = < 0x00 >;
+				};
+
+				obrick0 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x00 >;
+				};
+
+				obrick1 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x01 >;
+				};
+
+				obrick2 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x02 >;
+				};
+			};
+
+			CHIPLET_(c)
+				obus@3 {
+					reg = < 0x00 0xc000000 0xfffff >;
+					compatible = "ibm,power9-obus";
+					index = < 0x03 >;
+				};
+
+				obrick0 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x09 >;
+				};
+
+				obrick1 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x0a >;
+				};
+
+				obrick2 {
+					compatible = "ibm,power9-obus_brick";
+					index = < 0x0b >;
+				};
+			};
+
+			CHIPLET_(d)
+				pec@d000000 {
+					reg = < 0x00 0xd000000 0xfffff >;
+					compatible = "ibm,power9-pec";
+					index = < 0x00 >;
+				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x00 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x01 >;
+				};
+			};
+
+			CHIPLET_(e)
+				pec@e000000 {
+					reg = < 0x00 0xe000000 0xfffff >;
+					compatible = "ibm,power9-pec";
+					index = < 0x01 >;
+				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x02 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x03 >;
+				};
+			};
+
+			CHIPLET_(f)
+				pec@f000000 {
+					reg = < 0x00 0xf000000 0xfffff >;
+					compatible = "ibm,power9-pec";
+					index = < 0x02 >;
+				};
+
+				phb0 {
+					compatible = "ibm,power9-phb";
+					index = < 0x04 >;
+				};
+
+				phb1 {
+					compatible = "ibm,power9-phb";
+					index = < 0x05 >;
+				};
+			};
+
+			CHIPLET_(10)
+				EQ_(0)
+					EX_(0,0)
+						CHIPLET_(20)
+							CORE(00)
+						};
+
+						CHIPLET_(21)
+							CORE(01)
+						};
+					};
+
+					EX_(0,1)
+						CHIPLET_(22)
+							CORE(02)
+						};
+
+						CHIPLET_(23)
+							CORE(03)
+						};
+					};
+				};
+			};
+
+			CHIPLET_(11)
+				EQ_(1)
+					EX_(1,0)
+						CHIPLET_(24)
+							CORE(04)
+						};
+
+						CHIPLET_(25)
+							CORE(05)
+						};
+					};
+
+					EX_(1,1)
+						CHIPLET_(26)
+							CORE(06)
+						};
+
+						CHIPLET_(27)
+							CORE(07)
+						};
+					};
+				};
+			};
+
+			CHIPLET_(12)
+				EQ_(2)
+					EX_(2,0)
+						CHIPLET_(28)
+							CORE(08)
+						};
+
+						CHIPLET_(29)
+							CORE(09)
+						};
+					};
+
+					EX_(2,1)
+						CHIPLET_(2a)
+							CORE(0a)
+						};
+
+						CHIPLET_(2b)
+							CORE(0b)
+						};
+					};
+				};
+			};
+
+			CHIPLET_(13)
+				EQ_(3)
+					EX_(3,0)
+						CHIPLET_(2c)
+							CORE(0c)
+						};
+
+						CHIPLET_(2d)
+							CORE(0d)
+						};
+					};
+
+					EX_(3,1)
+						CHIPLET_(2e)
+							CORE(0e)
+						};
+
+						CHIPLET_(2f)
+							CORE(0f)
+						};
+					};
+				};
+			};
+
+			CHIPLET_(14)
+				EQ_(4)
+					EX_(4,0)
+						CHIPLET_(30)
+							CORE(10)
+						};
+
+						CHIPLET_(31)
+							CORE(11)
+						};
+					};
+
+					EX_(4,1)
+						CHIPLET_(32)
+							CORE(12)
+						};
+
+						CHIPLET_(33)
+							CORE(13)
+						};
+					};
+				};
+			};
+
+			CHIPLET_(15)
+				EQ_(5)
+					EX_(5,0)
+						CHIPLET_(34)
+							CORE(14)
+						};
+
+						CHIPLET_(35)
+							CORE(15)
+						};
+					};
+
+					EX_(5,1)
+						CHIPLET_(36)
+							CORE(16)
+						};
+
+						CHIPLET_(37)
+							CORE(17)
+						};
+					};
+				};
+			};
+
+			nv0 {
+				compatible = "ibm,power9-nv";
+				index = < 0x00 >;
+			};
+
+			nv1 {
+				compatible = "ibm,power9-nv";
+				index = < 0x01 >;
+			};
+
+			nv2 {
+				compatible = "ibm,power9-nv";
+				index = < 0x02 >;
+			};
+
+			nv3 {
+				compatible = "ibm,power9-nv";
+				index = < 0x03 >;
+			};
+
+			nv4 {
+				compatible = "ibm,power9-nv";
+				index = < 0x04 >;
+			};
+
+			nv5 {
+				compatible = "ibm,power9-nv";
+				index = < 0x05 >;
+			};
+
+			occ0 {
+				compatible = "ibm,power9-occ";
+				index = < 0x00 >;
+			};
+
+			sbe0 {
+				compatible = "ibm,power9-sbe";
+				index = < 0x00 >;
+			};
+
+			ppe0 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x00 >;
+			};
+
+			ppe1 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x0a >;
+			};
+
+			ppe2 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x0d >;
+			};
+
+			ppe3 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x14 >;
+			};
+
+			ppe4 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x19 >;
+			};
+
+			ppe5 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x1e >;
+			};
+
+			ppe6 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x28 >;
+			};
+
+			ppe7 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x29 >;
+			};
+
+			ppe8 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2a >;
+			};
+
+			ppe9 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2b >;
+			};
+
+			ppe10 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2c >;
+			};
+
+			ppe11 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2d >;
+			};
+
+			ppe12 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x2e >;
+			};
+
+			ppe13 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x32 >;
+			};
+
+			ppe14 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x34 >;
+			};
+
+			ppe15 {
+				compatible = "ibm,power9-ppe";
+				index = < 0x38 >;
+			};
+		};
+	};
+')dnl
+
 /dts-v1/;
 
 / {
-
-	mem0 {
-		index = < 0x00 >;
-	};
-
-	proc0 {
-		compatible = "ibm,power-proc", "ibm,power9-proc";
-		index = < 0x00 >;
-
-		fsi {
-			index = < 0x00 >;
-		};
-
-		pib {
-			#address-cells = < 0x02 >;
-			#size-cells = < 0x01 >;
-			index = < 0x00 >;
-
-			adu@90000 {
-				compatible = "ibm,power9-adu";
-				reg = < 0x00 0x90000 0x50 >;
-				system-path = "/mem0";
-			};
-
-			htm@5012880 {
-				compatible = "ibm,power9-nhtm";
-				reg = < 0x00 0x5012880 0x40 >;
-				index = < 0x00 >;
-			};
-
-			htm@50128C0 {
-				compatible = "ibm,power9-nhtm";
-				reg = < 0x00 0x50128c0 0x40 >;
-				index = < 0x01 >;
-			};
-
-			chiplet@1000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x01 >;
-				reg = < 0x00 0x1000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				tp@0 {
-					compatible = "ibm,power9-tp";
-					index = < 0x00 >;
-					reg = < 0x00 0x1000000 0xffffff >;
-				};
-			};
-
-			chiplet@2000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x02 >;
-				reg = < 0x00 0x2000000 0xfffff >;
-
-				n0 {
-					compatible = "ibm,power9-nest";
-					index = < 0x00 >;
-
-					capp0 {
-						compatible = "ibm,power9-capp";
-						index = < 0x00 >;
-					};
-				};
-			};
-
-			chiplet@3000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x03 >;
-				reg = < 0x00 0x3000000 0xfffff >;
-
-				n1 {
-					compatible = "ibm,power9-nest";
-					index = < 0x01 >;
-
-					mcs2 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x02 >;
-					};
-
-					mcs3 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x03 >;
-					};
-				};
-			};
-
-			chiplet@4000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x04 >;
-				reg = < 0x00 0x4000000 0xfffff >;
-
-				n2 {
-					compatible = "ibm,power9-nest";
-					index = < 0x02 >;
-
-					capp1 {
-						compatible = "ibm,power9-capp";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			chiplet@5000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x05 >;
-				reg = < 0x00 0x5000000 0xfffff >;
-
-				n3 {
-					compatible = "ibm,power9-nest";
-					index = < 0x03 >;
-
-					mcs0 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x00 >;
-					};
-
-					mcs1 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			chiplet@6000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x06 >;
-				reg = < 0x00 0x6000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				xbus@0 {
-					compatible = "ibm,power9-xbus";
-					index = < 0x01 >;
-					reg = < 0x00 0x6000000 0xffffff >;
-					other-end = "/proc1/pib/chiplet@6000000/xbus@1";
-				};
-			};
-
-			chiplet@7000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x07 >;
-				reg = < 0x00 0x7000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				mc@0 {
-					compatible = "ibm,power9-mc";
-					index = < 0x00 >;
-					reg = < 0x00 0x7000000 0xffffff >;
-
-					mca0 {
-						compatible = "ibm,power9-mca";
-						index = < 0x00 >;
-					};
-
-					mca1 {
-						compatible = "ibm,power9-mca";
-						index = < 0x01 >;
-					};
-
-					mca2 {
-						compatible = "ibm,power9-mca";
-						index = < 0x02 >;
-					};
-
-					mca3 {
-						compatible = "ibm,power9-mca";
-						index = < 0x03 >;
-					};
-
-					mcbist {
-						compatible = "ibm,power9-mcbist";
-						index = < 0x00 >;
-					};
-				};
-			};
-
-			chiplet@8000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x08 >;
-				reg = < 0x00 0x8000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				mc@1 {
-					compatible = "ibm,power9-mc";
-					index = < 0x01 >;
-					reg = < 0x00 0x8000000 0xffffff >;
-
-					mca0 {
-						compatible = "ibm,power9-mca";
-						index = < 0x04 >;
-					};
-
-					mca1 {
-						compatible = "ibm,power9-mca";
-						index = < 0x05 >;
-					};
-
-					mca2 {
-						compatible = "ibm,power9-mca";
-						index = < 0x06 >;
-					};
-
-					mca3 {
-						compatible = "ibm,power9-mca";
-						index = < 0x07 >;
-					};
-
-					mcbist {
-						compatible = "ibm,power9-mcbist";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			chiplet@9000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x09 >;
-				reg = < 0x00 0x9000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				obus@0 {
-					compatible = "ibm,power9-obus";
-					index = < 0x00 >;
-					reg = < 0x00 0x9000000 0xffffff >;
-				};
-
-				obrick0 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x00 >;
-				};
-
-				obrick1 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x01 >;
-				};
-
-				obrick2 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x02 >;
-				};
-			};
-
-			chiplet@c000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0c >;
-				reg = < 0x00 0xc000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				obus@3 {
-					compatible = "ibm,power9-obus";
-					index = < 0x03 >;
-					reg = < 0x00 0xc000000 0xffffff >;
-				};
-
-				obrick0 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x09 >;
-				};
-
-				obrick1 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x0a >;
-				};
-
-				obrick2 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x0b >;
-				};
-			};
-
-			chiplet@d000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0d >;
-				reg = < 0x00 0xd000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				pec@d000000 {
-					compatible = "ibm,power9-pec";
-					index = < 0x00 >;
-					reg = < 0x00 0xd000000 0xfffff >;
-				};
-
-				phb0 {
-					compatible = "ibm,power9-phb";
-					index = < 0x00 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power9-phb";
-					index = < 0x01 >;
-				};
-			};
-
-			chiplet@e000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0e >;
-				reg = < 0x00 0xe000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				pec@e000000 {
-					compatible = "ibm,power9-pec";
-					index = < 0x01 >;
-					reg = < 0x00 0xe000000 0xfffff >;
-				};
-
-				phb0 {
-					compatible = "ibm,power9-phb";
-					index = < 0x02 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power9-phb";
-					index = < 0x03 >;
-				};
-			};
-
-			chiplet@f000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0f >;
-				reg = < 0x00 0xf000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				pec@f000000 {
-					compatible = "ibm,power9-pec";
-					index = < 0x02 >;
-					reg = < 0x00 0xf000000 0xfffff >;
-				};
-
-				phb0 {
-					compatible = "ibm,power9-phb";
-					index = < 0x04 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power9-phb";
-					index = < 0x05 >;
-				};
-			};
-
-			chiplet@10000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x10 >;
-				reg = < 0x00 0x10000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@0 {
-					compatible = "ibm,power9-eq";
-					index = < 0x00 >;
-					reg = < 0x00 0x10000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@20000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x20 >;
-							reg = < 0x00 0x20000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x00 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@21000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x21 >;
-							reg = < 0x00 0x21000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x01 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@22000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x22 >;
-							reg = < 0x00 0x22000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x02 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@23000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x23 >;
-							reg = < 0x00 0x23000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x03 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@11000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x11 >;
-				reg = < 0x00 0x11000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@1 {
-					compatible = "ibm,power9-eq";
-					index = < 0x01 >;
-					reg = < 0x00 0x11000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@24000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x24 >;
-							reg = < 0x00 0x24000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x04 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@25000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x25 >;
-							reg = < 0x00 0x25000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x05 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@26000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x26 >;
-							reg = < 0x00 0x26000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x06 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@27000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x27 >;
-							reg = < 0x00 0x27000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x07 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@12000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x12 >;
-				reg = < 0x00 0x12000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@2 {
-					compatible = "ibm,power9-eq";
-					index = < 0x02 >;
-					reg = < 0x00 0x12000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x12000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@28000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x28 >;
-							reg = < 0x00 0x28000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x08 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@29000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x29 >;
-							reg = < 0x00 0x29000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x09 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x12000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@2a000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2a >;
-							reg = < 0x00 0x2a000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0a >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@2b000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2b >;
-							reg = < 0x00 0x2b000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0b >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@13000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x13 >;
-				reg = < 0x00 0x13000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@3 {
-					compatible = "ibm,power9-eq";
-					index = < 0x03 >;
-					reg = < 0x00 0x13000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x13000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@2c000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2c >;
-							reg = < 0x00 0x2c000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0c >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@2d000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2d >;
-							reg = < 0x00 0x2d000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0d >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x13000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@2e000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2e >;
-							reg = < 0x00 0x2e000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0e >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@2f000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2f >;
-							reg = < 0x00 0x2f000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0f >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@14000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x14 >;
-				reg = < 0x00 0x14000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@4 {
-					compatible = "ibm,power9-eq";
-					index = < 0x04 >;
-					reg = < 0x00 0x13000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x14000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@30000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x30 >;
-							reg = < 0x00 0x30000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x10 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@31000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x31 >;
-							reg = < 0x00 0x31000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x11 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x14000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@32000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x32 >;
-							reg = < 0x00 0x32000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x12 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@33000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x33 >;
-							reg = < 0x00 0x33000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x13 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@15000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x15 >;
-				reg = < 0x00 0x15000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@5 {
-					compatible = "ibm,power9-eq";
-					index = < 0x05 >;
-					reg = < 0x00 0x13000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x15000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@34000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x34 >;
-							reg = < 0x00 0x34000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x14 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@35000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x35 >;
-							reg = < 0x00 0x35000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x15 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x15000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@36000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x36 >;
-							reg = < 0x00 0x36000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x16 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@37000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x37 >;
-							reg = < 0x00 0x37000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x17 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			nv0 {
-				compatible = "ibm,power9-nv";
-				index = < 0x00 >;
-			};
-
-			nv1 {
-				compatible = "ibm,power9-nv";
-				index = < 0x01 >;
-			};
-
-			nv2 {
-				compatible = "ibm,power9-nv";
-				index = < 0x02 >;
-			};
-
-			nv3 {
-				compatible = "ibm,power9-nv";
-				index = < 0x03 >;
-			};
-
-			nv4 {
-				compatible = "ibm,power9-nv";
-				index = < 0x04 >;
-			};
-
-			nv5 {
-				compatible = "ibm,power9-nv";
-				index = < 0x05 >;
-			};
-
-			occ0 {
-				compatible = "ibm,power9-occ";
-				index = < 0x00 >;
-			};
-
-			sbe0 {
-				compatible = "ibm,power9-sbe";
-				index = < 0x00 >;
-			};
-
-			ppe0 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x00 >;
-			};
-
-			ppe1 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x0a >;
-			};
-
-			ppe2 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x0d >;
-			};
-
-			ppe3 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x14 >;
-			};
-
-			ppe4 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x19 >;
-			};
-
-			ppe5 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x1e >;
-			};
-
-			ppe6 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x28 >;
-			};
-
-			ppe7 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x29 >;
-			};
-
-			ppe8 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2a >;
-			};
-
-			ppe9 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2b >;
-			};
-
-			ppe10 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2c >;
-			};
-
-			ppe11 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2d >;
-			};
-
-			ppe12 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2e >;
-			};
-
-			ppe13 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x32 >;
-			};
-
-			ppe14 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x34 >;
-			};
-
-			ppe15 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x38 >;
-			};
-		};
-	};
-
-	mem1 {
-		index = < 0x01 >;
-	};
-
-	proc1 {
-		compatible = "ibm,power-proc", "ibm,power9-proc";
-		index = < 0x01 >;
-
-		fsi {
-			index = < 0x00 >;
-		};
-
-		pib {
-			#address-cells = < 0x02 >;
-			#size-cells = < 0x01 >;
-			index = < 0x00 >;
-
-			adu@90000 {
-				compatible = "ibm,power9-adu";
-				reg = < 0x00 0x90000 0x50 >;
-				system-path = "/mem1";
-			};
-
-			htm@5012880 {
-				compatible = "ibm,power9-nhtm";
-				reg = < 0x00 0x5012880 0x40 >;
-				index = < 0x00 >;
-			};
-
-			htm@50128C0 {
-				compatible = "ibm,power9-nhtm";
-				reg = < 0x00 0x50128c0 0x40 >;
-				index = < 0x01 >;
-			};
-
-			chiplet@1000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x01 >;
-				reg = < 0x00 0x1000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				tp@0 {
-					compatible = "ibm,power9-tp";
-					index = < 0x00 >;
-					reg = < 0x00 0x1000000 0xffffff >;
-				};
-			};
-
-			chiplet@2000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x02 >;
-				reg = < 0x00 0x2000000 0xfffff >;
-
-				n0 {
-					compatible = "ibm,power9-nest";
-					index = < 0x00 >;
-
-					capp0 {
-						compatible = "ibm,power9-capp";
-						index = < 0x00 >;
-					};
-				};
-			};
-
-			chiplet@3000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x03 >;
-				reg = < 0x00 0x3000000 0xfffff >;
-
-				n1 {
-					compatible = "ibm,power9-nest";
-					index = < 0x01 >;
-
-					mcs2 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x02 >;
-					};
-
-					mcs3 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x03 >;
-					};
-				};
-			};
-
-			chiplet@4000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x04 >;
-				reg = < 0x00 0x4000000 0xfffff >;
-
-				n2 {
-					compatible = "ibm,power9-nest";
-					index = < 0x02 >;
-
-					capp1 {
-						compatible = "ibm,power9-capp";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			chiplet@5000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x05 >;
-				reg = < 0x00 0x5000000 0xfffff >;
-
-				n3 {
-					compatible = "ibm,power9-nest";
-					index = < 0x03 >;
-
-					mcs0 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x00 >;
-					};
-
-					mcs1 {
-						compatible = "ibm,power9-mcs";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			chiplet@6000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x06 >;
-				reg = < 0x00 0x6000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				xbus@0 {
-					compatible = "ibm,power9-xbus";
-					index = < 0x01 >;
-					reg = < 0x00 0x6000000 0xffffff >;
-					other-end = "/proc0/pib/chiplet@6000000/xbus@1";
-				};
-			};
-
-			chiplet@7000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x07 >;
-				reg = < 0x00 0x7000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				mc@0 {
-					compatible = "ibm,power9-mc";
-					index = < 0x00 >;
-					reg = < 0x00 0x7000000 0xffffff >;
-
-					mca0 {
-						compatible = "ibm,power9-mca";
-						index = < 0x00 >;
-					};
-
-					mca1 {
-						compatible = "ibm,power9-mca";
-						index = < 0x01 >;
-					};
-
-					mca2 {
-						compatible = "ibm,power9-mca";
-						index = < 0x02 >;
-					};
-
-					mca3 {
-						compatible = "ibm,power9-mca";
-						index = < 0x03 >;
-					};
-
-					mcbist {
-						compatible = "ibm,power9-mcbist";
-						index = < 0x00 >;
-					};
-				};
-			};
-
-			chiplet@8000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x08 >;
-				reg = < 0x00 0x8000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				mc@1 {
-					compatible = "ibm,power9-mc";
-					index = < 0x01 >;
-					reg = < 0x00 0x8000000 0xffffff >;
-
-					mca0 {
-						compatible = "ibm,power9-mca";
-						index = < 0x04 >;
-					};
-
-					mca1 {
-						compatible = "ibm,power9-mca";
-						index = < 0x05 >;
-					};
-
-					mca2 {
-						compatible = "ibm,power9-mca";
-						index = < 0x06 >;
-					};
-
-					mca3 {
-						compatible = "ibm,power9-mca";
-						index = < 0x07 >;
-					};
-
-					mcbist {
-						compatible = "ibm,power9-mcbist";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			chiplet@9000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x09 >;
-				reg = < 0x00 0x9000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				obus@0 {
-					compatible = "ibm,power9-obus";
-					index = < 0x00 >;
-					reg = < 0x00 0x9000000 0xffffff >;
-				};
-
-				obrick0 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x00 >;
-				};
-
-				obrick1 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x01 >;
-				};
-
-				obrick2 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x02 >;
-				};
-			};
-
-			chiplet@c000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0c >;
-				reg = < 0x00 0xc000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				obus@3 {
-					compatible = "ibm,power9-obus";
-					index = < 0x03 >;
-					reg = < 0x00 0xc000000 0xffffff >;
-				};
-
-				obrick0 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x09 >;
-				};
-
-				obrick1 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x0a >;
-				};
-
-				obrick2 {
-					compatible = "ibm,power9-obus_brick";
-					index = < 0x0b >;
-				};
-			};
-
-			chiplet@d000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0d >;
-				reg = < 0x00 0xd000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				pec@d000000 {
-					compatible = "ibm,power9-pec";
-					index = < 0x00 >;
-					reg = < 0x00 0xd000000 0xfffff >;
-				};
-
-				phb0 {
-					compatible = "ibm,power9-phb";
-					index = < 0x00 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power9-phb";
-					index = < 0x01 >;
-				};
-			};
-
-			chiplet@e000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0e >;
-				reg = < 0x00 0xe000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				pec@e000000 {
-					compatible = "ibm,power9-pec";
-					index = < 0x01 >;
-					reg = < 0x00 0xe000000 0xfffff >;
-				};
-
-				phb0 {
-					compatible = "ibm,power9-phb";
-					index = < 0x02 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power9-phb";
-					index = < 0x03 >;
-				};
-			};
-
-			chiplet@f000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x0f >;
-				reg = < 0x00 0xf000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				pec@f000000 {
-					compatible = "ibm,power9-pec";
-					index = < 0x02 >;
-					reg = < 0x00 0xf000000 0xfffff >;
-				};
-
-				phb0 {
-					compatible = "ibm,power9-phb";
-					index = < 0x04 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power9-phb";
-					index = < 0x05 >;
-				};
-			};
-
-			chiplet@10000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x10 >;
-				reg = < 0x00 0x10000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@0 {
-					compatible = "ibm,power9-eq";
-					index = < 0x00 >;
-					reg = < 0x00 0x10000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@20000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x20 >;
-							reg = < 0x00 0x20000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x00 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@21000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x21 >;
-							reg = < 0x00 0x21000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x01 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@22000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x22 >;
-							reg = < 0x00 0x22000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x02 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@23000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x23 >;
-							reg = < 0x00 0x23000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x03 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@11000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x11 >;
-				reg = < 0x00 0x11000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@1 {
-					compatible = "ibm,power9-eq";
-					index = < 0x01 >;
-					reg = < 0x00 0x11000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@24000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x24 >;
-							reg = < 0x00 0x24000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x04 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@25000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x25 >;
-							reg = < 0x00 0x25000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x05 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x10000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@26000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x26 >;
-							reg = < 0x00 0x26000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x06 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@27000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x27 >;
-							reg = < 0x00 0x27000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x07 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@12000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x12 >;
-				reg = < 0x00 0x12000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@2 {
-					compatible = "ibm,power9-eq";
-					index = < 0x02 >;
-					reg = < 0x00 0x12000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x12000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@28000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x28 >;
-							reg = < 0x00 0x28000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x08 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@29000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x29 >;
-							reg = < 0x00 0x29000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x09 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x12000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@2a000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2a >;
-							reg = < 0x00 0x2a000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0a >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@2b000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2b >;
-							reg = < 0x00 0x2b000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0b >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@13000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x13 >;
-				reg = < 0x00 0x13000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@3 {
-					compatible = "ibm,power9-eq";
-					index = < 0x03 >;
-					reg = < 0x00 0x13000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x13000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@2c000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2c >;
-							reg = < 0x00 0x2c000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0c >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@2d000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2d >;
-							reg = < 0x00 0x2d000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0d >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x13000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@2e000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2e >;
-							reg = < 0x00 0x2e000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0e >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@2f000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x2f >;
-							reg = < 0x00 0x2f000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x0f >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@14000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x14 >;
-				reg = < 0x00 0x14000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@4 {
-					compatible = "ibm,power9-eq";
-					index = < 0x04 >;
-					reg = < 0x00 0x13000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x14000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@30000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x30 >;
-							reg = < 0x00 0x30000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x10 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@31000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x31 >;
-							reg = < 0x00 0x31000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x11 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x14000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@32000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x32 >;
-							reg = < 0x00 0x32000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x12 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@33000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x33 >;
-							reg = < 0x00 0x33000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x13 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			chiplet@15000000 {
-				compatible = "ibm,power9-chiplet";
-				index = < 0x15 >;
-				reg = < 0x00 0x15000000 0xfffff >;
-				#address-cells = < 0x02 >;
-				#size-cells = < 0x01 >;
-
-				eq@5 {
-					compatible = "ibm,power9-eq";
-					index = < 0x05 >;
-					reg = < 0x00 0x13000000 0xffffff >;
-					#address-cells = < 0x02 >;
-					#size-cells = < 0x01 >;
-
-					ex@0 {
-						compatible = "ibm,power9-ex";
-						index = < 0x00 >;
-						reg = < 0x00 0x15000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@34000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x34 >;
-							reg = < 0x00 0x34000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x14 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@35000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x35 >;
-							reg = < 0x00 0x35000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x15 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-
-					ex@1 {
-						compatible = "ibm,power9-ex";
-						index = < 0x01 >;
-						reg = < 0x00 0x15000000 0xffffff >;
-						#address-cells = < 0x02 >;
-						#size-cells = < 0x01 >;
-
-						chiplet@36000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x36 >;
-							reg = < 0x00 0x36000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x16 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-
-						chiplet@37000000 {
-							#address-cells = < 0x02 >;
-							#size-cells = < 0x01 >;
-							compatible = "ibm,power9-chiplet";
-							index = < 0x37 >;
-							reg = < 0x00 0x37000000 0xfffff >;
-
-							core@0 {
-								#address-cells = < 0x01 >;
-								#size-cells = < 0x00 >;
-								compatible = "ibm,power-core", "ibm,power9-core";
-								index = < 0x17 >;
-								reg = < 0x00 0x00 0xfffff >;
-
-								thread@0 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x00 >;
-									index = < 0x00 >;
-								};
-
-								thread@1 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x01 >;
-									index = < 0x01 >;
-								};
-
-								thread@2 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x02 >;
-									index = < 0x02 >;
-								};
-
-								thread@3 {
-									compatible = "ibm,power-thread", "ibm,power9-thread";
-									reg = < 0x00 >;
-									tid = < 0x03 >;
-									index = < 0x03 >;
-								};
-							};
-						};
-					};
-				};
-			};
-
-			nv0 {
-				compatible = "ibm,power9-nv";
-				index = < 0x00 >;
-			};
-
-			nv1 {
-				compatible = "ibm,power9-nv";
-				index = < 0x01 >;
-			};
-
-			nv2 {
-				compatible = "ibm,power9-nv";
-				index = < 0x02 >;
-			};
-
-			nv3 {
-				compatible = "ibm,power9-nv";
-				index = < 0x03 >;
-			};
-
-			nv4 {
-				compatible = "ibm,power9-nv";
-				index = < 0x04 >;
-			};
-
-			nv5 {
-				compatible = "ibm,power9-nv";
-				index = < 0x05 >;
-			};
-
-			occ0 {
-				compatible = "ibm,power9-occ";
-				index = < 0x00 >;
-			};
-
-			sbe0 {
-				compatible = "ibm,power9-sbe";
-				index = < 0x00 >;
-			};
-
-			ppe0 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x00 >;
-			};
-
-			ppe1 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x0a >;
-			};
-
-			ppe2 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x0d >;
-			};
-
-			ppe3 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x14 >;
-			};
-
-			ppe4 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x19 >;
-			};
-
-			ppe5 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x1e >;
-			};
-
-			ppe6 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x28 >;
-			};
-
-			ppe7 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x29 >;
-			};
-
-			ppe8 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2a >;
-			};
-
-			ppe9 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2b >;
-			};
-
-			ppe10 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2c >;
-			};
-
-			ppe11 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2d >;
-			};
-
-			ppe12 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x2e >;
-			};
-
-			ppe13 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x32 >;
-			};
-
-			ppe14 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x34 >;
-			};
-
-			ppe15 {
-				compatible = "ibm,power9-ppe";
-				index = < 0x38 >;
-			};
-		};
-	};
+	CHIP(0)
+	CHIP(1)
+	CHIP(2)
+	CHIP(3)
+	CHIP(4)
+	CHIP(5)
+	CHIP(6)
+	CHIP(7)
 };
