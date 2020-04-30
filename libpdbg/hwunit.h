@@ -94,6 +94,10 @@ struct pib {
 	struct pdbg_target target;
 	int (*read)(struct pib *, uint64_t, uint64_t *);
 	int (*write)(struct pib *, uint64_t, uint64_t);
+	int (*thread_start_all)(struct pib *);
+	int (*thread_stop_all)(struct pib *);
+	int (*thread_step_all)(struct pib *, int);
+	int (*thread_sreset_all)(struct pib *);
 	void *priv;
 	int fd;
 };
