@@ -42,7 +42,7 @@
 #include "p8-host.dt.h"
 #include "p9-host.dt.h"
 #include "p8-cronus.dt.h"
-#include "p9-cronus.dt.h"
+#include "cronus.dt.h"
 #include "p9-sbefifo.dt.h"
 
 #include "p8.dt.h"
@@ -413,7 +413,7 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strncmp(pdbg_backend_option, "p9", 2)) {
 			if (!dtb->backend.fdt)
-				dtb->backend.fdt = &_binary_p9_cronus_dtb_o_start;
+				dtb->backend.fdt = &_binary_cronus_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else {

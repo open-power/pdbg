@@ -77,7 +77,7 @@ if TARGET_PPC
 ARCH_FLAGS="-DTARGET_PPC=1"
 endif
 
-DT = fake.dts fake2.dts p8-cronus.dts p9-cronus.dts \
+DT = fake.dts fake2.dts p8-cronus.dts cronus.dts \
      p8-fsi.dts p8-i2c.dts p8-kernel.dts \
      p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts bmc-kernel.dts \
      p9-sbefifo.dts \
