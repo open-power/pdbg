@@ -17,7 +17,7 @@
 			 #size-cells = <0x1>;
 			 reg = <0x0 0x1000 0x7>;
 			 index = <0x0>;
-			 compatible = "ibm,fsi-pib", "ibm,power9-fsi-pib";
+			 compatible = "ibm,fsi-pib";
 			 system-path = "/proc0/pib";
 		};
 
@@ -35,7 +35,7 @@
 				#size-cells = <0x1>;
 				reg = <0x0 0x1000 0x7>;
 				index = <0x1>;
-				compatible = "ibm,fsi-pib", "ibm,power9-fsi-pib";
+				compatible = "ibm,fsi-pib";
 				system-path = "/proc1/pib";
 			};
 		};
