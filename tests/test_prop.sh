@@ -39,7 +39,11 @@ test_run libpdbg_prop_test /proc0/pib write ATTR2 char PROCESSOR0
 cp fake.dtb fake-prop.dtb
 test_cleanup rm -f fake-prop.dtb
 
+cp fake-backend.dtb fake-backend-prop.dtb
+test_cleanup rm -f fake-backend-prop.dtb
+
 export PDBG_DTB=fake-prop.dtb
+export PDBG_BACKEND_DTB=fake-backend-prop.dtb
 
 test_result 0 --
 test_run libpdbg_prop_test /proc1/pib write ATTR1 int 0xdeadbeef

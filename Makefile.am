@@ -35,7 +35,7 @@ PDBG_TESTS = \
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
 
 tests/test_tree2.sh: fake2.dtb
-tests/test_prop.sh: fake.dtb
+tests/test_prop.sh: fake.dtb fake-backend.dtb
 tests/test_p9_fapi_translation.sh: p9.dtb bmc-kernel.dtb
 
 test: $(libpdbg_tests)
@@ -77,7 +77,7 @@ if TARGET_PPC
 ARCH_FLAGS="-DTARGET_PPC=1"
 endif
 
-DT = fake.dts fake2.dts p8-cronus.dts cronus.dts \
+DT = fake.dts fake-backend.dts fake2.dts p8-cronus.dts cronus.dts \
      p8-fsi.dts p8-i2c.dts p8-kernel.dts \
      p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts bmc-kernel.dts \
      bmc-sbefifo.dts \

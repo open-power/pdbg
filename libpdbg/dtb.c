@@ -31,6 +31,7 @@
 #include "target.h"
 
 #include "fake.dt.h"
+#include "fake-backend.dt.h"
 
 #include "p8-i2c.dt.h"
 #include "p8-fsi.dt.h"
@@ -447,6 +448,8 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 	case PDBG_BACKEND_FAKE:
 		if (!dtb->system.fdt)
 			dtb->system.fdt = &_binary_fake_dtb_o_start;
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_fake_backend_dtb_o_start;
 		break;
 	}
 
