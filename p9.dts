@@ -379,33 +379,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x00 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -423,33 +423,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x01 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -475,33 +475,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x02 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -519,33 +519,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x03 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -587,33 +587,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x04 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -631,33 +631,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x05 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -683,33 +683,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x06 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -727,33 +727,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x07 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -795,33 +795,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x08 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -839,33 +839,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x09 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -891,33 +891,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0a >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -935,33 +935,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0b >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1003,33 +1003,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0c >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1047,33 +1047,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0d >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1099,33 +1099,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0e >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1143,33 +1143,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0f >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1211,33 +1211,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x10 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1255,33 +1255,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x11 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1307,33 +1307,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x12 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1351,33 +1351,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x13 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1419,33 +1419,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x14 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1463,33 +1463,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x15 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1515,33 +1515,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x16 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -1559,33 +1559,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x17 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2095,33 +2095,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x00 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2139,33 +2139,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x01 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2191,33 +2191,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x02 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2235,33 +2235,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x03 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2303,33 +2303,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x04 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2347,33 +2347,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x05 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2399,33 +2399,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x06 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2443,33 +2443,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x07 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2511,33 +2511,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x08 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2555,33 +2555,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x09 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2607,33 +2607,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0a >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2651,33 +2651,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0b >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2719,33 +2719,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0c >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2763,33 +2763,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0d >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2815,33 +2815,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0e >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2859,33 +2859,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x0f >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2927,33 +2927,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x10 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -2971,33 +2971,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x11 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -3023,33 +3023,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x12 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -3067,33 +3067,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x13 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -3135,33 +3135,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x14 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -3179,33 +3179,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x15 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -3231,33 +3231,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x16 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
@@ -3275,33 +3275,33 @@
 							core@0 {
 								#address-cells = < 0x01 >;
 								#size-cells = < 0x00 >;
-								compatible = "ibm,power9-core";
+								compatible = "ibm,power-core", "ibm,power9-core";
 								index = < 0x17 >;
 								reg = < 0x00 0x00 0xfffff >;
 
 								thread@0 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x00 >;
 									index = < 0x00 >;
 								};
 
 								thread@1 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x01 >;
 									index = < 0x01 >;
 								};
 
 								thread@2 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x02 >;
 									index = < 0x02 >;
 								};
 
 								thread@3 {
-									compatible = "ibm,power9-thread";
+									compatible = "ibm,power-thread", "ibm,power9-thread";
 									reg = < 0x00 >;
 									tid = < 0x03 >;
 									index = < 0x03 >;
