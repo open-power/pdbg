@@ -76,7 +76,24 @@ static struct pdbg_dtb pdbg_dtb = {
  * running on. */
 static enum pdbg_backend default_backend(void)
 {
+	const char *tmp;
 	int rc;
+
+	tmp = getenv("PDBG_BACKEND_DRIVER");
+	if (tmp) {
+		if (!strcmp(tmp, "fsi"))
+			return PDBG_BACKEND_FSI;
+		else if (!strcmp(tmp, "i2c"))
+			return PDBG_BACKEND_I2C;
+		else if (!strcmp(tmp, "kernel"))
+			return PDBG_BACKEND_KERNEL;
+		else if (!strcmp(tmp, "fake"))
+			return PDBG_BACKEND_FAKE;
+		else if (!strcmp(tmp, "host"))
+			return PDBG_BACKEND_HOST;
+		else if (!strcmp(tmp, "cronus"))
+			return PDBG_BACKEND_CRONUS;
+	}
 
 	rc = access(XSCOM_BASE_PATH, F_OK);
 	if (rc == 0) /* PowerPC Host System */
@@ -313,6 +330,9 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 	dtb->backend.fdt = NULL;
 	dtb->system.fdt = system_fdt;
 
+	if (!pdbg_backend)
+		pdbg_backend = default_backend();
+
 	fdt = getenv("PDBG_BACKEND_DTB");
 	if (fdt)
 		mmap_dtb(fdt, false, &dtb->backend);
@@ -323,9 +343,6 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 
 	if (dtb->backend.fdt && dtb->system.fdt)
 		goto done;
-
-	if (!pdbg_backend)
-		pdbg_backend = default_backend();
 
 	switch(pdbg_backend) {
 	case PDBG_BACKEND_HOST:
