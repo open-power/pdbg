@@ -142,7 +142,6 @@ enum pdbg_target_status {
 	PDBG_TARGET_RELEASED,
 };
 
-
 /**
  * @brief Describes the various methods (referred to as backends) for
  * accessing hardware depending on where the code is executed.
@@ -197,6 +196,12 @@ enum pdbg_backend {
 	 * the BMC network address / hostname.  For example p9@spoon2-bmc.
 	 */
 	PDBG_BACKEND_CRONUS,
+
+	/**
+	 * This backend uses sbefifo kernel driver on BMC to access hardware
+	 * via SBE.
+	 */
+	PDBG_BACKEND_SBEFIFO,
 };
 
 /**
