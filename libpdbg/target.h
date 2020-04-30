@@ -80,6 +80,7 @@ extern struct list_head empty_list;
 extern struct list_head target_classes;
 
 struct pdbg_dtb *pdbg_default_dtb(void *system_fdt);
+enum pdbg_backend pdbg_get_backend(void);
 const char *pdbg_get_backend_option(void);
 bool pdbg_fdt_is_readonly(void *fdt);
 
