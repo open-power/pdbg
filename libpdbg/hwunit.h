@@ -76,10 +76,6 @@ struct chipop {
 	int (*istep)(struct chipop *, uint32_t major, uint32_t minor);
 	int (*mpipl_enter)(struct chipop *);
 	int (*mpipl_continue)(struct chipop *);
-	int (*thread_start)(struct chipop *, uint32_t core_id, uint32_t thread_id);
-	int (*thread_stop)(struct chipop *, uint32_t core_id, uint32_t thread_id);
-	int (*thread_step)(struct chipop *, uint32_t core_id, uint32_t thread_id);
-	int (*thread_sreset)(struct chipop *, uint32_t core_id, uint32_t thread_id);
 };
 #define target_to_chipop(x) container_of(x, struct chipop, target)
 

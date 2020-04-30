@@ -195,48 +195,6 @@ static int sbefifo_op_mpipl_enter(struct chipop *chipop)
 	return sbefifo_mpipl_enter(sctx);
 }
 
-static int sbefifo_op_control(struct chipop *chipop,
-			      uint32_t core_id, uint32_t thread_id,
-			      uint32_t oper)
-{
-	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
-	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-	uint8_t mode = 0;
-
-	/* Enforce special-wakeup for thread stop and sreset */
-	if ((oper & 0xf) == SBEFIFO_INSN_OP_STOP ||
-	    (oper & 0xf) == SBEFIFO_INSN_OP_SRESET)
-		mode = 0x2;
-
-	PR_NOTICE("sbefifo: control c:0x%x, t:0x%x, op:%u mode:%u\n", core_id, thread_id, oper, mode);
-
-	return sbefifo_control_insn(sctx, core_id & 0xff, thread_id & 0xff, oper & 0xff, mode);
-}
-
-static int sbefifo_op_thread_start(struct chipop *chipop,
-				   uint32_t core_id, uint32_t thread_id)
-{
-	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_START);
-}
-
-static int sbefifo_op_thread_stop(struct chipop *chipop,
-				  uint32_t core_id, uint32_t thread_id)
-{
-	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_STOP);
-}
-
-static int sbefifo_op_thread_step(struct chipop *chipop,
-				  uint32_t core_id, uint32_t thread_id)
-{
-	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_STEP);
-}
-
-static int sbefifo_op_thread_sreset(struct chipop *chipop,
-				    uint32_t core_id, uint32_t thread_id)
-{
-	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_SRESET);
-}
-
 static struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
 {
 	struct pdbg_target *target;
@@ -441,10 +399,6 @@ static struct chipop sbefifo_chipop = {
 	.istep = sbefifo_op_istep,
 	.mpipl_enter = sbefifo_op_mpipl_enter,
 	.mpipl_continue = sbefifo_op_mpipl_continue,
-	.thread_start = sbefifo_op_thread_start,
-	.thread_stop = sbefifo_op_thread_stop,
-	.thread_step = sbefifo_op_thread_step,
-	.thread_sreset = sbefifo_op_thread_sreset,
 };
 DECLARE_HW_UNIT(sbefifo_chipop);
 
