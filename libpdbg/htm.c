@@ -1158,7 +1158,7 @@ DECLARE_HW_UNIT(p8_chtm);
 __attribute__((constructor))
 static void register_htm(void)
 {
-	pdbg_hwunit_register(&p8_nhtm_hw_unit);
-	pdbg_hwunit_register(&p9_nhtm_hw_unit);
-	pdbg_hwunit_register(&p8_chtm_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_nhtm_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p9_nhtm_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_chtm_hw_unit);
 }

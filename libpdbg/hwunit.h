@@ -31,8 +31,9 @@ struct hw_unit_info {
 	size_t size;
 };
 
-void pdbg_hwunit_register(const struct hw_unit_info *hw_unit);
-const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat);
+void pdbg_hwunit_register(enum pdbg_backend backend, const struct hw_unit_info *hw_unit);
+const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat_list,
+						       uint32_t len);
 
 /*
  * If this macro fails to compile for you, you've probably not

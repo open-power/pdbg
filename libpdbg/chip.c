@@ -679,5 +679,5 @@ DECLARE_HW_UNIT(proc);
 __attribute__((constructor))
 static void register_proc(void)
 {
-	pdbg_hwunit_register(&proc_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &proc_hw_unit);
 }

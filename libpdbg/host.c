@@ -127,5 +127,5 @@ DECLARE_HW_UNIT(host_pib);
 __attribute__((constructor))
 static void register_host(void)
 {
-	pdbg_hwunit_register(&host_pib_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &host_pib_hw_unit);
 }

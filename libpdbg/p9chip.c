@@ -510,6 +510,6 @@ DECLARE_HW_UNIT(p9_core);
 __attribute__((constructor))
 static void register_p9chip(void)
 {
-	pdbg_hwunit_register(&p9_thread_hw_unit);
-	pdbg_hwunit_register(&p9_core_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p9_thread_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p9_core_hw_unit);
 }

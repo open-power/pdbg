@@ -353,8 +353,8 @@ DECLARE_HW_UNIT(cfam_hmfsi);
 __attribute__((constructor))
 static void register_cfam(void)
 {
-	pdbg_hwunit_register(&fsi_pib_hw_unit);
-	pdbg_hwunit_register(&p8_opb_hw_unit);
-	pdbg_hwunit_register(&p8_opb_hmfsi_hw_unit);
-	pdbg_hwunit_register(&cfam_hmfsi_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &fsi_pib_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_opb_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_opb_hmfsi_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &cfam_hmfsi_hw_unit);
 }

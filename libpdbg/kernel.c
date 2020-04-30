@@ -264,6 +264,6 @@ DECLARE_HW_UNIT(kernel_pib);
 __attribute__((constructor))
 static void register_kernel(void)
 {
-	pdbg_hwunit_register(&kernel_fsi_hw_unit);
-	pdbg_hwunit_register(&kernel_pib_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_fsi_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_pib_hw_unit);
 }

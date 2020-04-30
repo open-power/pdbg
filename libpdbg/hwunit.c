@@ -20,26 +20,28 @@
 #include "hwunit.h"
 
 #define MAX_HW_UNITS	1024
+#define MAX_BACKENDS	16
 
-static const struct hw_unit_info *g_hw_unit[MAX_HW_UNITS];
-static int g_hw_unit_count;
+static const struct hw_unit_info *g_hw_unit[MAX_BACKENDS][MAX_HW_UNITS];
+static int g_hw_unit_count[MAX_BACKENDS];
 
-void pdbg_hwunit_register(const struct hw_unit_info *hw_unit)
+void pdbg_hwunit_register(enum pdbg_backend backend, const struct hw_unit_info *hw_unit)
 {
-	assert(g_hw_unit_count < MAX_HW_UNITS);
+	assert(g_hw_unit_count[backend] < MAX_HW_UNITS);
 
-	g_hw_unit[g_hw_unit_count] = hw_unit;
-	g_hw_unit_count++;
+	g_hw_unit[backend][g_hw_unit_count[backend]] = hw_unit;
+	g_hw_unit_count[backend]++;
 }
 
-const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat)
+static const struct hw_unit_info *find_driver(enum pdbg_backend backend,
+					      const char *compat)
 {
 	const struct hw_unit_info *p;
 	struct pdbg_target *target;
 	int i;
 
-	for (i = 0; i < g_hw_unit_count; i++) {
-		p = g_hw_unit[i];
+	for (i = 0; i < g_hw_unit_count[backend]; i++) {
+		p = g_hw_unit[backend][i];
 		target = p->hw_unit;
 
 		if (!strcmp(target->compatible, compat))
@@ -47,4 +49,35 @@ const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat)
 	}
 
 	return NULL;
+}
+
+static const struct hw_unit_info *find_compatible(enum pdbg_backend backend,
+						  const char *compat_list,
+						  uint32_t len)
+{
+	const struct hw_unit_info *p;
+	uint32_t i;
+
+	i = 0;
+	while (i < len) {
+		p = find_driver(backend, &compat_list[i]);
+		if (p)
+			return p;
+
+		i += strlen(&compat_list[i]) + 1;
+	}
+
+	return NULL;
+}
+
+const struct hw_unit_info *pdbg_hwunit_find_compatible(const char *compat_list,
+						       uint32_t len)
+{
+	const struct hw_unit_info *p;
+
+	p = find_compatible(pdbg_get_backend(), compat_list, len);
+	if (!p)
+		p = find_compatible(PDBG_DEFAULT_BACKEND, compat_list, len);
+
+	return p;
 }

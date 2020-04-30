@@ -177,5 +177,5 @@ DECLARE_HW_UNIT(p8_i2c_pib);
 __attribute__((constructor))
 static void register_i2c(void)
 {
-	pdbg_hwunit_register(&p8_i2c_pib_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_i2c_pib_hw_unit);
 }

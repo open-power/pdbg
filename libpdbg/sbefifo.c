@@ -321,8 +321,8 @@ DECLARE_HW_UNIT(kernel_sbefifo);
 __attribute__((constructor))
 static void register_sbefifo(void)
 {
-	pdbg_hwunit_register(&kernel_sbefifo_hw_unit);
-	pdbg_hwunit_register(&sbefifo_chipop_hw_unit);
-	pdbg_hwunit_register(&sbefifo_mem_hw_unit);
-	pdbg_hwunit_register(&sbefifo_pba_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_sbefifo_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_chipop_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_mem_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_pba_hw_unit);
 }

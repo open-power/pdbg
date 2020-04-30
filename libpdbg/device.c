@@ -60,23 +60,16 @@ static struct pdbg_target *dt_pdbg_target_new(const void *fdt, int node_offset)
 
 	prop = fdt_get_property(fdt, node_offset, "compatible", NULL);
 	if (prop) {
-		int i, prop_len = fdt32_to_cpu(prop->len);
+		uint32_t prop_len = fdt32_to_cpu(prop->len);
 
 		/*
 		 * If I understand correctly, the property we have
 		 * here can be a stringlist with a few compatible
 		 * strings
 		 */
-		i = 0;
-		while (i < prop_len) {
-			hw_info = pdbg_hwunit_find_compatible(&prop->data[i]);
-			if (hw_info) {
-				size = hw_info->size;
-				break;
-			}
-
-			i += strlen(&prop->data[i]) + 1;
-		}
+		hw_info = pdbg_hwunit_find_compatible(prop->data, prop_len);
+		if (hw_info)
+			size = hw_info->size;
 	}
 
 	if (!hw_info)

@@ -519,5 +519,5 @@ DECLARE_HW_UNIT(bmcfsi);
 __attribute__((constructor))
 static void register_bmcfsi(void)
 {
-	pdbg_hwunit_register(&bmcfsi_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &bmcfsi_hw_unit);
 }
