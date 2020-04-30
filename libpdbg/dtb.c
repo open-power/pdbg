@@ -38,7 +38,7 @@
 #include "p9w-fsi.dt.h"
 #include "p9r-fsi.dt.h"
 #include "p9z-fsi.dt.h"
-#include "p9-kernel.dt.h"
+#include "bmc-kernel.dt.h"
 #include "p8-host.dt.h"
 #include "p9-host.dt.h"
 #include "p8-cronus.dt.h"
@@ -195,7 +195,7 @@ static void bmc_target(struct pdbg_dtb *dtb)
 				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9")) {
 			if (!dtb->backend.fdt)
-				dtb->backend.fdt = &_binary_p9_kernel_dtb_o_start;
+				dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else {
@@ -234,7 +234,7 @@ static void bmc_target(struct pdbg_dtb *dtb)
 	case CHIP_ID_P9P:
 		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
 		if (!dtb->backend.fdt)
-			dtb->backend.fdt = &_binary_p9_kernel_dtb_o_start;
+			dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
 		if (!dtb->system.fdt)
 			dtb->system.fdt = &_binary_p9_dtb_o_start;
 		break;

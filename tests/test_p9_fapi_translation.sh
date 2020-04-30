@@ -4,7 +4,7 @@
 
 test_group "p9 fapi translation tests"
 
-export PDBG_BACKEND_DTB=p9-kernel.dtb
+export PDBG_BACKEND_DTB=bmc-kernel.dtb
 export PDBG_DTB=p9.dtb
 
 test_result 0 <<EOF
