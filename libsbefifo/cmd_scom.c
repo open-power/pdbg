@@ -24,7 +24,7 @@
 
 static int sbefifo_scom_get_push(uint64_t addr, uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *msg;
+	uint32_t *msg;
 	uint32_t nwords, cmd;
 
 	nwords = 4;
@@ -83,7 +83,7 @@ int sbefifo_scom_get(struct sbefifo_context *sctx, uint64_t addr, uint64_t *valu
 
 static int sbefifo_scom_put_push(uint64_t addr, uint64_t value, uint8_t **buf, uint32_t *buflen)
 {
-	uint8_t *msg;
+	uint32_t *msg;
 	uint32_t nwords, cmd;
 
 	nwords = 6;
