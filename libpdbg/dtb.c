@@ -251,7 +251,7 @@ static void bmc_target(struct pdbg_dtb *dtb)
 }
 
 /* Opens a dtb at the given path */
-static void mmap_dtb(char *file, bool readonly, struct pdbg_mfile *mfile)
+static void mmap_dtb(const char *file, bool readonly, struct pdbg_mfile *mfile)
 {
 	int fd;
 	void *dtb;
@@ -325,7 +325,7 @@ const char *pdbg_get_backend_option(void)
 struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 {
 	struct pdbg_dtb *dtb = &pdbg_dtb;
-	char *fdt;
+	const char *fdt;
 
 	dtb->backend.fdt = NULL;
 	dtb->system.fdt = system_fdt;
