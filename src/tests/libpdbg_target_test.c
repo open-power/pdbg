@@ -21,8 +21,6 @@
 
 #include <libpdbg.h>
 
-#include "fake.dt.h"
-
 static int count_target(struct pdbg_target *parent, const char *classname)
 {
 	struct pdbg_target *target;

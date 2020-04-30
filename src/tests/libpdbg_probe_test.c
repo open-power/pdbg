@@ -20,8 +20,6 @@
 
 #include <libpdbg.h>
 
-#include "fake.dt.h"
-
 static void for_each_target(struct pdbg_target *parent,
 			    void (*callback)(struct pdbg_target *target,
 					     enum pdbg_target_status status),

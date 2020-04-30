@@ -243,8 +243,6 @@ libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
 libpdbg_target_test_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_target_test_LDADD = $(libpdbg_test_ldadd)
 
-src/tests/libpdbg_target_test.c: fake.dt.h
-
 libpdbg_probe_test1_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test1_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=1
 libpdbg_probe_test1_LDFLAGS = $(libpdbg_test_ldflags)
@@ -259,8 +257,6 @@ libpdbg_probe_test3_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test3_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=3
 libpdbg_probe_test3_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_probe_test3_LDADD = $(libpdbg_test_ldadd)
-
-src/tests/libpdbg_probe_test.c: fake.dt.h
 
 libpdbg_dtree_test_SOURCES = src/tests/libpdbg_dtree_test.c
 libpdbg_dtree_test_CFLAGS = $(libpdbg_test_cflags)
