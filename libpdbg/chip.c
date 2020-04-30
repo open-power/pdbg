@@ -156,21 +156,16 @@ int thread_sreset(struct pdbg_target *thread_target)
 
 int thread_step_all(void)
 {
-	struct pdbg_target *pib, *thread;
+	struct pdbg_target *target, *thread;
 	int rc = 0, count = 0;
 
-	pdbg_for_each_class_target("pib", pib) {
-		struct chipop *chipop;
+	pdbg_for_each_class_target("pib", target) {
+		struct pib *pib = target_to_pib(target);
 
-		chipop = pib_to_chipop(pib);
-		if (!chipop)
+		if (!pib->thread_step_all)
 			break;
 
-		/*
-		 * core_id = 0xff (all SMT4 cores)
-		 * thread_id = 0xf (all 4 threads in the SMT4 core)
-		 */
-		rc |= chipop->thread_step(chipop, 0xff, 0xf);
+		rc |= pib->thread_step_all(pib, 1);
 		count++;
 	}
 
@@ -189,21 +184,16 @@ int thread_step_all(void)
 
 int thread_start_all(void)
 {
-	struct pdbg_target *pib, *thread;
+	struct pdbg_target *target, *thread;
 	int rc = 0, count = 0;
 
-	pdbg_for_each_class_target("pib", pib) {
-		struct chipop *chipop;
+	pdbg_for_each_class_target("pib", target) {
+		struct pib *pib = target_to_pib(target);
 
-		chipop = pib_to_chipop(pib);
-		if (!chipop)
+		if (!pib->thread_start_all)
 			break;
 
-		/*
-		 * core_id = 0xff (all SMT4 cores)
-		 * thread_id = 0xf (all 4 threads in the SMT4 core)
-		 */
-		rc |= chipop->thread_start(chipop, 0xff, 0xf);
+		rc |= pib->thread_start_all(pib);
 		count++;
 	}
 
@@ -222,21 +212,16 @@ int thread_start_all(void)
 
 int thread_stop_all(void)
 {
-	struct pdbg_target *pib, *thread;
+	struct pdbg_target *target, *thread;
 	int rc = 0, count = 0;
 
-	pdbg_for_each_class_target("pib", pib) {
-		struct chipop *chipop;
+	pdbg_for_each_class_target("pib", target) {
+		struct pib *pib = target_to_pib(target);
 
-		chipop = pib_to_chipop(pib);
-		if (!chipop)
+		if (!pib->thread_stop_all)
 			break;
 
-		/*
-		 * core_id = 0xff (all SMT4 cores)
-		 * thread_id = 0xf (all 4 threads in the SMT4 core)
-		 */
-		rc |= chipop->thread_stop(chipop, 0xff, 0xf);
+		rc |= pib->thread_stop_all(pib);
 		count++;
 	}
 
@@ -255,21 +240,16 @@ int thread_stop_all(void)
 
 int thread_sreset_all(void)
 {
-	struct pdbg_target *pib, *thread;
+	struct pdbg_target *target, *thread;
 	int rc = 0, count = 0;
 
-	pdbg_for_each_class_target("pib", pib) {
-		struct chipop *chipop;
+	pdbg_for_each_class_target("pib", target) {
+		struct pib *pib = target_to_pib(target);
 
-		chipop = pib_to_chipop(pib);
-		if (!chipop)
+		if (!pib->thread_sreset_all)
 			break;
 
-		/*
-		 * core_id = 0xff (all SMT4 cores)
-		 * thread_id = 0xf (all 4 threads in the SMT4 core)
-		 */
-		rc |= chipop->thread_sreset(chipop, 0xff, 0xf);
+		rc |= pib->thread_sreset_all(pib);
 		count++;
 	}
 
