@@ -271,6 +271,53 @@ static int sbefifo_pib_write(struct pib *pib, uint64_t addr, uint64_t val)
 	return sbefifo_scom_put(sctx, addr, val);
 }
 
+static int sbefifo_pib_thread_op(struct pib *pib, uint32_t oper)
+{
+	struct sbefifo *sbefifo = target_to_sbefifo(pib->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+	uint32_t core_id, thread_id;
+	uint8_t mode = 0;
+
+	/*
+	 * core_id = 0xff (all SMT4 cores)
+	 * thread_id = 0xf (all 4 threads in the SMT4 core)
+	 */
+	core_id = 0xff;
+	thread_id = 0xf;
+
+	/* Enforce special-wakeup for thread stop and sreset */
+	if ((oper & 0xf) == SBEFIFO_INSN_OP_STOP ||
+	    (oper & 0xf) == SBEFIFO_INSN_OP_SRESET)
+		mode = 0x2;
+
+	return sbefifo_control_insn(sctx, core_id, thread_id, oper, mode);
+}
+
+static int sbefifo_pib_thread_start(struct pib *pib)
+{
+	return sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_START);
+}
+
+static int sbefifo_pib_thread_stop(struct pib *pib)
+{
+	return sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_STOP);
+}
+
+static int sbefifo_pib_thread_step(struct pib *pib, int count)
+{
+	int i, rc = 0;
+
+	for (i = 0; i < count; i++)
+		rc |= sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_STEP);
+
+	return rc;
+}
+
+static int sbefifo_pib_thread_sreset(struct pib *pib)
+{
+	return sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_SRESET);
+}
+
 static int sbefifo_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
@@ -409,6 +456,10 @@ static struct pib sbefifo_pib = {
 	},
 	.read = sbefifo_pib_read,
 	.write = sbefifo_pib_write,
+	.thread_start_all = sbefifo_pib_thread_start,
+	.thread_stop_all = sbefifo_pib_thread_stop,
+	.thread_step_all = sbefifo_pib_thread_step,
+	.thread_sreset_all = sbefifo_pib_thread_sreset,
 	.fd = -1,
 };
 DECLARE_HW_UNIT(sbefifo_pib);
