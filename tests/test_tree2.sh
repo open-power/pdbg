@@ -5,6 +5,7 @@
 test_group "tree tests for fake2.dts"
 
 export PDBG_DTB="fake2.dtb"
+export PDBG_BACKEND_DTB="fake2-backend.dtb"
 
 test_result 0 <<EOF
 / (/)
