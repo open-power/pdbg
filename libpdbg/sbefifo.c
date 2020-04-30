@@ -237,6 +237,40 @@ static int sbefifo_op_thread_sreset(struct chipop *chipop,
 	return sbefifo_op_control(chipop, core_id, thread_id, SBEFIFO_INSN_OP_SRESET);
 }
 
+static struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
+{
+	struct pdbg_target *target;
+	struct sbefifo *sbefifo = NULL;
+
+	pdbg_for_each_class_target("sbefifo", target) {
+		if (pdbg_target_index(target) == pdbg_target_index(pib)) {
+			sbefifo = target_to_sbefifo(target);
+			break;
+		}
+	}
+
+	if (sbefifo == NULL)
+		assert(sbefifo);
+
+	return sbefifo;
+}
+
+static int sbefifo_pib_read(struct pib *pib, uint64_t addr, uint64_t *val)
+{
+	struct sbefifo *sbefifo = pib_to_sbefifo(&pib->target);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+	return sbefifo_scom_get(sctx, addr, val);
+}
+
+static int sbefifo_pib_write(struct pib *pib, uint64_t addr, uint64_t val)
+{
+	struct sbefifo *sbefifo = pib_to_sbefifo(&pib->target);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+	return sbefifo_scom_put(sctx, addr, val);
+}
+
 static struct sbefifo_context *sbefifo_op_get_context(struct sbefifo *sbefifo)
 {
 	return sbefifo->sf_ctx;
@@ -306,6 +340,18 @@ static struct chipop sbefifo_chipop = {
 };
 DECLARE_HW_UNIT(sbefifo_chipop);
 
+static struct pib sbefifo_pib = {
+	.target = {
+		.name = "SBE FIFO Chip-op based PIB",
+		.compatible = "ibm,sbefifo-pib",
+		.class = "pib",
+	},
+	.read = sbefifo_pib_read,
+	.write = sbefifo_pib_write,
+	.fd = -1,
+};
+DECLARE_HW_UNIT(sbefifo_pib);
+
 static struct sbefifo kernel_sbefifo = {
 	.target = {
 		.name =	"Kernel based FSI SBE FIFO",
@@ -323,6 +369,7 @@ static void register_sbefifo(void)
 {
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_sbefifo_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_chipop_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_pib_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_mem_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_pba_hw_unit);
 }
