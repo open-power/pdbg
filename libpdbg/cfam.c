@@ -247,6 +247,8 @@ enum chip_type get_chip_type(uint64_t chip_id)
 		return CHIP_P8NV;
 	case CHIP_ID_P9:
 		return CHIP_P9;
+	case CHIP_ID_P10:
+		return CHIP_P10;
 	default:
 		return CHIP_UNKNOWN;
 	}

@@ -48,6 +48,7 @@
 
 #include "p8.dt.h"
 #include "p9.dt.h"
+#include "p10.dt.h"
 
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
 #define XSCOM_BASE_PATH "/sys/kernel/debug/powerpc/scom"
@@ -228,9 +229,15 @@ static void bmc_target(struct pdbg_dtb *dtb)
 				dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p10")) {
+			pdbg_proc = PDBG_PROC_P10;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p10_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
-			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9'\n");
+			pdbg_log(PDBG_ERROR, "Use 'p8', 'p9' or 'p10'\n");
 		}
 
 		return;
@@ -240,6 +247,15 @@ static void bmc_target(struct pdbg_dtb *dtb)
 		return;
 
 	switch(chip_id) {
+	case CHIP_ID_P10:
+		pdbg_log(PDBG_INFO, "Found a POWER10 OpenBMC based system\n");
+		pdbg_proc = PDBG_PROC_P10;
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p10_dtb_o_start;
+		break;
+
 	case CHIP_ID_P9:
 	case CHIP_ID_P9P:
 		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
@@ -276,9 +292,15 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p10")) {
+			pdbg_proc = PDBG_PROC_P10;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p10_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
-			pdbg_log(PDBG_ERROR, "Use 'p9'\n");
+			pdbg_log(PDBG_ERROR, "Use 'p9' or 'p10'\n");
 		}
 
 		return;
@@ -288,6 +310,15 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 		return;
 
 	switch(chip_id) {
+	case CHIP_ID_P10:
+		pdbg_log(PDBG_INFO, "Found a POWER10 OpenBMC based system\n");
+		pdbg_proc = PDBG_PROC_P10;
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p10_dtb_o_start;
+		break;
+
 	case CHIP_ID_P9:
 	case CHIP_ID_P9P:
 		pdbg_proc = PDBG_PROC_P9;
@@ -485,7 +516,7 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 	case PDBG_BACKEND_CRONUS:
 		if (!pdbg_backend_option) {
 			pdbg_log(PDBG_ERROR, "No system type specified\n");
-			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
+			pdbg_log(PDBG_ERROR, "Use [p8|p9|p10]@<server>\n");
 			return NULL;
 		}
 
@@ -501,9 +532,15 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 				dtb->backend.fdt = &_binary_cronus_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
+		} else if (!strncmp(pdbg_backend_option, "p10", 3)) {
+			pdbg_proc = PDBG_PROC_P10;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_cronus_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p10_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
-			pdbg_log(PDBG_ERROR, "Use p8@<server> or p9@<server>\n");
+			pdbg_log(PDBG_ERROR, "Use [p8|p9|p10]@<server>\n");
 		}
 		break;
 
