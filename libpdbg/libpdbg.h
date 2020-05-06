@@ -1258,6 +1258,17 @@ int sbe_mpipl_enter(struct pdbg_target *target);
 int sbe_mpipl_continue(struct pdbg_target *target);
 
 /**
+ * @brief Get ti info
+ *
+ * @param[in] target pib target to operate on
+ * @param[out] data TI information
+ * @param[out] data_len length of the data
+ *
+ * @return 0 on success, -1 on failure
+ */
+int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *data_len);
+
+/**
  * @brief Type for specifying a progress callback for long running
  * operations
  *

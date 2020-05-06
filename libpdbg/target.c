@@ -345,6 +345,17 @@ int sbe_mpipl_continue(struct pdbg_target *target)
 	return chipop->mpipl_continue(chipop);
 }
 
+int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *data_len)
+{
+	struct chipop *chipop;
+
+	chipop = pib_to_chipop(target);
+	if (!chipop)
+		return -1;
+
+	return chipop->mpipl_get_ti_info(chipop, data, data_len);
+}
+
 uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct chipop *chipop;
