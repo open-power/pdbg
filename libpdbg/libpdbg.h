@@ -53,6 +53,7 @@ enum pdbg_proc {
 	PDBG_PROC_UNKNOWN,  /**< Unknown processor */
 	PDBG_PROC_P8,       /**< POWER8 processor  */
 	PDBG_PROC_P9,       /**< POWER9 processor  */
+	PDBG_PROC_P10,      /**< POWER10 processor */
 };
 
 /**
