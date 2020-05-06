@@ -195,6 +195,14 @@ static int sbefifo_op_mpipl_enter(struct chipop *chipop)
 	return sbefifo_mpipl_enter(sctx);
 }
 
+static int sbefifo_op_mpipl_get_ti_info(struct chipop *chipop, uint8_t **data, uint32_t *data_len)
+{
+	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+	return sbefifo_mpipl_get_ti_info(sctx, data, data_len);
+}
+
 static struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
 {
 	struct pdbg_target *target;
@@ -399,6 +407,7 @@ static struct chipop sbefifo_chipop = {
 	.istep = sbefifo_op_istep,
 	.mpipl_enter = sbefifo_op_mpipl_enter,
 	.mpipl_continue = sbefifo_op_mpipl_continue,
+	.mpipl_get_ti_info = sbefifo_op_mpipl_get_ti_info,
 };
 DECLARE_HW_UNIT(sbefifo_chipop);
 
