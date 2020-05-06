@@ -364,12 +364,13 @@ bool pdbg_target_get_attribute(struct pdbg_target *target, const char *name, uin
  * @param[in] target pdbg_target to set the attribute on
  * @param[in] name name of the attribute to set
  * @param[in] spec specification of packed integers
+ * @param[in] count repetition count
  * @param[in] val value of the attribute to set
  * @return true on success, false on failure
  *
  * This function will update the attribute value provided the size matches.
  */
-bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, const void *val);
+bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, uint32_t count, const void *val);
 
 /**
  * @brief Get the value of the given attribute from device tree
@@ -382,13 +383,14 @@ bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *na
  * @param[in] target pdbg_target to get the attribute from
  * @param[in] name name of the attribute to get
  * @param[in] spec specification of packed integers
+ * @param[in] count repetition count
  * @param[out] val value of the attribute
  * @return true on success, false on failure
  *
  * This function will copy the attribute value in the given buffer, provided
  * the specification matches.
  */
-bool pdbg_target_get_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, void *val);
+bool pdbg_target_get_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, uint32_t count, void *val);
 
 /**
  * @brief Get the given property value as a uint32_t

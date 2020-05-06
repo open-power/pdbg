@@ -27,8 +27,8 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: libpdbg_attr_test <path> read <prop> array 1|2|4|8 <count>\n");
 	fprintf(stderr, "       libpdbg_attr_test <path> write <prop> array 1|2|4|8 <count> <value1> [<value2> ...]\n");
-	fprintf(stderr, "       libpdbg_attr_test <path> read <prop> packed <spec>\n");
-	fprintf(stderr, "       libpdbg_attr_test <path> write <prop> packed <spec> <value1> [<value2> ...]\n");
+	fprintf(stderr, "       libpdbg_attr_test <path> read <prop> packed <spec> <count>\n");
+	fprintf(stderr, "       libpdbg_attr_test <path> write <prop> packed <spec> <count> <value1> [<value2> ...]\n");
 	exit(1);
 }
 
@@ -143,48 +143,53 @@ static size_t spec_size(const char *spec)
 
 static void read_packed(struct pdbg_target *target,
 			const char *attr,
-			const char *spec)
+			const char *spec,
+			unsigned int count)
 {
 	void *buf;
 	size_t size, pos;
-	unsigned int i;
+	unsigned int i, j;
 
 	size = spec_size(spec);
 	assert(size > 0);
 
+	size = size * count;
+
 	buf = malloc(size);
 	assert(buf);
 
-	if (!pdbg_target_get_attribute_packed(target, attr, spec, buf))
+	if (!pdbg_target_get_attribute_packed(target, attr, spec, count, buf))
 		exit(88);
 
 	pos = 0;
-	for (i=0; i<strlen(spec); i++) {
-		char ch = spec[i];
+	for (j=0; j<count; j++) {
+		for (i=0; i<strlen(spec); i++) {
+			char ch = spec[i];
 
-		if (ch == '1') {
-			uint8_t u8 = *(uint8_t *)((uint8_t *)buf + pos);
+			if (ch == '1') {
+				uint8_t u8 = *(uint8_t *)((uint8_t *)buf + pos);
 
-			printf("0x%02x ", u8);
-			pos += 1;
+				printf("0x%02x ", u8);
+				pos += 1;
 
-		} else if (ch == '2') {
-			uint16_t u16 = *(uint16_t *)((uint8_t *)buf + pos);
+			} else if (ch == '2') {
+				uint16_t u16 = *(uint16_t *)((uint8_t *)buf + pos);
 
-			printf("0x%04x ", u16);
-			pos += 2;
+				printf("0x%04x ", u16);
+				pos += 2;
 
-		} else if (ch == '4') {
-			uint32_t u32 = *(uint32_t *)((uint8_t *)buf + pos);
+			} else if (ch == '4') {
+				uint32_t u32 = *(uint32_t *)((uint8_t *)buf + pos);
 
-			printf("0x%08x ", u32);
-			pos += 4;
+				printf("0x%08x ", u32);
+				pos += 4;
 
-		} else if (ch == '8') {
-			uint64_t u64 = *(uint64_t *)((uint8_t *)buf + pos);
+			} else if (ch == '8') {
+				uint64_t u64 = *(uint64_t *)((uint8_t *)buf + pos);
 
-			printf("0x%016" PRIx64 " ", u64);
-			pos += 8;
+				printf("0x%016" PRIx64 " ", u64);
+				pos += 8;
+			}
 		}
 	}
 	printf("\n");
@@ -195,49 +200,54 @@ static void read_packed(struct pdbg_target *target,
 static void write_packed(struct pdbg_target *target,
 			 const char *attr,
 			 const char *spec,
+			 unsigned int count,
 			 const char **argv)
 {
 	void *buf;
 	size_t size, pos;
-	unsigned int i;
+	unsigned int i, j;
 
 	size = spec_size(spec);
 	assert(size > 0);
 
+	size = size * count;
 	buf = malloc(size);
 	assert(buf);
 
 	pos = 0;
-	for (i=0; i<strlen(spec); i++) {
-		char ch = spec[i];
+	for (j=0; j<count; j++) {
+		for (i=0; i<strlen(spec); i++) {
+			unsigned index = j * (count-1) + i;
+			char ch = spec[i];
 
-		if (ch == '1') {
-			uint8_t *v = (uint8_t *)((uint8_t *)buf + pos);
+			if (ch == '1') {
+				uint8_t *v = (uint8_t *)((uint8_t *)buf + pos);
 
-			*v = strtoul(argv[i], NULL, 0) & 0xff;
-			pos += 1;
+				*v = strtoul(argv[index], NULL, 0) & 0xff;
+				pos += 1;
 
-		} else if (ch == '2') {
-			uint16_t *v = (uint16_t *)((uint8_t *)buf + pos);
+			} else if (ch == '2') {
+				uint16_t *v = (uint16_t *)((uint8_t *)buf + pos);
 
-			*v = strtoul(argv[i], NULL, 0) & 0xffffff;
-			pos += 2;
+				*v = strtoul(argv[index], NULL, 0) & 0xffffff;
+				pos += 2;
 
-		} else if (ch == '4') {
-			uint32_t *v = (uint32_t *)((uint8_t *)buf + pos);
+			} else if (ch == '4') {
+				uint32_t *v = (uint32_t *)((uint8_t *)buf + pos);
 
-			*v = strtoul(argv[i], NULL, 0);
-			pos += 4;
+				*v = strtoul(argv[index], NULL, 0);
+				pos += 4;
 
-		} else if (ch == '8') {
-			uint64_t *v = (uint64_t *)((uint8_t *)buf + pos);
+			} else if (ch == '8') {
+				uint64_t *v = (uint64_t *)((uint8_t *)buf + pos);
 
-			*v = strtoull(argv[i], NULL, 0);
-			pos += 8;
+				*v = strtoull(argv[index], NULL, 0);
+				pos += 8;
+			}
 		}
 	}
 
-	if (!pdbg_target_set_attribute_packed(target, attr, spec, buf))
+	if (!pdbg_target_set_attribute_packed(target, attr, spec, count, buf))
 		exit(99);
 
 	free(buf);
@@ -249,7 +259,7 @@ int main(int argc, const char **argv)
 	const char *path, *attr, *spec = NULL;
 	bool do_read = false, do_write = false;
 	bool is_array = false;
-	int size = 0, count = 0;
+	unsigned int size = 0, count = 0;
 
 	if (argc < 6)
 		usage();
@@ -276,11 +286,11 @@ int main(int argc, const char **argv)
 		if (argc < 7)
 			usage();
 
-		size = atoi(argv[5]);
+		size = atol(argv[5]);
 		if (size != 1 && size != 2 && size != 4 & size != 8)
 			usage();
 
-		count = atoi(argv[6]);
+		count = atol(argv[6]);
 
 		if (do_read && argc != 7)
 			usage();
@@ -289,11 +299,12 @@ int main(int argc, const char **argv)
 			usage();
 	} else {
 		spec = argv[5];
+		count = atol(argv[6]);
 
-		if (do_read && argc != 6)
+		if (do_read && argc != 7)
 			usage();
 
-		if (do_write && argc != 6 + strlen(spec))
+		if (do_write && argc != 7 + count * strlen(spec))
 			usage();
 	}
 
@@ -308,14 +319,14 @@ int main(int argc, const char **argv)
 		if (is_array)
 			read_array(target, attr, size, count);
 		else
-			read_packed(target, attr, spec);
+			read_packed(target, attr, spec, count);
 	}
 
 	if (do_write) {
 		if (is_array)
 			write_array(target, attr, size, count, &argv[7]);
 		else
-			write_packed(target, attr, spec, &argv[6]);
+			write_packed(target, attr, spec, count, &argv[7]);
 	}
 
 	return 0;

@@ -861,58 +861,64 @@ static size_t spec_size(const char *spec)
 	return size;
 }
 
-bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, const void *val)
+bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, uint32_t count, const void *val)
 {
 	void *buf;
-	size_t size, pos, i;
+	size_t size, pos, i, j;
 	bool ok;
 
 	if (!spec || spec[0] == '\0')
+		return false;
+
+	if (count == 0)
 		return false;
 
 	size = spec_size(spec);
 	if (size <= 0)
 		return false;
 
+	size = size * count;
 	buf = malloc(size);
 	if (!buf)
 		return false;
 
 	pos = 0;
-	for (i=0; i<strlen(spec); i++) {
-		char ch = spec[i];
+	for (j=0; j<count; j++) {
+		for (i=0; i<strlen(spec); i++) {
+			char ch = spec[i];
 
-		if (ch == '1') {
-			uint8_t *b = (uint8_t *)buf + pos;
-			uint8_t *v = (uint8_t *)val + pos;
+			if (ch == '1') {
+				uint8_t *b = (uint8_t *)buf + pos;
+				uint8_t *v = (uint8_t *)val + pos;
 
-			*b = *v;
-			pos += 1;
+				*b = *v;
+				pos += 1;
 
-		} else if (ch == '2') {
-			uint16_t *b = (uint16_t *)((uint8_t *)buf + pos);
-			uint16_t *v = (uint16_t *)((uint8_t *)val + pos);
+			} else if (ch == '2') {
+				uint16_t *b = (uint16_t *)((uint8_t *)buf + pos);
+				uint16_t *v = (uint16_t *)((uint8_t *)val + pos);
 
-			*b = htobe16(*v);
-			pos += 2;
+				*b = htobe16(*v);
+				pos += 2;
 
-		} else if (ch == '4') {
-			uint32_t *b = (uint32_t *)((uint8_t *)buf + pos);
-			uint32_t *v = (uint32_t *)((uint8_t *)val + pos);
+			} else if (ch == '4') {
+				uint32_t *b = (uint32_t *)((uint8_t *)buf + pos);
+				uint32_t *v = (uint32_t *)((uint8_t *)val + pos);
 
-			*b = htobe32(*v);
-			pos += 4;
+				*b = htobe32(*v);
+				pos += 4;
 
-		} else if (ch == '8') {
-			uint64_t *b = (uint64_t *)((uint8_t *)buf + pos);
-			uint64_t *v = (uint64_t *)((uint8_t *)val + pos);
+			} else if (ch == '8') {
+				uint64_t *b = (uint64_t *)((uint8_t *)buf + pos);
+				uint64_t *v = (uint64_t *)((uint8_t *)val + pos);
 
-			*b = htobe64(*v);
-			pos += 8;
+				*b = htobe64(*v);
+				pos += 8;
 
-		} else {
-			free(buf);
-			return false;
+			} else {
+				free(buf);
+				return false;
+			}
 		}
 	}
 
@@ -922,12 +928,15 @@ bool pdbg_target_set_attribute_packed(struct pdbg_target *target, const char *na
 	return ok;
 }
 
-bool pdbg_target_get_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, void *val)
+bool pdbg_target_get_attribute_packed(struct pdbg_target *target, const char *name, const char *spec, uint32_t count, void *val)
 {
 	const void *buf;
-	size_t size, total_size, pos, i;
+	size_t size, total_size, pos, i, j;
 
 	if (!spec || spec[0] == '\0')
+		return false;
+
+	if (count == 0)
 		return false;
 
 	buf = pdbg_target_property(target, name, &total_size);
@@ -935,41 +944,44 @@ bool pdbg_target_get_attribute_packed(struct pdbg_target *target, const char *na
 		return false;
 
 	size = spec_size(spec);
+	size = size * count;
 	if (total_size != size)
 		return false;
 
 	pos = 0;
-	for (i=0; i<strlen(spec); i++) {
-		char ch = spec[i];
+	for (j=0; j<count; j++) {
+		for (i=0; i<strlen(spec); i++) {
+			char ch = spec[i];
 
-		if (ch == '1') {
-			uint8_t *b = (uint8_t *)buf + pos;
-			uint8_t *v = (uint8_t *)val + pos;
+			if (ch == '1') {
+				uint8_t *b = (uint8_t *)buf + pos;
+				uint8_t *v = (uint8_t *)val + pos;
 
-			*v = *b;
-			pos += 1;
+				*v = *b;
+				pos += 1;
 
-		} else if (ch == '2') {
-			uint16_t *b = (uint16_t *)((uint8_t *)buf + pos);
-			uint16_t *v = (uint16_t *)((uint8_t *)val + pos);
+			} else if (ch == '2') {
+				uint16_t *b = (uint16_t *)((uint8_t *)buf + pos);
+				uint16_t *v = (uint16_t *)((uint8_t *)val + pos);
 
-			*v = be16toh(*b);
-			pos += 2;
+				*v = be16toh(*b);
+				pos += 2;
 
-		} else if (ch == '4') {
-			uint32_t *b = (uint32_t *)((uint8_t *)buf + pos);
-			uint32_t *v = (uint32_t *)((uint8_t *)val + pos);
+			} else if (ch == '4') {
+				uint32_t *b = (uint32_t *)((uint8_t *)buf + pos);
+				uint32_t *v = (uint32_t *)((uint8_t *)val + pos);
 
-			*v = be32toh(*b);
-			pos += 4;
+				*v = be32toh(*b);
+				pos += 4;
 
-		} else if (ch == '8') {
-			uint64_t *b = (uint64_t *)((uint8_t *)buf + pos);
-			uint64_t *v = (uint64_t *)((uint8_t *)val + pos);
+			} else if (ch == '8') {
+				uint64_t *b = (uint64_t *)((uint8_t *)buf + pos);
+				uint64_t *v = (uint64_t *)((uint8_t *)val + pos);
 
-			*v = be64toh(*b);
-			pos += 8;
+				*v = be64toh(*b);
+				pos += 8;
 
+			}
 		}
 	}
 
