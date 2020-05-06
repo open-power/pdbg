@@ -124,6 +124,6 @@ int sbefifo_quiesce(struct sbefifo_context *sctx);
 int sbefifo_mpipl_enter(struct sbefifo_context *sctx);
 int sbefifo_mpipl_continue(struct sbefifo_context *sctx);
 int sbefifo_mpipl_stopclocks(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id);
-
+int sbefifo_mpipl_get_ti_info(struct sbefifo_context *sctx, uint8_t **data, uint32_t *data_len);
 
 #endif /* __LIBSBEFIFO_H__ */

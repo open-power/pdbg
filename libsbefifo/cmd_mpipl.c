@@ -179,3 +179,60 @@ int sbefifo_mpipl_stopclocks(struct sbefifo_context *sctx, uint16_t target_type,
 
 	return rc;
 }
+
+static int sbefifo_mpipl_get_ti_info_push(uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
+	cmd = SBEFIFO_CMD_CLASS_MPIPL | SBEFIFO_CMD_GET_TI_INFO;
+
+	msg[0] = htobe32(nwords);
+	msg[1] = htobe32(cmd);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_mpipl_get_ti_info_pull(uint8_t *buf, uint32_t buflen, uint8_t **data, uint32_t *data_len)
+{
+	if (buflen < 4)
+		return EPROTO;
+
+	*data_len = be32toh(*(uint32_t *) &buf[buflen-4]);
+	*data = malloc(*data_len);
+	if (! *data)
+		return ENOMEM;
+
+	memcpy(*data, buf, *data_len);
+	return 0;
+}
+
+int sbefifo_mpipl_get_ti_info(struct sbefifo_context *sctx, uint8_t **data, uint32_t *data_len)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_mpipl_get_ti_info_push(&msg, &msg_len);
+	if (rc)
+		return rc;
+
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_mpipl_get_ti_info_pull(out, out_len, data, data_len);
+	if (out)
+		free(out);
+
+	return rc;
+}
