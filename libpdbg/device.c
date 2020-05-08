@@ -661,6 +661,10 @@ static void pdbg_targets_init_virtual(struct pdbg_target *node, struct pdbg_targ
 	const char *system_path;
 	size_t len;
 
+	/* Skip virtual nodes */
+	if (target_is_virtual(node))
+		goto skip;
+
 	system_path = (const char *)pdbg_target_property(node, "system-path", &len);
 	if (!system_path)
 		goto skip;
@@ -679,21 +683,18 @@ static void pdbg_targets_init_virtual(struct pdbg_target *node, struct pdbg_targ
 	if (!vnode)
 		goto skip;
 
-	assert(target_is_virtual(vnode));
-
 	/*
-	 * If virtual node is not linked, then link with node;
-	 * otherwise skip
+	 * If the virtual node is linked, dt_find_by_path will return the
+	 * linked target.  So if we found a virtual target, then it's
+	 * definitely not linked.
 	 */
-	if (!vnode->vnode)
+	if (target_is_virtual(vnode)) {
+		assert(!vnode->vnode);
 		dt_link_virtual(node, vnode);
+	}
 
 skip:
 	list_for_each(&node->children, child, list) {
-		/* If a virtual node is already linked, skip */
-		if (target_is_virtual(child) && child->vnode)
-			continue;
-
 		pdbg_targets_init_virtual(child, root);
 	}
 }
