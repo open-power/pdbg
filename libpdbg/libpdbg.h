@@ -263,6 +263,30 @@ enum pdbg_backend {
 	     target = __pdbg_next_child_target(parent, target, true))
 
 /**
+ * @brief Callback function for pdbg target traverse
+ *
+ * @param[in] target current target
+ * @param[in] priv private data assoicated with callback function
+ * @return 0 to continue traverse, non-zero to stop traverse
+ */
+typedef int (*pdbg_target_traverse_callback_fn)(struct pdbg_target *target, void *priv);
+
+/**
+ * @brief Loop over all children of the given target
+ *
+ * @param[in] parent the head pdbg_target
+ * @param[in] func callback function to call on each target
+ * @param[in] priv private data for callback function
+ * @return 0 on successful traverse of all children, non-zero otherwise
+ *
+ * If the callback function returns non-zero value, the traverse will stop and
+ * return the same non-zero value.
+ */
+int pdbg_target_traverse(struct pdbg_target *parent,
+			 pdbg_target_traverse_callback_fn func,
+			 void *priv);
+
+/**
  * @brief Find a target parent of the given class/type
  * @param[in] klass the desired parent class
  * @param[in] target the pdbg_target
