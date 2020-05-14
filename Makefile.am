@@ -18,7 +18,8 @@ bin_PROGRAMS = pdbg
 check_PROGRAMS = $(libpdbg_tests) libpdbg_dtree_test \
 		libpdbg_p9_fapi_translation_test \
 		optcmd_test hexdump_test cronus_proxy \
-		libpdbg_prop_test libpdbg_attr_test
+		libpdbg_prop_test libpdbg_attr_test \
+		libpdbg_traverse_test
 
 PDBG_TESTS = \
 	tests/test_selection.sh 	\
@@ -30,6 +31,7 @@ PDBG_TESTS = \
 	tests/test_prop.sh		\
 	tests/test_attr_array.sh	\
 	tests/test_attr_packed.sh	\
+	tests/test_traverse.sh		\
 	tests/test_p9_fapi_translation.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
@@ -279,6 +281,11 @@ libpdbg_attr_test_SOURCES = src/tests/libpdbg_attr_test.c
 libpdbg_attr_test_CFLAGS = $(libpdbg_test_cflags)
 libpdbg_attr_test_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_attr_test_LDADD = $(libpdbg_test_ldadd)
+
+libpdbg_traverse_test_SOURCES = src/tests/libpdbg_traverse_test.c
+libpdbg_traverse_test_CFLAGS = $(libpdbg_test_cflags)
+libpdbg_traverse_test_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_traverse_test_LDADD = $(libpdbg_test_ldadd)
 
 M4_V = $(M4_V_$(V))
 M4_V_ = $(M4_V_$(AM_DEFAULT_VERBOSITY))
