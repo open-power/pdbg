@@ -630,7 +630,7 @@ static struct pdbg_target *dt_new_virtual(struct pdbg_target *root, const char *
 
 	parent = dt_find_by_path(root, parent_path);
 	if (!parent) {
-		PR_ERROR("Invalid path reference \"%s\"\n", system_path);
+		PR_INFO("Path reference \"%s\" not found, ignoring\n", system_path);
 		free(parent_path);
 		return NULL;
 	}
