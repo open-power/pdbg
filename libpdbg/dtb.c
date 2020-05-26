@@ -52,11 +52,6 @@
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
 #define XSCOM_BASE_PATH "/sys/kernel/debug/powerpc/scom"
 
-#define CHIP_ID_P8  0xea
-#define CHIP_ID_P8P 0xd3
-#define CHIP_ID_P9  0xd1
-#define CHIP_ID_P9P 0xd9
-
 static enum pdbg_backend pdbg_backend = PDBG_DEFAULT_BACKEND;
 static const char *pdbg_backend_option;
 static struct pdbg_dtb pdbg_dtb = {

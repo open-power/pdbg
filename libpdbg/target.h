@@ -24,6 +24,11 @@
 #include "compiler.h"
 #include "libpdbg.h"
 
+#define CHIP_ID_P8  0xea
+#define CHIP_ID_P8P 0xd3
+#define CHIP_ID_P9  0xd1
+#define CHIP_ID_P9P 0xd9
+
 enum chip_type {CHIP_UNKNOWN, CHIP_P8, CHIP_P8NV, CHIP_P9};
 
 struct pdbg_target_class {
