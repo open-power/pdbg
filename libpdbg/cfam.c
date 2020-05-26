@@ -241,11 +241,11 @@ DECLARE_HW_UNIT(p8_opb);
 enum chip_type get_chip_type(uint64_t chip_id)
 {
 	switch(GETFIELD(PPC_BITMASK32(12, 19), chip_id)) {
-	case 0xea:
+	case CHIP_ID_P8:
 		return CHIP_P8;
-	case 0xd3:
+	case CHIP_ID_P8P:
 		return CHIP_P8NV;
-	case 0xd1:
+	case CHIP_ID_P9:
 		return CHIP_P9;
 	default:
 		return CHIP_UNKNOWN;
