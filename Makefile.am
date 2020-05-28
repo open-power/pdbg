@@ -180,6 +180,8 @@ libpdbg_la_SOURCES = \
 	libpdbg/p9chip.c \
 	libpdbg/p9_fapi_targets.c \
 	libpdbg/p9_scom_addr.h \
+	libpdbg/p10_fapi_targets.c \
+	libpdbg/p10_scom_addr.h \
 	libpdbg/sbefifo.c \
 	libpdbg/sprs.h \
 	libpdbg/sprs.c \

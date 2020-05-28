@@ -307,4 +307,18 @@ struct capp {
 };
 #define target_to_capp(x) container_of(x, struct capp, target)
 
+struct omi {
+	struct pdbg_target target;
+};
+#define target_to_omi(x) container_of(x, struct omi, target)
+
+struct omic {
+	struct pdbg_target target;
+};
+#define target_to_omic(x) container_of(x, struct omic, target)
+
+struct mcc {
+	struct pdbg_target target;
+};
+#define target_to_mcc(x) container_of(x, struct mcc, target)
 #endif /* __HWUNIT_H */
