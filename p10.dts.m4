@@ -16,8 +16,9 @@ dnl
 dnl CORE([index])
 dnl
 define(`CORE',
-`
-	core@0 {
+` define(`id', eval(`0x$1 % 2'))dnl
+
+	CONCAT(core@, id) {
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
 		reg = <0x00 0x00 0xfffff>;
@@ -76,21 +77,193 @@ define(`addr', CONCAT(chiplet_id, 000000))dnl
 ')dnl
 
 dnl
-dnl EX_([eq_index, ex_index])
+dnl FC_([index])
 dnl
-define(`EX_',
+define(`FC_',
 `define(`chiplet_id', CONCAT(1, $1))dnl
 define(`addr', CONCAT(chiplet_id, 000000))dnl
 
-	ex@$2 {
+	fc@$1 {
 		#address-cells = <0x02>;
 		#size-cells = <0x01>;
 		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
-		compatible = "ibm,power10-ex";
-		index = <$2>;
+		compatible = "ibm,power10-fc";
+		index = <$1>;
 
 ')dnl
 
+dnl
+dnl PAUC_([chiplet], [index])
+dnl
+define(`PAUC_',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	pauc@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-pauc";
+		index = <$2>;
+')dnl
+
+dnl
+dnl PAU([chiplet], [index])
+dnl
+define(`PAU',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	pau@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-pau";
+		index = <$2>;
+	};
+')
+
+dnl
+dnl IOHS([chiplet], [index])
+dnl
+define(`IOHS',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	iohs@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-iohs";
+		index = <$2>;
+	};
+')
+
+dnl
+dnl MI_([chiplet], [index])
+dnl
+define(`MI_',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	mi@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-mi";
+		index = <$2>;
+')
+
+dnl
+dnl MC_([chiplet], [index])
+dnl
+define(`MC_',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	mc@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-mc";
+		index = <0x$2>;
+')
+
+dnl
+dnl MCC_([chiplet], [index])
+dnl
+define(`MCC_',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+define(`id', eval(`$2 % 2'))dnl
+
+	CONCAT(mcc@, id) {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-mcc";
+		index = <$2>;
+')
+
+dnl
+dnl OMIC([chiplet], [index])
+dnl
+define(`OMIC',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	omic@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-omic";
+		index = <$2>;
+	};
+')
+
+dnl
+dnl OMI_([chiplet], [index])
+dnl
+define(`OMI_',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+define(`id', eval(`$2 % 2'))dnl
+
+	CONCAT(omi@, id) {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-omi";
+		index = <$2>;
+')
+
+dnl
+dnl PEC_([chiplet], [index])
+dnl
+define(`PEC_',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	pec@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-pec";
+		index = <$2>;
+')
+
+dnl
+dnl PHB([chiplet], [index])
+dnl
+define(`PHB',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+define(`id', eval(`$2 % 3'))dnl
+
+	CONCAT(phb@,id) {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-phb";
+		index = <$2>;
+	};
+')
+
+dnl
+dnl NMMU([chiplet], [index])
+dnl
+define(`NMMU',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	nmmu@$2 {
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-nmmu";
+		index = <$2>;
+	};
+')
+
+dnl
 dnl
 dnl CHIP([index])
 dnl
@@ -139,501 +312,276 @@ define(`CHIP',
 				};
 			};
 
-			CHIPLET__(2)
-				n0 {
-					compatible = "ibm,power10-nest";
-					index = < 0x00 >;
-
-					capp0 {
-						compatible = "ibm,power10-capp";
-						index = < 0x00 >;
-					};
-				};
+			CHIPLET_(2)
+				NMMU(2,0)
 			};
 
-			CHIPLET__(3)
-				n1 {
-					compatible = "ibm,power10-nest";
-					index = < 0x01 >;
-
-					mcs2 {
-						compatible = "ibm,power10-mcs";
-						index = < 0x02 >;
-					};
-
-					mcs3 {
-						compatible = "ibm,power10-mcs";
-						index = < 0x03 >;
-					};
-				};
-			};
-
-			CHIPLET__(4)
-				n2 {
-					compatible = "ibm,power10-nest";
-					index = < 0x02 >;
-
-					capp1 {
-						compatible = "ibm,power10-capp";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			CHIPLET__(5)
-				n3 {
-					compatible = "ibm,power10-nest";
-					index = < 0x03 >;
-
-					mcs0 {
-						compatible = "ibm,power10-mcs";
-						index = < 0x00 >;
-					};
-
-					mcs1 {
-						compatible = "ibm,power10-mcs";
-						index = < 0x01 >;
-					};
-				};
-			};
-
-			CHIPLET_(6)
-				xbus$1_0: xbus@0 {
-					compatible = "ibm,power10-xbus";
-					index = < 0x01 >;
-					reg = < 0x00 0x6000000 0xfffff >;
-				};
-			};
-
-			CHIPLET_(7)
-				mc@0 {
-					reg = < 0x00 0x7000000 0xfffff >;
-					compatible = "ibm,power10-mc";
-					index = < 0x00 >;
-
-					mca0 {
-						compatible = "ibm,power10-mca";
-						index = < 0x00 >;
-					};
-
-					mca1 {
-						compatible = "ibm,power10-mca";
-						index = < 0x01 >;
-					};
-
-					mca2 {
-						compatible = "ibm,power10-mca";
-						index = < 0x02 >;
-					};
-
-					mca3 {
-						compatible = "ibm,power10-mca";
-						index = < 0x03 >;
-					};
-
-					mcbist {
-						compatible = "ibm,power10-mcbist";
-						index = < 0x00 >;
-					};
-				};
+			CHIPLET_(3)
+				NMMU(3,1)
 			};
 
 			CHIPLET_(8)
-				mc@1 {
-					reg = < 0x00 0x8000000 0xfffff >;
-					compatible = "ibm,power10-mc";
-					index = < 0x01 >;
-
-					mca0 {
-						compatible = "ibm,power10-mca";
-						index = < 0x04 >;
-					};
-
-					mca1 {
-						compatible = "ibm,power10-mca";
-						index = < 0x05 >;
-					};
-
-					mca2 {
-						compatible = "ibm,power10-mca";
-						index = < 0x06 >;
-					};
-
-					mca3 {
-						compatible = "ibm,power10-mca";
-						index = < 0x07 >;
-					};
-
-					mcbist {
-						compatible = "ibm,power10-mcbist";
-						index = < 0x01 >;
-					};
+				PEC_(8,0)
+					PHB(8,0)
+					PHB(8,1)
+					PHB(8,2)
 				};
 			};
 
 			CHIPLET_(9)
-				obus@0 {
-					reg = < 0x00 0x9000000 0xfffff >;
-					compatible = "ibm,power10-obus";
-					index = < 0x00 >;
-				};
-
-				obrick0 {
-					compatible = "ibm,power10-obus_brick";
-					index = < 0x00 >;
-				};
-
-				obrick1 {
-					compatible = "ibm,power10-obus_brick";
-					index = < 0x01 >;
-				};
-
-				obrick2 {
-					compatible = "ibm,power10-obus_brick";
-					index = < 0x02 >;
+				PEC_(9,1)
+					PHB(9,3)
+					PHB(9,4)
+					PHB(9,5)
 				};
 			};
 
 			CHIPLET_(c)
-				obus@3 {
-					reg = < 0x00 0xc000000 0xfffff >;
-					compatible = "ibm,power10-obus";
-					index = < 0x03 >;
-				};
-
-				obrick0 {
-					compatible = "ibm,power10-obus_brick";
-					index = < 0x09 >;
-				};
-
-				obrick1 {
-					compatible = "ibm,power10-obus_brick";
-					index = < 0x0a >;
-				};
-
-				obrick2 {
-					compatible = "ibm,power10-obus_brick";
-					index = < 0x0b >;
+				MC_(c,0)
+					MI_(c,0)
+						MCC_(c,0)
+							OMI_(c,0)
+							};
+							OMI_(c,1)
+							};
+						};
+						MCC_(c,1)
+							OMI_(c,2)
+							};
+							OMI_(c,3)
+							};
+						};
+					};
+					OMIC(c,0)
+					OMIC(c,1)
 				};
 			};
 
 			CHIPLET_(d)
-				pec@d000000 {
-					reg = < 0x00 0xd000000 0xfffff >;
-					compatible = "ibm,power10-pec";
-					index = < 0x00 >;
-				};
-
-				phb0 {
-					compatible = "ibm,power10-phb";
-					index = < 0x00 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power10-phb";
-					index = < 0x01 >;
+				MC_(d,1)
+					MI_(d,1)
+						MCC_(d,2)
+							OMI_(d,4)
+							};
+							OMI_(d,5)
+							};
+						};
+						MCC_(d,3)
+							OMI_(d,6)
+							};
+							OMI_(d,7)
+							};
+						};
+					};
+					OMIC(d,2)
+					OMIC(d,3)
 				};
 			};
 
 			CHIPLET_(e)
-				pec@e000000 {
-					reg = < 0x00 0xe000000 0xfffff >;
-					compatible = "ibm,power10-pec";
-					index = < 0x01 >;
-				};
-
-				phb0 {
-					compatible = "ibm,power10-phb";
-					index = < 0x02 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power10-phb";
-					index = < 0x03 >;
+				MC_(e,2)
+					MI_(e,2)
+						MCC_(e,4)
+							OMI_(e,8)
+							};
+							OMI_(e,9)
+							};
+						};
+						MCC_(e,5)
+							OMI_(e,10)
+							};
+							OMI_(e,11)
+							};
+						};
+					};
+					OMIC(e,4)
+					OMIC(e,5)
 				};
 			};
 
 			CHIPLET_(f)
-				pec@f000000 {
-					reg = < 0x00 0xf000000 0xfffff >;
-					compatible = "ibm,power10-pec";
-					index = < 0x02 >;
-				};
-
-				phb0 {
-					compatible = "ibm,power10-phb";
-					index = < 0x04 >;
-				};
-
-				phb1 {
-					compatible = "ibm,power10-phb";
-					index = < 0x05 >;
+				MC_(f,3)
+					MI_(f,3)
+						MCC_(f,6)
+							OMI_(f,12)
+							};
+							OMI_(f,13)
+							};
+						};
+						MCC_(f,7)
+							OMI_(f,14)
+							};
+							OMI_(f,15)
+							};
+						};
+					};
+					OMIC(f,6)
+					OMIC(f,7)
 				};
 			};
 
 			CHIPLET_(10)
-				EQ_(0)
-					EX_(0,0)
-						CHIPLET_(20)
-							CORE(00)
-						};
-
-						CHIPLET_(21)
-							CORE(01)
-						};
-					};
-
-					EX_(0,1)
-						CHIPLET_(22)
-							CORE(02)
-						};
-
-						CHIPLET_(23)
-							CORE(03)
-						};
-					};
+				PAUC_(10,0)
+					PAU(10,0)
 				};
 			};
 
 			CHIPLET_(11)
-				EQ_(1)
-					EX_(1,0)
-						CHIPLET_(24)
-							CORE(04)
-						};
-
-						CHIPLET_(25)
-							CORE(05)
-						};
-					};
-
-					EX_(1,1)
-						CHIPLET_(26)
-							CORE(06)
-						};
-
-						CHIPLET_(27)
-							CORE(07)
-						};
-					};
+				PAUC_(11,1)
+					PAU(11,3)
 				};
 			};
 
 			CHIPLET_(12)
-				EQ_(2)
-					EX_(2,0)
-						CHIPLET_(28)
-							CORE(08)
-						};
-
-						CHIPLET_(29)
-							CORE(09)
-						};
-					};
-
-					EX_(2,1)
-						CHIPLET_(2a)
-							CORE(0a)
-						};
-
-						CHIPLET_(2b)
-							CORE(0b)
-						};
-					};
+				PAUC_(12,2)
+					PAU(12,4)
+					PAU(12,5)
 				};
 			};
 
 			CHIPLET_(13)
+				PAUC_(13,3)
+					PAU(13,6)
+					PAU(13,7)
+				};
+			};
+
+			CHIPLET_(18)
+				IOHS(18,0)
+			};
+
+			CHIPLET_(19)
+				IOHS(19,1)
+			};
+
+			CHIPLET_(1a)
+				IOHS(1a,2)
+			};
+
+			CHIPLET_(1b)
+				IOHS(1b,3)
+			};
+
+			CHIPLET_(1c)
+				IOHS(1c,4)
+			};
+
+			CHIPLET_(1d)
+				IOHS(1d,5)
+			};
+
+			CHIPLET_(1e)
+				IOHS(1e,6)
+			};
+
+			CHIPLET_(1f)
+				IOHS(1f,7)
+			};
+
+			CHIPLET_(20)
+				EQ_(0)
+					FC_(0)
+						CORE(0)
+						CORE(1)
+					};
+					FC_(1)
+						CORE(2)
+						CORE(3)
+					};
+				};
+			};
+
+			CHIPLET_(21)
+				EQ_(1)
+					FC_(0)
+						CORE(4)
+						CORE(5)
+					};
+					FC_(1)
+						CORE(6)
+						CORE(7)
+					};
+				};
+			};
+
+			CHIPLET_(22)
+				EQ_(2)
+					FC_(0)
+						CORE(8)
+						CORE(9)
+					};
+					FC_(1)
+						CORE(a)
+						CORE(b)
+					};
+				};
+			};
+
+			CHIPLET_(23)
 				EQ_(3)
-					EX_(3,0)
-						CHIPLET_(2c)
-							CORE(0c)
-						};
-
-						CHIPLET_(2d)
-							CORE(0d)
-						};
+					FC_(0)
+						CORE(c)
+						CORE(d)
 					};
-
-					EX_(3,1)
-						CHIPLET_(2e)
-							CORE(0e)
-						};
-
-						CHIPLET_(2f)
-							CORE(0f)
-						};
+					FC_(1)
+						CORE(e)
+						CORE(f)
 					};
 				};
 			};
 
-			CHIPLET_(14)
+			CHIPLET_(24)
 				EQ_(4)
-					EX_(4,0)
-						CHIPLET_(30)
-							CORE(10)
-						};
-
-						CHIPLET_(31)
-							CORE(11)
-						};
+					FC_(0)
+						CORE(10)
+						CORE(11)
 					};
-
-					EX_(4,1)
-						CHIPLET_(32)
-							CORE(12)
-						};
-
-						CHIPLET_(33)
-							CORE(13)
-						};
+					FC_(1)
+						CORE(12)
+						CORE(13)
 					};
 				};
 			};
 
-			CHIPLET_(15)
+			CHIPLET_(25)
 				EQ_(5)
-					EX_(5,0)
-						CHIPLET_(34)
-							CORE(14)
-						};
-
-						CHIPLET_(35)
-							CORE(15)
-						};
+					FC_(0)
+						CORE(14)
+						CORE(15)
 					};
-
-					EX_(5,1)
-						CHIPLET_(36)
-							CORE(16)
-						};
-
-						CHIPLET_(37)
-							CORE(17)
-						};
+					FC_(1)
+						CORE(16)
+						CORE(17)
 					};
 				};
 			};
 
-			nv0 {
-				compatible = "ibm,power10-nv";
-				index = < 0x00 >;
+			CHIPLET_(26)
+				EQ_(6)
+					FC_(0)
+						CORE(18)
+						CORE(19)
+					};
+					FC_(1)
+						CORE(1a)
+						CORE(1b)
+					};
+				};
 			};
 
-			nv1 {
-				compatible = "ibm,power10-nv";
-				index = < 0x01 >;
+			CHIPLET_(27)
+				EQ_(7)
+					FC_(0)
+						CORE(1c)
+						CORE(1d)
+					};
+					FC_(1)
+						CORE(1e)
+						CORE(1f)
+					};
+				};
 			};
 
-			nv2 {
-				compatible = "ibm,power10-nv";
-				index = < 0x02 >;
-			};
-
-			nv3 {
-				compatible = "ibm,power10-nv";
-				index = < 0x03 >;
-			};
-
-			nv4 {
-				compatible = "ibm,power10-nv";
-				index = < 0x04 >;
-			};
-
-			nv5 {
-				compatible = "ibm,power10-nv";
-				index = < 0x05 >;
-			};
-
-			occ0 {
-				compatible = "ibm,power10-occ";
-				index = < 0x00 >;
-			};
-
-			sbe0 {
-				compatible = "ibm,power10-sbe";
-				index = < 0x00 >;
-			};
-
-			ppe0 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x00 >;
-			};
-
-			ppe1 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x0a >;
-			};
-
-			ppe2 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x0d >;
-			};
-
-			ppe3 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x14 >;
-			};
-
-			ppe4 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x19 >;
-			};
-
-			ppe5 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x1e >;
-			};
-
-			ppe6 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x28 >;
-			};
-
-			ppe7 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x29 >;
-			};
-
-			ppe8 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x2a >;
-			};
-
-			ppe9 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x2b >;
-			};
-
-			ppe10 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x2c >;
-			};
-
-			ppe11 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x2d >;
-			};
-
-			ppe12 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x2e >;
-			};
-
-			ppe13 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x32 >;
-			};
-
-			ppe14 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x34 >;
-			};
-
-			ppe15 {
-				compatible = "ibm,power10-ppe";
-				index = < 0x38 >;
-			};
 		};
 	};
 ')dnl
