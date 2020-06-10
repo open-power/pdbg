@@ -149,6 +149,7 @@ int kernel_fsi_probe(struct pdbg_target *target)
 	const char *kernel_path = kernel_get_fsi_path();
 	const char *fsi_path;
 	char *path;
+	static bool first_probe = true;
 
 	if (!kernel_path)
 		return -1;
@@ -163,23 +164,30 @@ int kernel_fsi_probe(struct pdbg_target *target)
 	}
 
 	while (tries) {
-		/* Open first raw device */
 		fsi->fd = open(path, O_RDWR | O_SYNC);
 		if (fsi->fd >= 0) {
 			free(path);
+			first_probe = false;
 			return 0;
 		}
 		tries--;
 
-		/* Scan */
-		kernel_fsi_scan_devices();
-		sleep(1);
-	}
-	if (fsi->fd < 0) {
-		PR_ERROR("Unable to open %s\n", path);
-		free(path);
+		/*
+		 * On fsi bus rescan, kernel re-creates all the slave device
+		 * entries.  It means any currently open devices will be
+		 * invalid and need to be re-opened.  So avoid scanning if
+		 * some devices are already probed.
+		 */
+		if (first_probe) {
+			kernel_fsi_scan_devices();
+			sleep(1);
+		} else {
+			break;
+		}
 	}
 
+	PR_ERROR("Unable to open %s\n", path);
+	free(path);
 	return -1;
 }
 
