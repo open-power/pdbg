@@ -70,7 +70,8 @@ define(`HMFSI',
 	hmfsi@$1 {
 		#address-cells = <0x2>;
 		#size-cells = <0x1>;
-		compatible = "ibm,fsi-hmfsi";
+		compatible = "ibm,kernel-fsi";
+		device-path = "/fsi1/slave@0$2:00/raw";
 		reg = <0x0 0x$1 0x8000>;
 		port = <0x$2>;
 		index = <0x$3>;
