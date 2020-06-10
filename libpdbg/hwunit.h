@@ -112,6 +112,7 @@ struct fsi {
 	int (*read)(struct fsi *, uint32_t, uint32_t *);
 	int (*write)(struct fsi *, uint32_t, uint32_t);
 	enum chip_type chip_type;
+	int fd;
 };
 #define target_to_fsi(x) container_of(x, struct fsi, target)
 

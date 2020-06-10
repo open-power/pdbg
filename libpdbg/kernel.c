@@ -33,7 +33,6 @@
 #define OPENFSI_LEGACY_PATH "/sys/bus/platform/devices/gpio-fsi/"
 #define OPENFSI_PATH "/sys/class/fsi-master/"
 
-int fsi_fd;
 const char *fsi_base;
 
 const char *kernel_get_fsi_path(void)
@@ -66,14 +65,14 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 	int rc;
 	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
 
-	rc = lseek(fsi_fd, addr, SEEK_SET);
+	rc = lseek(fsi->fd, addr, SEEK_SET);
 	if (rc < 0) {
 		rc = errno;
 		PR_WARNING("seek failed: %s\n", strerror(errno));
 		return rc;
 	}
 
-	rc = read(fsi_fd, &tmp, 4);
+	rc = read(fsi->fd, &tmp, 4);
 	if (rc < 0) {
 		rc = errno;
 		if ((addr64 & 0xfff) != 0xc09)
@@ -93,7 +92,7 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 	int rc;
 	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
 
-	rc = lseek(fsi_fd, addr, SEEK_SET);
+	rc = lseek(fsi->fd, addr, SEEK_SET);
 	if (rc < 0) {
 		rc = errno;
 		PR_WARNING("seek failed: %s\n", strerror(errno));
@@ -101,7 +100,7 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 	}
 
 	tmp = htobe32(data);
-	rc = write(fsi_fd, &tmp, 4);
+	rc = write(fsi->fd, &tmp, 4);
 	if (rc < 0) {
 		rc = errno;
 		PR_ERROR("Failed to write to 0x%08" PRIx32 " (%016" PRIx32 ")\n", addr, addr64);
@@ -110,16 +109,6 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 
 	return 0;
 }
-
-#if 0
-/* TODO: At present we don't have a generic destroy method as there aren't many
- * use cases for it. So for the moment we can just let the OS close the file
- * descriptor on exit. */
-static void kernel_fsi_destroy(struct pdbg_target *target)
-{
-	close(fsi_fd);
-}
-#endif
 
 static void kernel_fsi_scan_devices(void)
 {
@@ -154,43 +143,50 @@ static void kernel_fsi_scan_devices(void)
 
 int kernel_fsi_probe(struct pdbg_target *target)
 {
-	if (!fsi_fd) {
-		int tries = 5;
-		int rc;
-		const char *kernel_path = kernel_get_fsi_path();
-		char *path;
+	struct fsi *fsi = target_to_fsi(target);
+	int tries = 5;
+	int rc;
+	const char *kernel_path = kernel_get_fsi_path();
+	char *path;
 
-		if (!kernel_path)
-			return -1;
+	if (!kernel_path)
+		return -1;
 
-		rc = asprintf(&path, "%s/fsi0/slave@00:00/raw", kernel_get_fsi_path());
-		if (rc < 0) {
-			PR_ERROR("Unable create fsi path\n");
-			return rc;
-		}
+	rc = asprintf(&path, "%s/fsi0/slave@00:00/raw", kernel_get_fsi_path());
+	if (rc < 0) {
+		PR_ERROR("Unable create fsi path\n");
+		return rc;
+	}
 
-		while (tries) {
-			/* Open first raw device */
-			fsi_fd = open(path, O_RDWR | O_SYNC);
-			if (fsi_fd >= 0) {
-				free(path);
-				return 0;
-			}
-			tries--;
-
-			/* Scan */
-			kernel_fsi_scan_devices();
-			sleep(1);
-		}
-		if (fsi_fd < 0) {
-			PR_ERROR("Unable to open %s\n", path);
+	while (tries) {
+		/* Open first raw device */
+		fsi->fd = open(path, O_RDWR | O_SYNC);
+		if (fsi->fd >= 0) {
 			free(path);
-			return -1;
+			return 0;
 		}
+		tries--;
 
+		/* Scan */
+		kernel_fsi_scan_devices();
+		sleep(1);
+	}
+	if (fsi->fd < 0) {
+		PR_ERROR("Unable to open %s\n", path);
+		free(path);
 	}
 
 	return -1;
+}
+
+static void kernel_fsi_release(struct pdbg_target *target)
+{
+	struct fsi *fsi = target_to_fsi(target);
+
+	if (fsi->fd != -1) {
+		close(fsi->fd);
+		fsi->fd = -1;
+	}
 }
 
 static struct fsi kernel_fsi = {
@@ -199,6 +195,7 @@ static struct fsi kernel_fsi = {
 		.compatible = "ibm,kernel-fsi",
 		.class = "fsi",
 		.probe = kernel_fsi_probe,
+		.release = kernel_fsi_release,
 	},
 	.read = kernel_fsi_getcfam,
 	.write = kernel_fsi_putcfam,
