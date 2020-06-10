@@ -50,8 +50,6 @@
 #include "p9.dt.h"
 
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
-#define OPENFSI_BMC "/sys/bus/platform/devices/gpio-fsi/fsi0/"
-#define FSI_CFAM_ID "/sys/devices/platform/gpio-fsi/fsi0/slave@00:00/cfam_id"
 #define XSCOM_BASE_PATH "/sys/kernel/debug/powerpc/scom"
 
 #define CHIP_ID_P8  0xea
