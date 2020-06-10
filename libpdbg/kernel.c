@@ -147,12 +147,16 @@ int kernel_fsi_probe(struct pdbg_target *target)
 	int tries = 5;
 	int rc;
 	const char *kernel_path = kernel_get_fsi_path();
+	const char *fsi_path;
 	char *path;
 
 	if (!kernel_path)
 		return -1;
 
-	rc = asprintf(&path, "%s/fsi0/slave@00:00/raw", kernel_get_fsi_path());
+	fsi_path = pdbg_target_property(target, "device-path", NULL);
+	assert(fsi_path);
+
+	rc = asprintf(&path, "%s%s", kernel_get_fsi_path(), fsi_path);
 	if (rc < 0) {
 		PR_ERROR("Unable create fsi path\n");
 		return rc;
