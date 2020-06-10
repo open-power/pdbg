@@ -54,6 +54,7 @@ define(`FSI_PRE',
 		#size-cells = <0x1>;
 		reg = <0x0 0x$1 0x8000>;
 		compatible = "ibm,kernel-fsi";
+		device-path = "/fsi0/slave@00:00/raw";
 		index = <0x$2>;
 		system-path = "/proc$2/fsi";
 		status = "mustexist";
