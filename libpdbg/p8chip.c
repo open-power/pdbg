@@ -477,7 +477,7 @@ static int p8_ram_destroy(struct thread *thread)
 	return 0;
 }
 
-static int p8_ram_getxer(struct pdbg_target *thread, uint64_t *value)
+static int p8_ram_getxer(struct thread *thread, uint64_t *value)
 {
 	uint64_t opcodes[] = {mfxerf(0, 0), mtspr(277, 0), mfxerf(0, 1),
 			      mtspr(277, 0), mfxerf(0, 2), mtspr(277, 0),
@@ -496,7 +496,7 @@ static int p8_ram_getxer(struct pdbg_target *thread, uint64_t *value)
 	return 0;
 }
 
-static int p8_ram_putxer(struct pdbg_target *thread, uint64_t value)
+static int p8_ram_putxer(struct thread *thread, uint64_t value)
 {
 	uint64_t fields[] = {value, value, value, value, 0};
 	uint64_t opcodes[] = {mfspr(0, 277), mtxerf(0, 0), mtxerf(0, 1), mtxerf(0, 2), mtxerf(0, 3)};
@@ -618,17 +618,12 @@ static int p8_put_hid0(struct pdbg_target *chip, uint64_t value)
 	return 0;
 }
 
-static int p8_enable_attn(struct pdbg_target *target)
+static int p8_enable_attn(struct thread *thread)
 {
 	struct pdbg_target *core;
 	uint64_t hid0;
 
-	core = pdbg_target_parent("core", target);
-	if (core == NULL)
-	{
-		PR_ERROR("CORE NOT FOUND\n");
-		return 1;
-	}
+	core = pdbg_target_require_parent("core", &thread->target);
 
 	/* Need to enable the attn instruction in HID0 */
 	if (p8_get_hid0(core, &hid0)) {

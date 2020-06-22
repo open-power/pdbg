@@ -274,17 +274,13 @@ int thread_sreset_all(void)
  * data. Note that only registers r0 and r1 are saved and restored so
  * opcode sequences must preserve other registers.
  */
-int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes,
+int ram_instructions(struct thread *thread, uint64_t *opcodes,
 			    uint64_t *results, int len, unsigned int lpar)
 {
 	uint64_t opcode = 0, r0 = 0, r1 = 0, scratch = 0;
 	int i;
 	int exception = 0;
-	struct thread *thread;
 	bool did_setup = false;
-
-	assert(!strcmp(thread_target->class, "thread"));
-	thread = target_to_thread(thread_target);
 
 	if (!thread->ram_is_setup) {
 		CHECK_ERR(thread->ram_setup(thread));
@@ -339,31 +335,40 @@ int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes,
 /*
  * Get gpr value. Chip must be stopped.
  */
-int thread_getgpr(struct pdbg_target *thread, int gpr, uint64_t *value)
+int thread_getgpr(struct pdbg_target *target, int gpr, uint64_t *value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mtspr(277, gpr)};
 	uint64_t results[] = {0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	*value = results[0];
 	return 0;
 }
 
-int thread_putgpr(struct pdbg_target *thread, int gpr, uint64_t value)
+int thread_putgpr(struct pdbg_target *target, int gpr, uint64_t value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfspr(gpr, 277)};
 	uint64_t results[] = {value};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 
 	return 0;
 }
 
-int thread_getnia(struct pdbg_target *thread, uint64_t *value)
+int thread_getnia(struct pdbg_target *target, uint64_t *value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfnia(0), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	*value = results[1];
 	return 0;
@@ -376,8 +381,9 @@ int thread_getnia(struct pdbg_target *thread, uint64_t *value)
  * This is a hack and should be made much cleaner once we have target
  * specific putspr commands.
  */
-int thread_putnia(struct pdbg_target *thread, uint64_t value)
+int thread_putnia(struct pdbg_target *target, uint64_t value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {	mfspr(1, 8),	/* mflr r1 */
 				mfspr(0, 277),	/* value -> r0 */
 				mtspr(8, 0),	/* mtlr r0 */
@@ -385,42 +391,53 @@ int thread_putnia(struct pdbg_target *thread, uint64_t value)
 				mtspr(8, 1), };	/* mtlr r1 */
 	uint64_t results[] = {0, value, 0, 0, 0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	return 0;
 }
 
-int thread_getspr(struct pdbg_target *thread, int spr, uint64_t *value)
+int thread_getspr(struct pdbg_target *target, int spr, uint64_t *value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfspr(0, spr), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	*value = results[1];
 	return 0;
 }
 
-int thread_putspr(struct pdbg_target *thread, int spr, uint64_t value)
+int thread_putspr(struct pdbg_target *target, int spr, uint64_t value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfspr(0, 277), mtspr(spr, 0)};
 	uint64_t results[] = {value, 0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	return 0;
 }
 
-int thread_getmsr(struct pdbg_target *thread, uint64_t *value)
+int thread_getmsr(struct pdbg_target *target, uint64_t *value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfmsr(0), mtspr(277, 0)};
 	uint64_t results[] = {0, 0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	*value = results[1];
 	return 0;
 }
 
-int thread_getcr(struct pdbg_target *thread, uint32_t *value)
+int thread_getcr(struct pdbg_target *target, uint32_t *value)
 {
-
+	struct thread *thread;
 	uint64_t opcodes[] = {mfocrf(0, 0), mtspr(277, 0), mfocrf(0, 1), mtspr(277, 0),
 			      mfocrf(0, 2), mtspr(277, 0), mfocrf(0, 3), mtspr(277, 0),
 			      mfocrf(0, 4), mtspr(277, 0), mfocrf(0, 5), mtspr(277, 0),
@@ -429,6 +446,8 @@ int thread_getcr(struct pdbg_target *thread, uint32_t *value)
 	uint32_t cr_field, cr = 0;
 	int i;
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	for (i = 1; i < 16; i += 2) {
 		cr_field = results[i];
@@ -440,58 +459,66 @@ int thread_getcr(struct pdbg_target *thread, uint32_t *value)
 	return 0;
 }
 
-int thread_putcr(struct pdbg_target *thread, uint32_t value)
+int thread_putcr(struct pdbg_target *target, uint32_t value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfspr(0, 277), mtocrf(0, 0), mtocrf(1, 0),
 			      mtocrf(2, 0), mtocrf(3, 0), mtocrf(4, 0),
 			      mtocrf(5, 0), mtocrf(6, 0), mtocrf(7, 0)};
 	uint64_t results[] = {value};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 
 	return 0;
 }
 
-int thread_putmsr(struct pdbg_target *thread, uint64_t value)
+int thread_putmsr(struct pdbg_target *target, uint64_t value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfspr(0, 277), mtmsr(0)};
 	uint64_t results[] = {value, 0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	return 0;
 }
 
-int thread_getmem(struct pdbg_target *thread, uint64_t addr, uint64_t *value)
+int thread_getmem(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 {
+	struct thread *thread;
 	uint64_t opcodes[] = {mfspr(0, 277), mfspr(1, 277), ld(0, 0, 1), mtspr(277, 0)};
 	uint64_t results[] = {0xdeaddeaddeaddead, addr, 0, 0};
 
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 	CHECK_ERR(ram_instructions(thread, opcodes, results, ARRAY_SIZE(opcodes), 0));
 	*value = results[3];
 	return 0;
 }
 
-int thread_getxer(struct pdbg_target *thread_target, uint64_t *value)
+int thread_getxer(struct pdbg_target *target, uint64_t *value)
 {
-
 	struct thread *thread;
 
-	assert(!strcmp(thread_target->class, "thread"));
-	thread = target_to_thread(thread_target);
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 
-	CHECK_ERR(thread->ram_getxer(thread_target, value));
+	CHECK_ERR(thread->ram_getxer(thread, value));
 
 	return 0;
 }
 
-int thread_putxer(struct pdbg_target *thread_target, uint64_t value)
+int thread_putxer(struct pdbg_target *target, uint64_t value)
 {
 	struct thread *thread;
 
-	assert(!strcmp(thread_target->class, "thread"));
-	thread = target_to_thread(thread_target);
+	assert(pdbg_target_is_class(target, "thread"));
+	thread = target_to_thread(target);
 
-	CHECK_ERR(thread->ram_putxer(thread_target, value));
+	CHECK_ERR(thread->ram_putxer(thread, value));
 
 	return 0;
 }

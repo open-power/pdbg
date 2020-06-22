@@ -285,7 +285,7 @@ static void put_mem(uint64_t *stack, void *priv)
 		data = attn_opcode;
 
 		/* Need to enable the attn instruction in HID0 */
-		if (thread->enable_attn(thread_target))
+		if (thread->enable_attn(thread))
 			goto out;
 	} else
 		stack[2] = __builtin_bswap64(stack[2]) >> 32;

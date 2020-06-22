@@ -404,16 +404,16 @@ static int p9_ram_destroy(struct thread *thread)
 	return 0;
 }
 
-static int p9_ram_getxer(struct pdbg_target *thread, uint64_t *value)
+static int p9_ram_getxer(struct thread *thread, uint64_t *value)
 {
-	CHECK_ERR(thread_getspr(thread, 1, value));
+	CHECK_ERR(thread_getspr(&thread->target, 1, value));
 
 	return 0;
 }
 
-static int p9_ram_putxer(struct pdbg_target *thread, uint64_t value)
+static int p9_ram_putxer(struct thread *thread, uint64_t value)
 {
-	CHECK_ERR(thread_putspr(thread, 1, value));
+	CHECK_ERR(thread_putspr(&thread->target, 1, value));
 
 	return 0;
 

@@ -16,9 +16,12 @@
 #ifndef __LIBPDBG_CHIP_H
 #define __LIBPDBG_CHIP_H
 
+#include "libpdbg.h"
+#include "hwunit.h"
+
 uint64_t mfspr(uint64_t reg, uint64_t spr) __attribute__ ((visibility("hidden")));
 uint64_t mtspr(uint64_t spr, uint64_t reg) __attribute__ ((visibility("hidden")));
-int ram_instructions(struct pdbg_target *thread_target, uint64_t *opcodes,
+int ram_instructions(struct thread *thread, uint64_t *opcodes,
 		uint64_t *results, int len, unsigned int lpar) __attribute__
 		((visibility("hidden")));
 #endif
