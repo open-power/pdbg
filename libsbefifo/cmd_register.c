@@ -22,7 +22,7 @@
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
-static int sbefifo_register_get_push(uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint8_t *reg_id, uint8_t reg_count, uint8_t **buf, uint32_t *buflen)
+static int sbefifo_register_get_push(uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint32_t *reg_id, uint8_t reg_count, uint8_t **buf, uint32_t *buflen)
 {
 	uint32_t *msg;
 	uint32_t nwords, cmd;
@@ -48,7 +48,7 @@ static int sbefifo_register_get_push(uint8_t core_id, uint8_t thread_id, uint8_t
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(r);
 	for (i=0; i<reg_count; i++)
-		msg[3+i] = htobe32(reg_id[i] & 0xff);
+		msg[3+i] = htobe32(reg_id[i]);
 
 	*buf = (uint8_t *)msg;
 	return 0;
@@ -77,7 +77,7 @@ static int sbefifo_register_get_pull(uint8_t *buf, uint32_t buflen, uint8_t reg_
 	return 0;
 }
 
-int sbefifo_register_get(struct sbefifo_context *sctx, uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint8_t *reg_id, uint8_t reg_count, uint64_t **value)
+int sbefifo_register_get(struct sbefifo_context *sctx, uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint32_t *reg_id, uint8_t reg_count, uint64_t **value)
 {
 	uint8_t *msg, *out;
 	uint32_t msg_len, out_len;
@@ -100,7 +100,7 @@ int sbefifo_register_get(struct sbefifo_context *sctx, uint8_t core_id, uint8_t 
 	return rc;
 }
 
-static int sbefifo_register_put_push(uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint8_t *reg_id, uint8_t reg_count, uint64_t *value, uint8_t **buf, uint32_t *buflen)
+static int sbefifo_register_put_push(uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint32_t *reg_id, uint8_t reg_count, uint64_t *value, uint8_t **buf, uint32_t *buflen)
 {
 	uint32_t *msg;
 	uint32_t nwords, cmd;
@@ -126,7 +126,7 @@ static int sbefifo_register_put_push(uint8_t core_id, uint8_t thread_id, uint8_t
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(r);
 	for (i=0; i<reg_count; i++) {
-		msg[3+i*3] = htobe32(reg_id[i] & 0xff);
+		msg[3+i*3] = htobe32(reg_id[i]);
 		msg[3+i*3+1] = htobe32(value[i] >> 32);
 		msg[3+i*3+2] = htobe32(value[i] & 0xffffffff);
 	}
@@ -143,7 +143,7 @@ static int sbefifo_register_put_pull(uint8_t *buf, uint32_t buflen)
 	return 0;
 }
 
-int sbefifo_register_put(struct sbefifo_context *sctx, uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint8_t *reg_id, uint8_t reg_count, uint64_t *value)
+int sbefifo_register_put(struct sbefifo_context *sctx, uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint32_t *reg_id, uint8_t reg_count, uint64_t *value)
 {
 	uint8_t *msg, *out;
 	uint32_t msg_len, out_len;
