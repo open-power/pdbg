@@ -24,6 +24,7 @@
 
 #include "hwunit.h"
 #include "debug.h"
+#include "sprs.h"
 
 static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 			     uint64_t addr, uint8_t *data, uint64_t size,
@@ -320,6 +321,7 @@ static int sbefifo_thread_op(struct thread *thread, uint32_t oper)
 				    oper,
 				    mode);
 }
+
 static int sbefifo_thread_start(struct thread *thread)
 {
 	return sbefifo_thread_op(thread, SBEFIFO_INSN_OP_START);
@@ -343,6 +345,251 @@ static int sbefifo_thread_step(struct thread *thread, int count)
 static int sbefifo_thread_sreset(struct thread *thread)
 {
 	return sbefifo_thread_op(thread, SBEFIFO_INSN_OP_SRESET);
+}
+
+static int sbefifo_thread_getregs(struct thread *thread, struct thread_regs *regs)
+{
+	struct pdbg_target *chiplet = pdbg_target_require_parent("chiplet", &thread->target);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", chiplet);
+	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+	uint32_t reg_id[34];
+	uint64_t value[34];
+	int ret, i;
+
+	for (i=0; i<32; i++)
+		reg_id[i] = i;
+
+	/* This chip-op requires core-id as pervasive (chiplet) id */
+	ret = sbefifo_register_get(sctx,
+				   pdbg_target_index(chiplet),
+				   thread->id,
+				   0,
+				   reg_id,
+				   32,
+				   (uint64_t **)&regs->gprs);
+	if (ret)
+		return ret;
+
+	reg_id[0] = SPR_NIA;
+	reg_id[1] = SPR_MSR;
+	reg_id[2] = SPR_CFAR;
+	reg_id[3] = SPR_LR;
+	reg_id[4] = SPR_CTR;
+	reg_id[5] = SPR_TAR;
+	reg_id[6] = SPR_CR;
+	reg_id[7] = SPR_XER;
+	reg_id[8] = SPR_LPCR;
+	reg_id[9] = SPR_PTCR;
+	reg_id[10] = SPR_LPIDR;
+	reg_id[11] = SPR_PIDR;
+	reg_id[12] = SPR_HFSCR;
+	reg_id[13] = SPR_HDSISR;
+	reg_id[14] = SPR_HDAR;
+	reg_id[15] = SPR_HSRR0;
+	reg_id[16] = SPR_HSRR1;
+	reg_id[17] = SPR_HDEC;
+	reg_id[18] = SPR_HEIR;
+	reg_id[19] = SPR_HID;
+	reg_id[20] = SPR_HSPRG0;
+	reg_id[21] = SPR_HSPRG1;
+	reg_id[22] = SPR_FSCR;
+	reg_id[23] = SPR_DSISR;
+	reg_id[24] = SPR_DAR;
+	reg_id[25] = SPR_SRR0;
+	reg_id[26] = SPR_SRR1;
+	reg_id[27] = SPR_DEC;
+	reg_id[28] = SPR_TB;
+	reg_id[29] = SPR_SPRG0;
+	reg_id[30] = SPR_SPRG1;
+	reg_id[31] = SPR_SPRG2;
+	reg_id[32] = SPR_SPRG3;
+	reg_id[33] = SPR_PPR;
+
+	ret = sbefifo_register_get(sctx,
+				   pdbg_target_index(chiplet),
+				   thread->id,
+				   1,
+				   reg_id,
+				   34,
+				   (uint64_t **)&value);
+	if (ret)
+		return ret;
+
+	regs->nia = value[0];
+	regs->msr = value[1];
+	regs->cfar = value[2];
+	regs->lr = value[3];
+	regs->ctr = value[4];
+	regs->tar = value[5];
+	regs->cr = (uint32_t)(value[6] & 0xffffffff);
+	regs->xer = value[7];
+	regs->lpcr = value[8];
+	regs->ptcr = value[9];
+	regs->lpidr = value[10];
+	regs->pidr = value[11];
+	regs->hfscr = value[12];
+	regs->hdsisr = (uint32_t)(value[13] & 0xffffffff);
+	regs->hdar = value[14];
+	regs->hsrr0 = value[15];
+	regs->hsrr1 = value[16];
+	regs->hdec = value[17];
+	regs->heir = (uint32_t)(value[18] & 0xffffffff);
+	regs->hid = value[19];
+	regs->hsprg0 = value[20];
+	regs->hsprg1 = value[21];
+	regs->fscr = value[22];
+	regs->dsisr = (uint32_t)(value[23] & 0xffffffff);
+	regs->dar = value[24];
+	regs->srr0 = value[25];
+	regs->srr1 = value[26];
+	regs->dec = value[27];
+	regs->tb = value[28];
+	regs->sprg0 = value[29];
+	regs->sprg1 = value[30];
+	regs->sprg2 = value[31];
+	regs->sprg3 = value[32];
+	regs->ppr = value[33];
+
+	return 0;
+}
+
+static int sbefifo_thread_get_reg(struct thread *thread, uint8_t reg_type, uint32_t reg_id, uint64_t *value)
+{
+	struct pdbg_target *chiplet = pdbg_target_require_parent("chiplet", &thread->target);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", chiplet);
+	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+	/* This chip-op requires core-id as pervasive (chiplet) id */
+	return sbefifo_register_get(sctx,
+				    pdbg_target_index(chiplet),
+				    thread->id,
+				    reg_type,
+				    &reg_id,
+				    1,
+				    &value);
+}
+
+static int sbefifo_thread_put_reg(struct thread *thread, uint8_t reg_type, uint32_t reg_id, uint64_t value)
+{
+	struct pdbg_target *chiplet = pdbg_target_require_parent("chiplet", &thread->target);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", chiplet);
+	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+	/* This chip-op requires core-id as pervasive (chiplet) id */
+	return sbefifo_register_put(sctx,
+				    pdbg_target_index(chiplet),
+				    thread->id,
+				    reg_type,
+				    &reg_id,
+				    1,
+				    &value);
+}
+
+static int sbefifo_thread_getgpr(struct thread *thread, int gpr, uint64_t *value)
+{
+	uint8_t reg_type = 0x0; /* GPR */
+	uint32_t reg_id = gpr;
+
+	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_putgpr(struct thread *thread, int gpr, uint64_t value)
+{
+	uint8_t reg_type = 0x0; /* GPR */
+	uint32_t reg_id = gpr;
+
+	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_getspr(struct thread *thread, int spr, uint64_t *value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = spr;
+
+	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_putspr(struct thread *thread, int spr, uint64_t value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = spr;
+
+	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_getmsr(struct thread *thread, uint64_t *value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_MSR;
+
+	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_putmsr(struct thread *thread, uint64_t value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_MSR;
+
+	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_getnia(struct thread *thread, uint64_t *value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_NIA;
+
+	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_putnia(struct thread *thread, uint64_t value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_NIA;
+
+	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_getxer(struct thread *thread, uint64_t *value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_XER;
+
+	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_putxer(struct thread *thread, uint64_t value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_XER;
+
+	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
+}
+
+static int sbefifo_thread_getcr(struct thread *thread, uint32_t *value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_CR;
+	uint64_t val;
+	int ret;
+
+	ret = sbefifo_thread_get_reg(thread, reg_type, reg_id, &val);
+	if (ret)
+		return ret;
+
+	*value = (uint32_t)(val & 0xffffffff);
+	return 0;
+}
+
+static int sbefifo_thread_putcr(struct thread *thread, uint32_t value)
+{
+	uint8_t reg_type = 0x1; /* SPR */
+	uint32_t reg_id = SPR_CR;
+	uint64_t val = value;;
+
+	return sbefifo_thread_put_reg(thread, reg_type, reg_id, val);
 }
 
 static struct sbefifo_context *sbefifo_op_get_context(struct sbefifo *sbefifo)
@@ -439,6 +686,19 @@ static struct thread sbefifo_thread = {
 	.stop = sbefifo_thread_stop,
 	.step = sbefifo_thread_step,
 	.sreset = sbefifo_thread_sreset,
+	.getregs = sbefifo_thread_getregs,
+	.getgpr = sbefifo_thread_getgpr,
+	.putgpr = sbefifo_thread_putgpr,
+	.getspr = sbefifo_thread_getspr,
+	.putspr = sbefifo_thread_putspr,
+	.getmsr = sbefifo_thread_getmsr,
+	.putmsr = sbefifo_thread_putmsr,
+	.getnia = sbefifo_thread_getnia,
+	.putnia = sbefifo_thread_putnia,
+	.getxer = sbefifo_thread_getxer,
+	.putxer = sbefifo_thread_putxer,
+	.getcr = sbefifo_thread_getcr,
+	.putcr = sbefifo_thread_putcr,
 };
 DECLARE_HW_UNIT(sbefifo_thread);
 
