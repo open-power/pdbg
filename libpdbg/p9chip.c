@@ -24,6 +24,7 @@
 #include "operations.h"
 #include "bitutils.h"
 #include "debug.h"
+#include "sprs.h"
 
 /*
  * NOTE!
@@ -406,14 +407,14 @@ static int p9_ram_destroy(struct thread *thread)
 
 static int p9_ram_getxer(struct thread *thread, uint64_t *value)
 {
-	CHECK_ERR(thread_getspr(&thread->target, 1, value));
+	CHECK_ERR(thread_getspr(&thread->target, SPR_XER, value));
 
 	return 0;
 }
 
 static int p9_ram_putxer(struct thread *thread, uint64_t value)
 {
-	CHECK_ERR(thread_putspr(&thread->target, 1, value));
+	CHECK_ERR(thread_putspr(&thread->target, SPR_XER, value));
 
 	return 0;
 

@@ -25,6 +25,7 @@
 #include "operations.h"
 #include "bitutils.h"
 #include "debug.h"
+#include "sprs.h"
 
 #define RAS_STATUS_TIMEOUT	100
 
@@ -508,9 +509,6 @@ static int p8_ram_putxer(struct thread *thread, uint64_t value)
 
 	return 0;
 }
-
-#define SPR_SRR0 0x01a
-#define SPR_SRR1 0x01b
 
 #define HID0_HILE	PPC_BIT(19)
 

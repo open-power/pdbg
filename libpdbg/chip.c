@@ -25,6 +25,7 @@
 #include "operations.h"
 #include "bitutils.h"
 #include "debug.h"
+#include "sprs.h"
 
 uint64_t mfspr(uint64_t reg, uint64_t spr)
 {
@@ -559,16 +560,16 @@ int thread_getregs(struct pdbg_target *target, struct thread_regs *regs)
 	thread_getnia(target, &regs->nia);
 	printf("NIA   : 0x%016" PRIx64 "\n", regs->nia);
 
-	thread_getspr(target, 28, &regs->cfar);
+	thread_getspr(target, SPR_CFAR, &regs->cfar);
 	printf("CFAR  : 0x%016" PRIx64 "\n", regs->cfar);
 
 	thread_getmsr(target, &regs->msr);
 	printf("MSR   : 0x%016" PRIx64 "\n", regs->msr);
 
-	thread_getspr(target, 8, &regs->lr);
+	thread_getspr(target, SPR_LR, &regs->lr);
 	printf("LR    : 0x%016" PRIx64 "\n", regs->lr);
 
-	thread_getspr(target, 9, &regs->ctr);
+	thread_getspr(target, SPR_CTR, &regs->ctr);
 	printf("CTR   : 0x%016" PRIx64 "\n", regs->ctr);
 
 	thread_getspr(target, 815, &regs->tar);
@@ -588,85 +589,85 @@ int thread_getregs(struct pdbg_target *target, struct thread_regs *regs)
 			printf("\n");
 	}
 
-	thread_getspr(target, 318, &regs->lpcr);
+	thread_getspr(target, SPR_LPCR, &regs->lpcr);
 	printf("LPCR  : 0x%016" PRIx64 "\n", regs->lpcr);
 
-	thread_getspr(target, 464, &regs->ptcr);
+	thread_getspr(target, SPR_PTCR, &regs->ptcr);
 	printf("PTCR  : 0x%016" PRIx64 "\n", regs->ptcr);
 
-	thread_getspr(target, 319, &regs->lpidr);
+	thread_getspr(target, SPR_LPIDR, &regs->lpidr);
 	printf("LPIDR : 0x%016" PRIx64 "\n", regs->lpidr);
 
-	thread_getspr(target, 48, &regs->pidr);
+	thread_getspr(target, SPR_PIDR, &regs->pidr);
 	printf("PIDR  : 0x%016" PRIx64 "\n", regs->pidr);
 
-	thread_getspr(target, 190, &regs->hfscr);
+	thread_getspr(target, SPR_HFSCR, &regs->hfscr);
 	printf("HFSCR : 0x%016" PRIx64 "\n", regs->hfscr);
 
-	thread_getspr(target, 306, &value);
+	thread_getspr(target, SPR_HDSISR, &value);
 	regs->hdsisr = value;
 	printf("HDSISR: 0x%08" PRIx32 "\n", regs->hdsisr);
 
-	thread_getspr(target, 307, &regs->hdar);
+	thread_getspr(target, SPR_HDAR, &regs->hdar);
 	printf("HDAR  : 0x%016" PRIx64 "\n", regs->hdar);
 
-	thread_getspr(target, 339, &value);
+	thread_getspr(target, SPR_HEIR, &value);
 	regs->heir = value;
 	printf("HEIR : 0x%016" PRIx32 "\n", regs->heir);
 
-	thread_getspr(target, 1008, &regs->hid);
+	thread_getspr(target, SPR_HID, &regs->hid);
 	printf("HID0 : 0x%016" PRIx64 "\n", regs->hid);
 
-	thread_getspr(target, 314, &regs->hsrr0);
+	thread_getspr(target, SPR_HSRR0, &regs->hsrr0);
 	printf("HSRR0 : 0x%016" PRIx64 "\n", regs->hsrr0);
 
-	thread_getspr(target, 315, &regs->hsrr1);
+	thread_getspr(target, SPR_HSRR1, &regs->hsrr1);
 	printf("HSRR1 : 0x%016" PRIx64 "\n", regs->hsrr1);
 
-	thread_getspr(target, 310, &regs->hdec);
+	thread_getspr(target, SPR_HDEC, &regs->hdec);
 	printf("HDEC  : 0x%016" PRIx64 "\n", regs->hdec);
 
-	thread_getspr(target, 304, &regs->hsprg0);
+	thread_getspr(target, SPR_HSPRG0, &regs->hsprg0);
 	printf("HSPRG0: 0x%016" PRIx64 "\n", regs->hsprg0);
 
-	thread_getspr(target, 305, &regs->hsprg1);
+	thread_getspr(target, SPR_HSPRG1, &regs->hsprg1);
 	printf("HSPRG1: 0x%016" PRIx64 "\n", regs->hsprg1);
 
-	thread_getspr(target, 153, &regs->fscr);
+	thread_getspr(target, SPR_FSCR, &regs->fscr);
 	printf("FSCR  : 0x%016" PRIx64 "\n", regs->fscr);
 
-	thread_getspr(target, 18, &value);
+	thread_getspr(target, SPR_DSISR, &value);
 	regs->dsisr = value;
 	printf("DSISR : 0x%08" PRIx32 "\n", regs->dsisr);
 
-	thread_getspr(target, 19, &regs->dar);
+	thread_getspr(target, SPR_DAR, &regs->dar);
 	printf("DAR   : 0x%016" PRIx64 "\n", regs->dar);
 
-	thread_getspr(target, 26, &regs->srr0);
+	thread_getspr(target, SPR_SRR0, &regs->srr0);
 	printf("SRR0  : 0x%016" PRIx64 "\n", regs->srr0);
 
-	thread_getspr(target, 27, &regs->srr1);
+	thread_getspr(target, SPR_SRR1, &regs->srr1);
 	printf("SRR1  : 0x%016" PRIx64 "\n", regs->srr1);
 
-	thread_getspr(target, 22, &regs->dec);
+	thread_getspr(target, SPR_DEC, &regs->dec);
 	printf("DEC   : 0x%016" PRIx64 "\n", regs->dec);
 
-	thread_getspr(target, 268, &regs->tb);
+	thread_getspr(target, SPR_TB, &regs->tb);
 	printf("TB    : 0x%016" PRIx64 "\n", regs->tb);
 
-	thread_getspr(target, 272, &regs->sprg0);
+	thread_getspr(target, SPR_SPRG0, &regs->sprg0);
 	printf("SPRG0 : 0x%016" PRIx64 "\n", regs->sprg0);
 
-	thread_getspr(target, 273, &regs->sprg1);
+	thread_getspr(target, SPR_SPRG1, &regs->sprg1);
 	printf("SPRG1 : 0x%016" PRIx64 "\n", regs->sprg1);
 
-	thread_getspr(target, 274, &regs->sprg2);
+	thread_getspr(target, SPR_SPRG2, &regs->sprg2);
 	printf("SPRG2 : 0x%016" PRIx64 "\n", regs->sprg2);
 
-	thread_getspr(target, 275, &regs->sprg3);
+	thread_getspr(target, SPR_SPRG3, &regs->sprg3);
 	printf("SPRG3 : 0x%016" PRIx64 "\n", regs->sprg3);
 
-	thread_getspr(target, 896, &regs->ppr);
+	thread_getspr(target, SPR_PPR, &regs->ppr);
 	printf("PPR   : 0x%016" PRIx64 "\n", regs->ppr);
 
 	CHECK_ERR(thread->ram_destroy(thread));
