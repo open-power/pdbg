@@ -143,6 +143,27 @@ struct thread {
 	int (*ram_getxer)(struct thread *, uint64_t *value);
 	int (*ram_putxer)(struct thread *, uint64_t value);
 	int (*enable_attn)(struct thread *);
+
+	int (*getmem)(struct thread *, uint64_t, uint64_t *);
+	int (*getregs)(struct thread *, struct thread_regs *regs);
+
+	int (*getgpr)(struct thread *, int, uint64_t *);
+	int (*putgpr)(struct thread *, int, uint64_t);
+
+	int (*getspr)(struct thread *, int, uint64_t *);
+	int (*putspr)(struct thread *, int, uint64_t);
+
+	int (*getmsr)(struct thread *, uint64_t *);
+	int (*putmsr)(struct thread *, uint64_t);
+
+	int (*getnia)(struct thread *, uint64_t *);
+	int (*putnia)(struct thread *, uint64_t);
+
+	int (*getxer)(struct thread *, uint64_t *);
+	int (*putxer)(struct thread *, uint64_t);
+
+	int (*getcr)(struct thread *, uint32_t *);
+	int (*putcr)(struct thread *, uint32_t);
 };
 #define target_to_thread(x) container_of(x, struct thread, target)
 
