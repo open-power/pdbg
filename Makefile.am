@@ -205,6 +205,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/p9chip.c \
 	libpdbg/p9_fapi_targets.c \
 	libpdbg/sbefifo.c \
+	libpdbg/sprs.h \
 	libpdbg/target.c \
 	libpdbg/target.h
 
