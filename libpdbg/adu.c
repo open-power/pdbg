@@ -166,7 +166,7 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, false);
@@ -177,7 +177,7 @@ int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, true);
@@ -188,7 +188,7 @@ int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	/* There is no equivalent for cachable memory as blocksize
@@ -201,7 +201,7 @@ int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, ci);
@@ -250,7 +250,7 @@ int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, false);
@@ -261,7 +261,7 @@ int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, true);
@@ -272,7 +272,7 @@ int adu_putmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, block_size, true);
@@ -283,7 +283,7 @@ int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 {
 	struct mem *adu;
 
-	assert(!strcmp(adu_target->class, "mem"));
+	assert(pdbg_target_is_class(adu_target, "mem"));
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, ci);
