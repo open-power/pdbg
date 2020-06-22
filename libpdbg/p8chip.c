@@ -26,6 +26,7 @@
 #include "bitutils.h"
 #include "debug.h"
 #include "sprs.h"
+#include "chip.h"
 
 #define RAS_STATUS_TIMEOUT	100
 
@@ -655,9 +656,21 @@ static struct thread p8_thread = {
 	.ram_setup = p8_ram_setup,
 	.ram_instruction = p8_ram_instruction,
 	.ram_destroy = p8_ram_destroy,
-	.ram_getxer = p8_ram_getxer,
-	.ram_putxer = p8_ram_putxer,
 	.enable_attn = p8_enable_attn,
+	.getmem = ram_getmem,
+	.getregs = ram_getregs,
+	.getgpr = ram_getgpr,
+	.putgpr = ram_putgpr,
+	.getspr = ram_getspr,
+	.putspr = ram_putspr,
+	.getmsr = ram_getmsr,
+	.putmsr = ram_putmsr,
+	.getnia = ram_getnia,
+	.putnia = ram_putnia,
+	.getxer = p8_ram_getxer,
+	.putxer = p8_ram_putxer,
+	.getcr = ram_getcr,
+	.putcr = ram_putcr,
 };
 DECLARE_HW_UNIT(p8_thread);
 

@@ -25,6 +25,7 @@
 #include "bitutils.h"
 #include "debug.h"
 #include "sprs.h"
+#include "chip.h"
 
 /*
  * NOTE!
@@ -407,14 +408,14 @@ static int p9_ram_destroy(struct thread *thread)
 
 static int p9_ram_getxer(struct thread *thread, uint64_t *value)
 {
-	CHECK_ERR(thread_getspr(&thread->target, SPR_XER, value));
+	CHECK_ERR(ram_getspr(thread, SPR_XER, value));
 
 	return 0;
 }
 
 static int p9_ram_putxer(struct thread *thread, uint64_t value)
 {
-	CHECK_ERR(thread_putspr(&thread->target, SPR_XER, value));
+	CHECK_ERR(ram_putspr(thread, SPR_XER, value));
 
 	return 0;
 
@@ -435,8 +436,20 @@ static struct thread p9_thread = {
 	.ram_setup = p9_ram_setup,
 	.ram_instruction = p9_ram_instruction,
 	.ram_destroy = p9_ram_destroy,
-	.ram_getxer = p9_ram_getxer,
-	.ram_putxer = p9_ram_putxer,
+	.getmem = ram_getmem,
+	.getregs = ram_getregs,
+	.getgpr = ram_getgpr,
+	.putgpr = ram_putgpr,
+	.getspr = ram_getspr,
+	.putspr = ram_putspr,
+	.getmsr = ram_getmsr,
+	.putmsr = ram_putmsr,
+	.getnia = ram_getnia,
+	.putnia = ram_putnia,
+	.getxer = p9_ram_getxer,
+	.putxer = p9_ram_putxer,
+	.getcr = ram_getcr,
+	.putcr = ram_putcr,
 };
 DECLARE_HW_UNIT(p9_thread);
 

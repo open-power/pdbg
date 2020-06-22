@@ -207,7 +207,8 @@ libpdbg_la_SOURCES = \
 	libpdbg/sbefifo.c \
 	libpdbg/sprs.h \
 	libpdbg/target.c \
-	libpdbg/target.h
+	libpdbg/target.h \
+	libpdbg/thread.c
 
 libpdbg_la_CFLAGS = -Wall -Werror
 libpdbg_la_LIBADD = libcronus.la libsbefifo.la

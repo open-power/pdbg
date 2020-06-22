@@ -24,4 +24,23 @@ uint64_t mtspr(uint64_t spr, uint64_t reg) __attribute__ ((visibility("hidden"))
 int ram_instructions(struct thread *thread, uint64_t *opcodes,
 		uint64_t *results, int len, unsigned int lpar) __attribute__
 		((visibility("hidden")));
+
+int ram_getmem(struct thread *thread, uint64_t addr, uint64_t *value);
+int ram_getregs(struct thread *thread, struct thread_regs *regs);
+
+int ram_getgpr(struct thread *thread, int gpr, uint64_t *value);
+int ram_putgpr(struct thread *thread, int gpr, uint64_t value);
+
+int ram_getnia(struct thread *thread, uint64_t *value);
+int ram_putnia(struct thread *thread, uint64_t value);
+
+int ram_getspr(struct thread *thread, int spr, uint64_t *value);
+int ram_putspr(struct thread *thread, int spr, uint64_t value);
+
+int ram_getmsr(struct thread *thread, uint64_t *value);
+int ram_putmsr(struct thread *thread, uint64_t value);
+
+int ram_getcr(struct thread *thread, uint32_t *value);
+int ram_putcr(struct thread *thread, uint32_t value);
+
 #endif
