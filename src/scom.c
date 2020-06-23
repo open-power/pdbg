@@ -29,15 +29,8 @@
 /* Check if a target has scom region */
 static bool scommable(struct pdbg_target *target)
 {
-	const char *classname;
-
-	classname = pdbg_target_class_name(target);
-	if (!strcmp(classname, "pib") ||
-	    !strcmp(classname, "core") ||
-	    !strcmp(classname, "thread"))
-		return true;
-
-	return false;
+	return !strcmp(pdbg_target_class_name(target), "pib") ||
+		pdbg_target_parent("pib", target);
 }
 
 int getscom(uint64_t addr)
