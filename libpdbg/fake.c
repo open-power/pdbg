@@ -20,6 +20,15 @@
 #include "operations.h"
 #include "hwunit.h"
 
+static struct proc fake_proc = {
+	.target = {
+		.name =	"Fake Processor",
+		.compatible = "ibm,fake-proc",
+		.class = "proc",
+	},
+};
+DECLARE_HW_UNIT(fake_proc);
+
 static int fake_fsi_read(struct fsi *fsi, uint32_t addr, uint32_t *value)
 {
 	*value = 0xfeed0cfa;
@@ -90,6 +99,7 @@ DECLARE_HW_UNIT(fake_thread);
 __attribute__((constructor))
 static void register_fake(void)
 {
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &fake_proc_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &fake_fsi_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &fake_pib_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &fake_core_hw_unit);
