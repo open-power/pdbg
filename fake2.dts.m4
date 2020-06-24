@@ -16,6 +16,7 @@ define(`dump_system',
 `
     CONCAT(proc,i) {
       index = < CONCAT(0x,i) >;
+      compatible = "ibm,fake-proc";
     };
 ')
 ')

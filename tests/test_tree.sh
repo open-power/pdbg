@@ -245,6 +245,14 @@ test_result 0 <<EOF
          core@10040 (/proc7/pib/core@10040)
             thread@0 (/proc7/pib/core@10040/thread@0)
             thread@1 (/proc7/pib/core@10040/thread@1)
+   proc0 (/proc0)
+   proc1 (/proc1)
+   proc2 (/proc2)
+   proc3 (/proc3)
+   proc4 (/proc4)
+   proc5 (/proc5)
+   proc6 (/proc6)
+   proc7 (/proc7)
 EOF
 
 test_run libpdbg_dtree_test tree backend /
