@@ -725,3 +725,101 @@ EOF
 
 do_skip
 test_run pdbg -b fake -P core@10040 probe
+
+
+test_result 0 <<EOF
+proc0: Fake Processor
+    fsi0: Fake FSI
+    pib0: Fake PIB
+        core0: Fake Core
+            thread0: Fake Thread (*)
+            thread1: Fake Thread (*)
+        core1: Fake Core
+            thread0: Fake Thread (*)
+            thread1: Fake Thread (*)
+        core2: Fake Core
+            thread0: Fake Thread (*)
+            thread1: Fake Thread (*)
+        core3: Fake Core
+            thread0: Fake Thread (*)
+            thread1: Fake Thread (*)
+EOF
+
+do_skip
+test_run pdbg -b fake -P proc0/thread probe
+
+
+test_result 0 <<EOF
+proc0: Fake Processor
+    fsi0: Fake FSI
+    pib0: Fake PIB
+        core2: Fake Core
+            thread0: Fake Thread (*)
+            thread1: Fake Thread (*)
+EOF
+
+do_skip
+test_run pdbg -b fake -P proc0/core2/thread probe
+
+
+test_result 0 <<EOF
+proc0: Fake Processor
+    fsi0: Fake FSI
+    pib0: Fake PIB
+        core2: Fake Core
+            thread1: Fake Thread (*)
+EOF
+
+do_skip
+test_run pdbg -b fake -P proc0/core2/thread1 probe
+
+
+test_result 0 <<EOF
+proc1: Fake Processor
+    fsi1: Fake FSI
+    pib1: Fake PIB
+        core0: Fake Core
+            thread0: Fake Thread (*)
+proc2: Fake Processor
+    fsi2: Fake FSI
+    pib2: Fake PIB
+        core0: Fake Core
+            thread0: Fake Thread (*)
+proc3: Fake Processor
+    fsi3: Fake FSI
+    pib3: Fake PIB
+        core0: Fake Core
+            thread0: Fake Thread (*)
+proc5: Fake Processor
+    fsi5: Fake FSI
+    pib5: Fake PIB
+        core0: Fake Core
+            thread0: Fake Thread (*)
+proc6: Fake Processor
+    fsi6: Fake FSI
+    pib6: Fake PIB
+        core0: Fake Core
+            thread0: Fake Thread (*)
+EOF
+
+do_skip
+test_run pdbg -b fake -P proc[1-3,5,5-6]/core0/thread0 probe
+
+
+test_result 0 <<EOF
+proc0: Fake Processor (*)
+EOF
+
+do_skip
+test_run pdbg -b fake -P proc0 probe
+
+
+test_result 0 <<EOF
+proc1: Fake Processor (*)
+proc2: Fake Processor (*)
+proc3: Fake Processor (*)
+proc4: Fake Processor (*)
+EOF
+
+do_skip
+test_run pdbg -b fake -P proc[1-4] probe
