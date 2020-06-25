@@ -118,6 +118,11 @@ static int adu_read(struct mem *adu, uint64_t start_addr, uint8_t *output,
 	int rc = 0;
 	uint64_t addr0, addr;
 
+	if (!adu->getmem) {
+		PR_ERROR("getmem() not implemented for the target\n");
+		return -1;
+	}
+
 	if (!block_size)
 		block_size = 8;
 
@@ -167,6 +172,10 @@ int adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, false);
@@ -178,6 +187,10 @@ int adu_getmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, true);
@@ -189,6 +202,10 @@ int adu_getmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	/* There is no equivalent for cachable memory as blocksize
@@ -202,6 +219,10 @@ int __adu_getmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	return adu_read(adu, start_addr, output, size, 8, ci);
@@ -212,6 +233,11 @@ static int adu_write(struct mem *adu, uint64_t start_addr, uint8_t *input,
 {
 	int rc = 0, tsize;
 	uint64_t addr, data, end_addr;
+
+	if (!adu->putmem) {
+		PR_ERROR("putmem() not implemented for the target\n");
+		return -1;
+	}
 
 	if (!block_size)
 		block_size = 8;
@@ -251,6 +277,10 @@ int adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, false);
@@ -262,6 +292,10 @@ int adu_putmem_ci(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, true);
@@ -273,6 +307,10 @@ int adu_putmem_io(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, block_size, true);
@@ -284,6 +322,10 @@ int __adu_putmem(struct pdbg_target *adu_target, uint64_t start_addr,
 	struct mem *adu;
 
 	assert(pdbg_target_is_class(adu_target, "mem"));
+
+	if (pdbg_target_status(adu_target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	adu = target_to_mem(adu_target);
 
 	return adu_write(adu, start_addr, input, size, 8, ci);

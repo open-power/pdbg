@@ -171,10 +171,12 @@ struct htm_status {
 
 static struct htm *check_and_convert(struct pdbg_target *target)
 {
-
 	if (!pdbg_target_is_class(target, "nhtm") &&
 	    !pdbg_target_is_class(target, "chtm"))
 	    return NULL;
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return NULL;
 
 	return target_to_htm(target);
 }
@@ -183,21 +185,45 @@ int htm_start(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
-	return htm ? htm->start(htm) : -1;
+	if (!htm)
+		return -1;
+
+	if (!htm->start) {
+		PR_ERROR("start() not implemented for the target\n");
+		return -1;
+	}
+
+	return htm->start(htm);
 }
 
 int htm_stop(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
-	return htm ? htm->stop(htm) : -1;
+	if (!htm)
+		return -1;
+
+	if (!htm->stop) {
+		PR_ERROR("stop() not implemented for the target\n");
+		return -1;
+	}
+
+	return htm->stop(htm);
 }
 
 int htm_status(struct pdbg_target *target)
 {
 	struct htm *htm = check_and_convert(target);
 
-	return htm ? htm->status(htm) : -1;
+	if (!htm)
+		return -1;
+
+	if (!htm->status) {
+		PR_ERROR("status() not implemented for the target\n");
+		return -1;
+	}
+
+	return htm->status(htm);
 }
 
 int htm_dump(struct pdbg_target *target, char *filename)
@@ -206,6 +232,11 @@ int htm_dump(struct pdbg_target *target, char *filename)
 
 	if (!htm || !filename)
 		return -1;
+
+	if (!htm->dump) {
+		PR_ERROR("dump() not implemented for the target\n");
+		return -1;
+	}
 
 	return htm->dump(htm, filename);
 }
@@ -216,6 +247,11 @@ int htm_record(struct pdbg_target *target, char *filename)
 
 	if (!htm || !filename)
 		return -1;
+
+	if (!htm->record) {
+		PR_ERROR("record() not implemented for the target\n");
+		return -1;
+	}
 
 	return htm->record(htm, filename);
 }

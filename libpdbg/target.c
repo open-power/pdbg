@@ -133,7 +133,17 @@ int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 	int rc;
 
 	pib_dt = get_class_target_addr(pib_dt, "pib", &target_addr);
+
+	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	pib = target_to_pib(pib_dt);
+
+	if (!pib->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
+
 	if (target_addr & PPC_BIT(0))
 		rc = pib_indirect_read(pib, target_addr, data);
 	else
@@ -152,7 +162,17 @@ int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 	int rc;
 
 	pib_dt = get_class_target_addr(pib_dt, "pib", &target_addr);
+
+	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	pib = target_to_pib(pib_dt);
+
+	if (!pib->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
+
 	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
 		 target_addr, data);
 	if (target_addr & PPC_BIT(0))
@@ -188,7 +208,16 @@ int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t 
 	int rc;
 
 	pib_dt = get_class_target_addr(pib_dt, "pib", &addr);
+
+	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	pib = target_to_pib(pib_dt);
+
+	if (!pib->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
 
 	do {
 		if (addr & PPC_BIT(0))
@@ -208,7 +237,17 @@ int opb_read(struct pdbg_target *opb_dt, uint32_t addr, uint32_t *data)
 	uint64_t addr64 = addr;
 
 	opb_dt = get_class_target_addr(opb_dt, "opb", &addr64);
+
+	if (pdbg_target_status(opb_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	opb = target_to_opb(opb_dt);
+
+	if (!opb->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
+
 	return opb->read(opb, addr64, data);
 }
 
@@ -218,8 +257,16 @@ int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data)
 	uint64_t addr64 = addr;
 
 	opb_dt = get_class_target_addr(opb_dt, "opb", &addr64);
+
+	if (pdbg_target_status(opb_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	opb = target_to_opb(opb_dt);
 
+	if (!opb->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
 	return opb->write(opb, addr64, data);
 }
 
@@ -230,7 +277,16 @@ int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 	uint64_t addr64 = addr;
 
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
+
+	if (pdbg_target_status(fsi_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	fsi = target_to_fsi(fsi_dt);
+
+	if (!fsi->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
 
 	rc = fsi->read(fsi, addr64, data);
 	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
@@ -245,7 +301,16 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 	uint64_t addr64 = addr;
 
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
+
+	if (pdbg_target_status(fsi_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	fsi = target_to_fsi(fsi_dt);
+
+	if (!fsi->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
 
 	rc = fsi->write(fsi, addr64, data);
 	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
@@ -274,7 +339,16 @@ int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_
 
 	assert(pdbg_target_is_class(target, "mem"));
 
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	mem = target_to_mem(target);
+
+	if (!mem->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
+
 	rc = mem->read(mem, addr, output, size, block_size, ci);
 
 	return rc;
@@ -287,7 +361,16 @@ int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_
 
 	assert(pdbg_target_is_class(target, "mem"));
 
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	mem = target_to_mem(target);
+
+	if (!mem->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
+
 	rc = mem->write(mem, addr, input, size, block_size, ci);
 
 	return rc;
@@ -299,6 +382,10 @@ struct chipop *pib_to_chipop(struct pdbg_target *pib)
 	uint32_t index;
 
 	assert(pdbg_target_is_class(pib, "pib"));
+
+	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
+		return NULL;
+
 	index = pdbg_target_index(pib);
 
 	pdbg_for_each_class_target("chipop", chipop) {
@@ -320,6 +407,11 @@ int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 	if (!chipop)
 		return -1;
 
+	if (!chipop->istep) {
+		PR_ERROR("istep() not implemented for the target\n");
+		return -1;
+	}
+
 	return chipop->istep(chipop, major, minor);
 }
 
@@ -330,6 +422,11 @@ int sbe_mpipl_enter(struct pdbg_target *target)
 	chipop = pib_to_chipop(target);
 	if (!chipop)
 		return -1;
+
+	if (!chipop->mpipl_enter) {
+		PR_ERROR("mpipl_enter() not implemented for the target\n");
+		return -1;
+	}
 
 	return chipop->mpipl_enter(chipop);
 }
@@ -342,6 +439,11 @@ int sbe_mpipl_continue(struct pdbg_target *target)
 	if (!chipop)
 		return -1;
 
+	if (!chipop->mpipl_continue) {
+		PR_ERROR("mpipl_continue() not implemented for the target\n");
+		return -1;
+	}
+
 	return chipop->mpipl_continue(chipop);
 }
 
@@ -353,6 +455,11 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 	if (!chipop)
 		return -1;
 
+	if (!chipop->mpipl_get_ti_info) {
+		PR_ERROR("mpipl_get_ti_info() not implemented for the target\n");
+		return -1;
+	}
+
 	return chipop->mpipl_get_ti_info(chipop, data, data_len);
 }
 
@@ -363,6 +470,11 @@ uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t
 	chipop = pib_to_chipop(target);
 	if (!chipop)
 		return -1;
+
+	if (!chipop->ffdc_get) {
+		PR_ERROR("ffdc_get() not implemented for the target\n");
+		return -1;
+	}
 
 	return chipop->ffdc_get(chipop, ffdc, ffdc_len);
 }
