@@ -65,6 +65,7 @@
 
 struct sbefifo_context {
 	int fd;
+	int proc;
 
 	sbefifo_transport_fn transport;
 	void *priv;

@@ -48,15 +48,19 @@
 #define SBEFIFO_SEC_PIB_ERROR             0x0011
 #define SBEFIFO_SEC_PARITY_ERROR          0x0012
 
+#define SBEFIFO_PROC_P9    0x01
+#define SBEFIFO_PROC_P10   0x02
+
 struct sbefifo_context;
 
 typedef int (*sbefifo_transport_fn)(uint8_t *msg, uint32_t msg_len,
 				    uint8_t *out, uint32_t *out_len,
 				    void *private_data);
 
-int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out);
-int sbefifo_connect_transport(sbefifo_transport_fn transport, void *priv, struct sbefifo_context **out);
+int sbefifo_connect(const char *fifo_path, int proc, struct sbefifo_context **out);
+int sbefifo_connect_transport(int proc, sbefifo_transport_fn transport, void *priv, struct sbefifo_context **out);
 void sbefifo_disconnect(struct sbefifo_context *sctx);
+int sbefifo_proc(struct sbefifo_context *sctx);
 
 int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
 			 uint8_t *buf, uint32_t buflen,

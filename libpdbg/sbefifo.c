@@ -700,12 +700,26 @@ static int sbefifo_probe(struct pdbg_target *target)
 {
 	struct sbefifo *sf = target_to_sbefifo(target);
 	const char *sbefifo_path;
-	int rc;
+	int rc, proc;
 
 	sbefifo_path = pdbg_target_property(target, "device-path", NULL);
 	assert(sbefifo_path);
 
-	rc = sbefifo_connect(sbefifo_path, &sf->sf_ctx);
+	switch (pdbg_get_proc()) {
+	case PDBG_PROC_P9:
+		proc = SBEFIFO_PROC_P9;
+		break;
+
+	case PDBG_PROC_P10:
+		proc = SBEFIFO_PROC_P10;
+		break;
+
+	default:
+		PR_ERROR("SBEFIFO driver not supported\n");
+		return -1;
+	}
+
+	rc = sbefifo_connect(sbefifo_path, proc, &sf->sf_ctx);
 	if (rc) {
 		PR_ERROR("Unable to open sbefifo driver %s\n", sbefifo_path);
 		return rc;

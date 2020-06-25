@@ -20,14 +20,26 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
-int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out)
+static bool proc_valid(int proc)
+{
+	if (proc == SBEFIFO_PROC_P9 || proc == SBEFIFO_PROC_P10)
+		return true;
+
+	return false;
+}
+
+int sbefifo_connect(const char *fifo_path, int proc, struct sbefifo_context **out)
 {
 	struct sbefifo_context *sctx;
 	int fd, rc;
+
+	if (!proc_valid(proc))
+		return EINVAL;
 
 	sctx = malloc(sizeof(struct sbefifo_context));
 	if (!sctx) {
@@ -37,6 +49,7 @@ int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out)
 
 	*sctx = (struct sbefifo_context) {
 		.fd = -1,
+		.proc = proc,
 	};
 
 	fd = open(fifo_path, O_RDWR | O_SYNC);
@@ -53,9 +66,12 @@ int sbefifo_connect(const char *fifo_path, struct sbefifo_context **out)
 	return 0;
 }
 
-int sbefifo_connect_transport(sbefifo_transport_fn transport, void *priv, struct sbefifo_context **out)
+int sbefifo_connect_transport(int proc, sbefifo_transport_fn transport, void *priv, struct sbefifo_context **out)
 {
 	struct sbefifo_context *sctx;
+
+	if (!proc_valid(proc))
+		return EINVAL;
 
 	sctx = malloc(sizeof(struct sbefifo_context));
 	if (!sctx) {
@@ -65,6 +81,7 @@ int sbefifo_connect_transport(sbefifo_transport_fn transport, void *priv, struct
 
 	*sctx = (struct sbefifo_context) {
 		.fd = -1,
+		.proc = proc,
 		.transport = transport,
 		.priv = priv,
 	};
@@ -82,6 +99,11 @@ void sbefifo_disconnect(struct sbefifo_context *sctx)
 		free(sctx->ffdc);
 
 	free(sctx);
+}
+
+int sbefifo_proc(struct sbefifo_context *sctx)
+{
+	return sctx->proc;
 }
 
 void sbefifo_debug(const char *fmt, ...)

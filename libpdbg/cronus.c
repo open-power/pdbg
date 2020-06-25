@@ -155,13 +155,27 @@ static int cronus_sbefifo_transport(uint8_t *msg, uint32_t msg_len,
 static int cronus_sbefifo_probe(struct pdbg_target *target)
 {
 	struct sbefifo *sf = target_to_sbefifo(target);
-	int rc;
+	int rc, proc;
 
 	rc = cronus_probe(target);
 	if (rc)
 		return rc;
 
-	rc = sbefifo_connect_transport(cronus_sbefifo_transport, sf, &sf->sf_ctx);
+	switch (pdbg_get_proc()) {
+	case PDBG_PROC_P9:
+		proc = SBEFIFO_PROC_P9;
+		break;
+
+	case PDBG_PROC_P10:
+		proc = SBEFIFO_PROC_P10;
+		break;
+
+	default:
+		PR_ERROR("SBEFIFO driver not supported\n");
+		return -1;
+	}
+
+	rc = sbefifo_connect_transport(proc, cronus_sbefifo_transport, sf, &sf->sf_ctx);
 	if (rc) {
 		PR_ERROR("Unable to initialize sbefifo driver\n");
 		return rc;
