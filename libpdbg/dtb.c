@@ -256,6 +256,47 @@ static void bmc_target(struct pdbg_dtb *dtb)
 	}
 }
 
+static void sbefifo_target(struct pdbg_dtb *dtb)
+{
+	uint32_t chip_id = 0;
+
+	if (pdbg_backend_option) {
+		if (!strcmp(pdbg_backend_option, "p9")) {
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p9_dtb_o_start;
+		} else {
+			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
+			pdbg_log(PDBG_ERROR, "Use 'p9'\n");
+		}
+
+		return;
+	}
+
+	if (!get_chipid(&chip_id))
+		return;
+
+	switch(chip_id) {
+	case CHIP_ID_P9:
+	case CHIP_ID_P9P:
+		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p9_dtb_o_start;
+		break;
+
+	case CHIP_ID_P8:
+	case CHIP_ID_P8P:
+		pdbg_log(PDBG_ERROR, "SBEFIFO backend not supported on POWER8/8+ OpenBMC based system\n");
+		break;
+
+	default:
+		pdbg_log(PDBG_ERROR, "Unrecognised Chip ID register 0x%08" PRIx32 "\n", chip_id);
+	}
+}
+
 /* Opens a dtb at the given path */
 static void mmap_dtb(const char *file, bool readonly, struct pdbg_mfile *mfile)
 {
@@ -426,21 +467,7 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 		break;
 
 	case PDBG_BACKEND_SBEFIFO:
-		if (!pdbg_backend_option) {
-			pdbg_log(PDBG_ERROR, "No system type specified\n");
-			pdbg_log(PDBG_ERROR, "Use p9\n");
-			return NULL;
-		}
-
-		if (!strcmp(pdbg_backend_option, "p9")) {
-			if (!dtb->backend.fdt)
-				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
-			if (!dtb->system.fdt)
-				dtb->system.fdt = &_binary_p9_dtb_o_start;
-		} else {
-			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
-			pdbg_log(PDBG_ERROR, "Use p9\n");
-		}
+		sbefifo_target(dtb);
 		break;
 
 	default:
