@@ -173,13 +173,42 @@ static void ppc_target(struct pdbg_dtb *dtb)
  	}
 }
 
-static void bmc_target(struct pdbg_dtb *dtb)
+static bool get_chipid(uint32_t *chip_id)
 {
 	FILE *cfam_id_file;
 	char *path;
 	uint32_t cfam_id = 0;
-	uint32_t chip_id = 0;
 	int rc;
+
+	/* Try and determine the correct device type */
+	rc = asprintf(&path, "%s/fsi0/slave@00:00/cfam_id", kernel_get_fsi_path());
+	if (rc < 0) {
+		pdbg_log(PDBG_ERROR, "Unable create fsi path");
+		return false;
+	}
+
+	cfam_id_file = fopen(path, "r");
+	free(path);
+	if (!cfam_id_file) {
+		pdbg_log(PDBG_ERROR, "Unabled to open CFAM ID file\n");
+		return false;
+	}
+
+	rc = fscanf(cfam_id_file, "0x%" PRIx32, &cfam_id);
+	if (rc != 1) {
+		pdbg_log(PDBG_ERROR, "Unable to read CFAM ID: %s", strerror(errno));
+		fclose(cfam_id_file);
+		return false;
+	}
+	fclose(cfam_id_file);
+
+	*chip_id = (cfam_id >> 4) & 0xff;
+	return true;
+}
+
+static void bmc_target(struct pdbg_dtb *dtb)
+{
+	uint32_t chip_id = 0;
 
 	if (pdbg_backend_option) {
 		if (!strcmp(pdbg_backend_option, "p8")) {
@@ -200,28 +229,8 @@ static void bmc_target(struct pdbg_dtb *dtb)
 		return;
 	}
 
-	/* Try and determine the correct device type */
-	rc = asprintf(&path, "%s/fsi0/slave@00:00/cfam_id", kernel_get_fsi_path());
-	if (rc < 0) {
-		pdbg_log(PDBG_ERROR, "Unable create fsi path");
+	if (!get_chipid(&chip_id))
 		return;
-	}
-
-	cfam_id_file = fopen(path, "r");
-	free(path);
-	if (!cfam_id_file) {
-		pdbg_log(PDBG_ERROR, "Unabled to open CFAM ID file\n");
-		return;
-	}
-
-	rc = fscanf(cfam_id_file, "0x%" PRIx32, &cfam_id);
-	if (rc != 1) {
-		pdbg_log(PDBG_ERROR, "Unable to read CFAM ID: %s", strerror(errno));
-		fclose(cfam_id_file);
-		return;
-	}
-	fclose(cfam_id_file);
-	chip_id = (cfam_id >> 4) & 0xff;
 
 	switch(chip_id) {
 	case CHIP_ID_P9:
