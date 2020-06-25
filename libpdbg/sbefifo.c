@@ -364,7 +364,7 @@ static int sbefifo_thread_getregs(struct thread *thread, struct thread_regs *reg
 	ret = sbefifo_register_get(sctx,
 				   pdbg_target_index(chiplet),
 				   thread->id,
-				   0,
+				   SBEFIFO_REGISTER_TYPE_GPR,
 				   reg_id,
 				   32,
 				   (uint64_t **)&regs->gprs);
@@ -409,7 +409,7 @@ static int sbefifo_thread_getregs(struct thread *thread, struct thread_regs *reg
 	ret = sbefifo_register_get(sctx,
 				   pdbg_target_index(chiplet),
 				   thread->id,
-				   1,
+				   SBEFIFO_REGISTER_TYPE_SPR,
 				   reg_id,
 				   34,
 				   (uint64_t **)&value);
@@ -490,7 +490,7 @@ static int sbefifo_thread_put_reg(struct thread *thread, uint8_t reg_type, uint3
 
 static int sbefifo_thread_getgpr(struct thread *thread, int gpr, uint64_t *value)
 {
-	uint8_t reg_type = 0x0; /* GPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_GPR;
 	uint32_t reg_id = gpr;
 
 	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
@@ -498,7 +498,7 @@ static int sbefifo_thread_getgpr(struct thread *thread, int gpr, uint64_t *value
 
 static int sbefifo_thread_putgpr(struct thread *thread, int gpr, uint64_t value)
 {
-	uint8_t reg_type = 0x0; /* GPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_GPR;
 	uint32_t reg_id = gpr;
 
 	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
@@ -506,7 +506,7 @@ static int sbefifo_thread_putgpr(struct thread *thread, int gpr, uint64_t value)
 
 static int sbefifo_thread_getspr(struct thread *thread, int spr, uint64_t *value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = spr;
 
 	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
@@ -514,7 +514,7 @@ static int sbefifo_thread_getspr(struct thread *thread, int spr, uint64_t *value
 
 static int sbefifo_thread_putspr(struct thread *thread, int spr, uint64_t value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = spr;
 
 	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
@@ -522,7 +522,7 @@ static int sbefifo_thread_putspr(struct thread *thread, int spr, uint64_t value)
 
 static int sbefifo_thread_getmsr(struct thread *thread, uint64_t *value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_MSR;
 
 	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
@@ -530,7 +530,7 @@ static int sbefifo_thread_getmsr(struct thread *thread, uint64_t *value)
 
 static int sbefifo_thread_putmsr(struct thread *thread, uint64_t value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_MSR;
 
 	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
@@ -538,7 +538,7 @@ static int sbefifo_thread_putmsr(struct thread *thread, uint64_t value)
 
 static int sbefifo_thread_getnia(struct thread *thread, uint64_t *value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_NIA;
 
 	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
@@ -546,7 +546,7 @@ static int sbefifo_thread_getnia(struct thread *thread, uint64_t *value)
 
 static int sbefifo_thread_putnia(struct thread *thread, uint64_t value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_NIA;
 
 	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
@@ -554,7 +554,7 @@ static int sbefifo_thread_putnia(struct thread *thread, uint64_t value)
 
 static int sbefifo_thread_getxer(struct thread *thread, uint64_t *value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_XER;
 
 	return sbefifo_thread_get_reg(thread, reg_type, reg_id, value);
@@ -562,7 +562,7 @@ static int sbefifo_thread_getxer(struct thread *thread, uint64_t *value)
 
 static int sbefifo_thread_putxer(struct thread *thread, uint64_t value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_XER;
 
 	return sbefifo_thread_put_reg(thread, reg_type, reg_id, value);
@@ -570,7 +570,7 @@ static int sbefifo_thread_putxer(struct thread *thread, uint64_t value)
 
 static int sbefifo_thread_getcr(struct thread *thread, uint32_t *value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_CR;
 	uint64_t val;
 	int ret;
@@ -585,7 +585,7 @@ static int sbefifo_thread_getcr(struct thread *thread, uint32_t *value)
 
 static int sbefifo_thread_putcr(struct thread *thread, uint32_t value)
 {
-	uint8_t reg_type = 0x1; /* SPR */
+	uint8_t reg_type = SBEFIFO_REGISTER_TYPE_SPR;
 	uint32_t reg_id = SPR_CR;
 	uint64_t val = value;;
 
