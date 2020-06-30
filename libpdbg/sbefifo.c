@@ -254,9 +254,11 @@ static int sbefifo_pib_thread_op(struct pib *pib, uint32_t oper)
 	thread_id = 0xf;
 
 	/* Enforce special-wakeup for thread stop and sreset */
-	if ((oper & 0xf) == SBEFIFO_INSN_OP_STOP ||
-	    (oper & 0xf) == SBEFIFO_INSN_OP_SRESET)
-		mode = 0x2;
+	if (sbefifo_proc(sctx) == SBEFIFO_PROC_P9) {
+		if ((oper & 0xf) == SBEFIFO_INSN_OP_STOP ||
+		    (oper & 0xf) == SBEFIFO_INSN_OP_SRESET)
+			mode = 0x2;
+	}
 
 	return sbefifo_control_insn(sctx, core_id, thread_id, oper, mode);
 }
@@ -314,6 +316,20 @@ static int sbefifo_pib_thread_sreset(struct pib *pib)
 	return rc;
 }
 
+static uint8_t sbefifo_core_id(struct sbefifo_context *sctx, struct thread *thread)
+{
+	struct pdbg_target *parent;
+
+	if (sbefifo_proc(sctx) == SBEFIFO_PROC_P9)
+		/* P9 uses pervasive (chiplet) id as core-id */
+		parent = pdbg_target_require_parent("chiplet", &thread->target);
+	else
+		/* P10 uses core id as core-id */
+		parent = pdbg_target_require_parent("core", &thread->target);
+
+	return pdbg_target_index(parent) & 0xff;
+}
+
 static int sbefifo_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
@@ -330,21 +346,23 @@ static void sbefifo_thread_release(struct pdbg_target *target)
 
 static int sbefifo_thread_op(struct thread *thread, uint32_t oper)
 {
-	struct pdbg_target *chiplet =
-		pdbg_target_require_parent("chiplet", &thread->target);
-	struct pdbg_target *pib = pdbg_target_require_parent("pib", chiplet);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", &thread->target);
 	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint8_t mode = 0;
+	uint8_t core_id;
 
 	/* Enforce special-wakeup for thread stop and sreset */
-	if ((oper & 0xf) == SBEFIFO_INSN_OP_STOP ||
-	    (oper & 0xf) == SBEFIFO_INSN_OP_SRESET)
-		mode = 0x2;
+	if (sbefifo_proc(sctx) == SBEFIFO_PROC_P9) {
+		if ((oper & 0xf) == SBEFIFO_INSN_OP_STOP ||
+		    (oper & 0xf) == SBEFIFO_INSN_OP_SRESET)
+			mode = 0x2;
+	}
 
-	/* This chip-op requires core-id as pervasive (chiplet) id */
+	core_id = sbefifo_core_id(sctx, thread);
+
 	return sbefifo_control_insn(sctx,
-				    pdbg_target_index(chiplet),
+				    core_id,
 				    thread->id,
 				    oper,
 				    mode);
@@ -416,20 +434,21 @@ static int sbefifo_thread_sreset(struct thread *thread)
 
 static int sbefifo_thread_getregs(struct thread *thread, struct thread_regs *regs)
 {
-	struct pdbg_target *chiplet = pdbg_target_require_parent("chiplet", &thread->target);
-	struct pdbg_target *pib = pdbg_target_require_parent("pib", chiplet);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", &thread->target);
 	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint32_t reg_id[34];
 	uint64_t *value;
+	uint8_t core_id;
 	int ret, i;
 
 	for (i=0; i<32; i++)
 		reg_id[i] = i;
 
-	/* This chip-op requires core-id as pervasive (chiplet) id */
+	core_id = sbefifo_core_id(sctx, thread);
+
 	ret = sbefifo_register_get(sctx,
-				   pdbg_target_index(chiplet),
+				   core_id,
 				   thread->id,
 				   SBEFIFO_REGISTER_TYPE_GPR,
 				   reg_id,
@@ -479,7 +498,7 @@ static int sbefifo_thread_getregs(struct thread *thread, struct thread_regs *reg
 	reg_id[33] = SPR_PPR;
 
 	ret = sbefifo_register_get(sctx,
-				   pdbg_target_index(chiplet),
+				   core_id,
 				   thread->id,
 				   SBEFIFO_REGISTER_TYPE_SPR,
 				   reg_id,
@@ -530,16 +549,17 @@ static int sbefifo_thread_getregs(struct thread *thread, struct thread_regs *reg
 
 static int sbefifo_thread_get_reg(struct thread *thread, uint8_t reg_type, uint32_t reg_id, uint64_t *value)
 {
-	struct pdbg_target *chiplet = pdbg_target_require_parent("chiplet", &thread->target);
-	struct pdbg_target *pib = pdbg_target_require_parent("pib", chiplet);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", &thread->target);
 	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint64_t *v;
+	uint8_t core_id;
 	int ret;
 
-	/* This chip-op requires core-id as pervasive (chiplet) id */
+	core_id = sbefifo_core_id(sctx, thread);
+
 	ret = sbefifo_register_get(sctx,
-				   pdbg_target_index(chiplet),
+				   core_id,
 				   thread->id,
 				   reg_type,
 				   &reg_id,
@@ -556,14 +576,15 @@ static int sbefifo_thread_get_reg(struct thread *thread, uint8_t reg_type, uint3
 
 static int sbefifo_thread_put_reg(struct thread *thread, uint8_t reg_type, uint32_t reg_id, uint64_t value)
 {
-	struct pdbg_target *chiplet = pdbg_target_require_parent("chiplet", &thread->target);
-	struct pdbg_target *pib = pdbg_target_require_parent("pib", chiplet);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", &thread->target);
 	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+	uint8_t core_id;
 
-	/* This chip-op requires core-id as pervasive (chiplet) id */
+	core_id = sbefifo_core_id(sctx, thread);
+
 	return sbefifo_register_put(sctx,
-				    pdbg_target_index(chiplet),
+				    core_id,
 				    thread->id,
 				    reg_type,
 				    &reg_id,
