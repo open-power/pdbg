@@ -39,7 +39,6 @@ example:
 		thread@0 {
 				compatible = "ibm,power9-thread";
 				reg = <0x0>;
-				tid = <0x0>;
 				index = <0x0>;
 		};
 	};

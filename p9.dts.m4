@@ -8,7 +8,6 @@ define(`THREAD',
 	thread@$1 {
 		reg = <0x00>;
 		compatible = "ibm,power-thread", "ibm,power9-thread";
-		tid = <0x$1>;
 		index = <0x$1>;
 	};
 ')dnl
