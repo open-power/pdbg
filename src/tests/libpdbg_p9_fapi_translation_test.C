@@ -94,6 +94,11 @@ int main(int argc, const char **argv)
 		uint64_t addr;
 		int index = pdbg_target_index(target);
 
+		/*  We only need to test targets on proc0, translation won't change for
+		 *  other procs */
+		if (pdbg_target_index(pdbg_target_parent("proc", target)))
+			continue;
+
 		printf("Testing %s  %d\n", pdbg_target_path(target), index);
 		/* Test every sat offset */
 		for (addr = 0; addr < 0xffffffff; addr += 0x40)
