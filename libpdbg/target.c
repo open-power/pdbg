@@ -463,9 +463,11 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 	return chipop->mpipl_get_ti_info(chipop, data, data_len);
 }
 
-uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len)
+uint32_t sbe_ffdc_get(struct pdbg_target *target, uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct chipop *chipop;
+	const uint8_t *data = NULL;
+	uint32_t status, len = 0;
 
 	chipop = pib_to_chipop(target);
 	if (!chipop)
@@ -476,7 +478,18 @@ uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t
 		return -1;
 	}
 
-	return chipop->ffdc_get(chipop, ffdc, ffdc_len);
+	status = chipop->ffdc_get(chipop, &data, &len);
+	if (data && len > 0) {
+		*ffdc = malloc(len);
+		assert(*ffdc);
+		memcpy(*ffdc, data, len);
+		*ffdc_len = len;
+	} else {
+		*ffdc = NULL;
+		*ffdc_len = 0;
+	}
+
+	return status;
 }
 
 /* Finds the given class. Returns NULL if not found. */

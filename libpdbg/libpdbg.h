@@ -1259,9 +1259,10 @@ int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor);
  *
  * @return SBE error code, 0 if there is no ffdc data
  *
- * The ffdc data must be freed by caller.
+ * The ffdc data must be freed by caller.  It is allocated using malloc and
+ * must be freed using free().
  */
-uint32_t sbe_ffdc_get(struct pdbg_target *target, const uint8_t **ffdc, uint32_t *ffdc_len);
+uint32_t sbe_ffdc_get(struct pdbg_target *target, uint8_t **ffdc, uint32_t *ffdc_len);
 
 /**
  * @brief Execute enter mpipl on the pib
