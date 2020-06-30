@@ -98,8 +98,8 @@ static int sbefifo_scom_put_push(uint64_t addr, uint64_t value, uint8_t **buf, u
 	msg[1] = htobe32(cmd);
 	msg[2] = htobe32(addr >> 32);
 	msg[3] = htobe32(addr & 0xffffffff);
-	msg[2] = htobe32(value >> 32);
-	msg[3] = htobe32(value & 0xffffffff);
+	msg[4] = htobe32(value >> 32);
+	msg[5] = htobe32(value & 0xffffffff);
 
 	*buf = (uint8_t *)msg;
 	return 0;
