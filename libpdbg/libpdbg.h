@@ -947,6 +947,24 @@ int thread_getxer(struct pdbg_target *thread, uint64_t *value);
 int thread_putxer(struct pdbg_target *thread, uint64_t value);
 
 /**
+ * @brief Set a FPR on a thread
+ * @param[in] thread the thread target to operate on
+ * @param[in] fpr the FPR number to set
+ * @param[in] value value to set FPR to
+ * @return 0 on success, -1 otherwise
+ */
+int thread_putfpr(struct pdbg_target *thread, int fpr, uint64_t value);
+
+/**
+ * @brief Get a FPR on a thread
+ * @param[in] thread the thread target to operate on
+ * @param[in] fpr the FPR number to get
+ * @param[in] value value of the given FPR
+ * @return 0 on success, -1 otherwise
+ */
+int thread_getfpr(struct pdbg_target *thread, int fpr, uint64_t *value);
+
+/**
  * @brief Get the value of all interesting registers on a thread
  * @param[in] target the thread target to operate on
  * @param[out] regs a pointer to a structure with register values

@@ -361,6 +361,44 @@ int thread_putspr(struct pdbg_target *target, int spr, uint64_t value)
 	return thread->putspr(thread, spr, value);
 }
 
+int thread_getfpr(struct pdbg_target *target, int fpr, uint64_t *value)
+{
+	struct thread *thread;
+
+	assert(pdbg_target_is_class(target, "thread"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	thread = target_to_thread(target);
+
+	if (!thread->getfpr) {
+		PR_ERROR("getfpr() not imeplemented for the target\n");
+		return -1;
+	}
+
+	return thread->getfpr(thread, fpr, value);
+}
+
+int thread_putfpr(struct pdbg_target *target, int fpr, uint64_t value)
+{
+	struct thread *thread;
+
+	assert(pdbg_target_is_class(target, "thread"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	thread = target_to_thread(target);
+
+	if (!thread->putfpr) {
+		PR_ERROR("putfpr() not imeplemented for the target\n");
+		return -1;
+	}
+
+	return thread->putfpr(thread, fpr, value);
+}
+
 int thread_getmsr(struct pdbg_target *target, uint64_t *value)
 {
 	struct thread *thread;

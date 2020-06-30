@@ -151,6 +151,9 @@ struct thread {
 	int (*getspr)(struct thread *, int, uint64_t *);
 	int (*putspr)(struct thread *, int, uint64_t);
 
+	int (*getfpr)(struct thread *, int, uint64_t *);
+	int (*putfpr)(struct thread *, int, uint64_t);
+
 	int (*getmsr)(struct thread *, uint64_t *);
 	int (*putmsr)(struct thread *, uint64_t);
 
