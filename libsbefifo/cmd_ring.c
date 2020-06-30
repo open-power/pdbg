@@ -178,6 +178,9 @@ int sbefifo_ring_put_from_image(struct sbefifo_context *sctx, uint16_t target, u
 	uint32_t msg_len, out_len;
 	int rc;
 
+	if (sctx->proc != SBEFIFO_PROC_P9)
+		return ENOSYS;
+
 	rc = sbefifo_ring_put_from_image_push(target, chiplet_id, ring_id, ring_mode, &msg, &msg_len);
 	if (rc)
 		return rc;
