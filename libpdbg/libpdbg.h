@@ -47,6 +47,23 @@ struct pdbg_target;
 struct pdbg_target_class;
 
 /**
+ * @brief Identifies the processor type
+ */
+enum pdbg_proc {
+	PDBG_PROC_UNKNOWN,  /**< Unknown processor */
+	PDBG_PROC_P8,       /**< POWER8 processor  */
+	PDBG_PROC_P9,       /**< POWER9 processor  */
+};
+
+/**
+ * @brief Get the processor type
+ * @return the processor type
+ *
+ * This function can only be called after pdbg_targets_init() has bee called.
+ */
+enum pdbg_proc pdbg_get_proc(void);
+
+/**
  * @brief Find the next compatible target
  * @param[in] root the head pdbg_target
  * @param[in] prev the last pdbg_target in the class

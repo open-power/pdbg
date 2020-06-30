@@ -52,6 +52,7 @@
 #define AMI_BMC "/proc/ractrends/Helper/FwInfo"
 #define XSCOM_BASE_PATH "/sys/kernel/debug/powerpc/scom"
 
+static enum pdbg_proc pdbg_proc = PDBG_PROC_UNKNOWN;
 static enum pdbg_backend pdbg_backend = PDBG_DEFAULT_BACKEND;
 static const char *pdbg_backend_option;
 static struct pdbg_dtb pdbg_dtb = {
@@ -116,11 +117,13 @@ static void ppc_target(struct pdbg_dtb *dtb)
 
 	if (pdbg_backend_option) {
 		if (!strcmp(pdbg_backend_option, "p8")) {
+			pdbg_proc = PDBG_PROC_P8;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p8_host_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9")) {
+			pdbg_proc = PDBG_PROC_P9;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p9_host_dtb_o_start;
 			if (!dtb->system.fdt)
@@ -158,11 +161,13 @@ static void ppc_target(struct pdbg_dtb *dtb)
 
 	if (strncmp(pos, "POWER8", 6) == 0) {
 		pdbg_log(PDBG_INFO, "Found a POWER8 PPC host system\n");
+		pdbg_proc = PDBG_PROC_P8;
 		if (!dtb->backend.fdt)
 			dtb->backend.fdt = &_binary_p8_host_dtb_o_start;
 		if (!dtb->system.fdt)
 			dtb->system.fdt = &_binary_p8_dtb_o_start;
 	} else if (strncmp(pos, "POWER9", 6) == 0) {
+		pdbg_proc = PDBG_PROC_P9;
 		pdbg_log(PDBG_INFO, "Found a POWER9 PPC host system\n");
 		if (!dtb->backend.fdt)
 			dtb->backend.fdt = &_binary_p9_host_dtb_o_start;
@@ -212,11 +217,13 @@ static void bmc_target(struct pdbg_dtb *dtb)
 
 	if (pdbg_backend_option) {
 		if (!strcmp(pdbg_backend_option, "p8")) {
+			pdbg_proc = PDBG_PROC_P8;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p8_kernel_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9")) {
+			pdbg_proc = PDBG_PROC_P9;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
 			if (!dtb->system.fdt)
@@ -236,6 +243,7 @@ static void bmc_target(struct pdbg_dtb *dtb)
 	case CHIP_ID_P9:
 	case CHIP_ID_P9P:
 		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
+		pdbg_proc = PDBG_PROC_P9;
 		if (!dtb->backend.fdt)
 			dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
 		if (!dtb->system.fdt)
@@ -244,6 +252,7 @@ static void bmc_target(struct pdbg_dtb *dtb)
 
 	case CHIP_ID_P8:
 	case CHIP_ID_P8P:
+		pdbg_proc = PDBG_PROC_P8;
 		pdbg_log(PDBG_INFO, "Found a POWER8/8+ OpenBMC based system\n");
 		if (!dtb->backend.fdt)
 			dtb->backend.fdt = &_binary_p8_kernel_dtb_o_start;
@@ -262,6 +271,7 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 
 	if (pdbg_backend_option) {
 		if (!strcmp(pdbg_backend_option, "p9")) {
+			pdbg_proc = PDBG_PROC_P9;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
 			if (!dtb->system.fdt)
@@ -280,6 +290,7 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 	switch(chip_id) {
 	case CHIP_ID_P9:
 	case CHIP_ID_P9P:
+		pdbg_proc = PDBG_PROC_P9;
 		pdbg_log(PDBG_INFO, "Found a POWER9 OpenBMC based system\n");
 		if (!dtb->backend.fdt)
 			dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
@@ -289,6 +300,7 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 
 	case CHIP_ID_P8:
 	case CHIP_ID_P8P:
+		pdbg_proc = PDBG_PROC_P8;
 		pdbg_log(PDBG_ERROR, "SBEFIFO backend not supported on POWER8/8+ OpenBMC based system\n");
 		break;
 
@@ -367,6 +379,26 @@ const char *pdbg_get_backend_option(void)
 	return pdbg_backend_option;
 }
 
+enum pdbg_proc pdbg_get_proc(void)
+{
+	return pdbg_proc;
+}
+
+static void set_pdbg_proc(void)
+{
+	const char *proc;
+
+	/* Allow to set processor, when device trees are overriden */
+	proc = getenv("PDBG_PROC");
+	if (!proc)
+		return;
+
+	if (!strcmp(proc, "p8"))
+		pdbg_proc = PDBG_PROC_P8;
+	else if (!strcmp(proc, "p9"))
+		pdbg_proc = PDBG_PROC_P9;
+}
+
 /* Determines what platform we are running on and returns a pointer to
  * the fdt that is most likely to work on the system. */
 struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
@@ -388,8 +420,10 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 	if (fdt)
 		mmap_dtb(fdt, false, &dtb->system);
 
-	if (dtb->backend.fdt && dtb->system.fdt)
+	if (dtb->backend.fdt && dtb->system.fdt) {
+		set_pdbg_proc();
 		goto done;
+	}
 
 	switch(pdbg_backend) {
 	case PDBG_BACKEND_HOST:
@@ -398,6 +432,7 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 
 	case PDBG_BACKEND_I2C:
 		/* I2C is only supported on POWER8 */
+		pdbg_proc = PDBG_PROC_P8;
 		if (!dtb->backend.fdt) {
 			pdbg_log(PDBG_INFO, "Found a POWER8 AMI BMC based system\n");
 			dtb->backend.fdt = &_binary_p8_i2c_dtb_o_start;
@@ -418,21 +453,25 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 		}
 
 		if (!strcmp(pdbg_backend_option, "p8")) {
+			pdbg_proc = PDBG_PROC_P8;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p8_fsi_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9w")) {
+			pdbg_proc = PDBG_PROC_P9;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p9w_fsi_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9r")) {
+			pdbg_proc = PDBG_PROC_P9;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p9r_fsi_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p9z")) {
+			pdbg_proc = PDBG_PROC_P9;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p9z_fsi_dtb_o_start;
 			if (!dtb->system.fdt)
@@ -451,11 +490,13 @@ struct pdbg_dtb *pdbg_default_dtb(void *system_fdt)
 		}
 
 		if (!strncmp(pdbg_backend_option, "p8", 2)) {
+			pdbg_proc = PDBG_PROC_P8;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_p8_cronus_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p8_dtb_o_start;
 		} else if (!strncmp(pdbg_backend_option, "p9", 2)) {
+			pdbg_proc = PDBG_PROC_P9;
 			if (!dtb->backend.fdt)
 				dtb->backend.fdt = &_binary_cronus_dtb_o_start;
 			if (!dtb->system.fdt)
