@@ -59,7 +59,6 @@ EXTRA_DIST = \
 	p9-fsi.dtsi.m4 \
 	p9-host.dts.m4 \
 	bmc-kernel.dts.m4 \
-	p9-pib.dts.m4 \
 	p9r-fsi.dts.m4 \
 	p9w-fsi.dts.m4 \
 	p9z-fsi.dts.m4 \
@@ -311,7 +310,7 @@ RAGEL_V_0 = @echo "  RAGEL   " $@;
 %.dtsi: %.dtsi.m4
 	$(M4_V)$(M4) -I$(dir $<) $< > $@
 
-p9-fsi.dtsi: p9-fsi.dtsi.m4 p9-pib.dts.m4
+p9-fsi.dtsi: p9-fsi.dtsi.m4
 p9w-fsi.dts: p9w-fsi.dts.m4 p9-fsi.dtsi
 p9r-fsi.dts: p9r-fsi.dts.m4 p9-fsi.dtsi
 p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
