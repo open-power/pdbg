@@ -19,6 +19,12 @@
 
 #include <stdint.h>
 
+/*
+ * libsbefifo implements SBE interfaces available via SBEFIFO device.  The
+ * details of the interface can be found in SBE interface specification
+ * document (2.0 for P10).
+ */
+
 #define ESBEFIFO	201
 
 #define SBEFIFO_PRI_SUCCESS           0x00000000
@@ -26,6 +32,7 @@
 #define SBEFIFO_PRI_INVALID_DATA      0x00020000
 #define SBEFIFO_PRI_SEQUENCE_ERROR    0x00030000
 #define SBEFIFO_PRI_INTERNAL_ERROR    0x00040000
+#define SBEFIFO_PRI_ACCESS_DENIED     0x00050000
 #define SBEFIFO_PRI_UNKNOWN_ERROR     0x00FE0000
 
 #define SBEFIFO_SEC_SUCCESS               0x0000
@@ -47,6 +54,44 @@
 #define SBEFIFO_SEC_HW_TIMEOUT            0x0010
 #define SBEFIFO_SEC_PIB_ERROR             0x0011
 #define SBEFIFO_SEC_PARITY_ERROR          0x0012
+#define SBEFIFO_SEC_UNUSED                0x0013
+#define SBEFIFO_SEC_MEM_INVALID_ACCESS    0x0014
+#define SBEFIFO_SEC_MEM_REGION_NOT_FOUND  0x0015
+#define SBEFIFO_SEC_MEM_OVERFLOW_REGION   0x0016
+#define SBEFIFO_SEC_MEM_REGION_AMEND      0x0017
+#define SBEFIFO_SEC_INPUT_BUFFER_OVERFLOW 0x0018
+#define SBEFIFO_SEC_INVALID_PARAM         0x0019
+/* Missing error codes */
+#define SBEFIFO_SEC_INVALID_CHIPOP        0x0020
+#define SBEFIFO_SEC_DEADMAN_TIMEOUT       0x0021
+#define SBEFIFO_SEC_SYSTEM_CHECKSTOP      0x0022
+#define SBEFIFO_SEC_REG_ACCESS_BLOCKED    0x0023
+#define SBEFIFO_SEC_START_MPIPL_FAIL      0x0024
+#define SBEFIFO_SEC_STOP_CLOCK_FAIL       0x0025
+#define SBEFIFO_SEC_CONT_MPIPL_FAIL       0x0026
+#define SBEFIFO_SEC_IO_TOGGLE_FAIL        0x0027
+#define SBEFIFO_SEC_SPL_WKUP_TIMEOUT      0x0028
+#define SBEFIFO_SEC_SPL_WKUP_SCOM_FAIL    0x0029
+#define SBEFIFO_SEC_REG_DUMP_FAIL         0x002A
+#define SBEFIFO_SEC_LPC_ACCESS_FAIL       0x002B
+#define SBEFIFO_SEC_HWP_FAIL              0x002C
+#define SBEFIFO_SEC_ATTN_CORE_READ_FAIL   0x002D
+#define SBEFIFO_SEC_ATTN_DATA_READ_FAIL   0x002E
+#define SBEFIFO_SEC_PUT_SRAM_FAIL         0x002F
+#define SBEFIFO_SEC_GET_SRAM_FAIL         0x0030
+#define SBEFIFO_SEC_THREAD_CONTROL_FAIL   0x0031
+#define SBEFIFO_SEC_RAM_CORE_SETUP_FAIL   0x0032
+#define SBEFIFO_SEC_RAM_CORE_ACCESS_FAIL  0x0033
+#define SBEFIFO_SEC_RAM_CORE_CLEAN_FAIL   0x0034
+#define SBEFIFO_SEC_SUSPEND_IO_FAIL       0x0035
+#define SBEFIFO_SEC_ENTER_MPIPL_FAIL2     0x0036
+#define SBEFIFO_SEC_STOP_CLOCK_FAIL2      0x0037
+
+#define SBEFIFO_TARGET_TYPE_PROC        0x0000
+#define SBEFIFO_TARGET_TYPE_PERV        0x0001
+#define SBEFIFO_TARGET_TYPE_EQ          0x0002
+#define SBEFIFO_TARGET_TYPE_CORE        0x0003
+#define SBEFIFO_TARGET_TYPE_OCMB        0x0004
 
 #define SBEFIFO_PROC_P9    0x01
 #define SBEFIFO_PROC_P10   0x02
@@ -102,6 +147,11 @@ int sbefifo_ring_put_from_image(struct sbefifo_context *sctx, uint16_t target, u
 
 int sbefifo_mem_get(struct sbefifo_context *sctx, uint64_t addr, uint32_t size, uint16_t flags, uint8_t **data);
 int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, uint32_t len, uint16_t flags);
+
+#define SBEFIFO_MEMORY_MODE_NORMAL      0x01
+#define SBEFIFO_MEMORY_MODE_DEBUG       0x02
+#define SBEFIFO_MEMORY_MODE_CIRCULAR    0x03
+
 int sbefifo_occsram_get(struct sbefifo_context *sctx, uint32_t addr, uint32_t size, uint8_t mode, uint8_t **data, uint32_t *data_len);
 int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *data, uint32_t data_len, uint8_t mode);
 
