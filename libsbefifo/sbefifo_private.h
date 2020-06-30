@@ -22,6 +22,7 @@
 
 #define SBEFIFO_CMD_CLASS_CONTROL        0xA100
 #define   SBEFIFO_CMD_EXECUTE_ISTEP        0x01
+#define   SBEFIFO_CMD_SUSPEND_IO           0x02
 
 #define SBEFIFO_CMD_CLASS_SCOM           0xA200
 #define   SBEFIFO_CMD_GET_SCOM             0x01

@@ -76,3 +76,54 @@ int sbefifo_istep_execute(struct sbefifo_context *sctx, uint8_t major, uint8_t m
 
 	return rc;
 }
+
+static int sbefifo_suspend_io_push(uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
+	cmd = SBEFIFO_CMD_CLASS_CONTROL | SBEFIFO_CMD_SUSPEND_IO;
+
+	msg[0] = htobe32(nwords);
+	msg[1] = htobe32(cmd);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_suspend_io_pull(uint8_t *buf, uint32_t buflen)
+{
+	if (buflen != 0)
+		return EPROTO;
+
+	return 0;
+}
+
+int sbefifo_suspend_io(struct sbefifo_context *sctx)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_suspend_io_push(&msg, &msg_len);
+	if (rc)
+		return rc;
+
+	out_len = 0;
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_suspend_io_pull(out, out_len);
+	if (out)
+		free(out);
+
+	return rc;
+}

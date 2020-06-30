@@ -73,6 +73,7 @@ uint32_t sbefifo_ffdc_get(struct sbefifo_context *sctx, const uint8_t **ffdc, ui
 void sbefifo_ffdc_dump(struct sbefifo_context *sctx);
 
 int sbefifo_istep_execute(struct sbefifo_context *sctx, uint8_t major, uint8_t minor);
+int sbefifo_suspend_io(struct sbefifo_context *sctx);
 
 #define SBEFIFO_SCOM_OPERAND_NONE        0
 #define SBEFIFO_SCOM_OPERAND_OR          1
