@@ -288,10 +288,8 @@ static int sbefifo_pib_thread_sreset(struct pib *pib)
 static int sbefifo_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
-	uint32_t tid;
 
-	assert(!pdbg_target_u32_property(target, "tid", &tid));
-	thread->id = tid;
+	thread->id = pdbg_target_index(target);
 
 	return 0;
 }

@@ -116,10 +116,8 @@ static struct thread_state p9_get_thread_status(struct thread *thread)
 static int p9_thread_probe(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
-	uint32_t tid;
 
-	assert(!pdbg_target_u32_property(target, "tid", &tid));
-	thread->id = tid;
+	thread->id = pdbg_target_index(target);
 	thread->status = p9_get_thread_status(thread);
 
 	return 0;
