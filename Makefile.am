@@ -108,7 +108,6 @@ pdbg_SOURCES = \
 	src/mem.c \
 	src/optcmd.c \
 	src/optcmd.h \
-	src/options.h \
 	src/parsers.c \
 	src/parsers.h \
 	src/path.c \
