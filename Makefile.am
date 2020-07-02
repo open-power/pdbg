@@ -5,7 +5,6 @@ if BUILD_LIBFDT
 MAYBE_LIBFDT = libfdt
 endif
 SUBDIRS = $(MAYBE_LIBFDT)
-DIST_SUBDIRS = libfdt
 
 GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe --always --long --dirty 2>/dev/null || echo unknown`
 
@@ -47,28 +46,6 @@ SH_LOG_DRIVER = $(SHELL) $(srcdir)/tests/run_test.sh
 
 ACLOCAL_AMFLAGS = -Im4
 AM_CFLAGS = -I$(top_srcdir)/ccan/array_size -Wall -Werror -O2
-
-EXTRA_DIST = \
-	fake.dts.m4 \
-	fake2.dts.m4 \
-	p8-fsi.dts.m4 \
-	p8-host.dts.m4 \
-	p8-i2c.dts.m4 \
-	p8-kernel.dts.m4 \
-	p8-pib.dts.m4 \
-	p9-fsi.dtsi.m4 \
-	p9-host.dts.m4 \
-	bmc-kernel.dts.m4 \
-	p9r-fsi.dts.m4 \
-	p9w-fsi.dts.m4 \
-	p9z-fsi.dts.m4 \
-	template.S \
-	generate_dt_header.sh \
-	src/gdb_parser.rl \
-	tests/driver.sh \
-	tests/run_test.sh \
-	tests/test_driver.sh \
-	$(PDBG_TESTS)
 
 if TARGET_ARM
 ARCH_FLAGS="-DTARGET_ARM=1"
