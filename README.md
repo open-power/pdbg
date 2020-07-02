@@ -41,6 +41,7 @@ POWER9 Backends:
 - kernel (default): Uses the in kernel OpenFSI driver provided by OpenBMC
 - fsi: Uses a bit-banging GPIO backend which accesses BMC registers directly via
   /dev/mem. Requiers `-d p9w/p9r/p9z` as appropriate for the system.
+- sbefifo: Uses the in kernel OpenFSI & SBEFIFO drivers provided by OpenBMC
 
 When using the fsi backend POWER8 AMI based BMC's must first be put into debug
 mode to allow access to the relevant GPIOs:
@@ -159,95 +160,140 @@ Usage: ./pdbg [options] command ...
 ### Probe chip/processor/thread numbers
 ```
 $ ./pdbg -a probe
-    BMC GPIO bit-banging FSI master
-        CFAM hMFSI Port
-            p1: POWER FSI2PIB
-                POWER9 ADU
-                c16: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-                c17: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-                c18: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-                c19: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-                c20: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-                c21: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-                c22: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-                c23: POWER9 Core
-                    t0: POWER9 Thread
-                    t1: POWER9 Thread
-                    t2: POWER9 Thread
-                    t3: POWER9 Thread
-        p0: POWER FSI2PIB
-            POWER9 ADU
-            c5: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
-            c7: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
-            c14: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
-            c15: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
-            c19: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
-            c20: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
-            c21: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
-            c22: POWER9 Core
-                t0: POWER9 Thread
-                t1: POWER9 Thread
-                t2: POWER9 Thread
-                t3: POWER9 Thread
+proc0: Processor Module
+    fsi0: Kernel based FSI master (*)
+    pib0: Kernel based FSI SCOM (*)
+        chiplet16: POWER9 Chiplet
+            eq0: POWER9 eq
+                ex0: POWER9 ex
+                    chiplet32: POWER9 Chiplet
+                        core0: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet33: POWER9 Chiplet
+                        core1: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                ex1: POWER9 ex
+                    chiplet34: POWER9 Chiplet
+                        core2: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet35: POWER9 Chiplet
+                        core3: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+        chiplet17: POWER9 Chiplet
+            eq1: POWER9 eq
+                ex0: POWER9 ex
+                    chiplet36: POWER9 Chiplet
+                        core4: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet37: POWER9 Chiplet
+                        core5: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                ex1: POWER9 ex
+        chiplet18: POWER9 Chiplet
+            eq2: POWER9 eq
+                ex0: POWER9 ex
+                    chiplet40: POWER9 Chiplet
+                        core8: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet41: POWER9 Chiplet
+                        core9: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                ex1: POWER9 ex
+        chiplet19: POWER9 Chiplet
+            eq3: POWER9 eq
+                ex0: POWER9 ex
+                    chiplet44: POWER9 Chiplet
+                        core12: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet45: POWER9 Chiplet
+                        core13: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                ex1: POWER9 ex
+                    chiplet46: POWER9 Chiplet
+                        core14: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet47: POWER9 Chiplet
+                        core15: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+        chiplet20: POWER9 Chiplet
+            eq4: POWER9 eq
+                ex0: POWER9 ex
+                    chiplet48: POWER9 Chiplet
+                        core16: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet49: POWER9 Chiplet
+                        core17: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                ex1: POWER9 ex
+        chiplet21: POWER9 Chiplet
+            eq5: POWER9 eq
+                ex0: POWER9 ex
+                ex1: POWER9 ex
+                    chiplet54: POWER9 Chiplet
+                        core22: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+                    chiplet55: POWER9 Chiplet
+                        core23: POWER9 Core (*)
+                            thread0: POWER9 Thread (*)
+                            thread1: POWER9 Thread (*)
+                            thread2: POWER9 Thread (*)
+                            thread3: POWER9 Thread (*)
+proc1: Processor Module
+proc2: Processor Module
+proc3: Processor Module
+proc4: Processor Module
+proc5: Processor Module
+proc6: Processor Module
+proc7: Processor Module
 
-Note that only selected targets will be shown above. If none are shown
-try adding '-a' to select all targets
+Note that only selected targets (marked with *) and targets in the
+hierarchy of the selected targets will be shown above. If none are shown
+try adding '-a' to select all targets.
 ```
 
 Core-IDs are core/chip numbers which should be passed as arguments to `-c`
@@ -266,19 +312,19 @@ specified targets were not found when probing the system.
 
 ### Read SCOM register
 ```
-$ ./pdbg -a getscom 0xf000f
-p0:0xf000f = 0x220ea04980000000
-p1:0xf000f = 0x220ea04980800000
+$ ./pdbg -P pib getscom 0xf000f
+p0: 0x00000000000f000f = 0x222d104900008040 (/proc0/pib)
+p1: 0x00000000000f000f = 0x222d104900008040 (/proc1/pib)
 ```
 
 ### Write SCOM register on secondary processor
-`$ ./pdbg -p1 putscom 0x8013c02 0x0`
+`$ ./pdbg -P pib1 putscom 0x8013c02 0x0`
 
 ### Get thread status
 ```
 $ ./pdbg -a threadstatus
 
-p0t: 0 1 2 3 4 5 6 7
+p0t: 0 1 2 3
 c22: A A A A
 c21: A A A A
 c20: A A A A
@@ -286,9 +332,9 @@ c19: A A A A
 c15: A A A A
 c14: A A A A
 c07: A A A A
-c05: A A A A 
+c05: A A A A
 
-p1t: 0 1 2 3 4 5 6 7
+p1t: 0 1 2 3
 c23: A A A A
 c22: A A A A
 c21: A A A A
@@ -306,7 +352,7 @@ quiesced state.
 $ ./pdbg -p0 -c22 -t0 -t1 -t2 -t3 stop
 $ ./pdbg -p0 -c22 -t0 -t1 -t2 -t3 threadstatus
 
-p0t: 0 1 2 3 4 5 6 7
+p0t: 0 1 2 3
 c22: Q Q Q Q
 ```
 
@@ -327,7 +373,7 @@ p0:c22:t0:spr008: 0xc0000000008a97f0
 ./pdbg -p0 -c22 -t0 -t1 -t2 -t3 start
 ./pdbg -p0 -c22 -t0 -t1 -t2 -t3 threadstatus
 
-p0t: 0 1 2 3 4 5 6 7
+p0t: 0 1 2 3
 c22: A A A A
 ```
 
@@ -340,19 +386,22 @@ Wrote 6 bytes starting at 0x0000000250000001
 ### Read 6 bytes from memory through processor 1
 ```
 $ sudo ./pdbg -p 1 getmem 0x250000001 6 | hexdump -C
+0x0000000250000000:    68 65 6c 6c 6f 0a
+
+$ sudo ./pdbg -p 1 getmem 0x250000001 6 --raw | hexdump -C
 00000000  68 65 6c 6c 6f 0a                                 |hello.|
 00000006
 ```
 
 ### Write to cache-inhibited memory through processor 1
 ```
-$ echo hello | sudo ./pdbg -p 1 putmem -ci 0x3fe88202
+$ echo hello | sudo ./pdbg -p 1 putmem --ci 0x3fe88202
 Wrote 6 bytes starting at 0x000000003fe88202
 ```
 
 ### Read from cache-inhibited memory through processor 1
 ```
-$ sudo ./pdbg -p 1 getmem -ci 0x3fe88202 6 | hexdump -C
+$ sudo ./pdbg -p 1 getmem --ci 0x3fe88202 6 --raw | hexdump -C
 00000000  68 65 6c 6c 6f 0a                                 |hello.|
 00000006
 ```
@@ -366,16 +415,16 @@ reg              0003ffff 40000000 00000000 00001000
 phandle          100003bd (268436413)
 name             "hwrng"
 
-$ sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+$ sudo ./pdbg -p 0  getmem --ci 0x0003ffff40000000 4 --raw |hexdump -C
 00000000  01 c0 d1 79                                       |...y|
 00000004
-$  sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+$  sudo ./pdbg -p 0  getmem --ci 0x0003ffff40000000 4 --raw |hexdump -C
 00000000  77 9b ab ce                                       |w...|
 00000004
-$  sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+$  sudo ./pdbg -p 0  getmem --ci 0x0003ffff40000000 4 --raw |hexdump -C
 00000000  66 8d fb 42                                       |f..B|
 00000004
-$  sudo ./pdbg -p 0  getmem -ci 0x0003ffff40000000 4 |hexdump -C
+$  sudo ./pdbg -p 0  getmem --ci 0x0003ffff40000000 4 --raw |hexdump -C
 00000000  fa 9b e3 44                                       |...D|
 00000004
 ```

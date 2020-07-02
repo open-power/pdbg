@@ -32,8 +32,8 @@ example:
 		#address-cells = <0x1>;
 		#size-cells = <0x0>;
 		compatible = "ibm,power9-core";
-    	index = <0x0>;
-    	reg = <0x0 0x0 0xfffff>;
+		index = <0x0>;
+		reg = <0x0 0x0 0xfffff>;
 		inside-special-wakeup = <0x0>;
 
 		thread@0 {
