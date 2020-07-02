@@ -8,6 +8,7 @@
 	       #address-cells = <0x2>;
 	       #size-cells = <0x1>;
 	       compatible = "ibm,kernel-fsi";
+	       device-path = "/fsi0/slave@00:00/raw";
 	       reg = <0x0 0x0 0x0>;
 	       index = <0x0>;
 	       status = "mustexist";
