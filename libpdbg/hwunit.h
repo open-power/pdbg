@@ -321,4 +321,12 @@ struct mcc {
 	struct pdbg_target target;
 };
 #define target_to_mcc(x) container_of(x, struct mcc, target)
+
+struct ocmb {
+	struct pdbg_target target;
+	int (*getscom)(struct ocmb *, uint64_t, uint64_t *);
+	int (*putscom)(struct ocmb *, uint64_t, uint64_t);
+};
+#define target_to_ocmb(x) container_of(x, struct ocmb, target);
+
 #endif /* __HWUNIT_H */
