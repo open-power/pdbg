@@ -163,6 +163,9 @@ int sbefifo_sram_put(struct sbefifo_context *sctx, uint16_t chiplet_id, uint64_t
 int sbefifo_register_get(struct sbefifo_context *sctx, uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint32_t *reg_id, uint8_t reg_count, uint64_t **value);
 int sbefifo_register_put(struct sbefifo_context *sctx, uint8_t core_id, uint8_t thread_id, uint8_t reg_type, uint32_t *reg_id, uint8_t reg_count, uint64_t *value);
 
+int sbefifo_hw_register_get(struct sbefifo_context *sctx, uint8_t target_type, uint8_t instance_id, uint64_t reg_id, uint64_t *value);
+int sbefifo_hw_register_put(struct sbefifo_context *sctx, uint8_t target_type, uint8_t instance_id, uint64_t reg_id, uint64_t value);
+
 int sbefifo_control_fast_array(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id, uint8_t mode, uint64_t clock_cycle);
 int sbefifo_control_trace_array(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id, uint16_t array_id, uint16_t operation, uint8_t **trace_data, uint32_t *trace_data_len);
 
