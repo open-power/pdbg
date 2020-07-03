@@ -178,6 +178,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/kernel.c \
 	libpdbg/libpdbg.c \
 	libpdbg/libpdbg.h \
+	libpdbg/ocmb.c \
 	libpdbg/operations.h \
 	libpdbg/p8chip.c \
 	libpdbg/p9chip.c \
