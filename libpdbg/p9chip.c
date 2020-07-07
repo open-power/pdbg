@@ -130,7 +130,8 @@ static void p9_thread_release(struct pdbg_target *target)
 
 	if (thread->status.quiesced)
 		/* This thread is still quiesced so don't release spwkup */
-		core->release_spwkup = false;}
+		core->release_spwkup = false;
+}
 
 static int p9_thread_start(struct thread *thread)
 {
