@@ -36,7 +36,7 @@ static int sbefifo_istep_execute_push(uint8_t major, uint8_t minor, uint8_t **bu
 
 	cmd = SBEFIFO_CMD_CLASS_CONTROL | SBEFIFO_CMD_EXECUTE_ISTEP;
 
-	step = (major << 16) | minor;
+	step = ((uint32_t)major << 16) | (uint32_t)minor;
 
 	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);

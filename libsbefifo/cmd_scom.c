@@ -139,7 +139,7 @@ int sbefifo_scom_put(struct sbefifo_context *sctx, uint64_t addr, uint64_t value
 static int sbefifo_scom_modify_push(uint64_t addr, uint64_t value, uint8_t operand, uint8_t **buf, uint32_t *buflen)
 {
 	uint32_t *msg;
-	uint32_t nwords, cmd;
+	uint32_t nwords, cmd, oper;
 
 	nwords = 7;
 	*buflen = nwords * sizeof(uint32_t);
@@ -149,9 +149,11 @@ static int sbefifo_scom_modify_push(uint64_t addr, uint64_t value, uint8_t opera
 
 	cmd = SBEFIFO_CMD_CLASS_SCOM | SBEFIFO_CMD_MODIFY_SCOM;
 
+	oper = (uint32_t)operand;
+
 	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
-	msg[2] = htobe32(operand);
+	msg[2] = htobe32(oper);
 	msg[3] = htobe32(addr >> 32);
 	msg[4] = htobe32(addr & 0xffffffff);
 	msg[5] = htobe32(value >> 32);
