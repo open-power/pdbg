@@ -219,11 +219,11 @@ int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, 
 	return rc;
 }
 
-static int sbefifo_occsram_get_push(uint32_t addr, uint32_t size, uint8_t mode, uint8_t **buf, uint32_t *buflen)
+static int sbefifo_sram_get_push(uint16_t chiplet_id, uint64_t addr, uint32_t size, uint8_t mode, uint8_t **buf, uint32_t *buflen)
 {
 	uint32_t *msg;
-	uint32_t nwords, cmd;
-	uint32_t start_addr, end_addr;
+	uint32_t nwords, cmd, flags;
+	uint64_t start_addr, end_addr;
 	uint32_t align, len;
 
 	align = 8;
@@ -233,29 +233,32 @@ static int sbefifo_occsram_get_push(uint32_t addr, uint32_t size, uint8_t mode, 
 	if (end_addr < start_addr)
 		return EINVAL;
 
-	nwords = 5;
+	nwords = 6;
 	*buflen = nwords * sizeof(uint32_t);
 	msg = malloc(*buflen);
 	if (!msg)
 		return ENOMEM;
 
-	len = end_addr - start_addr;
+	len = (end_addr - start_addr) / 8;
 
-	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_GET_OCCSRAM;
+	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_GET_SRAM;
+
+	flags = ((uint32_t)chiplet_id << 16 | (uint32_t)mode);
 
 	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
-	msg[2] = htobe32(mode);
-	msg[3] = htobe32(start_addr);
-	msg[4] = htobe32(len);
+	msg[2] = htobe32(flags);
+	msg[3] = htobe32(start_addr >> 32);
+	msg[4] = htobe32(start_addr & 0xffffffff);
+	msg[5] = htobe32(len);
 
 	*buf = (uint8_t *)msg;
 	return 0;
 }
 
-static int sbefifo_occsram_get_pull(uint8_t *buf, uint32_t buflen, uint32_t addr, uint32_t size, uint8_t **data, uint32_t *data_len)
+static int sbefifo_sram_get_pull(uint8_t *buf, uint32_t buflen, uint64_t addr, uint32_t size, uint8_t **data, uint32_t *data_len)
 {
-	uint32_t start_addr;
+	uint64_t start_addr;
 	uint32_t align, offset;
 
 	if (buflen < 4)
@@ -278,19 +281,22 @@ static int sbefifo_occsram_get_pull(uint8_t *buf, uint32_t buflen, uint32_t addr
 	return 0;
 }
 
-int sbefifo_occsram_get(struct sbefifo_context *sctx, uint32_t addr, uint32_t size, uint8_t mode, uint8_t **data, uint32_t *data_len)
+int sbefifo_sram_get(struct sbefifo_context *sctx, uint16_t chiplet_id, uint64_t addr, uint32_t size, uint8_t mode, uint8_t **data, uint32_t *data_len)
 {
 	uint8_t *msg, *out;
 	uint32_t msg_len, out_len;
 	uint32_t len;
 	int rc;
 
-	rc = sbefifo_occsram_get_push(addr, size, mode, &msg, &msg_len);
+	if (sctx->proc == SBEFIFO_PROC_P9)
+		return ENOSYS;
+
+	rc = sbefifo_sram_get_push(chiplet_id, addr, size, mode, &msg, &msg_len);
 	if (rc)
 		return rc;
 
-	/* length is 5th word in the request */
-	len = be32toh(*(uint32_t *)(msg + 16));
+	/* length is 6th word in the request */
+	len = be32toh(*(uint32_t *)(msg + 20));
 
 	out_len = len + 4;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
@@ -298,18 +304,19 @@ int sbefifo_occsram_get(struct sbefifo_context *sctx, uint32_t addr, uint32_t si
 	if (rc)
 		return rc;
 
-	rc = sbefifo_occsram_get_pull(out, out_len, addr, size, data, data_len);
+	rc = sbefifo_sram_get_pull(out, out_len, addr, size, data, data_len);
 	if (out)
 		free(out);
 
 	return rc;
 }
 
-static int sbefifo_occsram_put_push(uint32_t addr, uint8_t *data, uint32_t data_len, uint8_t mode, uint8_t **buf, uint32_t *buflen)
+static int sbefifo_sram_put_push(uint16_t chiplet_id, uint64_t addr, uint8_t *data, uint32_t data_len, bool multicast, uint8_t mode, uint8_t **buf, uint32_t *buflen)
 {
 	uint32_t *msg;
-	uint32_t nwords, cmd;
-	uint32_t align;
+	uint32_t nwords, cmd, flags;
+	uint32_t align, len;
+	uint8_t multicast_bit;
 
 	align = 8;
 
@@ -319,26 +326,35 @@ static int sbefifo_occsram_put_push(uint32_t addr, uint8_t *data, uint32_t data_
 	if (data_len & (align-1))
 		return EINVAL;
 
-	nwords = 5 + data_len/4;
+	nwords = 6 + data_len/4;
 	*buflen = nwords * sizeof(uint32_t);
 	msg = malloc(*buflen);
 	if (!msg)
 		return ENOMEM;
 
-	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_PUT_OCCSRAM;
+	multicast_bit = multicast ? 0x80 : 0x00;
+
+	cmd = SBEFIFO_CMD_CLASS_MEMORY | SBEFIFO_CMD_PUT_SRAM;
+
+	flags = ((uint32_t)chiplet_id << 16) |
+		((uint32_t)multicast_bit << 8) |
+		(uint32_t)mode;
+
+	len = data_len / 8;
 
 	msg[0] = htobe32(nwords);
 	msg[1] = htobe32(cmd);
-	msg[2] = htobe32(mode);
-	msg[3] = htobe32(addr);
-	msg[4] = htobe32(data_len);
+	msg[2] = htobe32(flags);
+	msg[3] = htobe32(addr >> 32);
+	msg[4] = htobe32(addr & 0xffffffff);
+	msg[5] = htobe32(len);
 	memcpy(&msg[5], data, data_len);
 
 	*buf = (uint8_t *)msg;
 	return 0;
 }
 
-static int sbefifo_occsram_put_pull(uint8_t *buf, uint32_t buflen)
+static int sbefifo_sram_put_pull(uint8_t *buf, uint32_t buflen)
 {
 	if (buflen != sizeof(uint32_t))
 		return EPROTO;
@@ -346,13 +362,16 @@ static int sbefifo_occsram_put_pull(uint8_t *buf, uint32_t buflen)
 	return 0;
 }
 
-int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *data, uint32_t data_len, uint8_t mode)
+int sbefifo_sram_put(struct sbefifo_context *sctx, uint16_t chiplet_id, uint64_t addr, uint8_t *data, uint32_t data_len, bool multicast, uint8_t mode)
 {
 	uint8_t *msg, *out;
 	uint32_t msg_len, out_len;
 	int rc;
 
-	rc = sbefifo_occsram_put_push(addr, data, data_len, mode, &msg, &msg_len);
+	if (sctx->proc == SBEFIFO_PROC_P9)
+		return ENOSYS;
+
+	rc = sbefifo_sram_put_push(chiplet_id, addr, data, data_len, multicast, mode, &msg, &msg_len);
 	if (rc)
 		return rc;
 
@@ -362,7 +381,7 @@ int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *da
 	if (rc)
 		return rc;
 
-	rc = sbefifo_occsram_put_pull(out, out_len);
+	rc = sbefifo_sram_put_pull(out, out_len);
 	if (out)
 		free(out);
 

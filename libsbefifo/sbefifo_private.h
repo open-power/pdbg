@@ -39,8 +39,8 @@
 #define SBEFIFO_CMD_CLASS_MEMORY         0xA400
 #define   SBEFIFO_CMD_GET_MEMORY           0x01
 #define   SBEFIFO_CMD_PUT_MEMORY           0x02
-#define   SBEFIFO_CMD_GET_OCCSRAM          0x03
-#define   SBEFIFO_CMD_PUT_OCCSRAM          0x04
+#define   SBEFIFO_CMD_GET_SRAM             0x03
+#define   SBEFIFO_CMD_PUT_SRAM             0x04
 
 #define SBEFIFO_CMD_CLASS_REGISTER       0xA500
 #define   SBEFIFO_CMD_GET_REGISTER         0x01

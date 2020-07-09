@@ -18,6 +18,7 @@
 #define __LIBSBEFIFO_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /*
  * libsbefifo implements SBE interfaces available via SBEFIFO device.  The
@@ -152,8 +153,8 @@ int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, 
 #define SBEFIFO_MEMORY_MODE_DEBUG       0x02
 #define SBEFIFO_MEMORY_MODE_CIRCULAR    0x03
 
-int sbefifo_occsram_get(struct sbefifo_context *sctx, uint32_t addr, uint32_t size, uint8_t mode, uint8_t **data, uint32_t *data_len);
-int sbefifo_occsram_put(struct sbefifo_context *sctx, uint32_t addr, uint8_t *data, uint32_t data_len, uint8_t mode);
+int sbefifo_sram_get(struct sbefifo_context *sctx, uint16_t chiplet_id, uint64_t addr, uint32_t size, uint8_t mode, uint8_t **data, uint32_t *data_len);
+int sbefifo_sram_put(struct sbefifo_context *sctx, uint16_t chiplet_id, uint64_t addr, uint8_t *data, uint32_t data_len, bool multicast, uint8_t mode);
 
 #define SBEFIFO_REGISTER_TYPE_GPR	0x0
 #define SBEFIFO_REGISTER_TYPE_SPR	0x1
