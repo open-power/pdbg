@@ -455,6 +455,44 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 	return chipop->mpipl_get_ti_info(chipop, data, data_len);
 }
 
+int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
+{
+	struct ocmb *ocmb;
+
+	assert(pdbg_target_is_class(target, "ocmb"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	ocmb = target_to_ocmb(target);
+
+	if (!ocmb->getscom) {
+		PR_ERROR("getscom() not implemented for the target\n");
+		return -1;
+	}
+
+	return ocmb->getscom(ocmb, addr, val);
+}
+
+int ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val)
+{
+	struct ocmb *ocmb;
+
+	assert(pdbg_target_is_class(target, "ocmb"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	ocmb = target_to_ocmb(target);
+
+	if (!ocmb->putscom) {
+		PR_ERROR("putscom() not implemented for the target\n");
+		return -1;
+	}
+
+	return ocmb->putscom(ocmb, addr, val);
+}
+
 uint32_t sbe_ffdc_get(struct pdbg_target *target, uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct chipop *chipop;
