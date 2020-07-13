@@ -17,6 +17,7 @@
 #define __TARGET_H
 
 #include <stdint.h>
+#include <unistd.h>
 #include <ccan/list/list.h>
 #include <ccan/str/str.h>
 #include <ccan/container_of/container_of.h>
