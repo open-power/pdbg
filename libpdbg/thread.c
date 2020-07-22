@@ -18,6 +18,7 @@
 #include "libpdbg.h"
 #include "hwunit.h"
 #include "debug.h"
+#include "sprs.h"
 
 struct thread_state thread_status(struct pdbg_target *target)
 {
@@ -334,6 +335,28 @@ int thread_getspr(struct pdbg_target *target, int spr, uint64_t *value)
 
 	thread = target_to_thread(target);
 
+	if (spr == SPR_MSR) {
+		if (thread->getmsr)
+			return thread->getmsr(thread, value);
+	} else if (spr == SPR_NIA) {
+		if (thread->getnia)
+			return thread->getnia(thread, value);
+	} else if (spr == SPR_XER) {
+		if (thread->getxer)
+			return thread->getxer(thread, value);
+	} else if (spr == SPR_CR) {
+		if (thread->getcr) {
+			uint32_t u32;
+			int rc;
+
+			rc  = thread->getcr(thread, &u32);
+			if (rc == 0)
+				*value = u32;
+
+			return rc;
+		}
+	}
+
 	if (!thread->getspr) {
 		PR_ERROR("getspr() not imeplemented for the target\n");
 		return -1;
@@ -352,6 +375,20 @@ int thread_putspr(struct pdbg_target *target, int spr, uint64_t value)
 		return -1;
 
 	thread = target_to_thread(target);
+
+	if (spr == SPR_MSR) {
+		if (thread->putmsr)
+			return thread->putmsr(thread, value);
+	} else if (spr == SPR_NIA) {
+		if (thread->putnia)
+			return thread->putnia(thread, value);
+	} else if (spr == SPR_XER) {
+		if (thread->putxer)
+			return thread->putxer(thread, value);
+	} else if (spr == SPR_CR) {
+		if (thread->putcr)
+			return thread->putcr(thread, (uint32_t)value);
+	}
 
 	if (!thread->putspr) {
 		PR_ERROR("putspr() not imeplemented for the target\n");
