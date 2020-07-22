@@ -26,14 +26,7 @@
 #include "optcmd.h"
 #include "path.h"
 
-#define REG_CR -5
-#define REG_XER -4
-#define REG_MEM -3
-#define REG_MSR -2
-#define REG_NIA -1
-#define REG_R31 31
-
-static void print_proc_reg(struct pdbg_target *target, int reg, uint64_t *value, int rc)
+static void print_proc_reg(struct pdbg_target *target, bool is_spr, int reg, uint64_t *value, int rc)
 {
 	int proc_index, chip_index, thread_index;
 
@@ -42,76 +35,46 @@ static void print_proc_reg(struct pdbg_target *target, int reg, uint64_t *value,
 	proc_index = pdbg_parent_index(target, "pib");
 	printf("p%d:c%d:t%d: ", proc_index, chip_index, thread_index);
 
-	if (reg == REG_MSR)
-		printf("msr: ");
-	else if (reg == REG_NIA)
-		printf("nia: ");
-	else if (reg == REG_XER)
-		printf("xer: ");
-	else if (reg == REG_CR)
-		printf("cr: ");
-	else if (reg > REG_R31)
-		printf("spr%03d: ", reg - REG_R31);
-	else if (reg >= 0 && reg <= 31)
+	if (is_spr)
+		printf("%s: ", pdbg_spr_by_id(reg));
+	else
 		printf("gpr%02d: ", reg);
 
-	if (rc == 1) {
+	if (rc == 0)
+		printf("0x%016" PRIx64 "\n", *value);
+	else if (rc == 1)
 		printf("Check threadstatus - not all threads on this chiplet are quiesced\n");
-	} else if (rc == 2)
+	else if (rc == 2)
 		printf("Thread in incorrect state\n");
 	else
-		printf("0x%016" PRIx64 "\n", *value);
+		printf("Error in thread access\n");
 }
 
-static int putprocreg(struct pdbg_target *target, int reg, uint64_t *value)
+static int putprocreg(struct pdbg_target *target, bool is_spr, int reg, uint64_t *value)
 {
-	uint32_t u32;
 	int rc;
 
-	if (reg == REG_MSR)
-		rc = thread_putmsr(target, *value);
-	else if (reg == REG_NIA)
-		rc = thread_putnia(target, *value);
-	else if (reg == REG_XER)
-		rc = thread_putxer(target, *value);
-	else if (reg == REG_CR) {
-		u32 = *value;
-		rc = thread_putcr(target, u32);
-	} else if (reg > REG_R31)
-		rc = thread_putspr(target, reg - REG_R31, *value);
-	else if (reg >= 0 && reg <= 31)
+	if (is_spr)
+		rc = thread_putspr(target, reg, *value);
+	else
 		rc = thread_putgpr(target, reg, *value);
-	else
-		assert(0);
 
 	return rc;
 }
 
-static int getprocreg(struct pdbg_target *target, uint32_t reg, uint64_t *value)
+static int getprocreg(struct pdbg_target *target, bool is_spr, uint32_t reg, uint64_t *value)
 {
-	uint32_t u32 = 0;
 	int rc;
 
-	if (reg == REG_MSR)
-		rc = thread_getmsr(target, value);
-	else if (reg == REG_NIA)
-		rc = thread_getnia(target, value);
-	else if (reg == REG_XER)
-		rc = thread_getxer(target, value);
-	else if (reg == REG_CR) {
-		rc = thread_getcr(target, &u32);
-		*value = u32;
-	} else if (reg > REG_R31)
-		rc = thread_getspr(target, reg - REG_R31, value);
-	else if (reg >= 0 && reg <= 31)
-		rc = thread_getgpr(target, reg, value);
+	if (is_spr)
+		rc = thread_getspr(target, reg, value);
 	else
-		assert(0);
+		rc = thread_getgpr(target, reg, value);
 
 	return rc;
 }
 
-static int getreg(int reg)
+static int getreg(bool is_spr, int reg)
 {
 	struct pdbg_target *target;
 	int count = 0;
@@ -123,8 +86,8 @@ static int getreg(int reg)
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		rc = getprocreg(target, reg, &value);
-		print_proc_reg(target, reg, &value, rc);
+		rc = getprocreg(target, is_spr, reg, &value);
+		print_proc_reg(target, is_spr, reg, &value, rc);
 
 		if (!rc)
 			count++;
@@ -133,7 +96,7 @@ static int getreg(int reg)
 	return count;
 }
 
-static int putreg(int reg, uint64_t *value)
+static int putreg(bool is_spr, int reg, uint64_t *value)
 {
 	struct pdbg_target *target;
 	int count = 0;
@@ -144,8 +107,8 @@ static int putreg(int reg, uint64_t *value)
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		rc = putprocreg(target, reg, value);
-		print_proc_reg(target, reg, value, rc);
+		rc = putprocreg(target, is_spr, reg, value);
+		print_proc_reg(target, is_spr, reg, value, rc);
 
 		if (!rc)
 			count++;
@@ -156,24 +119,24 @@ static int putreg(int reg, uint64_t *value)
 
 static int getgpr(int gpr)
 {
-	return getreg(gpr);
+	return getreg(false, gpr);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(getgpr, getgpr, (GPR));
 
 static int putgpr(int gpr, uint64_t data)
 {
-	return putreg(gpr, &data);
+	return putreg(false, gpr, &data);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putgpr, putgpr, (GPR, DATA));
 
 static int getspr(int spr)
 {
-	return getreg(spr + REG_R31);
+	return getreg(true, spr);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(getspr, getspr, (SPR));
 
 static int putspr(int spr, uint64_t data)
 {
-	return putreg(spr + REG_R31, &data);
+	return putreg(true, spr, &data);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putspr, putspr, (SPR, DATA));

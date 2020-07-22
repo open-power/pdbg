@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <errno.h>
 
+#include "libpdbg.h"
+
 uint64_t *parse_number64(const char *argv)
 {
 	uint64_t *n = malloc(sizeof(*n));
@@ -98,19 +100,16 @@ int *parse_gpr(const char *argv)
 	return gpr;
 }
 
-/* Parse an SPR. Currently only supports SPR by numbers but could be extended to
- * support names (eg. lr) */
+/* Parse an SPR name (eg. lr) */
 int *parse_spr(const char *argv)
 {
 	int *spr = malloc(sizeof(*spr));
-	char *endptr;
 
 	if (!argv)
 		return NULL;
 
-	errno = 0;
-	*spr = strtoul(argv, &endptr, 0);
-	if (errno || *endptr != '\0' || *spr > 0x3ff)
+	*spr = pdbg_spr_by_name(argv);
+	if (*spr == -1)
 		return NULL;
 
 	return spr;
