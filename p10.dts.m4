@@ -218,6 +218,20 @@ define(`id', eval(`$2 % 2'))dnl
 ')
 
 dnl
+dnl OCMB([index])
+dnl
+define(`OCMB',
+`
+	CONCAT(ocmb@, $1) {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 0x08010000 0x3c00>;
+		compatible = "ibm,power-ocmb", "ibm,power10-ocmb";
+		index = <$1>;
+	};
+')
+
+dnl
 dnl PEC_([chiplet], [index])
 dnl
 define(`PEC_',
@@ -341,14 +355,18 @@ define(`CHIP',
 					MI_(c,0)
 						MCC_(c,0)
 							OMI_(c,0)
+								OCMB(0)
 							};
 							OMI_(c,1)
+								OCMB(1)
 							};
 						};
 						MCC_(c,1)
 							OMI_(c,2)
+								OCMB(2)
 							};
 							OMI_(c,3)
+								OCMB(3)
 							};
 						};
 					};
@@ -362,14 +380,18 @@ define(`CHIP',
 					MI_(d,1)
 						MCC_(d,2)
 							OMI_(d,4)
+								OCMB(4)
 							};
 							OMI_(d,5)
+								OCMB(5)
 							};
 						};
 						MCC_(d,3)
 							OMI_(d,6)
+								OCMB(6)
 							};
 							OMI_(d,7)
+								OCMB(7)
 							};
 						};
 					};
