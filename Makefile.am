@@ -182,6 +182,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/p9_scom_addr.h \
 	libpdbg/sbefifo.c \
 	libpdbg/sprs.h \
+	libpdbg/sprs.c \
 	libpdbg/target.c \
 	libpdbg/target.h \
 	libpdbg/thread.c

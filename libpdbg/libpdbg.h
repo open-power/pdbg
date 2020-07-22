@@ -1067,6 +1067,24 @@ int thread_sreset_all(void);
  */
 struct thread_state thread_status(struct pdbg_target *target);
 
+/**
+ * @brief Get SPR id from name
+ *
+ * @param[in]  name SPR name
+ *
+ * @return spr id or -1 if not found
+ */
+int pdbg_spr_by_name(const char *name);
+
+/**
+ * @brief Get SPR name from id
+ *
+ * @param[in]  spr SPR id
+ *
+ * @return spr name or NULL if not found
+ */
+const char *pdbg_spr_by_id(int spr);
+
 int getring(struct pdbg_target *chiplet_target, uint64_t ring_addr, uint64_t ring_len, uint32_t result[]);
 
 /**
