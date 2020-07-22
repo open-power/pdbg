@@ -166,18 +166,6 @@ static int putgpr(int gpr, uint64_t data)
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putgpr, putgpr, (GPR, DATA));
 
-static int getnia(void)
-{
-	return getreg(REG_NIA);
-}
-OPTCMD_DEFINE_CMD(getnia, getnia);
-
-static int putnia(uint64_t nia)
-{
-	return putreg(REG_NIA, &nia);
-}
-OPTCMD_DEFINE_CMD_WITH_ARGS(putnia, putnia, (DATA));
-
 static int getspr(int spr)
 {
 	return getreg(spr + REG_R31);
@@ -189,40 +177,3 @@ static int putspr(int spr, uint64_t data)
 	return putreg(spr + REG_R31, &data);
 }
 OPTCMD_DEFINE_CMD_WITH_ARGS(putspr, putspr, (SPR, DATA));
-
-static int getmsr(void)
-{
-	return getreg(REG_MSR);
-}
-OPTCMD_DEFINE_CMD(getmsr, getmsr);
-
-static int putmsr(uint64_t data)
-{
-	return putreg(REG_MSR, &data);
-}
-OPTCMD_DEFINE_CMD_WITH_ARGS(putmsr, putmsr, (DATA));
-
-static int getxer(void)
-{
-	return getreg(REG_XER);
-}
-OPTCMD_DEFINE_CMD(getxer, getxer);
-
-static int putxer(uint64_t data)
-{
-	return putreg(REG_XER, &data);
-}
-OPTCMD_DEFINE_CMD_WITH_ARGS(putxer, putxer, (DATA));
-
-static int getcr(void)
-{
-	return getreg(REG_CR);
-}
-OPTCMD_DEFINE_CMD(getcr, getcr);
-
-static int putcr(uint32_t data)
-{
-	uint64_t u64 = data;
-	return putreg(REG_CR, &u64);
-}
-OPTCMD_DEFINE_CMD_WITH_ARGS(putcr, putcr, (DATA32));
