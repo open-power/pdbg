@@ -277,10 +277,6 @@ int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 	uint64_t addr64 = addr;
 
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
-
-	if (pdbg_target_status(fsi_dt) != PDBG_TARGET_ENABLED)
-		return -1;
-
 	fsi = target_to_fsi(fsi_dt);
 
 	if (!fsi->read) {
@@ -301,10 +297,6 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 	uint64_t addr64 = addr;
 
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
-
-	if (pdbg_target_status(fsi_dt) != PDBG_TARGET_ENABLED)
-		return -1;
-
 	fsi = target_to_fsi(fsi_dt);
 
 	if (!fsi->write) {
