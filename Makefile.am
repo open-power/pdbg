@@ -32,13 +32,15 @@ PDBG_TESTS = \
 	tests/test_attr_array.sh	\
 	tests/test_attr_packed.sh	\
 	tests/test_traverse.sh		\
-	tests/test_p9_fapi_translation.sh
+	tests/test_p9_fapi_translation.sh \
+	tests/test_p10_fapi_translation.sh
 
 TESTS = $(libpdbg_tests) optcmd_test $(PDBG_TESTS)
 
 tests/test_tree2.sh: fake2.dtb fake2-backend.dtb
 tests/test_prop.sh: fake.dtb fake-backend.dtb
 tests/test_p9_fapi_translation.sh: p9.dtb bmc-kernel.dtb
+tests/test_p10_fapi_translation.sh: p10.dtb bmc-kernel.dtb
 
 test: $(libpdbg_tests)
 
