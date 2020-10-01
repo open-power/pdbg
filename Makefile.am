@@ -16,6 +16,7 @@ libpdbg_tests = libpdbg_target_test \
 bin_PROGRAMS = pdbg
 check_PROGRAMS = $(libpdbg_tests) libpdbg_dtree_test \
 		libpdbg_p9_fapi_translation_test \
+		libpdbg_p10_fapi_translation_test \
 		optcmd_test hexdump_test cronus_proxy \
 		libpdbg_prop_test libpdbg_attr_test \
 		libpdbg_traverse_test
@@ -257,6 +258,12 @@ libpdbg_p9_fapi_translation_test_SOURCES = src/tests/libpdbg_p9_fapi_translation
 libpdbg_p9_fapi_translation_test_CXXFLAGS = $(libpdbg_test_cflags)
 libpdbg_p9_fapi_translation_test_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_p9_fapi_translation_test_LDADD = $(libpdbg_test_ldadd)
+
+libpdbg_p10_fapi_translation_test_SOURCES = src/tests/libpdbg_p10_fapi_translation_test.C \
+					   src/tests/p10_scominfo.C src/tests/p10_scom_addr.C
+libpdbg_p10_fapi_translation_test_CXXFLAGS = $(libpdbg_test_cflags)
+libpdbg_p10_fapi_translation_test_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_p10_fapi_translation_test_LDADD = $(libpdbg_test_ldadd)
 
 libpdbg_prop_test_SOURCES = src/tests/libpdbg_prop_test.c
 libpdbg_prop_test_CFLAGS = $(libpdbg_test_cflags)
