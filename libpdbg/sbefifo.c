@@ -25,6 +25,7 @@
 #include "hwunit.h"
 #include "debug.h"
 #include "sprs.h"
+#include "chip.h"
 
 static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 			     uint64_t addr, uint8_t *data, uint64_t size,
@@ -318,6 +319,11 @@ static int sbefifo_thread_op(struct thread *thread, uint32_t oper)
 				    thread->id,
 				    oper,
 				    mode);
+}
+
+static struct thread_state sbefifo_thread_state(struct thread *thread)
+{
+	return p9_thread_state(thread);
 }
 
 static int sbefifo_thread_start(struct thread *thread)
@@ -714,6 +720,7 @@ static struct thread sbefifo_thread = {
 		.probe = sbefifo_thread_probe,
 		.release = sbefifo_thread_release,
 	},
+	.state = sbefifo_thread_state,
 	.start = sbefifo_thread_start,
 	.stop = sbefifo_thread_stop,
 	.step = sbefifo_thread_step,
