@@ -43,4 +43,6 @@ int ram_putmsr(struct thread *thread, uint64_t value);
 int ram_getcr(struct thread *thread, uint32_t *value);
 int ram_putcr(struct thread *thread, uint32_t value);
 
+struct thread_state p9_thread_state(struct thread *thread);
+
 #endif

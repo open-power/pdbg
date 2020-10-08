@@ -90,7 +90,7 @@ static uint64_t thread_write(struct thread *thread, uint64_t addr, uint64_t data
 	return pib_write(chip, addr, data);
 }
 
-static struct thread_state p9_thread_state(struct thread *thread)
+struct thread_state p9_thread_state(struct thread *thread)
 {
 	uint64_t value;
 	struct thread_state thread_state;
