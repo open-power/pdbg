@@ -647,9 +647,11 @@ static int sbefifo_probe(struct pdbg_target *target)
 
 static void sbefifo_release(struct pdbg_target *target)
 {
-	struct sbefifo *sf = target_to_sbefifo(target);
-
-	sbefifo_disconnect(sf->sf_ctx);
+	/*
+	 * FIXME: Need to add reference counting for sbefifo context, so it is
+	 * not freed till every last hwunit using sbefifo driver has been
+	 * released.
+	 */
 }
 
 static struct mem sbefifo_mem = {
