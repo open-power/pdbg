@@ -649,6 +649,7 @@ static struct thread p8_thread = {
 		.probe = p8_thread_probe,
 		.release = p8_thread_release,
 	},
+	.state = p8_thread_state,
 	.step = p8_thread_step,
 	.start = p8_thread_start,
 	.stop = p8_thread_stop,

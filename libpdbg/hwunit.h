@@ -126,6 +126,7 @@ struct thread {
 	struct pdbg_target target;
 	struct thread_state status;
 	int id;
+	struct thread_state (*state)(struct thread *);
 	int (*step)(struct thread *, int);
 	int (*start)(struct thread *);
 	int (*stop)(struct thread *);

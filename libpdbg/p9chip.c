@@ -428,6 +428,7 @@ static struct thread p9_thread = {
 		.probe = p9_thread_probe,
 		.release = p9_thread_release,
 	},
+	.state = p9_thread_state,
 	.start = p9_thread_start,
 	.stop = p9_thread_stop,
 	.step = p9_thread_step,
