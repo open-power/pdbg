@@ -118,7 +118,7 @@ static int p9_thread_probe(struct pdbg_target *target)
 	struct thread *thread = target_to_thread(target);
 
 	thread->id = pdbg_target_index(target);
-	thread->status = p9_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
@@ -147,7 +147,7 @@ static int p9_thread_start(struct thread *thread)
 		thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(6 + 8*thread->id));
 	}
 
-	thread->status = p9_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
@@ -157,14 +157,14 @@ static int p9_thread_stop(struct thread *thread)
 	int i = 0;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(7 + 8*thread->id));
-	while (!(p9_thread_state(thread).quiesced)) {
+	while (!(thread->state(thread).quiesced)) {
 		usleep(1000);
 		if (i++ > RAS_STATUS_TIMEOUT) {
 			PR_ERROR("Unable to quiesce thread\n");
 			break;
 		}
 	}
-	thread->status = p9_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
@@ -214,7 +214,7 @@ static int p9_thread_sreset(struct thread *thread)
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(4 + 8*thread->id));
 
-	thread->status = p9_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
@@ -268,7 +268,7 @@ static int p9_ram_setup(struct thread *thread)
 	CHECK_ERR_GOTO(out_fail,
 		thread_write(thread, P9_SCOMC, 0x0));
 
-	thread->status = p9_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	thread->ram_is_setup = true;
 
@@ -398,7 +398,7 @@ static int p9_ram_destroy(struct thread *thread)
 	/* Deactivate thread for ramming */
 	CHECK_ERR(thread_write(thread, P9_THREAD_INFO, 0));
 
-	thread->status = p9_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	thread->ram_is_setup = false;
 

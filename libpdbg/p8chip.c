@@ -302,7 +302,7 @@ static int p8_thread_stop(struct thread *thread)
 	} while (!(val & RAS_STATUS_INST_COMPLETE) &&
 		 !(val & RAS_STATUS_TS_QUIESCE));
 
-	thread->status = p8_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
@@ -312,7 +312,7 @@ static int p8_thread_start(struct thread *thread)
 	/* Activate thread */
 	CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_START));
 
-	thread->status = p8_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
@@ -462,7 +462,7 @@ static int p8_ram_destroy(struct thread *thread)
 		pdbg_target_require_parent("core", &thread->target));
 	uint64_t val, ram_mode;
 
-	if (!(p8_thread_state(thread).active)) {
+	if (!(thread->state(thread).active)) {
 		/* Mark the RAM thread active so GPRs stick */
 		CHECK_ERR(pib_read(&chip->target, THREAD_ACTIVE_REG, &val));
 		val |= PPC_BIT(8) >> thread->id;
@@ -559,7 +559,7 @@ static int p8_thread_sreset(struct thread *thread)
 
 	if (!(thread->status.active)) {
 		CHECK_ERR(pib_write(&thread->target, DIRECT_CONTROLS_REG, DIRECT_CONTROL_SP_SRESET));
-		thread->status = p8_thread_state(thread);
+		thread->status = thread->state(thread);
 
 		return 0;
 	}
@@ -590,7 +590,7 @@ static int p8_thread_probe(struct pdbg_target *target)
 	struct thread *thread = target_to_thread(target);
 
 	thread->id = (pdbg_target_address(target, NULL) >> 4) & 0xf;
-	thread->status = p8_thread_state(thread);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
