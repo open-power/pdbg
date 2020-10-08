@@ -261,14 +261,36 @@ static int sbefifo_pib_thread_op(struct pib *pib, uint32_t oper)
 	return sbefifo_control_insn(sctx, core_id, thread_id, oper, mode);
 }
 
+static void sbefifo_pib_update_threads(struct pdbg_target *pib)
+{
+	struct pdbg_target *target;
+
+	pdbg_for_each_target("thread", pib, target) {
+		struct thread *thread = target_to_thread(target);
+		thread->status = thread->state(thread);
+	}
+}
+
 static int sbefifo_pib_thread_start(struct pib *pib)
 {
-	return sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_START);
+	int rc;
+
+	rc = sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_START);
+
+	sbefifo_pib_update_threads(&pib->target);
+
+	return rc;
 }
 
 static int sbefifo_pib_thread_stop(struct pib *pib)
 {
-	return sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_STOP);
+	int rc;
+
+	rc = sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_STOP);
+
+	sbefifo_pib_update_threads(&pib->target);
+
+	return rc;
 }
 
 static int sbefifo_pib_thread_step(struct pib *pib, int count)
@@ -283,7 +305,13 @@ static int sbefifo_pib_thread_step(struct pib *pib, int count)
 
 static int sbefifo_pib_thread_sreset(struct pib *pib)
 {
-	return sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_SRESET);
+	int rc;
+
+	rc = sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_SRESET);
+
+	sbefifo_pib_update_threads(&pib->target);
+
+	return rc;
 }
 
 static int sbefifo_thread_probe(struct pdbg_target *target)
