@@ -291,6 +291,7 @@ static int sbefifo_thread_probe(struct pdbg_target *target)
 	struct thread *thread = target_to_thread(target);
 
 	thread->id = pdbg_target_index(target);
+	thread->status = thread->state(thread);
 
 	return 0;
 }
@@ -328,17 +329,41 @@ static struct thread_state sbefifo_thread_state(struct thread *thread)
 
 static int sbefifo_thread_start(struct thread *thread)
 {
-	return sbefifo_thread_op(thread, SBEFIFO_INSN_OP_START);
+	int rc;
+
+	/* Can only start if a thread is quiesced */
+	if (!(thread->status.quiesced))
+		return 1;
+
+	rc = sbefifo_thread_op(thread, SBEFIFO_INSN_OP_START);
+
+	thread->status = thread->state(thread);
+
+	return rc;
 }
 
 static int sbefifo_thread_stop(struct thread *thread)
 {
-	return sbefifo_thread_op(thread, SBEFIFO_INSN_OP_STOP);
+	int rc;
+
+	rc = sbefifo_thread_op(thread, SBEFIFO_INSN_OP_STOP);
+
+	thread->status = thread->state(thread);
+
+	return rc;
 }
 
 static int sbefifo_thread_step(struct thread *thread, int count)
 {
 	int i, rc = 0;
+
+	/* Can only step if a thread is quiesced */
+	if (!(thread->status.quiesced))
+		return 1;
+
+	/* Core must be active to step */
+	if (!(thread->status.active))
+		return 1;
 
 	for (i = 0; i < count; i++)
 		rc |= sbefifo_thread_op(thread, SBEFIFO_INSN_OP_STEP);
@@ -348,7 +373,17 @@ static int sbefifo_thread_step(struct thread *thread, int count)
 
 static int sbefifo_thread_sreset(struct thread *thread)
 {
-	return sbefifo_thread_op(thread, SBEFIFO_INSN_OP_SRESET);
+	int rc;
+
+	/* Can only sreset if a thread is quiesced */
+	if (!(thread->status.quiesced))
+		return 1;
+
+	rc = sbefifo_thread_op(thread, SBEFIFO_INSN_OP_SRESET);
+
+	thread->status = thread->state(thread);
+
+	return rc;
 }
 
 static int sbefifo_thread_getregs(struct thread *thread, struct thread_regs *regs)
