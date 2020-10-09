@@ -122,6 +122,9 @@ pdbg_LDADD = libpdbg.la libccan.a \
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 
 lib_LTLIBRARIES = libpdbg.la
+pkgconfiglibdir = ${libdir}/pkgconfig
+pkgconfiglib_DATA = libpdbg/pdbg.pc
+
 noinst_LTLIBRARIES = libcronus.la libsbefifo.la
 
 libcronus_la_SOURCES = \
