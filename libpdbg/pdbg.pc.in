@@ -7,5 +7,5 @@ Name: pdbg
 Description: POWER processor debugger
 URL: https://github.com/open-power/pdbg
 Version: @VERSION@
-Libs: -L${libdir} -lpdbg
+Libs: -L${libdir} -lpdbg @LIBFDT@
 Cflags: -I${includedir}
