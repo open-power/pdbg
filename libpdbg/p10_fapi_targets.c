@@ -43,43 +43,6 @@ static struct eq p10_eq = {
 };
 DECLARE_HW_UNIT(p10_eq);
 
-#define NUM_CORES_PER_EQ 4
-static uint64_t p10_core_translate(struct core *c, uint64_t addr)
-{
-	int region = 0;
-	int chip_unitnum = pdbg_target_index(t(c));
-
-	switch(chip_unitnum % NUM_CORES_PER_EQ) {
-	case 0:
-		region = 8;
-		break;
-	case 1:
-		region = 4;
-		break;
-	case 2:
-		region = 2;
-		break;
-	case 3:
-		region = 1;
-		break;
-	}
-	addr = set_chiplet_id(addr, EQ0_CHIPLET_ID + pdbg_target_index(t(c)) / 4);
-	addr &= 0xFFFFFFFFFFFF0FFFULL;
-	addr |= ((region & 0xF) << 12);
-
-	return addr;
-}
-
-static struct core p10_core = {
-	.target = {
-		.name = "POWER10 core",
-		.compatible = "ibm,power10-core",
-		.class = "core",
-		.translate = translate_cast(p10_core_translate),
-	},
-};
-DECLARE_HW_UNIT(p10_core);
-
 static uint64_t p10_pec_translate(struct pec *pec, uint64_t addr)
 {
 	int chip_unitnum = pdbg_target_index(t(pec));
@@ -564,7 +527,6 @@ __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_eq_hw_unit);
-	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_core_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_pec_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_phb_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_nmmu_hw_unit);
