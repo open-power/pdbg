@@ -26,10 +26,12 @@ AC_PATH_PROG([RAGEL], [ragel])
 AC_SUBST([RAGEL])
 AM_CONDITIONAL([HAVE_RAGEL], [test x"$ac_cv_path_RAGEL" != "x"])
 
-AC_CHECK_LIB([fdt], [fdt_check_header], [AC_SUBST([LIBFDT], ["-lfdt"])])
+AC_CHECK_LIB([fdt], [fdt_check_header])
 AM_CONDITIONAL([BUILD_LIBFDT], [test x"$ac_cv_lib_fdt_fdt_check_header" != "xyes"])
 if test x"$ac_cv_lib_fdt_fdt_check_header" != "xyes" ; then
 	AC_CONFIG_SUBDIRS([libfdt])
+else
+	AC_SUBST([LIBFDT], ["-lfdt"])
 fi
 
 AC_CONFIG_MACRO_DIR([m4])
