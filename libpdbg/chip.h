@@ -44,5 +44,6 @@ int ram_getcr(struct thread *thread, uint32_t *value);
 int ram_putcr(struct thread *thread, uint32_t value);
 
 struct thread_state p9_thread_state(struct thread *thread);
+struct thread_state p10_thread_state(struct thread *thread);
 
 #endif

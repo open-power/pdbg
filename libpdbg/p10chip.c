@@ -22,12 +22,64 @@
 #include "chip.h"
 #include "debug.h"
 
+#define P10_CORE_THREAD_STATE	0x28412
+#define P10_THREAD_INFO		0x28413
+#define P10_RAS_STATUS		0x28454
+
 /* PCB Slave registers */
 #define QME_SSH_FSP		0xE8824
 #define  SPECIAL_WKUP_DONE	PPC_BIT(1)
 #define QME_SPWU_FSP		0xE8834
 
 #define SPECIAL_WKUP_TIMEOUT	100 /* 100ms */
+
+static int thread_read(struct thread *thread, uint64_t addr, uint64_t *data)
+{
+	struct pdbg_target *core = pdbg_target_require_parent("core", &thread->target);
+
+	return pib_read(core, addr, data);
+}
+
+struct thread_state p10_thread_state(struct thread *thread)
+{
+	struct thread_state thread_state;
+	uint64_t value;
+	uint8_t smt_mode;
+
+	thread_read(thread, P10_RAS_STATUS, &value);
+
+	thread_state.quiesced = (GETFIELD(PPC_BITMASK(1 + 8*thread->id, 3 + 8*thread->id), value) == 0x7);
+
+	thread_read(thread, P10_THREAD_INFO, &value);
+	thread_state.active = !!(value & PPC_BIT(thread->id));
+
+	smt_mode = GETFIELD(PPC_BITMASK(8,9), value);
+	switch (smt_mode) {
+	case 0:
+		thread_state.smt_state = PDBG_SMT_1;
+		break;
+
+	case 2:
+		thread_state.smt_state = PDBG_SMT_2;
+		break;
+
+	case 3:
+		thread_state.smt_state = PDBG_SMT_4;
+		break;
+
+	default:
+		thread_state.smt_state = PDBG_SMT_UNKNOWN;
+		break;
+	}
+
+	thread_read(thread, P10_CORE_THREAD_STATE, &value);
+	if (value & PPC_BIT(56 + thread->id))
+		thread_state.sleep_state = PDBG_THREAD_STATE_STOP;
+	else
+		thread_state.sleep_state = PDBG_THREAD_STATE_RUN;
+
+	return thread_state;
+}
 
 static int p10_core_probe(struct pdbg_target *target)
 {
