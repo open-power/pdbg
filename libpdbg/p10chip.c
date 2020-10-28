@@ -22,6 +22,70 @@
 #include "chip.h"
 #include "debug.h"
 
+/* PCB Slave registers */
+#define QME_SSH_FSP		0xE8824
+#define  SPECIAL_WKUP_DONE	PPC_BIT(1)
+#define QME_SPWU_FSP		0xE8834
+
+#define SPECIAL_WKUP_TIMEOUT	100 /* 100ms */
+
+static int p10_core_probe(struct pdbg_target *target)
+{
+	struct core *core = target_to_core(target);
+	uint64_t value;
+	int i = 0;
+
+	CHECK_ERR(pib_write(target, QME_SPWU_FSP, PPC_BIT(0)));
+	do {
+		usleep(1000);
+		CHECK_ERR(pib_read(target, QME_SSH_FSP, &value));
+
+		if (i++ > SPECIAL_WKUP_TIMEOUT) {
+			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n",
+				 target->name,
+				 pdbg_target_address(target, NULL));
+			break;
+		}
+	} while (!(value & SPECIAL_WKUP_DONE));
+
+	core->release_spwkup = true;
+
+	return 0;
+}
+
+static void p10_core_release(struct pdbg_target *target)
+{
+	struct pdbg_target *child;
+	struct core *core = target_to_core(target);
+	enum pdbg_target_status status;
+
+	usleep(1); /* enforce small delay before and after it is cleared */
+
+	/* Probe and release all threads to ensure release_spwkup is up to
+	 * date */
+	pdbg_for_each_target("thread", target, child) {
+		status = pdbg_target_status(child);
+
+		/* This thread has already been release so should have set
+		 * release_spwkup to false if it was quiesced, */
+		if (status == PDBG_TARGET_RELEASED)
+			continue;
+
+		status = pdbg_target_probe(child);
+		if (status != PDBG_TARGET_ENABLED)
+			continue;
+
+		/* Release the thread to ensure release_spwkup is updated. */
+		pdbg_target_release(child);
+	}
+
+	if (!core->release_spwkup)
+		return;
+
+	pib_write(target, QME_SPWU_FSP, 0);
+	usleep(10000);
+}
+
 #define NUM_CORES_PER_EQ 4
 #define EQ0_CHIPLET_ID 0x20
 
@@ -59,6 +123,8 @@ static struct core p10_core = {
 		.name = "POWER10 Core",
 		.compatible = "ibm,power10-core",
 		.class = "core",
+		.probe = p10_core_probe,
+		.release = p10_core_release,
 		.translate = translate_cast(p10_core_translate),
 	},
 };
