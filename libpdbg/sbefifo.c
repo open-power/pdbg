@@ -370,7 +370,16 @@ static int sbefifo_thread_op(struct thread *thread, uint32_t oper)
 
 static struct thread_state sbefifo_thread_state(struct thread *thread)
 {
-	return p9_thread_state(thread);
+	struct pdbg_target *pib = pdbg_target_require_parent("pib", &thread->target);
+	struct sbefifo *sbefifo = pib_to_sbefifo(pib);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+	if (sbefifo_proc(sctx) == SBEFIFO_PROC_P9)
+		return p9_thread_state(thread);
+	else if (sbefifo_proc(sctx) == SBEFIFO_PROC_P10)
+		return p10_thread_state(thread);
+	else
+		abort();
 }
 
 static int sbefifo_thread_start(struct thread *thread)
