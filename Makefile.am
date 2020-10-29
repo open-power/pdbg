@@ -65,9 +65,6 @@ DT = fake.dts fake-backend.dts fake2.dts fake2-backend.dts \
 DT_sources = $(DT:.dts=.dtb.S)
 DT_headers = $(DT:.dts=.dt.h)
 
-optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
-optcmd_test_CFLAGS = -Wall -g
-
 hexdump_test_SOURCES = src/util.c src/tests/hexdump_test.c
 hexdump_test_CFLAGS = -Wall -g
 
@@ -222,6 +219,11 @@ libpdbg_test_ldadd = -L.libs libpdbg.la
 if BUILD_LIBFDT
 libpdbg_test_cflags += -I$(top_srcdir)/libfdt
 endif
+
+optcmd_test_SOURCES = src/optcmd.c src/parsers.c src/tests/optcmd_test.c
+optcmd_test_CFLAGS = $(libpdbg_test_cflags)
+optcmd_test_LDFLAGS = $(libpdbg_test_ldflags)
+optcmd_test_LDADD = $(libpdbg_test_ldadd)
 
 libpdbg_target_test_SOURCES = src/tests/libpdbg_target_test.c
 libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
