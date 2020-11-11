@@ -455,6 +455,22 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 	return chipop->mpipl_get_ti_info(chipop, data, data_len);
 }
 
+int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t **data, uint32_t *data_len)
+{
+	struct chipop *chipop;
+
+	chipop = pib_to_chipop(target);
+	if (!chipop)
+		return -1;
+
+	if (!chipop->dump) {
+		PR_ERROR("dump() not implemented for the target\n");
+		return -1;
+	}
+
+	return chipop->dump(chipop, type, clock, data, data_len);
+}
+
 int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
 {
 	struct ocmb *ocmb;

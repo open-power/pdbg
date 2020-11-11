@@ -1348,6 +1348,22 @@ int sbe_mpipl_continue(struct pdbg_target *target);
 int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *data_len);
 
 /**
+ * @brief Get sbe dump
+ *
+ * The dump data must be freed by caller.  It is allocated using malloc() and
+ * must be freed using free().
+ *
+ * @param[in] target pib target to operate on
+ * @param[in] type Type of dump
+ * @param[in] clock Clock on or off
+ * @param[out] data Dump information
+ * @param[out] data_len length of the data
+ *
+ * @return 0 on success, -1 on failure
+ */
+int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t **data, uint32_t *data_len);
+
+/**
  * @brief Read a OCMB SCOM register
  *
  * @param[in] target ocmb target
