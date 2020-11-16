@@ -131,24 +131,25 @@ static void print_usage(void)
 	printf("\t-t, --thread=<0-%d>|<range>|<list>\n", MAX_THREADS-1);
 #ifdef TARGET_PPC
 	printf("\t-l, --cpu=<0-%d>|<range>|<list>\n", MAX_PROCESSORS-1);
+	printf("\t\tRequires device (-d) to be set to p8|p9\n");
 #endif
 	printf("\t-P, --path=<device tree node spec>\n");
 	printf("\t-a, --all\n");
 	printf("\t\tRun command on all possible processors/chips/threads (default)\n");
-	printf("\t-b, --backend=backend\n");
+	printf("\t-b, --backend=<backend>\n");
 	printf("\t\tcronus:\tA backend based on cronus server\n");
-	printf("\t\tsbefifo:\tA backend using sbefifo kernel driver\n");
+	printf("\t\tsbefifo: A backend using sbefifo kernel driver\n");
 	printf("\t\tfsi:\tAn experimental backend that uses\n");
 	printf("\t\t\tbit-banging to access the host processor\n");
 	printf("\t\t\tvia the FSI bus.\n");
 	printf("\t\ti2c:\tThe P8 only backend which goes via I2C.\n");
 	printf("\t\thost:\tUse the debugfs xscom nodes.\n");
 	printf("\t\tkernel:\tThe default backend which goes the kernel FSI driver.\n");
-	printf("\t-d, --device=backend device\n");
+	printf("\t-d, --device=<backend device>\n");
 	printf("\t\tFor I2C the device node used by the backend to access the bus.\n");
 	printf("\t\tFor FSI the system board type, one of p8 or p9w\n");
 	printf("\t\tDefaults to /dev/i2c4 for I2C\n");
-	printf("\t-s, --slave-address=backend device address\n");
+	printf("\t-s, --slave-address=<backend device address>\n");
 	printf("\t\tDevice slave address to use for the backend. Not used by FSI\n");
 	printf("\t\tand defaults to 0x50 for I2C\n");
 	printf("\t-D, --debug=<debug level>\n");
