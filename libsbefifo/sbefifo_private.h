@@ -61,10 +61,10 @@
 #define   SBEFIFO_CMD_QUIESCE              0x03
 
 #define SBEFIFO_CMD_CLASS_MPIPL          0xA900
-#define SBEFIFO_CMD_ENTER_MPIPL            0x01
-#define SBEFIFO_CMD_CONTINUE_MPIPL         0x02
-#define SBEFIFO_CMD_STOP_CLOCKS            0x03
-#define SBEFIFO_CMD_GET_TI_INFO            0x04
+#define   SBEFIFO_CMD_ENTER_MPIPL          0x01
+#define   SBEFIFO_CMD_CONTINUE_MPIPL       0x02
+#define   SBEFIFO_CMD_STOP_CLOCKS          0x03
+#define   SBEFIFO_CMD_GET_TI_INFO          0x04
 
 struct sbefifo_context {
 	int fd;
