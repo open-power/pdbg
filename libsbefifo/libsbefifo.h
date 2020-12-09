@@ -191,4 +191,15 @@ int sbefifo_mpipl_continue(struct sbefifo_context *sctx);
 int sbefifo_mpipl_stopclocks(struct sbefifo_context *sctx, uint16_t target_type, uint8_t chiplet_id);
 int sbefifo_mpipl_get_ti_info(struct sbefifo_context *sctx, uint8_t **data, uint32_t *data_len);
 
+#define SBEFIFO_DUMP_TYPE_SCS            0x01
+#define SBEFIFO_DUMP_TYPE_MPIPL          0x02
+#define SBEFIFO_DUMP_TYPE_PERF           0x03
+#define SBEFIFO_DUMP_TYPE_CCS            0x04
+#define SBEFIFO_DUMP_TYPE_HB             0x05
+
+#define SBEFIFO_DUMP_CLOCK_ON            0x01
+#define SBEFIFO_DUMP_CLOCK_OFF           0x02
+
+int sbefifo_get_dump(struct sbefifo_context *sctx, uint8_t type, uint8_t clock, uint8_t **data, uint32_t *data_len);
+
 #endif /* __LIBSBEFIFO_H__ */

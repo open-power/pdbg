@@ -142,6 +142,7 @@ libcronus_la_SOURCES = \
 libsbefifo_la_SOURCES = \
 	libsbefifo/cmd_array.c \
 	libsbefifo/cmd_control.c \
+	libsbefifo/cmd_dump.c \
 	libsbefifo/cmd_generic.c \
 	libsbefifo/cmd_instruction.c \
 	libsbefifo/cmd_memory.c \

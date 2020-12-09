@@ -66,6 +66,9 @@
 #define   SBEFIFO_CMD_STOP_CLOCKS          0x03
 #define   SBEFIFO_CMD_GET_TI_INFO          0x04
 
+#define SBEFIFO_CMD_CLASS_DUMP           0xAA00
+#define   SBEFIFO_CMD_GET_DUMP             0x01
+
 struct sbefifo_context {
 	int fd;
 	int proc;
