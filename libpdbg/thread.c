@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "libpdbg.h"
 #include "hwunit.h"
@@ -267,9 +268,56 @@ int thread_getmem(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 	return thread->getmem(thread, addr, value);
 }
 
+void thread_print_regs(struct thread_regs *regs)
+{
+	int i;
+
+	printf("NIA   : 0x%016" PRIx64 "\n", regs->nia);
+	printf("CFAR  : 0x%016" PRIx64 "\n", regs->cfar);
+	printf("MSR   : 0x%016" PRIx64 "\n", regs->msr);
+	printf("LR    : 0x%016" PRIx64 "\n", regs->lr);
+	printf("CTR   : 0x%016" PRIx64 "\n", regs->ctr);
+	printf("TAR   : 0x%016" PRIx64 "\n", regs->tar);
+	printf("CR    : 0x%08" PRIx32 "\n", regs->cr);
+	printf("XER   : 0x%08" PRIx64 "\n", regs->xer);
+	printf("GPRS  :\n");
+	for (i = 0; i < 32; i++) {
+		printf(" 0x%016" PRIx64 "", regs->gprs[i]);
+		if (i % 4 == 3)
+			printf("\n");
+	}
+	printf("LPCR  : 0x%016" PRIx64 "\n", regs->lpcr);
+	printf("PTCR  : 0x%016" PRIx64 "\n", regs->ptcr);
+	printf("LPIDR : 0x%016" PRIx64 "\n", regs->lpidr);
+	printf("PIDR  : 0x%016" PRIx64 "\n", regs->pidr);
+	printf("HFSCR : 0x%016" PRIx64 "\n", regs->hfscr);
+	printf("HDSISR: 0x%08" PRIx32 "\n", regs->hdsisr);
+	printf("HDAR  : 0x%016" PRIx64 "\n", regs->hdar);
+	printf("HEIR  : 0x%016" PRIx32 "\n", regs->heir);
+	printf("HID0  : 0x%016" PRIx64 "\n", regs->hid);
+	printf("HSRR0 : 0x%016" PRIx64 "\n", regs->hsrr0);
+	printf("HSRR1 : 0x%016" PRIx64 "\n", regs->hsrr1);
+	printf("HDEC  : 0x%016" PRIx64 "\n", regs->hdec);
+	printf("HSPRG0: 0x%016" PRIx64 "\n", regs->hsprg0);
+	printf("HSPRG1: 0x%016" PRIx64 "\n", regs->hsprg1);
+	printf("FSCR  : 0x%016" PRIx64 "\n", regs->fscr);
+	printf("DSISR : 0x%08" PRIx32 "\n", regs->dsisr);
+	printf("DAR   : 0x%016" PRIx64 "\n", regs->dar);
+	printf("SRR0  : 0x%016" PRIx64 "\n", regs->srr0);
+	printf("SRR1  : 0x%016" PRIx64 "\n", regs->srr1);
+	printf("DEC   : 0x%016" PRIx64 "\n", regs->dec);
+	printf("TB    : 0x%016" PRIx64 "\n", regs->tb);
+	printf("SPRG0 : 0x%016" PRIx64 "\n", regs->sprg0);
+	printf("SPRG1 : 0x%016" PRIx64 "\n", regs->sprg1);
+	printf("SPRG2 : 0x%016" PRIx64 "\n", regs->sprg2);
+	printf("SPRG3 : 0x%016" PRIx64 "\n", regs->sprg3);
+	printf("PPR   : 0x%016" PRIx64 "\n", regs->ppr);
+}
+
 int thread_getregs(struct pdbg_target *target, struct thread_regs *regs)
 {
 	struct thread *thread;
+	int err;
 
 	assert(pdbg_target_is_class(target, "thread"));
 
@@ -283,7 +331,11 @@ int thread_getregs(struct pdbg_target *target, struct thread_regs *regs)
 		return -1;
 	}
 
-	return thread->getregs(thread, regs);
+	err = thread->getregs(thread, regs);
+	if (!err)
+		thread_print_regs(regs);
+
+	return err;
 }
 
 int thread_getgpr(struct pdbg_target *target, int gpr, uint64_t *value)

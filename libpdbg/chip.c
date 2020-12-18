@@ -329,126 +329,58 @@ int ram_getregs(struct thread *thread, struct thread_regs *regs)
 
 	CHECK_ERR(thread->ram_setup(thread));
 
-	/*
-	 * It would be neat to do all the ramming up front, then go through
-	 * and print everything out somewhere else. In practice so far it
-	 * can help to diagnose checkstop issues with ramming to print as
-	 * we go. Once it's more robust and tested, maybe.
-	 */
 	ram_getnia(thread, &regs->nia);
-	printf("NIA   : 0x%016" PRIx64 "\n", regs->nia);
-
 	ram_getspr(thread, SPR_CFAR, &regs->cfar);
-	printf("CFAR  : 0x%016" PRIx64 "\n", regs->cfar);
-
 	ram_getmsr(thread, &regs->msr);
-	printf("MSR   : 0x%016" PRIx64 "\n", regs->msr);
-
 	ram_getspr(thread, SPR_LR, &regs->lr);
-	printf("LR    : 0x%016" PRIx64 "\n", regs->lr);
-
 	ram_getspr(thread, SPR_CTR, &regs->ctr);
-	printf("CTR   : 0x%016" PRIx64 "\n", regs->ctr);
-
 	ram_getspr(thread, 815, &regs->tar);
-	printf("TAR   : 0x%016" PRIx64 "\n", regs->tar);
-
 	ram_getcr(thread, &regs->cr);
-	printf("CR    : 0x%08" PRIx32 "\n", regs->cr);
 
 	thread->getxer(thread, &regs->xer);
-	printf("XER   : 0x%08" PRIx64 "\n", regs->xer);
 
-	printf("GPRS  :\n");
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 32; i++)
 		ram_getgpr(thread, i, &regs->gprs[i]);
-		printf(" 0x%016" PRIx64 "", regs->gprs[i]);
-		if (i % 4 == 3)
-			printf("\n");
-	}
 
 	ram_getspr(thread, SPR_LPCR, &regs->lpcr);
-	printf("LPCR  : 0x%016" PRIx64 "\n", regs->lpcr);
-
 	ram_getspr(thread, SPR_PTCR, &regs->ptcr);
-	printf("PTCR  : 0x%016" PRIx64 "\n", regs->ptcr);
-
 	ram_getspr(thread, SPR_LPIDR, &regs->lpidr);
-	printf("LPIDR : 0x%016" PRIx64 "\n", regs->lpidr);
-
 	ram_getspr(thread, SPR_PIDR, &regs->pidr);
-	printf("PIDR  : 0x%016" PRIx64 "\n", regs->pidr);
-
 	ram_getspr(thread, SPR_HFSCR, &regs->hfscr);
-	printf("HFSCR : 0x%016" PRIx64 "\n", regs->hfscr);
 
 	ram_getspr(thread, SPR_HDSISR, &value);
 	regs->hdsisr = value;
-	printf("HDSISR: 0x%08" PRIx32 "\n", regs->hdsisr);
 
 	ram_getspr(thread, SPR_HDAR, &regs->hdar);
-	printf("HDAR  : 0x%016" PRIx64 "\n", regs->hdar);
 
 	ram_getspr(thread, SPR_HEIR, &value);
 	regs->heir = value;
-	printf("HEIR : 0x%016" PRIx32 "\n", regs->heir);
 
 	ram_getspr(thread, SPR_HID, &regs->hid);
-	printf("HID0 : 0x%016" PRIx64 "\n", regs->hid);
-
 	ram_getspr(thread, SPR_HSRR0, &regs->hsrr0);
-	printf("HSRR0 : 0x%016" PRIx64 "\n", regs->hsrr0);
-
 	ram_getspr(thread, SPR_HSRR1, &regs->hsrr1);
-	printf("HSRR1 : 0x%016" PRIx64 "\n", regs->hsrr1);
-
 	ram_getspr(thread, SPR_HDEC, &regs->hdec);
-	printf("HDEC  : 0x%016" PRIx64 "\n", regs->hdec);
-
 	ram_getspr(thread, SPR_HSPRG0, &regs->hsprg0);
-	printf("HSPRG0: 0x%016" PRIx64 "\n", regs->hsprg0);
-
 	ram_getspr(thread, SPR_HSPRG1, &regs->hsprg1);
-	printf("HSPRG1: 0x%016" PRIx64 "\n", regs->hsprg1);
-
 	ram_getspr(thread, SPR_FSCR, &regs->fscr);
-	printf("FSCR  : 0x%016" PRIx64 "\n", regs->fscr);
 
 	ram_getspr(thread, SPR_DSISR, &value);
 	regs->dsisr = value;
-	printf("DSISR : 0x%08" PRIx32 "\n", regs->dsisr);
 
 	ram_getspr(thread, SPR_DAR, &regs->dar);
-	printf("DAR   : 0x%016" PRIx64 "\n", regs->dar);
-
 	ram_getspr(thread, SPR_SRR0, &regs->srr0);
-	printf("SRR0  : 0x%016" PRIx64 "\n", regs->srr0);
-
 	ram_getspr(thread, SPR_SRR1, &regs->srr1);
-	printf("SRR1  : 0x%016" PRIx64 "\n", regs->srr1);
-
 	ram_getspr(thread, SPR_DEC, &regs->dec);
-	printf("DEC   : 0x%016" PRIx64 "\n", regs->dec);
-
 	ram_getspr(thread, SPR_TB, &regs->tb);
-	printf("TB    : 0x%016" PRIx64 "\n", regs->tb);
-
 	ram_getspr(thread, SPR_SPRG0, &regs->sprg0);
-	printf("SPRG0 : 0x%016" PRIx64 "\n", regs->sprg0);
-
 	ram_getspr(thread, SPR_SPRG1, &regs->sprg1);
-	printf("SPRG1 : 0x%016" PRIx64 "\n", regs->sprg1);
-
 	ram_getspr(thread, SPR_SPRG2, &regs->sprg2);
-	printf("SPRG2 : 0x%016" PRIx64 "\n", regs->sprg2);
-
 	ram_getspr(thread, SPR_SPRG3, &regs->sprg3);
-	printf("SPRG3 : 0x%016" PRIx64 "\n", regs->sprg3);
-
 	ram_getspr(thread, SPR_PPR, &regs->ppr);
-	printf("PPR   : 0x%016" PRIx64 "\n", regs->ppr);
 
 	CHECK_ERR(thread->ram_destroy(thread));
+
+	thread_print_regs(regs);
 
 	return 0;
 }

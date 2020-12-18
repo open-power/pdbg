@@ -840,6 +840,12 @@ struct thread_regs {
 };
 
 /**
+ * @brief Print thread regs to stdout
+ * @param[in] regs the regs to print
+ */
+void thread_print_regs(struct thread_regs *regs);
+
+/**
  * @brief Set the MSR on a thread
  * @param[in] target the thread target to operate on
  * @param[in] val new value to set MSR to
