@@ -488,25 +488,6 @@ static struct chiplet p10_chiplet = {
 };
 DECLARE_HW_UNIT(p10_chiplet);
 
-static int p10_thread_probe(struct pdbg_target *target)
-{
-	struct thread *thread = target_to_thread(target);
-
-	thread->id = pdbg_target_index(target);
-
-	return 0;
-}
-
-static struct thread p10_thread = {
-	.target = {
-		.name = "POWER10 Thread",
-		.compatible = "ibm,power10-thread",
-		.class = "thread",
-		.probe = p10_thread_probe,
-	},
-};
-DECLARE_HW_UNIT(p10_thread);
-
 static uint64_t no_translate(struct pdbg_target *target, uint64_t addr)
 {
 	/*  No translation performed */
@@ -540,6 +521,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_pauc_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_pau_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_chiplet_hw_unit);
-	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_thread_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_fc_hw_unit);
 }

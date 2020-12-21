@@ -22,8 +22,16 @@
 #include "chip.h"
 #include "debug.h"
 
+/*
+ * NOTE!
+ * All timeouts and scom procedures in general through the file should be kept
+ * in synch with skiboot (e.g., core/direct-controls.c) as far as possible.
+ * If you fix a bug here, fix it in skiboot, and vice versa.
+ */
+
 #define P10_CORE_THREAD_STATE	0x28412
 #define P10_THREAD_INFO		0x28413
+#define P10_DIRECT_CONTROL	0x28449
 #define P10_RAS_STATUS		0x28454
 
 /* PCB Slave registers */
@@ -31,6 +39,7 @@
 #define  SPECIAL_WKUP_DONE	PPC_BIT(1)
 #define QME_SPWU_FSP		0xE8834
 
+#define RAS_STATUS_TIMEOUT	100 /* 100ms */
 #define SPECIAL_WKUP_TIMEOUT	100 /* 100ms */
 
 static int thread_read(struct thread *thread, uint64_t addr, uint64_t *data)
@@ -38,6 +47,13 @@ static int thread_read(struct thread *thread, uint64_t addr, uint64_t *data)
 	struct pdbg_target *core = pdbg_target_require_parent("core", &thread->target);
 
 	return pib_read(core, addr, data);
+}
+
+static uint64_t thread_write(struct thread *thread, uint64_t addr, uint64_t data)
+{
+	struct pdbg_target *chip = pdbg_target_require_parent("core", &thread->target);
+
+	return pib_write(chip, addr, data);
 }
 
 struct thread_state p10_thread_state(struct thread *thread)
@@ -80,6 +96,90 @@ struct thread_state p10_thread_state(struct thread *thread)
 
 	return thread_state;
 }
+
+static int p10_thread_probe(struct pdbg_target *target)
+{
+	struct thread *thread = target_to_thread(target);
+
+	thread->id = pdbg_target_index(target);
+	thread->status = thread->state(thread);
+
+	return 0;
+}
+
+static void p10_thread_release(struct pdbg_target *target)
+{
+	struct core *core = target_to_core(pdbg_target_require_parent("core", target));
+	struct thread *thread = target_to_thread(target);
+
+	if (thread->status.quiesced)
+		/* This thread is still quiesced so don't release spwkup */
+		core->release_spwkup = false;
+}
+
+static int p10_thread_start(struct thread *thread)
+{
+	if (!(thread->status.quiesced))
+		return 1;
+
+	if ((!(thread->status.active)) ||
+	    (thread->status.sleep_state == PDBG_THREAD_STATE_STOP)) {
+		/* Inactive or active and stopped: Clear Maint */
+		thread_write(thread, P10_DIRECT_CONTROL, PPC_BIT(3 + 8*thread->id));
+	} else {
+		/* Active and not stopped: Start */
+		thread_write(thread, P10_DIRECT_CONTROL, PPC_BIT(6 + 8*thread->id));
+	}
+
+	thread->status = thread->state(thread);
+
+	return 0;
+}
+
+static int p10_thread_stop(struct thread *thread)
+{
+	int i = 0;
+
+	thread_write(thread, P10_DIRECT_CONTROL, PPC_BIT(7 + 8*thread->id));
+	while (!(thread->state(thread).quiesced)) {
+		usleep(1000);
+		if (i++ > RAS_STATUS_TIMEOUT) {
+			PR_ERROR("Unable to quiesce thread\n");
+			break;
+		}
+	}
+	thread->status = thread->state(thread);
+
+	return 0;
+}
+
+static int p10_thread_sreset(struct thread *thread)
+{
+	/* Can only sreset if a thread is quiesced */
+	if (!(thread->status.quiesced))
+		return 1;
+
+	thread_write(thread, P10_DIRECT_CONTROL, PPC_BIT(4 + 8*thread->id));
+
+	thread->status = thread->state(thread);
+
+	return 0;
+}
+
+static struct thread p10_thread = {
+	.target = {
+		.name = "POWER10 Thread",
+		.compatible = "ibm,power10-thread",
+		.class = "thread",
+		.probe = p10_thread_probe,
+		.release = p10_thread_release,
+	},
+	.state = p10_thread_state,
+	.start = p10_thread_start,
+	.stop = p10_thread_stop,
+	.sreset = p10_thread_sreset,
+};
+DECLARE_HW_UNIT(p10_thread);
 
 static int p10_core_probe(struct pdbg_target *target)
 {
@@ -182,5 +282,6 @@ DECLARE_HW_UNIT(p10_core);
 __attribute__((constructor))
 static void register_p10chip(void)
 {
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_thread_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_core_hw_unit);
 }
