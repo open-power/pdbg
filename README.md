@@ -25,6 +25,12 @@ make
 rsync pdbg root@bmc:/usr/local/bin
 ```
 
+Depending on your cross compile environment, you may get a message like
+`pdbg: No such file or directory` when execting the binary on the BMC,
+which may be fixable by correcting loader location:
+
+`patchelf --set-interpreter /lib/ld-linux-armhf.so.3 pdbg`
+
 ## Usage
 
 Several backends are supported depending on which system you are using and are
