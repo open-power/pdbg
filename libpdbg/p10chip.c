@@ -111,8 +111,6 @@ static void p10_core_release(struct pdbg_target *target)
 	struct core *core = target_to_core(target);
 	enum pdbg_target_status status;
 
-	usleep(1); /* enforce small delay before and after it is cleared */
-
 	/* Probe and release all threads to ensure release_spwkup is up to
 	 * date */
 	pdbg_for_each_target("thread", target, child) {
@@ -135,7 +133,6 @@ static void p10_core_release(struct pdbg_target *target)
 		return;
 
 	pib_write(target, QME_SPWU_FSP, 0);
-	usleep(10000);
 }
 
 #define NUM_CORES_PER_EQ 4
