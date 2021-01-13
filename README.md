@@ -17,6 +17,11 @@ top level directory. Static linking is supported and can be performed by adding
 
 ### Cross compiling for BMC (ARM)
 
+First, work out if your BMC is using the hard or soft float ABI. If the
+file /lib/ld-linux.so.3 exists, soft-float. If /lib/ld-linux-armhf.so.3
+exists, hard-float.
+
+To build for soft-float:
 ```
 apt-get install gcc-arm-linux-gnueabi
 ./bootstrap.sh
@@ -25,11 +30,14 @@ make
 rsync pdbg root@bmc:/usr/local/bin
 ```
 
-Depending on your cross compile environment, you may get a message like
-`pdbg: No such file or directory` when execting the binary on the BMC,
-which may be fixable by correcting loader location:
-
-`patchelf --set-interpreter /lib/ld-linux-armhf.so.3 pdbg`
+For hard-float:
+```
+apt-get install gcc-arm-linux-gnueabihf
+./bootstrap.sh
+./configure --host=arm-linux-gnueabihf CFLAGS="-static"
+make
+rsync pdbg root@bmc:/usr/local/bin
+```
 
 ## Usage
 
