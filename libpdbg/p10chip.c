@@ -60,11 +60,24 @@ struct thread_state p10_thread_state(struct thread *thread)
 {
 	struct thread_state thread_state;
 	uint64_t value;
+	bool maint_mode, thread_quiesced, ict_empty;
 	uint8_t smt_mode;
 
 	thread_read(thread, P10_RAS_STATUS, &value);
 
-	thread_state.quiesced = (GETFIELD(PPC_BITMASK(1 + 8*thread->id, 3 + 8*thread->id), value) == 0x7);
+	maint_mode	= (value & PPC_BIT(0 + 8*thread->id));
+	thread_quiesced	= (value & PPC_BIT(1 + 8*thread->id));
+	ict_empty	= (value & PPC_BIT(2 + 8*thread->id));
+
+	/*
+	 * RAM mode (if implemented) additionally requires bit 3 (LSU quiesce)
+	 * to be set. RAM mode has other requirements as well, so those could
+	 * all be put into ram_setup.
+	 */
+	if (maint_mode && thread_quiesced && ict_empty)
+		thread_state.quiesced = true;
+	else
+		thread_state.quiesced = false;
 
 	thread_read(thread, P10_THREAD_INFO, &value);
 	thread_state.active = !!(value & PPC_BIT(thread->id));
