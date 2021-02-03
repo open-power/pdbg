@@ -18,8 +18,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "target.h"
-#include <libfdt/libfdt.h>
-#include <libfdt/libfdt_internal.h>
+#include <libfdt.h>
 #include <ccan/list/list.h>
 #include <ccan/short_types/short_types.h>
 #include <ccan/str/str.h>

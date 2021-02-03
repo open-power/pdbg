@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <ccan/list/list.h>
-#include <libfdt/libfdt.h>
+#include <libfdt.h>
 
 #include "bitutils.h"
 #include "hwunit.h"
