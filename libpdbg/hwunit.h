@@ -330,4 +330,9 @@ struct ocmb {
 };
 #define target_to_ocmb(x) container_of(x, struct ocmb, target);
 
+struct smpgroup {
+	struct pdbg_target target;
+};
+#define target_to_smpgroup(x) container_of(x, struct smpgroup, target)
+
 #endif /* __HWUNIT_H */

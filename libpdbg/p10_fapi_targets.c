@@ -504,6 +504,17 @@ static struct fc p10_fc = {
 };
 DECLARE_HW_UNIT(p10_fc);
 
+static struct smpgroup p10_smpgroup = {
+	.target = {
+		.name = "POWER10 SMP Group",
+		.compatible = "ibm,power10-smpgroup",
+		.class = "smpgroup",
+		.translate = no_translate,
+	},
+};
+DECLARE_HW_UNIT(p10_smpgroup);
+
+
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
@@ -522,4 +533,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_pau_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_chiplet_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_fc_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_smpgroup_hw_unit);
 }
