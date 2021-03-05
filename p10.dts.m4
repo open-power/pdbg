@@ -124,9 +124,9 @@ define(`addr', CONCAT(chiplet_id, 000000))dnl
 ')
 
 dnl
-dnl IOHS([chiplet], [index])
+dnl IOHS_([chiplet], [index])
 dnl
-define(`IOHS',
+define(`IOHS_',
 `define(`chiplet_id', $1)dnl
 define(`addr', CONCAT(chiplet_id, 000000))dnl
 
@@ -136,6 +136,22 @@ define(`addr', CONCAT(chiplet_id, 000000))dnl
 		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
 		compatible = "ibm,power10-iohs";
 		index = <$2>;
+	};
+')
+
+dnl
+dnl SMPGROUP([chiplet], [index])
+dnl
+define(`SMPGROUP',
+`define(`chiplet_id', $1)dnl
+define(`addr', CONCAT(chiplet_id, 000000))dnl
+
+	smpgroup@$2 {
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		reg = <0x00 CONCAT(0x,addr) 0xfffff>;
+		compatible = "ibm,power10-smpgroup";
+		index = <0x$2>;
 	};
 ')
 
@@ -469,35 +485,51 @@ define(`CHIP',
 			};
 
 			CHIPLET_(18)
-				IOHS(18,0)
+				IOHS_(18,0)
+					SMPGROUP(18,0)
+					SMPGROUP(18,1)
 			};
 
 			CHIPLET_(19)
-				IOHS(19,1)
+				IOHS_(19,1)
+					SMPGROUP(19,2)
+					SMPGROUP(19,3)
 			};
 
 			CHIPLET_(1a)
-				IOHS(1a,2)
+				IOHS_(1a,2)
+					SMPGROUP(1a,4)
+					SMPGROUP(1a,5)
 			};
 
 			CHIPLET_(1b)
-				IOHS(1b,3)
+				IOHS_(1b,3)
+					SMPGROUP(1b,6)
+					SMPGROUP(1b,7)
 			};
 
 			CHIPLET_(1c)
-				IOHS(1c,4)
+				IOHS_(1c,4)
+					SMPGROUP(1c,8)
+					SMPGROUP(1c,9)
 			};
 
 			CHIPLET_(1d)
-				IOHS(1d,5)
+				IOHS_(1d,5)
+					SMPGROUP(1d,a)
+					SMPGROUP(1d,b)
 			};
 
 			CHIPLET_(1e)
-				IOHS(1e,6)
+				IOHS_(1e,6)
+					SMPGROUP(1e,c)
+					SMPGROUP(1e,d)
 			};
 
 			CHIPLET_(1f)
-				IOHS(1f,7)
+				IOHS_(1f,7)
+					SMPGROUP(1f,e)
+					SMPGROUP(1f,f)
 			};
 
 			CHIPLET_(20)
