@@ -59,6 +59,8 @@ static int i2c_addr = 0x50;
 
 static const char *pathsel[MAX_PATH_ARGS];
 static int pathsel_count;
+static int l_list[MAX_LINUX_CPUS];
+static int l_count;
 
 static int probe(void);
 
@@ -133,7 +135,6 @@ static void print_usage(void)
 	printf("\t-t, --thread=<0-%d>|<range>|<list>\n", MAX_THREADS-1);
 #ifdef TARGET_PPC
 	printf("\t-l, --cpu=<0-%d>|<range>|<list>\n", MAX_PROCESSORS-1);
-	printf("\t\tRequires device (-d) to be set to p8|p9\n");
 #endif
 	printf("\t-P, --path=<device tree node spec>\n");
 	printf("\t-a, --all\n");
@@ -204,27 +205,33 @@ out2:
 #define P8_PIR2COREID(pir) (((pir) >> 3) & 0xf)
 #define P8_PIR2THREADID(pir) ((pir) & 0x7)
 
-void pir_map(int pir, int *chip, int *core, int *thread)
+bool pir_map(int pir, int *chip, int *core, int *thread)
 {
 	assert(chip && core && thread);
 
-	if (!strncmp(device_node, "p9", 2)) {
+	switch (pdbg_get_proc()) {
+	case PDBG_PROC_P9:
 		*chip = P9_PIR2GCID(pir);
 		*core = P9_PIR2COREID(pir);
 		*thread = P9_PIR2THREADID(pir);
-	} else if (!strncmp(device_node, "p8", 2)) {
+		break;
+	case PDBG_PROC_P8:
 		*chip = P8_PIR2GCID(pir);
 		*core = P8_PIR2COREID(pir);
 		*thread = P8_PIR2THREADID(pir);
-	} else
-		assert(0);
+		break;
+	default:
+		PR_ERROR("Unable to determine processor type for mapping to Linux CPU number\n");
+		return false;
+	}
 
+	return true;
 }
 
 #define PPC_OPTS "l:"
 #else
 int get_pir(int linux_cpu) { return -1; }
-void pir_map(int pir, int *chip, int *core, int *thread) {}
+bool pir_map(int pir, int *chip, int *core, int *thread) { return false; }
 #define PPC_OPTS
 #endif
 
@@ -285,8 +292,7 @@ static bool parse_options(int argc, char *argv[])
 	int p_list[MAX_PROCESSORS];
 	int c_list[MAX_CHIPS];
 	int t_list[MAX_THREADS];
-	int l_list[MAX_LINUX_CPUS];
-	int p_count = 0, c_count = 0, t_count = 0, l_count = 0;
+	int p_count = 0, c_count = 0, t_count = 0;
 	int i;
 	struct option long_opts[] = {
 		{"all",			no_argument,		NULL,	'a'},
@@ -484,32 +490,33 @@ static bool parse_options(int argc, char *argv[])
 			return false;
 	}
 
-	if (l_count) {
-		int pir = -1, i, chip, core, thread;
-
-		if (!device_node)
-			return false;
-
-		for (i = 0; i < MAX_LINUX_CPUS; i++) {
-			if (l_list[i] == 1) {
-				pir = get_pir(i);
-				if (pir < 0)
-					return true;
-
-				pir_map(pir, &chip, &core, &thread);
-
-				if (!pathsel_add("pib%d", chip))
-					return false;
-				if (!pathsel_add("pib%d/core%d", chip, core))
-					return false;
-				if (!pathsel_add("pib%d/core%d/thread%d", chip, core, thread))
-					return false;
-			}
-		}
-	}
-
 	return true;
 }
+
+static bool cpus_parse(int args[], int arg_count)
+{
+	int pir = -1, i, chip, core, thread;
+
+	for (i = 0; i < MAX_LINUX_CPUS; i++) {
+		if (args[i] == 1) {
+			pir = get_pir(i);
+			if (pir < 0)
+				return true;
+
+			if (!pir_map(pir, &chip, &core, &thread))
+				return false;
+
+			if (!pathsel_add("pib%d", chip))
+				return false;
+			if (!pathsel_add("pib%d/core%d", chip, core))
+				return false;
+			if (!pathsel_add("pib%d/core%d/thread%d", chip, core, thread))
+				return false;
+		}
+	}
+	return true;
+}
+
 
 static void print_target(struct pdbg_target *target, int level)
 {
@@ -581,6 +588,11 @@ int main(int argc, char *argv[])
 
 	if (!pdbg_targets_init(NULL))
 		return 1;
+
+	if (l_count) {
+		if (!cpus_parse(l_list, l_count))
+			return 1;
+	}
 
 	if (pathsel_count) {
 		if (!path_target_parse(pathsel, pathsel_count))
