@@ -75,8 +75,8 @@ int sbefifo_get_dump(struct sbefifo_context *sctx, uint8_t type, uint8_t clock, 
 	if (rc)
 		return rc;
 
-	/* dump size can be as large as 64MB */
-	out_len = 64 * 1024 * 1024;
+	/* dump size can be as large as 80MB */
+	out_len = 80 * 1024 * 1024;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
 	free(msg);
 	if (rc)
