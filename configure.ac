@@ -1,4 +1,4 @@
-AC_INIT([pdbg], [3.2])
+AC_INIT([pdbg],[3.2])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 AC_SUBST(SONAME_CURRENT, 4)
@@ -8,7 +8,7 @@ AC_SUBST(SONAME_AGE, 0)
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_AS
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_PATH_PROG([M4], [m4])
 if test x"$ac_cv_path_M4" = "x" ; then
@@ -51,7 +51,7 @@ AM_CONDITIONAL([TARGET_ARM], [test x"$ARCH" = "xarm"])
 AM_CONDITIONAL([TARGET_PPC], [test x"$ARCH" = "xppc"])
 
 AC_ARG_ENABLE(gdbserver,
-AC_HELP_STRING([--disable-gdbserver], [disables building the gdbserver]),
+AS_HELP_STRING([--disable-gdbserver],[disables building the gdbserver]),
 want_gdbserver=false,
 want_gdbserver=true)
 AM_CONDITIONAL([GDBSERVER], [test x$want_gdbserver = xtrue])
