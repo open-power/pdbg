@@ -455,7 +455,7 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 	return chipop->mpipl_get_ti_info(chipop, data, data_len);
 }
 
-int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t **data, uint32_t *data_len)
+int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
 {
 	struct chipop *chipop;
 
@@ -468,7 +468,7 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t **
 		return -1;
 	}
 
-	return chipop->dump(chipop, type, clock, data, data_len);
+	return chipop->dump(chipop, type, clock, fa_collect, data, data_len);
 }
 
 int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)

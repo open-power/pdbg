@@ -205,12 +205,12 @@ static int sbefifo_op_mpipl_get_ti_info(struct chipop *chipop, uint8_t **data, u
 	return sbefifo_mpipl_get_ti_info(sctx, data, data_len);
 }
 
-static int sbefifo_op_dump(struct chipop *chipop, uint8_t type, uint8_t clock, uint8_t **data, uint32_t *data_len)
+static int sbefifo_op_dump(struct chipop *chipop, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 
-	return sbefifo_get_dump(sctx, type, clock, data, data_len);
+	return sbefifo_get_dump(sctx, type, clock, fa_collect, data, data_len);
 }
 
 static struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)

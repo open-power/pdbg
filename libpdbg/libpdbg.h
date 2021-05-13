@@ -1362,12 +1362,13 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
  * @param[in] target pib target to operate on
  * @param[in] type Type of dump
  * @param[in] clock Clock on or off
+ * @param[in] fa_collect Fast Array collection (0 off, 1 on)
  * @param[out] data Dump information
  * @param[out] data_len length of the data
  *
  * @return 0 on success, -1 on failure
  */
-int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t **data, uint32_t *data_len);
+int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len);
 
 /**
  * @brief Read a OCMB SCOM register

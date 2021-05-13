@@ -200,6 +200,6 @@ int sbefifo_mpipl_get_ti_info(struct sbefifo_context *sctx, uint8_t **data, uint
 #define SBEFIFO_DUMP_CLOCK_ON            0x01
 #define SBEFIFO_DUMP_CLOCK_OFF           0x02
 
-int sbefifo_get_dump(struct sbefifo_context *sctx, uint8_t type, uint8_t clock, uint8_t **data, uint32_t *data_len);
+int sbefifo_get_dump(struct sbefifo_context *sctx, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len);
 
 #endif /* __LIBSBEFIFO_H__ */
