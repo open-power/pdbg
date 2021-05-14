@@ -180,8 +180,15 @@ int get_pir(int linux_cpu)
 
 	file = fopen(filename, "r");
 	if (!file) {
-		PR_ERROR("Invalid Linux CPU number %" PRIi32 "\n", linux_cpu);
-		goto out2;
+		switch (errno) {
+		case ENOENT:
+			PR_ERROR("Invalid Linux CPU number %" PRIi32 "\n", linux_cpu);
+			goto out2;
+		case EACCES:
+		default:
+			PR_ERROR("Can't access %s. Try running as root\n", filename);
+			goto out2;
+		}
 	}
 
 	if(fscanf(file, "%" PRIx32 "\n", &pir) != 1) {
