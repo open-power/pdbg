@@ -335,4 +335,9 @@ struct smpgroup {
 };
 #define target_to_smpgroup(x) container_of(x, struct smpgroup, target)
 
+struct dimm {
+    struct pdbg_target target;
+};
+#define target_to_dimm(x) container_of(x, struct dimm, target)
+
 #endif /* __HWUNIT_H */
