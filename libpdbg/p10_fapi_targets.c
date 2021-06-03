@@ -514,6 +514,16 @@ static struct smpgroup p10_smpgroup = {
 };
 DECLARE_HW_UNIT(p10_smpgroup);
 
+struct mem_port p10_mem_port = {
+	.target = {
+		.name = "POWER10 mem_port",
+		.compatible = "ibm,power10-memport",
+		.class = "mem_port",
+		.translate = no_translate,
+	},
+};
+DECLARE_HW_UNIT(p10_mem_port);
+
 
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
@@ -534,4 +544,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_chiplet_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_fc_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_smpgroup_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_mem_port_hw_unit);
 }
