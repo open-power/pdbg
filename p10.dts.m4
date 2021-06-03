@@ -245,6 +245,17 @@ define(`OCMB_',
 ')
 
 dnl
+dnl MEM_PORT_([index])
+dnl
+define(`MEM_PORT_',
+`define(`id', eval(`$1 % 2'))dnl
+
+	CONCAT(mem_port, id) {
+		compatible = "ibm,power10-memport";
+		index = <$1>;
+')
+
+dnl
 dnl PEC_([chiplet], [index])
 dnl
 define(`PEC_',
@@ -369,20 +380,28 @@ define(`CHIP',
 						MCC_(c,0)
 							OMI_(c,0)
 								OCMB_(0)
+									MEM_PORT_(0)
+									};
 								};
 							};
 							OMI_(c,1)
 								OCMB_(1)
+									MEM_PORT_(1)
+									};
 								};
 							};
 						};
 						MCC_(c,1)
 							OMI_(c,2)
 								OCMB_(2)
+									MEM_PORT_(2)
+									};
 								};
 							};
 							OMI_(c,3)
 								OCMB_(3)
+									MEM_PORT_(3)
+									};
 								};
 							};
 						};
@@ -398,20 +417,28 @@ define(`CHIP',
 						MCC_(d,2)
 							OMI_(d,4)
 								OCMB_(4)
+									MEM_PORT_(4)
+									};
 								};
 							};
 							OMI_(d,5)
 								OCMB_(5)
+									MEM_PORT_(5)
+									};
 								};
 							};
 						};
 						MCC_(d,3)
 							OMI_(d,6)
 								OCMB_(6)
+									MEM_PORT_(6)
+									};
 								};
 							};
 							OMI_(d,7)
 								OCMB_(7)
+									MEM_PORT_(7)
+									};
 								};
 							};
 						};
