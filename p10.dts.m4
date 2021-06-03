@@ -256,6 +256,17 @@ define(`MEM_PORT_',
 ')
 
 dnl
+dnl DIMM([index])
+dnl
+define(`DIMM',
+`
+	CONCAT(dimm, $1) {
+		compatible = "ibm,power10-dimm";
+		index = <$1>;
+	};
+')
+
+dnl
 dnl PEC_([chiplet], [index])
 dnl
 define(`PEC_',
@@ -381,12 +392,14 @@ define(`CHIP',
 							OMI_(c,0)
 								OCMB_(0)
 									MEM_PORT_(0)
+										DIMM(0)
 									};
 								};
 							};
 							OMI_(c,1)
 								OCMB_(1)
 									MEM_PORT_(1)
+										DIMM(1)
 									};
 								};
 							};
@@ -395,12 +408,14 @@ define(`CHIP',
 							OMI_(c,2)
 								OCMB_(2)
 									MEM_PORT_(2)
+										DIMM(2)
 									};
 								};
 							};
 							OMI_(c,3)
 								OCMB_(3)
 									MEM_PORT_(3)
+										DIMM(3)
 									};
 								};
 							};
@@ -418,12 +433,14 @@ define(`CHIP',
 							OMI_(d,4)
 								OCMB_(4)
 									MEM_PORT_(4)
+										DIMM(4)
 									};
 								};
 							};
 							OMI_(d,5)
 								OCMB_(5)
 									MEM_PORT_(5)
+										DIMM(5)
 									};
 								};
 							};
@@ -432,12 +449,14 @@ define(`CHIP',
 							OMI_(d,6)
 								OCMB_(6)
 									MEM_PORT_(6)
+										DIMM(6)
 									};
 								};
 							};
 							OMI_(d,7)
 								OCMB_(7)
 									MEM_PORT_(7)
+										DIMM(7)
 									};
 								};
 							};
