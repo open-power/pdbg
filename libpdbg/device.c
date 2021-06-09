@@ -501,7 +501,7 @@ static enum pdbg_target_status str_to_status(const char *status)
 	else if (!strcmp(status, "unknown"))
 		return PDBG_TARGET_UNKNOWN;
 	else
-		assert(0);
+		abort();
 }
 
 static int dt_expand_node(struct pdbg_target *node, void *fdt, int fdt_node)

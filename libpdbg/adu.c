@@ -15,6 +15,7 @@
  */
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 
@@ -107,7 +108,7 @@ uint8_t blog2(uint8_t x)
 	case 64:
 		return 6;
 	default:
-		assert(0);
+		abort();
 	}
 }
 
