@@ -320,7 +320,8 @@ static int cfam_hmfsi_probe(struct pdbg_target *target)
 	int rc;
 
 	/* Enable the port in the upstream control register */
-	assert(!(pdbg_target_u32_property(target, "port", &port)));
+	rc = pdbg_target_u32_property(target, "port", &port);
+	assert(!rc);
 	fsi_read(fsi_parent, 0x3404, &value);
 	value |= 1 << (31 - port);
 	if ((rc = fsi_write(fsi_parent, 0x3404, value))) {

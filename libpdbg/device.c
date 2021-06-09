@@ -501,7 +501,7 @@ static enum pdbg_target_status str_to_status(const char *status)
 	else if (!strcmp(status, "unknown"))
 		return PDBG_TARGET_UNKNOWN;
 	else
-		assert(0);
+		abort();
 }
 
 static int dt_expand_node(struct pdbg_target *node, void *fdt, int fdt_node)
@@ -600,10 +600,11 @@ uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 
 	u32 na = dt_n_address_cells(target);
 	u32 ns = dt_n_size_cells(target);
-	u32 n;
+#ifndef NDEBUG
+	u32 n = (na + ns) * sizeof(u32);
+#endif
 
 	p = dt_require_property(target, "reg", -1, &len);
-	n = (na + ns) * sizeof(u32);
 	assert(n <= len);
 	if (out_size)
 		*out_size = dt_get_number(p + na * sizeof(u32), ns);

@@ -166,7 +166,7 @@ OPTCMD_DEFINE_CMD_WITH_FLAGS(getmemio, getmemio, (ADDRESS, DATA, BLOCK_SIZE),
 static int _putmem(const char *mem_prefix, uint64_t addr, uint8_t block_size, bool ci)
 {
 	uint8_t *buf;
-	size_t buflen;
+	size_t buflen = 0;
 	int rc, count = 0;
 	struct pdbg_target *target;
 
