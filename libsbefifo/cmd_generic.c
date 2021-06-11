@@ -43,18 +43,19 @@ static int sbefifo_get_ffdc_push(uint8_t **buf, uint32_t *buflen)
 	return 0;
 }
 
-static int sbefifo_get_ffdc_pull(uint8_t *buf, uint32_t buflen, uint8_t **ffdc, uint32_t *ffdc_len)
+static int sbefifo_get_ffdc_pull(uint8_t *buf, uint32_t buflen)
 {
-	*ffdc_len = buflen;
-	*ffdc = buf;
+	if (buflen < 3*sizeof(uint32_t))
+		return EPROTO;
 
 	return 0;
 }
 
-int sbefifo_get_ffdc(struct sbefifo_context *sctx, uint8_t **ffdc, uint32_t *ffdc_len)
+int sbefifo_get_ffdc(struct sbefifo_context *sctx)
 {
 	uint8_t *msg, *out;
 	uint32_t msg_len, out_len;
+	uint32_t status;
 	int rc;
 
 	rc = sbefifo_get_ffdc_push(&msg, &msg_len);
@@ -68,8 +69,13 @@ int sbefifo_get_ffdc(struct sbefifo_context *sctx, uint8_t **ffdc, uint32_t *ffd
 	if (rc)
 		return rc;
 
-	rc = sbefifo_get_ffdc_pull(out, out_len, ffdc, ffdc_len);
-	return rc;
+	rc = sbefifo_get_ffdc_pull(out, out_len);
+	if (rc)
+		return rc;
+
+	status = SBEFIFO_PRI_UNKNOWN_ERROR | SBEFIFO_SEC_GENERIC_FAILURE;
+	sbefifo_ffdc_set(sctx, status, out, out_len);
+	return 0;
 }
 
 static int sbefifo_get_capabilities_push(uint8_t **buf, uint32_t *buflen)

@@ -182,7 +182,7 @@ int sbefifo_control_trace_array(struct sbefifo_context *sctx, uint16_t target_ty
 
 int sbefifo_control_insn(struct sbefifo_context *sctx, uint8_t core_id, uint8_t thread_id, uint8_t thread_op, uint8_t mode);
 
-int sbefifo_get_ffdc(struct sbefifo_context *sctx, uint8_t **ffdc, uint32_t *ffdc_len);
+int sbefifo_get_ffdc(struct sbefifo_context *sctx);
 int sbefifo_get_capabilities(struct sbefifo_context *sctx, uint32_t *version, char **commit_id, char **release_tag, uint32_t **caps, uint32_t *caps_count);
 int sbefifo_quiesce(struct sbefifo_context *sctx);
 
