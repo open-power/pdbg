@@ -17,6 +17,7 @@
  */
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 #include "hwunit.h"
@@ -320,7 +321,10 @@ static int cfam_hmfsi_probe(struct pdbg_target *target)
 	int rc;
 
 	/* Enable the port in the upstream control register */
-	assert(!(pdbg_target_u32_property(target, "port", &port)));
+	if (pdbg_target_u32_property(target, "port", &port)) {
+		PR_ERROR("Attribute port not defined for %s\n", pdbg_target_path(target));
+		abort();
+	}
 	fsi_read(fsi_parent, 0x3404, &value);
 	value |= 1 << (31 - port);
 	if ((rc = fsi_write(fsi_parent, 0x3404, value))) {

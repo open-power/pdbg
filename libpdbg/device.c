@@ -417,7 +417,7 @@ static const void *dt_require_property(struct pdbg_target *node,
 
 		prerror("DT: Missing required property %s/%s\n",
 			path, name);
-		assert(false);
+		abort();
 	}
 	if (wanted_len >= 0 && len != wanted_len) {
 		const char *path = dt_get_path(node);
@@ -426,7 +426,7 @@ static const void *dt_require_property(struct pdbg_target *node,
 			path, name);
 		prerror("DT: Expected len: %d got len: %zu\n",
 			wanted_len, len);
-		assert(false);
+		abort();
 	}
 
 	if (prop_len) {
@@ -604,7 +604,10 @@ uint64_t pdbg_target_address(struct pdbg_target *target, uint64_t *out_size)
 
 	p = dt_require_property(target, "reg", -1, &len);
 	n = (na + ns) * sizeof(u32);
-	assert(n <= len);
+	if (n > len) {
+		PR_ERROR("Invalid reg value for %s\n", pdbg_target_path(target));
+		abort();
+	}
 	if (out_size)
 		*out_size = dt_get_number(p + na * sizeof(u32), ns);
 	return dt_get_number(p, na);
