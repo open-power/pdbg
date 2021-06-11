@@ -135,8 +135,16 @@ static enum pdbg_backend default_backend(void)
 	if (rc == 0) /* AMI BMC */
 		return PDBG_BACKEND_I2C;
 
-	if (kernel_get_fsi_path() != NULL) /* Kernel interface. OpenBMC */
+	if (kernel_get_fsi_path() != NULL) { /* Kernel interface. OpenBMC */
+		uint32_t chip_id = 0;
+
+		if (get_chipid(&chip_id)) {
+			if (chip_id == CHIP_ID_P10) {
+				return PDBG_BACKEND_SBEFIFO;
+			}
+		}
 		return PDBG_BACKEND_KERNEL;
+	}
 
 	return PDBG_BACKEND_FAKE;
 }
