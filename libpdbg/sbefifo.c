@@ -26,6 +26,10 @@
 #include "debug.h"
 #include "sprs.h"
 #include "chip.h"
+#include "bitutils.h"
+
+#define SBE_MSG_REG	0x2809
+#define   SBE_MSG_ASYNC_FFDC PPC_BIT32(1)
 
 static int sbefifo_op_getmem(struct mem *sbefifo_mem,
 			     uint64_t addr, uint8_t *data, uint64_t size,
@@ -164,10 +168,33 @@ static int sbefifo_op_putmem_pba(struct mem *sbefifo_mem,
 
 static uint32_t sbefifo_op_ffdc_get(struct chipop *chipop, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
+	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", &chipop->target);
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+	uint32_t status, value = 0;
+	int rc;
 
-	return sbefifo_ffdc_get(sctx, ffdc, ffdc_len);
+	status = sbefifo_ffdc_get(sctx, ffdc, ffdc_len);
+	if (status)
+		return status;
+
+	/* Check if async FFDC is set */
+	rc = fsi_read(fsi, SBE_MSG_REG, &value);
+	if (rc) {
+		PR_NOTICE("Failed to read sbe mailbox register\n");
+		goto end;
+	}
+
+	if ((value & SBE_MSG_ASYNC_FFDC) == SBE_MSG_ASYNC_FFDC) {
+		sbefifo_get_ffdc(sbefifo->sf_ctx);
+		return sbefifo_ffdc_get(sctx, ffdc, ffdc_len);
+	}
+
+end:
+	*ffdc = NULL;
+	*ffdc_len = 0;
+	return 0;
+
 }
 
 static int sbefifo_op_istep(struct chipop *chipop,
