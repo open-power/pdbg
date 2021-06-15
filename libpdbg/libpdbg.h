@@ -543,7 +543,12 @@ bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option);
  * PDBG_DTB, then it will override the default device tree or the specified
  * device tree.
  *
- * @note This function can only be called once.
+ * @note This function can only be called once.  If the call fails, then it
+ * indicates failure to identify the system device tree to load. On failure,
+ * it's possible to call this function again with different argument or after
+ * modifying the value of the environment variable PDBG_DTB.  On success, any
+ * subsequent calls with always return success without re-loading the system
+ * device tree.
  */
 bool pdbg_targets_init(void *fdt);
 
