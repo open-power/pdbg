@@ -17,7 +17,7 @@ extern "C" {
  * @param[in]  major istep major number
  * @param[in]  minor istep minor number
  *
- * @return 0 on success, errno on failure
+ * @return 0 on success, -1 on failure
  */
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor);
 

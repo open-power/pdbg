@@ -50,6 +50,7 @@ static struct chipop *pib_to_chipop(struct pdbg_target *pib)
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 {
 	struct chipop *chipop;
+	int rc;
 
 	chipop = pib_to_chipop(target);
 	if (!chipop)
@@ -60,12 +61,19 @@ int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 		return -1;
 	}
 
-	return chipop->istep(chipop, major, minor);
+	rc = chipop->istep(chipop, major, minor);
+	if (rc) {
+		PR_ERROR("sbe istep() returned rc=%d\n", rc);
+		return -1;
+	}
+
+	return 0;
 }
 
 int sbe_mpipl_enter(struct pdbg_target *target)
 {
 	struct chipop *chipop;
+	int rc;
 
 	chipop = pib_to_chipop(target);
 	if (!chipop)
@@ -76,12 +84,19 @@ int sbe_mpipl_enter(struct pdbg_target *target)
 		return -1;
 	}
 
-	return chipop->mpipl_enter(chipop);
+	rc = chipop->mpipl_enter(chipop);
+	if (rc) {
+		PR_ERROR("sbe mpipl_enter() returned rc=%d\n", rc);
+		return -1;
+	}
+
+	return 0;
 }
 
 int sbe_mpipl_continue(struct pdbg_target *target)
 {
 	struct chipop *chipop;
+	int rc;
 
 	chipop = pib_to_chipop(target);
 	if (!chipop)
@@ -92,12 +107,19 @@ int sbe_mpipl_continue(struct pdbg_target *target)
 		return -1;
 	}
 
-	return chipop->mpipl_continue(chipop);
+	rc = chipop->mpipl_continue(chipop);
+	if (rc) {
+		PR_ERROR("sbe mpipl_continue() returned rc=%d\n", rc);
+		return -1;
+	}
+
+	return 0;
 }
 
 int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *data_len)
 {
 	struct chipop *chipop;
+	int rc;
 
 	chipop = pib_to_chipop(target);
 	if (!chipop)
@@ -108,12 +130,19 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 		return -1;
 	}
 
-	return chipop->mpipl_get_ti_info(chipop, data, data_len);
+	rc = chipop->mpipl_get_ti_info(chipop, data, data_len);
+	if (rc) {
+		PR_ERROR("sbe mpipl_get_ti_info() returned rc=%d\n", rc);
+		return -1;
+	}
+
+	return 0;
 }
 
 int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
 {
 	struct chipop *chipop;
+	int rc;
 
 	chipop = pib_to_chipop(target);
 	if (!chipop)
@@ -124,7 +153,13 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa
 		return -1;
 	}
 
-	return chipop->dump(chipop, type, clock, fa_collect, data, data_len);
+	rc = chipop->dump(chipop, type, clock, fa_collect, data, data_len);
+	if (rc) {
+		PR_ERROR("sbe dump() returned rc=%d\n", rc);
+		return -1;
+	}
+
+	return 0;
 }
 
 int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc, uint32_t *ffdc_len)
