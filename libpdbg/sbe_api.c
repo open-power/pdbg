@@ -24,6 +24,37 @@
 #include "debug.h"
 #include "libpdbg_sbe.h"
 
+#define SBE_MSG_REG	0x2809
+#define SBE_STATE_REG	0x2986
+
+enum {
+	SBE_MSG_STATE_UNKNOWN = 0x0,
+	SBE_MSG_STATE_IPLING  = 0x1,
+	SBE_MSG_STATE_ISTEP   = 0x2,
+	SBE_MSG_STATE_MPIPL   = 0x3,
+	SBE_MSG_STATE_RUNTIME = 0x4,
+	SBE_MSG_STATE_DMT     = 0x5,
+	SBE_MSG_STATE_DUMP    = 0x6,
+	SBE_MSG_STATE_FAILURE = 0x7,
+	SBE_MSG_STATE_QUIESCE = 0x8,
+
+	SBE_MSG_STATE_INVALID = 0xF,
+};
+
+union sbe_msg_register {
+	uint32_t reg;
+	struct {
+		uint32_t reserved2: 6;
+		uint32_t minor_step: 6;
+		uint32_t major_step: 8;
+		uint32_t curr_state: 4;
+		uint32_t prev_state: 4;
+		uint32_t reserved1: 2;
+		uint32_t async_ffdc: 1;
+		uint32_t sbe_booted: 1;
+	};
+};
+
 static struct chipop *pib_to_chipop(struct pdbg_target *pib)
 {
 	struct pdbg_target *chipop;
@@ -186,6 +217,67 @@ int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc, u
 	} else {
 		*ffdc = NULL;
 		*ffdc_len = 0;
+	}
+
+	return 0;
+}
+
+static int sbe_read_msg_register(struct pdbg_target *pib, uint32_t *value)
+{
+	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
+	int rc;
+
+	assert(pdbg_target_is_class(pib, "pib"));
+
+	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	rc = fsi_read(fsi, SBE_MSG_REG, value);
+	if (rc) {
+		PR_NOTICE("Failed to read sbe mailbox register\n");
+		return rc;
+	}
+
+	return 0;
+}
+
+static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
+{
+	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
+	int rc;
+
+	assert(pdbg_target_is_class(pib, "pib"));
+
+	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	rc = fsi_read(fsi, SBE_STATE_REG, value);
+	if (rc) {
+		PR_NOTICE("Failed to read sbe state register\n");
+		return rc;
+	}
+
+	return 0;
+}
+
+int sbe_get_state(struct pdbg_target *pib, enum sbe_state *state)
+{
+	union sbe_msg_register msg;
+	uint32_t value;
+	int rc;
+
+	rc = sbe_read_state_register(pib, &value);
+	if (rc)
+		return -1;
+
+	if (value == SBE_STATE_CHECK_CFAM) {
+		rc = sbe_read_msg_register(pib, &msg.reg);
+		if (rc)
+			return -1;
+
+		*state = msg.sbe_booted ? SBE_STATE_BOOTED : SBE_STATE_NOT_USABLE;
+	} else {
+		*state = value;
 	}
 
 	return 0;

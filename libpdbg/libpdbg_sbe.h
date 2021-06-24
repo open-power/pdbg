@@ -10,6 +10,16 @@ extern "C" {
 
 #include "libpdbg.h"
 
+enum sbe_state {
+	SBE_STATE_NOT_USABLE  = 0x00000000,
+	SBE_STATE_BOOTED      = 0x00000001,
+	SBE_STATE_CHECK_CFAM  = 0x00000002,
+	SBE_STATE_DEBUG_MODE  = 0x00000003,
+	SBE_STATE_FAILED      = 0x00000004,
+
+	SBE_STATE_INVALID     = 0x0000000F,
+};
+
 /**
  * @brief Execute IPL istep using SBE
  *
@@ -81,6 +91,18 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
  * @return 0 on success, -1 on failure
  */
 int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len);
+
+/**
+ * @brief Get sbe state
+ *
+ * Get the current state of SBE
+ *
+ * @param[in] target pib target to operate on
+ * @param[out] state sbe state
+ *
+ * @return 0 on success, -1 on failure
+ */
+int sbe_get_state(struct pdbg_target *target, enum sbe_state *state);
 
 
 #ifdef __cplusplus
