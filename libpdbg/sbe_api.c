@@ -127,11 +127,11 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa
 	return chipop->dump(chipop, type, clock, fa_collect, data, data_len);
 }
 
-uint32_t sbe_ffdc_get(struct pdbg_target *target, uint8_t **ffdc, uint32_t *ffdc_len)
+int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc, uint32_t *ffdc_len)
 {
 	struct chipop *chipop;
 	const uint8_t *data = NULL;
-	uint32_t status, len = 0;
+	uint32_t len = 0;
 
 	chipop = pib_to_chipop(target);
 	if (!chipop)
@@ -142,7 +142,7 @@ uint32_t sbe_ffdc_get(struct pdbg_target *target, uint8_t **ffdc, uint32_t *ffdc
 		return -1;
 	}
 
-	status = chipop->ffdc_get(chipop, &data, &len);
+	*status = chipop->ffdc_get(chipop, &data, &len);
 	if (data && len > 0) {
 		*ffdc = malloc(len);
 		assert(*ffdc);
@@ -153,5 +153,5 @@ uint32_t sbe_ffdc_get(struct pdbg_target *target, uint8_t **ffdc, uint32_t *ffdc
 		*ffdc_len = 0;
 	}
 
-	return status;
+	return 0;
 }
