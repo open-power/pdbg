@@ -260,6 +260,25 @@ static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 	return 0;
 }
 
+static int sbe_write_state_register(struct pdbg_target *pib, uint32_t value)
+{
+	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
+	int rc;
+
+	assert(pdbg_target_is_class(pib, "pib"));
+
+	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	rc = fsi_write(fsi, SBE_STATE_REG, value);
+	if (rc) {
+		PR_NOTICE("Failed to write sbe state register\n");
+		return rc;
+	}
+
+	return 0;
+}
+
 int sbe_get_state(struct pdbg_target *pib, enum sbe_state *state)
 {
 	union sbe_msg_register msg;
@@ -279,6 +298,18 @@ int sbe_get_state(struct pdbg_target *pib, enum sbe_state *state)
 	} else {
 		*state = value;
 	}
+
+	return 0;
+}
+
+int sbe_set_state(struct pdbg_target *pib, enum sbe_state state)
+{
+	uint32_t value = state;
+	int rc;
+
+	rc = sbe_write_state_register(pib, value);
+	if (rc)
+		return -1;
 
 	return 0;
 }

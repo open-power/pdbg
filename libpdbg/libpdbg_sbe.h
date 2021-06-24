@@ -104,6 +104,18 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa
  */
 int sbe_get_state(struct pdbg_target *target, enum sbe_state *state);
 
+/**
+ * @brief Set sbe state
+ *
+ * Set the current state of SBE
+ *
+ * @param[in] target pib target to operate on
+ * @param[in] state sbe state
+ *
+ * @return 0 on success, -1 on failure
+ */
+int sbe_set_state(struct pdbg_target *target, enum sbe_state state);
+
 
 #ifdef __cplusplus
 }
