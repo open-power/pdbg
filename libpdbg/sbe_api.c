@@ -22,7 +22,7 @@
 #include "target.h"
 #include "hwunit.h"
 #include "debug.h"
-#include "libpdbg.h"
+#include "libpdbg_sbe.h"
 
 static struct chipop *pib_to_chipop(struct pdbg_target *pib)
 {

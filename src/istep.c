@@ -15,7 +15,7 @@
  */
 #include <stdint.h>
 
-#include <libpdbg.h>
+#include <libpdbg_sbe.h>
 
 #include "optcmd.h"
 #include "path.h"

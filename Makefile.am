@@ -179,6 +179,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/kernel.c \
 	libpdbg/libpdbg.c \
 	libpdbg/libpdbg.h \
+	libpdbg/libpdbg_sbe.h \
 	libpdbg/ocmb.c \
 	libpdbg/operations.h \
 	libpdbg/p8chip.c \
@@ -205,7 +206,7 @@ libpdbg_la_CFLAGS += -I$(top_srcdir)/libfdt
 libpdbg_la_LIBADD += libfdt/libfdt.la
 endif
 
-include_HEADERS = libpdbg/libpdbg.h
+include_HEADERS = libpdbg/libpdbg.h libpdbg/libpdbg_sbe.h
 
 noinst_LIBRARIES = libccan.a
 
