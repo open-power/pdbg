@@ -171,6 +171,14 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 
 	if (rc) {
 		free(buf);
+
+		if (rc == ETIMEDOUT) {
+			uint32_t status;
+
+			status = SBEFIFO_PRI_UNKNOWN_ERROR | SBEFIFO_SEC_HW_TIMEOUT;
+			sbefifo_ffdc_set(sctx, status, NULL, 0);
+		}
+
 		return rc;
 	}
 
