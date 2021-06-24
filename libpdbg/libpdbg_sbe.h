@@ -116,6 +116,16 @@ int sbe_get_state(struct pdbg_target *target, enum sbe_state *state);
  */
 int sbe_set_state(struct pdbg_target *target, enum sbe_state state);
 
+/**
+ * @brief Check if IPL boot is complete
+ *
+ * @param[in] target pib target to operate on
+ * @param[out] done true if IPL is completed, false otherwise
+ *
+ * @return 0 on success, -1 on failure
+ */
+int sbe_is_ipl_done(struct pdbg_target *target, bool *done);
+
 
 #ifdef __cplusplus
 }

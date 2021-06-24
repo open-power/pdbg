@@ -313,3 +313,21 @@ int sbe_set_state(struct pdbg_target *pib, enum sbe_state state)
 
 	return 0;
 }
+
+int sbe_is_ipl_done(struct pdbg_target *pib, bool *done)
+{
+	union sbe_msg_register msg;
+	int rc;
+
+	rc = sbe_read_msg_register(pib, &msg.reg);
+	if (rc)
+		return -1;
+
+	*done = false;
+	if ((msg.curr_state == SBE_MSG_STATE_RUNTIME) ||
+	    (msg.prev_state == SBE_MSG_STATE_RUNTIME)) {
+		*done = true;
+	}
+
+	return 0;
+}
