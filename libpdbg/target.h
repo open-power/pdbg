@@ -91,7 +91,6 @@ enum pdbg_backend pdbg_get_backend(void);
 const char *pdbg_get_backend_option(void);
 bool pdbg_fdt_is_readonly(void *fdt);
 
-struct chipop *pib_to_chipop(struct pdbg_target *target);
 bool target_is_virtual(struct pdbg_target *target);
 struct pdbg_target *target_to_real(struct pdbg_target *target, bool strict);
 struct pdbg_target *target_to_virtual(struct pdbg_target *target, bool strict);

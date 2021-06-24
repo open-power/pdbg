@@ -189,6 +189,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/p10_fapi_targets.c \
 	libpdbg/p10_scom_addr.h \
 	libpdbg/sbefifo.c \
+	libpdbg/sbe_api.c \
 	libpdbg/sprs.h \
 	libpdbg/sprs.c \
 	libpdbg/target.c \
