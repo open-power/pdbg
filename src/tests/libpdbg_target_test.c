@@ -61,7 +61,7 @@ int main(void)
 {
 	struct pdbg_target *root, *target, *parent, *parent2;
 	const char *name;
-	int count, i;
+	int count;
 
 	assert(pdbg_set_backend(PDBG_BACKEND_FAKE, NULL));
 	assert(pdbg_targets_init(NULL));
