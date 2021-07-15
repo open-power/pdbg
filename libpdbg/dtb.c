@@ -146,6 +146,7 @@ static enum pdbg_backend default_backend(void)
 		return PDBG_BACKEND_KERNEL;
 	}
 
+	pdbg_log(PDBG_WARNING, "Can not determine an appropriate backend. Using fake backend\n");
 	return PDBG_BACKEND_FAKE;
 }
 
