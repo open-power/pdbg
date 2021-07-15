@@ -54,7 +54,7 @@ static inline void print_htm_address(enum htm_type type,
 {
 	if (type == HTM_CORE) {
 		printf("p%d:", pdbg_parent_index(target, "pib"));
-		printf("c%d:", pdbg_parent_index(target, "core"));
+		printf("c%d\n", pdbg_parent_index(target, "core"));
 	}
 	if (type == HTM_NEST) {
 		printf("p%d\n", pdbg_parent_index(target, "pib"));
