@@ -157,8 +157,8 @@ static int assert_special_wakeup(struct core *chip)
 		CHECK_ERR(pib_read(&chip->target, EX_PM_GP0_REG, &gp0));
 
 		if (i++ > SPECIAL_WKUP_TIMEOUT) {
-			PR_ERROR("Timeout waiting for special wakeup on %s@0x%08" PRIx64 "\n", chip->target.name,
-				 pdbg_target_address(&chip->target, NULL));
+			PR_ERROR("Timeout waiting for special wakeup on %s\n",
+				 pdbg_target_path(&chip->target));
 			return -1;
 		}
 	} while (!(gp0 & SPECIAL_WKUP_DONE));
