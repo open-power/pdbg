@@ -320,7 +320,7 @@ p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
 %.dt.h: %.dts
 	$(GEN_V)$(srcdir)/generate_dt_header.sh $< > $@
 
-%.dtb.S: %.dtb
+%.dtb.S: %.dtb $(srcdir)/template.S
 	$(GEN_V)$(CPP) $(srcdir)/template.S \
 	-DSYMBOL_PREFIX=$(shell basename $< .S | tr '.-' '_')_o -DFILENAME=\"$<\" -o \
 	$@
