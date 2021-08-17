@@ -505,3 +505,16 @@ Notes:
 happen.
 2. If you want to view the kernel call trace then run gdb on the vmlinux that
 the host is running (the kernel needs to be compiled with debug symbols).
+
+## Submitting patches
+
+Development and patch review happens on the mailing list at:
+
+ pdbg@lists.ozlabs.org
+
+Patches are tracked through patchwork:
+
+ https://patchwork.ozlabs.org/project/pdbg/list
+
+Pull requests via Github are also acceptable if you are not familiar with email
+based patch submission.
