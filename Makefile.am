@@ -206,7 +206,7 @@ libpdbg_la_CFLAGS += -I$(top_srcdir)/libfdt
 libpdbg_la_LIBADD += libfdt/libfdt.la
 endif
 
-include_HEADERS = libpdbg/libpdbg.h libpdbg/libpdbg_sbe.h
+include_HEADERS = libpdbg/libpdbg.h libpdbg/libpdbg_sbe.h libsbefifo/libsbefifo.h
 
 noinst_LIBRARIES = libccan.a
 
