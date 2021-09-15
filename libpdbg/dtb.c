@@ -79,14 +79,14 @@ static bool get_chipid(uint32_t *chip_id)
 	/* Try and determine the correct device type */
 	rc = asprintf(&path, "%s/fsi0/slave@00:00/cfam_id", kernel_get_fsi_path());
 	if (rc < 0) {
-		pdbg_log(PDBG_ERROR, "Unable create fsi path");
+		pdbg_log(PDBG_ERROR, "Unable to create fsi path");
 		return false;
 	}
 
 	cfam_id_file = fopen(path, "r");
 	free(path);
 	if (!cfam_id_file) {
-		pdbg_log(PDBG_ERROR, "Unabled to open CFAM ID file\n");
+		pdbg_log(PDBG_ERROR, "Unable to open CFAM ID file\n");
 		return false;
 	}
 

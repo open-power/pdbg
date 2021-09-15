@@ -261,7 +261,7 @@ int thread_getmem(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 	thread = target_to_thread(target);
 
 	if (!thread->getmem) {
-		PR_ERROR("getmem() not imeplemented for the target\n");
+		PR_ERROR("getmem() not implemented for the target\n");
 		return -1;
 	}
 
@@ -327,7 +327,7 @@ int thread_getregs(struct pdbg_target *target, struct thread_regs *regs)
 	thread = target_to_thread(target);
 
 	if (!thread->getregs) {
-		PR_ERROR("getregs() not imeplemented for the target\n");
+		PR_ERROR("getregs() not implemented for the target\n");
 		return -1;
 	}
 
@@ -350,7 +350,7 @@ int thread_getgpr(struct pdbg_target *target, int gpr, uint64_t *value)
 	thread = target_to_thread(target);
 
 	if (!thread->getgpr) {
-		PR_ERROR("getgpr() not imeplemented for the target\n");
+		PR_ERROR("getgpr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -369,7 +369,7 @@ int thread_putgpr(struct pdbg_target *target, int gpr, uint64_t value)
 	thread = target_to_thread(target);
 
 	if (!thread->putgpr) {
-		PR_ERROR("putgpr() not imeplemented for the target\n");
+		PR_ERROR("putgpr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -410,7 +410,7 @@ int thread_getspr(struct pdbg_target *target, int spr, uint64_t *value)
 	}
 
 	if (!thread->getspr) {
-		PR_ERROR("getspr() not imeplemented for the target\n");
+		PR_ERROR("getspr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -443,7 +443,7 @@ int thread_putspr(struct pdbg_target *target, int spr, uint64_t value)
 	}
 
 	if (!thread->putspr) {
-		PR_ERROR("putspr() not imeplemented for the target\n");
+		PR_ERROR("putspr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -462,7 +462,7 @@ int thread_getfpr(struct pdbg_target *target, int fpr, uint64_t *value)
 	thread = target_to_thread(target);
 
 	if (!thread->getfpr) {
-		PR_ERROR("getfpr() not imeplemented for the target\n");
+		PR_ERROR("getfpr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -481,7 +481,7 @@ int thread_putfpr(struct pdbg_target *target, int fpr, uint64_t value)
 	thread = target_to_thread(target);
 
 	if (!thread->putfpr) {
-		PR_ERROR("putfpr() not imeplemented for the target\n");
+		PR_ERROR("putfpr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -500,7 +500,7 @@ int thread_getmsr(struct pdbg_target *target, uint64_t *value)
 	thread = target_to_thread(target);
 
 	if (!thread->getmsr) {
-		PR_ERROR("getmsr() not imeplemented for the target\n");
+		PR_ERROR("getmsr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -519,7 +519,7 @@ int thread_putmsr(struct pdbg_target *target, uint64_t value)
 	thread = target_to_thread(target);
 
 	if (!thread->putmsr) {
-		PR_ERROR("putmsr() not imeplemented for the target\n");
+		PR_ERROR("putmsr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -538,7 +538,7 @@ int thread_getnia(struct pdbg_target *target, uint64_t *value)
 	thread = target_to_thread(target);
 
 	if (!thread->getnia) {
-		PR_ERROR("getnia() not imeplemented for the target\n");
+		PR_ERROR("getnia() not implemented for the target\n");
 		return -1;
 	}
 
@@ -557,7 +557,7 @@ int thread_putnia(struct pdbg_target *target, uint64_t value)
 	thread = target_to_thread(target);
 
 	if (!thread->putnia) {
-		PR_ERROR("putnia() not imeplemented for the target\n");
+		PR_ERROR("putnia() not implemented for the target\n");
 		return -1;
 	}
 
@@ -576,7 +576,7 @@ int thread_getxer(struct pdbg_target *target, uint64_t *value)
 	thread = target_to_thread(target);
 
 	if (!thread->getxer) {
-		PR_ERROR("getxer() not imeplemented for the target\n");
+		PR_ERROR("getxer() not implemented for the target\n");
 		return -1;
 	}
 
@@ -595,7 +595,7 @@ int thread_putxer(struct pdbg_target *target, uint64_t value)
 	thread = target_to_thread(target);
 
 	if (!thread->putxer) {
-		PR_ERROR("putxer() not imeplemented for the target\n");
+		PR_ERROR("putxer() not implemented for the target\n");
 		return -1;
 	}
 
@@ -614,7 +614,7 @@ int thread_getcr(struct pdbg_target *target, uint32_t *value)
 	thread = target_to_thread(target);
 
 	if (!thread->getcr) {
-		PR_ERROR("getcr() not imeplemented for the target\n");
+		PR_ERROR("getcr() not implemented for the target\n");
 		return -1;
 	}
 
@@ -633,7 +633,7 @@ int thread_putcr(struct pdbg_target *target, uint32_t value)
 	thread = target_to_thread(target);
 
 	if (!thread->putcr) {
-		PR_ERROR("putcr() not imeplemented for the target\n");
+		PR_ERROR("putcr() not implemented for the target\n");
 		return -1;
 	}
 
