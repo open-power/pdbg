@@ -122,7 +122,7 @@ static void kernel_fsi_scan_devices(void)
 
 	rc = asprintf(&path, "%s/fsi0/rescan", kernel_path);
 	if (rc < 0) {
-		PR_ERROR("Unable create fsi path\n");
+		PR_ERROR("Unable to create fsi path\n");
 		return;
 	}
 
@@ -159,7 +159,7 @@ int kernel_fsi_probe(struct pdbg_target *target)
 
 	rc = asprintf(&path, "%s%s", kernel_get_fsi_path(), fsi_path);
 	if (rc < 0) {
-		PR_ERROR("Unable create fsi path\n");
+		PR_ERROR("Unable to create fsi path\n");
 		return rc;
 	}
 
