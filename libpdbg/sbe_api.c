@@ -222,15 +222,33 @@ int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc, u
 	return 0;
 }
 
+// Get fsi target from proc type parent target.
+static struct pdbg_target* sbe_get_fsi_target(struct pdbg_target *proc)
+{
+	char path[16];
+	struct pdbg_target *fsi;
+
+	sprintf(path, "/proc%d/fsi", pdbg_target_index(proc));
+	fsi = pdbg_target_from_path(NULL, path);
+	assert(fsi);
+
+	return fsi;
+}
+
 static int sbe_read_msg_register(struct pdbg_target *pib, uint32_t *value)
 {
-	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
 	int rc;
+	struct pdbg_target *proc, *fsi;
 
 	assert(pdbg_target_is_class(pib, "pib"));
 
 	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
 		return -1;
+
+	//get parent proc target
+	proc = pdbg_target_require_parent("proc", pib);
+	//get fsi traget
+	fsi = sbe_get_fsi_target(proc);
 
 	rc = fsi_read(fsi, SBE_MSG_REG, value);
 	if (rc) {
@@ -243,13 +261,18 @@ static int sbe_read_msg_register(struct pdbg_target *pib, uint32_t *value)
 
 static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 {
-	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
 	int rc;
+	struct pdbg_target *proc, *fsi;
 
 	assert(pdbg_target_is_class(pib, "pib"));
 
 	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
 		return -1;
+
+	//get parent proc target
+	proc = pdbg_target_require_parent("proc", pib);
+	//get fsi traget
+	fsi = sbe_get_fsi_target(proc);
 
 	rc = fsi_read(fsi, SBE_STATE_REG, value);
 	if (rc) {
@@ -262,13 +285,18 @@ static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 
 static int sbe_write_state_register(struct pdbg_target *pib, uint32_t value)
 {
-	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
 	int rc;
+	struct pdbg_target *proc, *fsi;
 
 	assert(pdbg_target_is_class(pib, "pib"));
 
 	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
 		return -1;
+
+	//get parent proc target
+	proc = pdbg_target_require_parent("proc", pib);
+	//get fsi traget
+	fsi = sbe_get_fsi_target(proc);
 
 	rc = fsi_write(fsi, SBE_STATE_REG, value);
 	if (rc) {
