@@ -1,0 +1,22 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get install -yy make autoconf automake libtool
+          gcc-arm-linux-gnueabi libc-dev-armel-cross
+          gcc-powerpc64le-linux-gnu libc-dev-ppc64el-cross
+          git device-tree-compiler
+      - uses: actions/checkout@v2
+      - name: Bootstrap
+        run: ./bootstrap.sh
+      - name: arm32
+        run: ./configure --host=arm-linux-gnueabi && make && make -s clean
+      - name: ppc64le
+        run: ./configure --host=powerpc64le-linux-gnu && make && make -s clean
+      - name: amd64
+        run: ./configure --host=x86-64-linux-gnu && make && make -s clean
