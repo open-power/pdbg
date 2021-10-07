@@ -224,10 +224,11 @@ int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc, u
 
 static int sbe_read_msg_register(struct pdbg_target *pib, uint32_t *value)
 {
-	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
+	struct pdbg_target *fsi = pdbg_target_parent_virtual("fsi", pib);
 	int rc;
 
 	assert(pdbg_target_is_class(pib, "pib"));
+	assert(fsi);
 
 	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
 		return -1;
@@ -243,10 +244,11 @@ static int sbe_read_msg_register(struct pdbg_target *pib, uint32_t *value)
 
 static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 {
-	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
+	struct pdbg_target *fsi = pdbg_target_parent_virtual("fsi", pib);
 	int rc;
 
 	assert(pdbg_target_is_class(pib, "pib"));
+	assert(fsi);
 
 	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
 		return -1;
@@ -262,10 +264,11 @@ static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 
 static int sbe_write_state_register(struct pdbg_target *pib, uint32_t value)
 {
-	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", pib);
+	struct pdbg_target *fsi = pdbg_target_parent_virtual("fsi", pib);
 	int rc;
 
 	assert(pdbg_target_is_class(pib, "pib"));
+	assert(fsi);
 
 	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
 		return -1;
