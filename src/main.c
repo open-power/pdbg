@@ -50,7 +50,7 @@ static char const *device_node;
 static int i2c_addr = 0x50;
 
 #define MAX_PROCESSORS 64
-#define MAX_CHIPS 24
+#define MAX_CHIPS 32
 #define MAX_THREADS THREADS_PER_CORE
 
 #define MAX_LINUX_CPUS	(MAX_PROCESSORS * MAX_CHIPS * MAX_THREADS)
