@@ -182,6 +182,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/hwunit.c \
 	libpdbg/hwunit.h \
 	libpdbg/i2c.c \
+	libpdbg/i2c_kernel.c \
 	libpdbg/kernel.c \
 	libpdbg/libpdbg.c \
 	libpdbg/libpdbg.h \
