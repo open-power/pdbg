@@ -72,7 +72,7 @@ extern struct optcmd_cmd
 	optcmd_threadstatus, optcmd_sreset, optcmd_regs, optcmd_probe,
 	optcmd_getmem, optcmd_putmem, optcmd_getmemio, optcmd_putmemio,
 	optcmd_getmempba, optcmd_putmempba,
-	optcmd_gdbserver, optcmd_istep;
+	optcmd_gdbserver, optcmd_istep, optcmd_geti2c, optcmd_puti2c;
 
 static struct optcmd_cmd *cmds[] = {
 	&optcmd_getscom, &optcmd_putscom, &optcmd_getcfam, &optcmd_putcfam,
@@ -81,7 +81,7 @@ static struct optcmd_cmd *cmds[] = {
 	&optcmd_threadstatus, &optcmd_sreset, &optcmd_regs, &optcmd_probe,
 	&optcmd_getmem, &optcmd_putmem, &optcmd_getmemio, &optcmd_putmemio,
 	&optcmd_getmempba, &optcmd_putmempba,
-	&optcmd_gdbserver, &optcmd_istep,
+	&optcmd_gdbserver, &optcmd_istep, &optcmd_geti2c, &optcmd_puti2c,
 };
 
 /* Purely for printing usage text. We could integrate printing argument and flag
@@ -118,6 +118,8 @@ static struct action actions[] = {
 	{ "regs",  "[--backtrace]", "State (optionally display backtrace)" },
 	{ "gdbserver", "", "Start a gdb server" },
 	{ "istep", "<major> <minor>|0", "Execute istep on SBE" },
+	{ "geti2c", "<device> <reg> <n>", "Read n bytes from i2c device" },
+	{ "puti2c", "<device> <reg> <value>", "Write a value to i2c device" },
 };
 
 static void print_usage(void)
