@@ -117,6 +117,14 @@ struct fsi {
 };
 #define target_to_fsi(x) container_of(x, struct fsi, target)
 
+struct i2cbus {
+	struct pdbg_target target;
+	int (*read)(struct i2cbus *, uint8_t, uint8_t, uint16_t, uint8_t *);
+	int (*write)(struct i2cbus *, uint8_t, uint8_t, uint16_t, uint8_t *);
+	struct i2c_context *ctx;
+};
+#define target_to_i2cbus(x) container_of(x, struct i2cbus, target)
+
 struct core {
 	struct pdbg_target target;
 	bool release_spwkup;
