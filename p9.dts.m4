@@ -638,9 +638,34 @@ define(`CHIP',
 	};
 ')dnl
 
+dnl
+dnl I2CBUS([index])
+dnl
+define(`I2CBUS', `i2c-$1 {
+}')dnl
+
 /dts-v1/;
 
 / {
+	bmc0 {
+		I2CBUS(0);
+		I2CBUS(1);
+		I2CBUS(2);
+		I2CBUS(3);
+		I2CBUS(4);
+		I2CBUS(5);
+		I2CBUS(6);
+		I2CBUS(7);
+		I2CBUS(8);
+		I2CBUS(9);
+		I2CBUS(10);
+		I2CBUS(11);
+		I2CBUS(12);
+		I2CBUS(13);
+		I2CBUS(14);
+		I2CBUS(15);
+	};
+
 	CHIP(0)
 	CHIP(1)
 	CHIP(2)
