@@ -799,6 +799,36 @@ int pib_write_mask(struct pdbg_target *target, uint64_t addr, uint64_t val, uint
 int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t data);
 
 /**
+ * @brief Read data from i2c device
+ *
+ * The target can be:
+ *   - i2c bus target (addr specified), or
+ *   - i2c device target (addr as 0).
+ *
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address of the device on the bus
+ * @param[in] the register of device to read
+ * @param[in] the size to read
+ * @param[out] the read data
+ */
+int i2c_read(struct pdbg_target *target, uint8_t addr, uint8_t reg, uint16_t size, uint8_t *data);
+
+/**
+ * @brief Write data to i2c device
+ *
+ * The target can be:
+ *   - i2c bus target (addr specified), or
+ *   - i2c device target (addr as 0).
+ *
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address of the device on the bus
+ * @param[in] the register of device to write
+ * @param[in] the size data to write
+ * @param[out] the write data
+ */
+int i2c_write(struct pdbg_target *target, uint8_t addr, uint8_t reg, uint16_t size, uint8_t *data);
+
+/**
  * @struct thread_regs
  * @brief CPU per-thread registers
  *

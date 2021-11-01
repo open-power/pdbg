@@ -324,6 +324,48 @@ int fsi_write_mask(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data, uin
 	return fsi_write(fsi_dt, addr, value);
 }
 
+int i2c_read(struct pdbg_target *i2c_dt, uint8_t addr, uint8_t reg, uint16_t size, uint8_t *data)
+{
+	struct i2cbus *i2cbus;
+	uint64_t target_addr = addr;
+
+	i2c_dt = get_class_target_addr(i2c_dt, "i2c_bus", &target_addr);
+
+	if (pdbg_target_status(i2c_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	i2cbus = target_to_i2cbus(i2c_dt);
+
+	if (target_addr > 0xFF) {
+		PR_ERROR("i2c_read got invalid address 0x%02x --> 0x%" PRIx64 "\n", addr, target_addr);
+		return -1;
+	}
+
+	addr = target_addr & 0xff;
+	return i2cbus->read(i2cbus, addr, reg, size, data);
+}
+
+int i2c_write(struct pdbg_target *i2c_dt, uint8_t addr, uint8_t reg, uint16_t size, uint8_t *data)
+{
+	struct i2cbus *i2cbus;
+	uint64_t target_addr = addr;
+
+	i2c_dt = get_class_target_addr(i2c_dt, "i2c_bus", &target_addr);
+
+	if (pdbg_target_status(i2c_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	i2cbus = target_to_i2cbus(i2c_dt);
+
+	if (target_addr > 0xFF) {
+		PR_ERROR("i2c_write got invalid address 0x%02x --> 0x%" PRIx64 "\n", addr, target_addr);
+		return -1;
+	}
+
+	addr = target_addr & 0xff;
+	return i2cbus->write(i2cbus, addr, reg, size, data);
+}
+
 int mem_read(struct pdbg_target *target, uint64_t addr, uint8_t *output, uint64_t size, uint8_t block_size, bool ci)
 {
 	struct mem *mem;
