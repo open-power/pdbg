@@ -81,12 +81,44 @@ define(`HMFSI',
 	};
 ')dnl
 
+dnl
+dnl BMC_I2CBUS([index])
+dnl
+define(`BMC_I2CBUS',
+`
+	bmc-i2c-bus$1 {
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+		index = <$1>;
+		compatible = "ibm,kernel-i2c-bus";
+		device-path = "/dev/i2c-$1";
+		system-path = "/bmc0/i2c-$1";
+	};
+')dnl
+
 
 /dts-v1/;
 
 / {
 	#address-cells = <0x1>;
 	#size-cells = <0x0>;
+
+	BMC_I2CBUS(0)
+	BMC_I2CBUS(1)
+	BMC_I2CBUS(2)
+	BMC_I2CBUS(3)
+	BMC_I2CBUS(4)
+	BMC_I2CBUS(5)
+	BMC_I2CBUS(6)
+	BMC_I2CBUS(7)
+	BMC_I2CBUS(8)
+	BMC_I2CBUS(9)
+	BMC_I2CBUS(10)
+	BMC_I2CBUS(11)
+	BMC_I2CBUS(12)
+	BMC_I2CBUS(13)
+	BMC_I2CBUS(14)
+	BMC_I2CBUS(15)
 
 	FSI_PRE(0, 0, 1)
 
