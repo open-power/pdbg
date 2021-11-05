@@ -20,9 +20,26 @@ define(`PROC_ID',`$1')dnl
 	}'
 )dnl
 
+dnl
+dnl I2CBUS([index])
+dnl
+define(`I2CBUS', `i2c-$1 {
+}')dnl
+
 /dts-v1/;
 
 / {
+	bmc0 {
+		I2CBUS(0);
+		I2CBUS(1);
+		I2CBUS(2);
+		I2CBUS(3);
+		I2CBUS(4);
+		I2CBUS(5);
+		I2CBUS(6);
+		I2CBUS(7);
+	};
+
 	PROC(0);
 	PROC(1);
 	PROC(2);
