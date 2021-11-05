@@ -125,7 +125,7 @@ lib_LTLIBRARIES = libpdbg.la
 pkgconfiglibdir = ${libdir}/pkgconfig
 pkgconfiglib_DATA = libpdbg/pdbg.pc
 
-noinst_LTLIBRARIES = libcronus.la libsbefifo.la
+noinst_LTLIBRARIES = libcronus.la libsbefifo.la libi2c.la
 
 libcronus_la_SOURCES = \
 	libcronus/buffer.c \
@@ -155,6 +155,12 @@ libsbefifo_la_SOURCES = \
 	libsbefifo/libsbefifo.h \
 	libsbefifo/operation.c \
 	libsbefifo/sbefifo_private.h
+
+libi2c_la_SOURCES = \
+	libi2c/libi2c.h \
+	libi2c/libi2c.c \
+	libi2c/smbus.h \
+	libi2c/smbus.c
 
 libpdbg_la_SOURCES = \
 	$(DT_sources) \
@@ -198,7 +204,7 @@ libpdbg_la_SOURCES = \
 	libpdbg/thread.c
 
 libpdbg_la_CFLAGS = -Wall -Werror
-libpdbg_la_LIBADD = libcronus.la libsbefifo.la
+libpdbg_la_LIBADD = libcronus.la libsbefifo.la libi2c.la
 libpdbg_la_LDFLAGS = -version-info $(SONAME_CURRENT):$(SONAME_REVISION):$(SONAME_AGE)
 
 if BUILD_LIBFDT
