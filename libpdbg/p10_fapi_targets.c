@@ -534,6 +534,15 @@ static struct dimm p10_dimm = {
 };
 DECLARE_HW_UNIT(p10_dimm);
 
+static struct oscrefclk p10_oscrefclk = {
+	.target = {
+		.name = "POWER10 osc reference clock",
+		.compatible = "ibm,power10-oscrefclk",
+		.class = "oscrefclk",
+	},
+};
+DECLARE_HW_UNIT(p10_oscrefclk);
+
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
@@ -555,4 +564,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_smpgroup_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_mem_port_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_dimm_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_oscrefclk_hw_unit);
 }
