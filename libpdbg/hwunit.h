@@ -348,4 +348,9 @@ struct dimm {
 };
 #define target_to_dimm(x) container_of(x, struct dimm, target)
 
+struct oscrefclk {
+	struct pdbg_target target;
+};
+#define target_to_oscrefclk(x) container_of(x, struct oscrefclk, target)
+
 #endif /* __HWUNIT_H */
