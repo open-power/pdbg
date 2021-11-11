@@ -533,7 +533,7 @@ test_run pdbg -b fake -p100 probe
 
 test_result 1 --
 test_result_stderr <<EOF
-Value 100 larger than max 23
+Value 100 larger than max 31
 Failed to parse '-c 100'
 EOF
 
