@@ -57,6 +57,7 @@ static int sbefifo_register_get_push(uint8_t core_id, uint8_t thread_id, uint8_t
 static int sbefifo_register_get_pull(uint8_t *buf, uint32_t buflen, uint8_t reg_count, uint64_t **value)
 {
 	uint32_t i;
+	uint32_t *b = (uint32_t *)buf;
 
 	if (buflen != reg_count * 8)
 		return EPROTO;
@@ -68,8 +69,8 @@ static int sbefifo_register_get_pull(uint8_t *buf, uint32_t buflen, uint8_t reg_
 	for (i=0; i<reg_count; i++) {
 		uint32_t val1, val2;
 
-		val1 = be32toh(*(uint32_t *) &buf[i*4]);
-		val2 = be32toh(*(uint32_t *) &buf[i*4+4]);
+		val1 = be32toh(b[i*2]);
+		val2 = be32toh(b[i*2+1]);
 
 		(*value)[i] = ((uint64_t)val1 << 32) | (uint64_t)val2;
 	}
