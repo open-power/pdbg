@@ -543,6 +543,16 @@ static struct oscrefclk p10_oscrefclk = {
 };
 DECLARE_HW_UNIT(p10_oscrefclk);
 
+struct tpm p10_tpm = {
+    .target = {
+        .name = "POWER10 Trusted Platform Module",
+        .compatible = "ibm,power10-tpm",
+        .class = "tpm",
+        .translate = no_translate,
+    },
+};
+DECLARE_HW_UNIT(p10_tpm);
+
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
@@ -565,4 +575,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_mem_port_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_dimm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_oscrefclk_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_tpm_hw_unit);
 }

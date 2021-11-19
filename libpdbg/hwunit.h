@@ -353,4 +353,9 @@ struct oscrefclk {
 };
 #define target_to_oscrefclk(x) container_of(x, struct oscrefclk, target)
 
+struct tpm {
+    struct pdbg_target target;
+};
+#define target_to_tpm(x) container_of(x, struct tpm, target)
+
 #endif /* __HWUNIT_H */
