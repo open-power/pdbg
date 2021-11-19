@@ -358,4 +358,9 @@ struct tpm {
 };
 #define target_to_tpm(x) container_of(x, struct tpm, target)
 
+struct nx {
+    struct pdbg_target target;
+};
+#define target_to_nx(x) container_of(x, struct nx, target)
+
 #endif /* __HWUNIT_H */

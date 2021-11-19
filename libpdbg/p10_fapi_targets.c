@@ -553,6 +553,16 @@ struct tpm p10_tpm = {
 };
 DECLARE_HW_UNIT(p10_tpm);
 
+struct nx p10_nx = {
+    .target = {
+        .name = "POWER10 Nest Accelerator unit",
+        .compatible = "ibm,power10-nx",
+        .class = "nx",
+        .translate = no_translate,
+    },
+};
+DECLARE_HW_UNIT(p10_nx);
+
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
@@ -576,4 +586,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_dimm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_oscrefclk_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_tpm_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_nx_hw_unit);
 }
