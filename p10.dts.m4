@@ -697,6 +697,17 @@ dnl
 define(`I2CBUS', `i2c-$1 {
 }')dnl
 
+dnl
+dnl TPM([index])
+dnl
+define(`TPM',
+`
+   CONCAT(tpm, $1) {
+       compatible = "ibm,power10-tpm";
+       index = <$1>;
+   };
+')
+
 /dts-v1/;
 
 / {
@@ -727,4 +738,6 @@ define(`I2CBUS', `i2c-$1 {
 	CHIP(5)
 	CHIP(6)
 	CHIP(7)
+
+	TPM(0)
 };
