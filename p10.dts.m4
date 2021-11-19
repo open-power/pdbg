@@ -33,6 +33,17 @@ define(`CORE',
 ')dnl
 
 dnl
+dnl NX([index])
+dnl
+define(`NX',
+`
+   nx {
+       compatible = "ibm,power10-nx";
+       index = <$1>;
+   };
+')
+
+dnl
 dnl CHIPLET__([index])
 dnl
 define(`CHIPLET__',
@@ -352,6 +363,8 @@ define(`CHIP',
 				reg = < 0x00 0x50128c0 0x40 >;
 				index = < 0x$1 >;
 			};
+
+			NX(0)
 
 			CHIPLET_(1)
 				tp@0 {
