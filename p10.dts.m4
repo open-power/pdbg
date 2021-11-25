@@ -29,6 +29,13 @@ define(`CORE',
 		THREAD(1)
 		THREAD(2)
 		THREAD(3)
+
+		htm@20010680 {
+			compatible = "ibm,power10-chtm";
+			reg = < 0x20010680 >;
+			index = < 0x$1 >;
+		};
+
 	};
 ')dnl
 
