@@ -586,8 +586,7 @@ static int configure_debugfs_memtrace(struct htm *htm)
 
 static int configure_chtm(struct htm *htm, bool wrap)
 {
-	uint64_t hid0, ncu, val;
-	struct pdbg_target *core;
+	uint64_t val;
 
 	if (!pdbg_target_is_class(&htm->target, "chtm"))
 		return 0;
@@ -599,6 +598,17 @@ static int configure_chtm(struct htm *htm, bool wrap)
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
 		HTM_MODE_ENABLE | val)))
 		return -1;
+
+	if (htm->configure && htm->configure(htm) < 0)
+		return -1;
+
+	return 0;
+}
+
+static int do_configure_chtm_p8(struct htm *htm)
+{
+	uint64_t hid0, ncu;
+	struct pdbg_target *core;
 
 	core = pdbg_target_require_parent("core", &htm->target);
 	if (HTM_ERR(pib_read(core, HID0_REGISTER, &hid0)))
@@ -618,11 +628,26 @@ static int configure_chtm(struct htm *htm, bool wrap)
 
 static int deconfigure_chtm(struct htm *htm)
 {
-	uint64_t hid0, ncu;
-	struct pdbg_target *core;
 
 	if (!pdbg_target_is_class(&htm->target, "chtm"))
 		return 0;
+
+	if (htm->deconfigure && htm->deconfigure(htm) < 0)
+		return -1;
+
+	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,0)))
+		return -1;
+
+//	FIXME this needs kernel work to happen
+//	if (HTM_ERR(deconfigure_debugfs_memtrace(htm)))
+//		return -1;
+	return 0;
+}
+
+static int do_deconfigure_chtm_p8(struct htm *htm)
+{
+	struct pdbg_target *core;
+	uint64_t ncu, hid0;
 
 	core = pdbg_target_require_parent("core", &htm->target);
 	if (HTM_ERR(pib_read(core, NCU_MODE_REGISTER, &ncu)))
@@ -637,12 +662,6 @@ static int deconfigure_chtm(struct htm *htm)
 	if (HTM_ERR(pib_write(core, HID0_REGISTER, hid0)))
 		return -1;
 
-	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,0)))
-		return -1;
-
-//	FIXME this needs kernel work to happen
-//	if (HTM_ERR(deconfigure_debugfs_memtrace(htm)))
-//		return -1;
 	return 0;
 }
 
@@ -929,7 +948,7 @@ static int do_htm_reset(struct htm *htm, bool wrap)
 /* Stolen from p8chip.c */
 #define RAS_MODE_REG			0x1
 #define  MR_THREAD_IN_DEBUG		PPC_BIT(43)
-static int htm_toggle_debug_bit(struct htm *htm)
+static int do_post_configure_chtm_p8(struct htm *htm)
 {
 	struct pdbg_target *target;
 	struct pdbg_target *core;
@@ -940,12 +959,6 @@ static int htm_toggle_debug_bit(struct htm *htm)
 	core = pdbg_target_parent("core", &htm->target);
 	if (!core)
 		return 0; /* nhtm case */
-
-	/* FIXME: this is a hack for P8 */
-	if (!pdbg_target_compatible(core, "ibm,power8-core")) {
-		PR_ERROR("HTM is POWER8 only currently\n");
-		return -1;
-	}
 
 	pdbg_for_each_target("thread", core, target) {
 		if (pdbg_target_index(target) == 0) {
@@ -980,7 +993,7 @@ static int __do_htm_start(struct htm *htm, bool wrap)
 	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_START)))
 		return -1;
 
-	if (htm_toggle_debug_bit(htm))
+	if (htm->post_configure && htm->post_configure(htm))
 		return -1;
 
 	/*
@@ -1378,6 +1391,9 @@ static struct htm p8_chtm = {
 	.record = do_htm_record,
 	.status = do_htm_status,
 	.dump = do_htm_dump,
+	.configure = do_configure_chtm_p8,
+	.deconfigure = do_deconfigure_chtm_p8,
+	.post_configure = do_post_configure_chtm_p8,
 };
 DECLARE_HW_UNIT(p8_chtm);
 
