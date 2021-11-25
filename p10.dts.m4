@@ -346,21 +346,21 @@ define(`CHIP',
 			#size-cells = < 0x01 >;
 			index = < 0x$1 >;
 
-			adu@90000 {
+			adu@3001C00 {
 				compatible = "ibm,power10-adu";
-				reg = < 0x00 0x90000 0x50 >;
+				reg = < 0x00 0x3001C00 0x50 >;
 				system-path = "/mem$1";
 			};
 
-			htm@5012880 {
+			htm@3011C80 {
 				compatible = "ibm,power10-nhtm";
-				reg = < 0x00 0x5012880 0x40 >;
+				reg = < 0x00 0x3011C80 0x40 >;
 				index = < 0x$1 >;
 			};
 
-			htm@50128C0 {
+			htm@30120C0 {
 				compatible = "ibm,power10-nhtm";
-				reg = < 0x00 0x50128c0 0x40 >;
+				reg = < 0x00 0x30120C0 0x40 >;
 				index = < 0x$1 >;
 			};
 
