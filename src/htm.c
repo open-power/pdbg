@@ -230,6 +230,12 @@ static bool is_smt1(struct pdbg_target *target)
 	}
 
 	/* secondary thread */
+	if (pdbg_target_compatible(target, "ibm,power10-thread")) {
+		if (!thread_status(target).active)
+			return true;
+		goto fail;
+	}
+
 	if (thread_status(target).quiesced)
 		return true;
 
