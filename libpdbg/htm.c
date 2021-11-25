@@ -56,6 +56,17 @@
 			  HID0_SINGLE_DECODE | HID0_EN_INST_TRACE |\
 			  HID0_TRACE_EN)
 
+#define HIDQ_REGISTER			0x20028415
+#define  HIDQ_ONE_PPC			PPC_BIT(0)
+#define  HIDQ_EN_INST_TRACE		PPC_BIT(1)
+#define  HIDQ_HILE			PPC_BIT(4)
+#define  HIDQ_DIS_PROC_REC		PPC_BIT(5)
+#define  HIDQ_TRACE_BITS (HIDQ_ONE_PPC | HIDQ_EN_INST_TRACE)
+
+#define CORE_FIR			0x20028440
+#define  CORE_FIR_PC_LOGIC		PPC_BIT(45)
+#define CORE_FIR_AND			0x20028441
+#define CORE_FIR_MASK			0x20028443
 /*
  * This is a CORE register not a HTM register, don't pass the HTM
  * target to it.
@@ -63,14 +74,22 @@
 #define NCU_MODE_REGISTER		0x10C0A
 #define NCU_MODE_HTM_ENABLE		PPC_BIT(0)
 
+#define IMA_EVENT_MASK			0x20020400
+
 #define HTM_COLLECTION_MODE		0
 #define	  HTM_MODE_ENABLE		PPC_BIT(0)
 #define	  HTM_MODE_CONTENT_SEL		PPC_BITMASK(1,2)
+#define   HTM_MODE_CORE_TRACE_EN	PPC_BIT(1)
+#define   HTM_MODE_LLAT_TRACE_EN	PPC_BIT(2)
+#define   HTM_MODE_DMW_TRACE_EN		PPC_BIT(3)
 #define   NHTM_MODE_CAPTURE		PPC_BITMASK(4,12)
 #define     NHTM_MODE_CAPTURE_PMISC	PPC_BIT(5)
 #define     NHTM_MODE_CRESP_PRECISE	PPC_BIT(6)
 #define     CHTM_MODE_NO_ASSERT_LLAT_L3 PPC_BIT(6)
 #define	  HTM_MODE_WRAP			PPC_BIT(13)
+#define	  HTM_MODE_DIS_TIMESTAMP	PPC_BIT(14)
+#define	  HTM_MODE_FULL_ON_ERR		PPC_BIT(8)
+#define	  HTM_MODE_DISABLE_STALL	PPC_BIT(16)
 #define HTM_MEMORY_CONF			1
 #define   HTM_MEM_ALLOC			PPC_BIT(0)
 #define   HTM_MEM_SCOPE			PPC_BITMASK(1,3)
@@ -105,6 +124,8 @@
 #define   HTM2_STATUS_STATE_MASK	(PPC_BITMASK(28,36) | HTM_STATUS_REPAIR)
 #define	  HTM2_STATUS_ERROR_MASK	(HTM_STATUS_CRESP_OV | PPC_BITMASK(24,27) | PPC_BITMASK(37,39))
 #define   HTM_STATUS_MASK		PPC_BITMASK(2,19)
+#define   HTM_STATUS_PURGING		PPC_BIT(0)
+#define   HTM_STATUS_PURGED		PPC_BIT(1)
 #define   HTM_STATUS_CRESP_OV		PPC_BIT(2)
 #define	  HTM_STATUS_REPAIR		PPC_BIT(3)
 #define   HTM_STATUS_BUF_WAIT		PPC_BIT(4)
@@ -139,7 +160,11 @@
 #define   HTM_TRIG_MARK_TYPE		PPC_BITMASK(6,15)
 #define HTM_TRIGGER_CONTROL		(5 + dual_htm_offset)
 #define   HTM_CTRL_TRIG			PPC_BITMASK(0,1)
+#define   HTM_CTRL_MTSPR_TRIG		PPC_BIT(2)
+#define   HTM_CTRL_MTSPR_MARKER		PPC_BIT(3)
 #define   HTM_CTRL_MASK			PPC_BITMASK(4,5)
+#define   HTM_CTRL_DBG_TRIG0		PPC_BIT(6)
+#define   HTM_CTRL_DBG_TRIG1		PPC_BIT(7)
 #define   HTM_CTRL_XSTOP_STOP		PPC_BIT(13)
 #define NHTM_FILTER_CONTROL		(6 + dual_htm_offset)
 #define   NHTM_FILTER_RCMD_SCOPE	PPC_BITMASK(17,19)
@@ -163,6 +188,10 @@
 #define   NHTM_FLEX_DEFAULT_P10		0xCB34561567
 #define NHTM_ADDR_PAT			0xb
 #define   NHTM_ADDR_PAT_MASK		PPC_BITMASK(0, 55)
+#define CHTM_PDBAR			0x0b
+#define   CHTM_PDBAR_PARITY		PPC_BIT(0)
+#define   CHTM_PDBAR_SCOPE		PPC_BITMASK(5, 7)
+#define   CHTM_PDBAR_ADDR		PPC_BITMASK(12, 52)
 #define NHTM_ADDR_MASK			0xc
 #define   NHTM_ADDR_MASK_MASK		PPC_BITMASK(0, 55)
 #define NHTM_STOP_FILTER		0xd
@@ -452,6 +481,9 @@ static int get_status(struct htm *htm, struct htm_status *status)
 	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
 		status->mem_size_select = val & HTM_MEM_SIZE_SMALL_P10;
 		status->mem_base = val & HTM_MEM_BASE_P10;
+	} else if (pdbg_target_compatible(&htm->target, "ibm,power10-chtm")) {
+		status->mem_size_select = val & HTM_MEM_SIZE_SMALL_P10;
+		status->mem_base = val & HTM_MEM_BASE_P10;
 	} else {
 		status->mem_size_select = val & HTM_MEM_SIZE_SMALL;
 		status->mem_base = val & HTM_MEM_BASE;
@@ -596,12 +628,29 @@ static int configure_chtm(struct htm *htm, bool wrap)
 
 	val = wrap ? HTM_MODE_WRAP : 0;
 	if (HTM_ERR(pib_write(&htm->target, HTM_COLLECTION_MODE,
-		HTM_MODE_ENABLE | val)))
+		HTM_MODE_ENABLE | HTM_MODE_DIS_TIMESTAMP |
+		HTM_MODE_CORE_TRACE_EN | val)))
 		return -1;
 
 	if (htm->configure && htm->configure(htm) < 0)
 		return -1;
 
+	return 0;
+}
+
+static int do_configure_chtm_p10(struct htm *htm)
+{
+	struct pdbg_target *core;
+	uint64_t mask;
+
+	/* P10 only: mask PC Logic checkstop in wrapping mode */
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-chtm")) {
+		core = pdbg_target_require_parent("core", &htm->target);
+		if (HTM_ERR(pib_read(core, CORE_FIR_MASK, &mask)))
+			return -1;
+		if (HTM_ERR(pib_write(core, CORE_FIR_MASK, mask | CORE_FIR_PC_LOGIC)))
+			return -1;
+	}
 	return 0;
 }
 
@@ -641,6 +690,23 @@ static int deconfigure_chtm(struct htm *htm)
 //	FIXME this needs kernel work to happen
 //	if (HTM_ERR(deconfigure_debugfs_memtrace(htm)))
 //		return -1;
+	return 0;
+}
+
+static int do_deconfigure_chtm_p10(struct htm *htm)
+{
+	struct pdbg_target *core;
+	uint64_t mask;
+
+	core = pdbg_target_require_parent("core", &htm->target);
+	/* clear fir first before unmasking it */
+	if (HTM_ERR(pib_write(core, CORE_FIR_AND, ~CORE_FIR_PC_LOGIC)))
+		return -1;
+	if (HTM_ERR(pib_read(core, CORE_FIR_MASK, &mask)))
+		return -1;
+	if (HTM_ERR(pib_write(core, CORE_FIR_MASK, mask & ~CORE_FIR_PC_LOGIC)))
+		return -1;
+
 	return 0;
 }
 
@@ -898,6 +964,8 @@ static int configure_memory(struct htm *htm)
 		small = 1;
 	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm"))
 		val = SETFIELD(HTM_MEM_SIZE_SMALL_P10, val, small);
+	else if (pdbg_target_compatible(&htm->target, "ibm,power10-chtm"))
+		val = SETFIELD(HTM_MEM_SIZE_SMALL_P10, val, small);
 	else
 		val = SETFIELD(HTM_MEM_SIZE_SMALL, val, small);
 	shift = 29; /* large */
@@ -913,6 +981,8 @@ static int configure_memory(struct htm *htm)
 	 * in works fine.
 	 */
 	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm"))
+		val = SETFIELD(HTM_MEM_BASE_P10, val, 0);
+	else if (pdbg_target_compatible(&htm->target, "ibm,power10-chtm"))
 		val = SETFIELD(HTM_MEM_BASE_P10, val, 0);
 	else
 		val = SETFIELD(HTM_MEM_BASE, val, 0);
@@ -971,6 +1041,37 @@ static int do_post_configure_chtm_p8(struct htm *htm)
 	return 0;
 }
 
+static int do_post_configure_chtm_p10(struct htm *htm)
+{
+	struct pdbg_target *core;
+	uint64_t hid0;
+
+	core = pdbg_target_require_parent("core", &htm->target);
+	if (HTM_ERR(pib_read(core, HIDQ_REGISTER, &hid0)))
+		return -1;
+	hid0 = HIDQ_ONE_PPC | HIDQ_DIS_PROC_REC | HIDQ_HILE;
+	if (HTM_ERR(pib_write(core, HIDQ_REGISTER, hid0)))
+		return -1;
+	hid0 |= HIDQ_EN_INST_TRACE;
+	if (HTM_ERR(pib_write(core, HIDQ_REGISTER, hid0)))
+		return -1;
+
+	return 0;
+}
+
+static int do_pre_deconfigure_chtm_p10(struct htm *htm)
+{
+	struct pdbg_target *core;
+	uint64_t hid0;
+
+	core = pdbg_target_require_parent("core", &htm->target);
+	hid0 = HIDQ_DIS_PROC_REC | HIDQ_HILE;
+	if (HTM_ERR(pib_write(core, HIDQ_REGISTER, hid0)))
+		return -1;
+
+	return 0;
+}
+
 static int __do_htm_start(struct htm *htm, bool wrap)
 {
 	struct htm_status status;
@@ -993,6 +1094,13 @@ static int __do_htm_start(struct htm *htm, bool wrap)
 	if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_START)))
 		return -1;
 
+	while (1) {
+		if (HTM_ERR(get_status(htm, &status)))
+			return -1;
+		if (status.state == TRACING)
+			break;
+	}
+
 	if (htm->post_configure && htm->post_configure(htm))
 		return -1;
 
@@ -1014,6 +1122,7 @@ static int do_htm_start(struct htm *htm)
 static int do_htm_stop(struct htm *htm)
 {
 	struct htm_status status;
+
 	get_status(htm, &status);
 	if (HTM_ERR(get_status(htm, &status)))
 		return -1;
@@ -1022,6 +1131,10 @@ static int do_htm_stop(struct htm *htm)
 		PR_INFO("* Skipping STOP trigger, HTM appears uninitialized\n");
 		return -1;
 	}
+
+	if (htm->pre_deconfigure && htm->pre_deconfigure(htm) < 0)
+		return -1;
+
 	if (status.state == TRACING) {
 		PR_INFO("* Sending STOP trigger to HTM\n");
 		if (HTM_ERR(pib_write(&htm->target, HTM_SCOM_TRIGGER, HTM_TRIG_STOP)))
@@ -1222,7 +1335,8 @@ static int do_htm_dump(struct htm *htm, char *filename)
 		goto out3;
 	}
 
-	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm") ||
+	    pdbg_target_compatible(&htm->target, "ibm,power10-chtm")) {
 		lseek(trace_fd, 8, SEEK_SET);
 		r = read(trace_fd, &eyecatcher, 8);
 	} else {
@@ -1412,6 +1526,25 @@ static struct htm p10_nhtm = {
 };
 DECLARE_HW_UNIT(p10_nhtm);
 
+static struct htm p10_chtm = {
+	.target = {
+		.name = "POWER10 Core HTM",
+		.compatible = "ibm,power10-chtm",
+		.class = "chtm",
+		.probe = chtm_probe,
+	},
+	.start = do_htm_start,
+	.stop = do_htm_stop,
+	.record = do_htm_record,
+	.status = do_htm_status,
+	.dump = do_htm_dump,
+	.configure = do_configure_chtm_p10,
+	.deconfigure = do_deconfigure_chtm_p10,
+	.post_configure = do_post_configure_chtm_p10,
+	.pre_deconfigure = do_pre_deconfigure_chtm_p10,
+};
+DECLARE_HW_UNIT(p10_chtm);
+
 __attribute__((constructor))
 static void register_htm(void)
 {
@@ -1419,4 +1552,5 @@ static void register_htm(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p9_nhtm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_nhtm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_chtm_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_chtm_hw_unit);
 }

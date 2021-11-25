@@ -61,6 +61,7 @@ struct htm {
 	int (*configure)(struct htm *);
 	int (*deconfigure)(struct htm *);
 	int (*post_configure)(struct htm *);
+	int (*pre_deconfigure)(struct htm *);
 };
 #define target_to_htm(x) container_of(x, struct htm, target)
 
