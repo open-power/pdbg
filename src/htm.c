@@ -291,7 +291,7 @@ int run_htm(int optind, int argc, char *argv[])
 		}
 
 		/* Check that powersave is off */
-		pdbg_for_each_class_target("thread", target) {
+		pdbg_for_each_target("thread", core_target, target) {
 			status = pdbg_target_probe(target);
 			if (status == PDBG_TARGET_NONEXISTENT)
 				continue;
