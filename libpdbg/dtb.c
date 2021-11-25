@@ -42,6 +42,7 @@
 #include "bmc-kernel.dt.h"
 #include "p8-host.dt.h"
 #include "p9-host.dt.h"
+#include "p10-host.dt.h"
 #include "p8-cronus.dt.h"
 #include "cronus.dt.h"
 #include "bmc-sbefifo.dt.h"
@@ -171,9 +172,15 @@ static void ppc_target(struct pdbg_dtb *dtb)
 				dtb->backend.fdt = &_binary_p9_host_dtb_o_start;
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p10")) {
+			pdbg_proc = PDBG_PROC_P10;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_p10_host_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p10_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
-			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9'\n");
+			pdbg_log(PDBG_ERROR, "Use 'p8' or 'p9' or 'p10'\n");
 		}
 
  		return;
@@ -216,6 +223,13 @@ static void ppc_target(struct pdbg_dtb *dtb)
 			dtb->backend.fdt = &_binary_p9_host_dtb_o_start;
 		if (!dtb->system.fdt)
 			dtb->system.fdt = &_binary_p9_dtb_o_start;
+	} else if (strncmp(pos, "POWER10", 7) == 0) {
+		pdbg_proc = PDBG_PROC_P10;
+		pdbg_log(PDBG_INFO, "Found a POWER10 PPC host system\n");
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_p10_host_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p10_dtb_o_start;
 	} else {
 		pdbg_log(PDBG_ERROR, "Unsupported CPU type '%s'\n", pos);
  	}

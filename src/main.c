@@ -205,6 +205,9 @@ out2:
 }
 
 /* Stolen from skiboot */
+#define P10_PIR2GCID(pir) (((pir) >> 8) & 0xf)
+#define P10_PIR2COREID(pir) (((pir) >> 2) & 0x3f)
+#define P10_PIR2THREADID(pir) ((pir) & 0x3)
 #define P9_PIR2GCID(pir) (((pir) >> 8) & 0x7f)
 #define P9_PIR2COREID(pir) (((pir) >> 2) & 0x3f)
 #define P9_PIR2THREADID(pir) ((pir) & 0x3)
@@ -226,6 +229,11 @@ bool pir_map(int pir, int *chip, int *core, int *thread)
 		*chip = P8_PIR2GCID(pir);
 		*core = P8_PIR2COREID(pir);
 		*thread = P8_PIR2THREADID(pir);
+		break;
+	case PDBG_PROC_P10:
+		*chip = P10_PIR2GCID(pir);
+		*core = P10_PIR2COREID(pir);
+		*thread = P10_PIR2THREADID(pir);
 		break;
 	default:
 		PR_ERROR("Unable to determine processor type for mapping to Linux CPU number\n");
