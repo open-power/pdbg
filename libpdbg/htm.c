@@ -35,6 +35,7 @@
 			rc;})
 
 #define MIN(x,y) ((x < y) ? x : y)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define DEBUGFS_POWERPC "/sys/kernel/debug/powerpc"
 #define DEBUGFS_SCOM DEBUGFS_POWERPC"/scom"
@@ -75,10 +76,34 @@
 #define   HTM_MEM_SCOPE			PPC_BITMASK(1,3)
 /* Note: the next 3 change on P9 */
 #define   HTM_MEM_PRIORITY		PPC_BITMASK(4,5)
+#define   HTM_MEM_PRIORITY_P10		PPC_BITMASK(4)
 #define   HTM_MEM_SIZE_SMALL		PPC_BIT(13)
+#define   HTM_MEM_SIZE_SMALL_P10	PPC_BIT(5)
 #define   HTM_MEM_BASE			PPC_BITMASK(14,39)
+#define   HTM_MEM_BASE_P10		PPC_BITMASK(8,39)
 #define	  HTM_MEM_SIZE			PPC_BITMASK(40,48)
 #define HTM_STATUS			2
+#define   HTM2_STATUS_MASK		PPC_BITMASK(22,39)
+#define   HTM2_STATUS_CRESP_OV		PPC_BIT(22)
+#define	  HTM2_STATUS_REPAIR		PPC_BIT(23)
+#define   HTM2_STATUS_BUF_WAIT		PPC_BIT(24)
+#define   HTM2_STATUS_TRIG_DROPPED	PPC_BIT(25)
+#define   HTM2_STATUS_ADDR_ERROR	PPC_BIT(26)
+#define   HTM2_STATUS_REC_DROPPED	PPC_BIT(27)
+#define   HTM2_STATUS_INIT		PPC_BIT(28)
+#define   HTM2_STATUS_PREREQ		PPC_BIT(29)
+#define   HTM2_STATUS_READY		PPC_BIT(30)
+#define   HTM2_STATUS_TRACING		PPC_BIT(31)
+#define   HTM2_STATUS_PAUSED		PPC_BIT(32)
+#define   HTM2_STATUS_FLUSH		PPC_BIT(33)
+#define   HTM2_STATUS_COMPLETE		PPC_BIT(34)
+#define   HTM2_STATUS_ENABLE		PPC_BIT(35)
+#define   HTM2_STATUS_STAMP		PPC_BIT(36)
+#define   HTM2_STATUS_SCOM_ERROR	PPC_BIT(37)
+#define   HTM2_STATUS_PARITY_ERROR	PPC_BIT(38)
+#define   HTM2_STATUS_INVALID_CRESP	PPC_BIT(39)
+#define   HTM2_STATUS_STATE_MASK	(PPC_BITMASK(28,36) | HTM_STATUS_REPAIR)
+#define	  HTM2_STATUS_ERROR_MASK	(HTM_STATUS_CRESP_OV | PPC_BITMASK(24,27) | PPC_BITMASK(37,39))
 #define   HTM_STATUS_MASK		PPC_BITMASK(2,19)
 #define   HTM_STATUS_CRESP_OV		PPC_BIT(2)
 #define	  HTM_STATUS_REPAIR		PPC_BIT(3)
@@ -102,7 +127,9 @@
 #define	  HTM_STATUS_ERROR_MASK		(HTM_STATUS_CRESP_OV | PPC_BITMASK(4,7) | PPC_BITMASK(17,19))
 #define HTM_LAST_ADDRESS		3
 #define   HTM_LAST_ADDRESS_MASK		PPC_BITMASK(8,56)
-#define HTM_SCOM_TRIGGER		4
+#define HTM2_LAST_ADDRESS		4
+#define   HTM2_LAST_ADDRESS_MASK	PPC_BITMASK(8,56)
+#define HTM_SCOM_TRIGGER		(4 + dual_htm_offset)
 #define	  HTM_TRIG_START		PPC_BIT(0)
 #define   HTM_TRIG_STOP			PPC_BIT(1)
 #define   HTM_TRIG_PAUSE		PPC_BIT(2)
@@ -110,28 +137,49 @@
 #define   HTM_TRIG_RESET		PPC_BIT(4)
 #define   HTM_TRIG_MARK_VALID		PPC_BIT(5)
 #define   HTM_TRIG_MARK_TYPE		PPC_BITMASK(6,15)
-#define HTM_TRIGGER_CONTROL		5
+#define HTM_TRIGGER_CONTROL		(5 + dual_htm_offset)
 #define   HTM_CTRL_TRIG			PPC_BITMASK(0,1)
 #define   HTM_CTRL_MASK			PPC_BITMASK(4,5)
 #define   HTM_CTRL_XSTOP_STOP		PPC_BIT(13)
-#define NHTM_FILTER_CONTROL		6
+#define NHTM_FILTER_CONTROL		(6 + dual_htm_offset)
 #define   NHTM_FILTER_RCMD_SCOPE	PPC_BITMASK(17,19)
 #define   NHTM_FILTER_RCMD_SOURCE	PPC_BITMASK(20,21)
 #define   NHTM_FILTER_CRESP_PATTERN	PPC_BITMASK(27,31)
 #define   NHTM_FILTER_MASK		PPC_BITMASK(32,54)
 #define   NHTM_FILTER_CRESP_MASK	PPC_BITMASK(59,63)
-#define NHTM_TTYPE_FILTER_CONTROL	7
+#define NHTM_TTYPE_FILTER_CONTROL	(7 + dual_htm_offset)
 #define   NHTM_TTYPE_TYPE_MASK		PPC_BITMASK(17,23)
 #define   NHTM_TTYPE_SIZE_MASK		PPC_BITMASK(24,31)
-#define NHTM_CONFIGURATION		8
+#define NHTM_CONFIGURATION		(8 + dual_htm_offset)
 #define   NHTM_CONF_HANG_DIV_RATIO	PPC_BITMASK(0,4)
 #define   NHTM_CONF_RTY_DROP_COUNT	PPC_BITMASK(5,8)
 #define   NHTM_CONF_DROP_PRIORITY_INC	PPC_BIT(9)
 #define   NHTM_CONF_RETRY_BACKOFF	PPC_BIT(10)
 #define   NHTM_CONF_OPERALIONAL_HANG	PPC_BIT(11)
-#define NHTM_FLEX_MUX			9
+#define NHTM_FLEX_MUX			(9 + dual_htm_offset)
 #define   NHTM_FLEX_MUX_MASK		PPC_BITMASK(0,35)
 #define   NHTM_FLEX_DEFAULT		0xCB3456129
+#define   NHTM_FLEX_MUX_MASK_P10	PPC_BITMASK(0,39)
+#define   NHTM_FLEX_DEFAULT_P10		0xCB34561567
+#define NHTM_ADDR_PAT			0xb
+#define   NHTM_ADDR_PAT_MASK		PPC_BITMASK(0, 55)
+#define NHTM_ADDR_MASK			0xc
+#define   NHTM_ADDR_MASK_MASK		PPC_BITMASK(0, 55)
+#define NHTM_STOP_FILTER		0xd
+#define   NHTM_STOP_FILTER_TTAG_PAT	PPC_BITMASK(0, 14)
+#define   NHTM_STOP_FILTER_TTAG_MASK	PPC_BITMASK(15, 29)
+#define   NHTM_STOP_FILTER_TTYPE_PAT	PPC_BITMASK(30, 36)
+#define   NHTM_STOP_FILTER_TTYPE_MASK	PPC_BITMASK(37, 43)
+#define   NHTM_STOP_FILTER_CRESP_PAT	PPC_BITMASK(44, 48)
+#define   NHTM_STOP_FILTER_CRESP_MASK	PPC_BITMASK(49, 53)
+#define   NHTM_STOP_CYCLES		PPC_BITMASK(54, 60)
+#define NHTM_STOP_FILT_ADDR_PAT		0xe
+#define   NHTM_STOP_FILT_ADDR_PAT_MASK	PPC_BITMASK(0, 55)
+#define NHTM_STOP_FILT_ADDR_MASK	0xf
+#define   NHTM_STOP_FILT_ADDR_MASK_MASK	PPC_BITMASK(0, 55)
+
+/* On P10 there are two nhtms which shifts some of the registers */
+static int dual_htm_offset;
 
 enum htm_state {
 	INIT,
@@ -161,11 +209,14 @@ enum htm_error {
 
 struct htm_status {
 	enum htm_state state;
+	enum htm_state state2;
 	enum htm_error error;
+	enum htm_error error2;
 	bool mem_size_select;
 	uint16_t mem_size;
 	uint64_t mem_base;
 	uint64_t mem_last;
+	uint64_t mem_last2;
 	uint64_t raw;
 };
 
@@ -292,6 +343,37 @@ static int get_status(struct htm *htm, struct htm_status *status)
 		status->error = NONE;
 	}
 
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
+		switch (status->raw & HTM2_STATUS_ERROR_MASK) {
+		case HTM2_STATUS_CRESP_OV:
+			status->error2 = CRESP_OV;
+			break;
+		case HTM2_STATUS_BUF_WAIT:
+			status->error2 = BUF_WAIT;
+			break;
+		case HTM2_STATUS_TRIG_DROPPED:
+			status->error2 = TRIGGER_DROPPED;
+			break;
+		case HTM2_STATUS_ADDR_ERROR:
+			status->error2 = ADDR_ERROR;
+			break;
+		case HTM2_STATUS_REC_DROPPED:
+			status->error2 = RECORD_DROPPED;
+			break;
+		case HTM2_STATUS_SCOM_ERROR:
+			status->error2 = SCOM_ERROR;
+			break;
+		case HTM2_STATUS_PARITY_ERROR:
+			status->error2 = PARITY_ERROR;
+			break;
+		case HTM2_STATUS_INVALID_CRESP:
+			status->error2 = INVALID_CRESP;
+			break;
+		default:
+			status->error2 = NONE;
+		}
+	}
+
 	switch (status->raw & HTM_STATUS_STATE_MASK) {
 	case HTM_STATUS_REPAIR:
 		status->state = REPAIR;
@@ -327,15 +409,62 @@ static int get_status(struct htm *htm, struct htm_status *status)
 		status->state = UNINITIALIZED;
 	}
 
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
+		switch (status->raw & HTM2_STATUS_STATE_MASK) {
+		case HTM2_STATUS_REPAIR:
+			status->state2 = REPAIR;
+			break;
+		case HTM2_STATUS_INIT:
+			status->state2 = INIT;
+			break;
+		case HTM2_STATUS_PREREQ:
+			status->state2 = PREREQ;
+			break;
+		case HTM2_STATUS_READY:
+			status->state2 = READY;
+			break;
+		case HTM2_STATUS_TRACING:
+			status->state2 = TRACING;
+			break;
+		case HTM2_STATUS_PAUSED:
+			status->state2 = PAUSED;
+			break;
+		case HTM2_STATUS_FLUSH:
+			status->state2 = FLUSH;
+			break;
+		case HTM2_STATUS_COMPLETE:
+			status->state2 = COMPLETE;
+			break;
+		case HTM2_STATUS_ENABLE:
+			status->state2 = ENABLE;
+			break;
+		case HTM2_STATUS_STAMP:
+			status->state2 = STAMP;
+			break;
+		default:
+			status->state2 = UNINITIALIZED;
+		}
+	}
+
 	if (HTM_ERR(pib_read(&htm->target, HTM_MEMORY_CONF, &val)))
 		return -1;
 
-	status->mem_size_select = val & HTM_MEM_SIZE_SMALL;
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
+		status->mem_size_select = val & HTM_MEM_SIZE_SMALL_P10;
+		status->mem_base = val & HTM_MEM_BASE_P10;
+	} else {
+		status->mem_size_select = val & HTM_MEM_SIZE_SMALL;
+		status->mem_base = val & HTM_MEM_BASE;
+	}
 	status->mem_size = GETFIELD(HTM_MEM_SIZE,val);
-	status->mem_base = val & HTM_MEM_BASE;
 
 	if (HTM_ERR(pib_read(&htm->target, HTM_LAST_ADDRESS, &status->mem_last)))
 		return -1;
+
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
+		if (HTM_ERR(pib_read(&htm->target, HTM2_LAST_ADDRESS, &status->mem_last2)))
+			return -1;
+	}
 
 	return 0;
 }
@@ -566,6 +695,35 @@ static int configure_nhtm(struct htm *htm, bool wrap)
 		}
 	}
 
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
+		if (HTM_ERR(pib_read(&htm->target, NHTM_FLEX_MUX, &val)))
+			return -1;
+
+		if (GETFIELD(NHTM_FLEX_MUX_MASK_P10, val) != NHTM_FLEX_DEFAULT_P10) {
+			PR_ERROR("The HTM Flex wasn't default value\n");
+			return -1;
+		}
+
+		if (HTM_ERR(pib_write(&htm->target, NHTM_ADDR_PAT, 0)))
+			return -1;
+
+		if (HTM_ERR(pib_write(&htm->target, NHTM_ADDR_MASK, NHTM_ADDR_MASK_MASK)))
+			return -1;
+
+		if (HTM_ERR(pib_write(&htm->target, NHTM_STOP_FILTER,
+				      NHTM_STOP_FILTER_TTAG_MASK |
+				      NHTM_STOP_FILTER_TTYPE_MASK |
+				      NHTM_STOP_FILTER_CRESP_MASK)))
+			return -1;
+
+		if (HTM_ERR(pib_write(&htm->target, NHTM_STOP_FILT_ADDR_PAT, 0)))
+			return -1;
+
+		if (HTM_ERR(pib_write(&htm->target, NHTM_STOP_FILT_ADDR_MASK,
+				      NHTM_STOP_FILT_ADDR_MASK_MASK)))
+			return -1;
+	}
+
 	return 0;
 }
 
@@ -577,9 +735,13 @@ static int deconfigure_nhtm(struct htm *htm)
 	return 0;
 }
 
-static int is_startable(struct htm_status *status)
+static int is_startable(struct htm *htm, struct htm_status *status)
 {
-	return (status->state == READY || status->state == PAUSED);
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm"))
+		return ((status->state == READY || status->state == PAUSED) &&
+			(status->state2 == READY || status->state2 == PAUSED));
+	else
+		return (status->state == READY || status->state == PAUSED);
 }
 
 static char *get_debugfs_file(struct htm *htm, const char *file)
@@ -715,7 +877,10 @@ static int configure_memory(struct htm *htm)
 	small = 0;
 	if (size < 512*1024*1024)
 		small = 1;
-	val = SETFIELD(HTM_MEM_SIZE_SMALL, val, small);
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm"))
+		val = SETFIELD(HTM_MEM_SIZE_SMALL_P10, val, small);
+	else
+		val = SETFIELD(HTM_MEM_SIZE_SMALL, val, small);
 	shift = 29; /* large */
 	if (small)
 		shift = 24;
@@ -728,7 +893,10 @@ static int configure_memory(struct htm *htm)
 	 * already shifted correct as read from the kernel, or'ing it
 	 * in works fine.
 	 */
-	val = SETFIELD(HTM_MEM_BASE, val, 0);
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm"))
+		val = SETFIELD(HTM_MEM_BASE_P10, val, 0);
+	else
+		val = SETFIELD(HTM_MEM_BASE, val, 0);
 	val |= base;
 
 	if (HTM_ERR(pib_write(&htm->target, HTM_MEMORY_CONF, val)))
@@ -800,7 +968,7 @@ static int __do_htm_start(struct htm *htm, bool wrap)
 	if (HTM_ERR(get_status(htm, &status)))
 		return -1;
 
-	if (!is_startable(&status)) {
+	if (!is_startable(htm, &status)) {
 		PR_ERROR("HTM not in a startable state!\n");
 		return -1;
 	}
@@ -1008,9 +1176,9 @@ static int do_htm_dump(struct htm *htm, char *filename)
 {
 	char *trace_file;
 	struct htm_status status;
-	uint64_t last, end, trace_size;
+	uint64_t last, end, trace_size, last2 = 0;
 	int trace_fd, dump_fd;
-	uint32_t eyecatcher;
+	uint64_t eyecatcher;
 	size_t r;
 	bool wrapped;
 
@@ -1025,6 +1193,11 @@ static int do_htm_dump(struct htm *htm, char *filename)
 		return -1;
 	}
 
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm") && status.state2 != COMPLETE) {
+		PR_INFO("* Skipping DUMP tigger, HTM2 is not in complete state\n");
+		return -1;
+	}
+
 	trace_file = get_debugfs_file(htm, "trace");
 	if (!trace_file)
 		return -1;
@@ -1036,7 +1209,12 @@ static int do_htm_dump(struct htm *htm, char *filename)
 		goto out3;
 	}
 
-	r = read(trace_fd, &eyecatcher, 4);
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm")) {
+		lseek(trace_fd, 8, SEEK_SET);
+		r = read(trace_fd, &eyecatcher, 8);
+	} else {
+		r = read(trace_fd, &eyecatcher, 4);
+	}
 	if (r == -1) {
 		PR_ERROR("Failed to read from %s: %m\n", trace_file);
 		goto out2;
@@ -1045,6 +1223,8 @@ static int do_htm_dump(struct htm *htm, char *filename)
 	if (eyecatcher == 0x00f0efac)
 		wrapped = false;
 	last = status.mem_last - status.mem_base;
+	if (pdbg_target_compatible(&htm->target, "ibm,power10-nhtm"))
+		last2 = status.mem_last2 - status.mem_base;
 	end = htm_trace_size(&status);
 	trace_size = wrapped ? end : last;
 
@@ -1083,7 +1263,7 @@ static int do_htm_dump(struct htm *htm, char *filename)
 	r = lseek(trace_fd, 0, SEEK_SET);
 	if (r == -1)
 		goto out1;
-	r = copy_file(dump_fd, trace_fd, last);
+	r = copy_file(dump_fd, trace_fd, MAX(last2, last));
 	if (r)
 		goto out1;
 	r = 1;
@@ -1140,6 +1320,14 @@ static int nhtm_probe(struct pdbg_target *target)
 		}
 	}
 
+	switch (pdbg_get_proc()) {
+	case PDBG_PROC_P10:
+		dual_htm_offset = 0x01;
+		break;
+	default:
+		break;
+	}
+
 	return 0;
 }
 
@@ -1193,10 +1381,26 @@ static struct htm p8_chtm = {
 };
 DECLARE_HW_UNIT(p8_chtm);
 
+static struct htm p10_nhtm = {
+	.target = {
+		.name = "POWER10 Nest HTM",
+		.compatible = "ibm,power10-nhtm",
+		.class = "nhtm",
+		.probe = nhtm_probe,
+	},
+	.start = do_htm_start,
+	.stop = do_htm_stop,
+	.record = do_htm_record,
+	.status = do_htm_status,
+	.dump = do_htm_dump,
+};
+DECLARE_HW_UNIT(p10_nhtm);
+
 __attribute__((constructor))
 static void register_htm(void)
 {
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_nhtm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p9_nhtm_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_nhtm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p8_chtm_hw_unit);
 }
