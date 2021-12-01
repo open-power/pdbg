@@ -249,6 +249,60 @@ int thread_sreset_all(void)
 	return -1;
 }
 
+int thread_start_proc(struct pdbg_target *target)
+{
+	struct pdbg_target *thread;
+	struct pib *pib;
+	int rc = 0;
+
+	assert(pdbg_target_is_class(target, "pib"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	pib = target_to_pib(target);
+
+	if (pib->thread_start_all) {
+		rc = pib->thread_start_all(pib);
+	} else {
+		pdbg_for_each_target("thread", target, thread) {
+			if (pdbg_target_status(thread) != PDBG_TARGET_ENABLED)
+				continue;
+
+			rc |= thread_start(thread);
+		}
+	}
+
+	return rc;
+}
+
+int thread_stop_proc(struct pdbg_target *target)
+{
+	struct pdbg_target *thread;
+	struct pib *pib;
+	int rc = 0;
+
+	assert(pdbg_target_is_class(target, "pib"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	pib = target_to_pib(target);
+
+	if (pib->thread_stop_all) {
+		rc = pib->thread_stop_all(pib);
+	} else {
+		pdbg_for_each_target("thread", target, thread) {
+			if (pdbg_target_status(thread) != PDBG_TARGET_ENABLED)
+				continue;
+
+			rc |= thread_stop(thread);
+		}
+	}
+
+	return rc;
+}
+
 int thread_getmem(struct pdbg_target *target, uint64_t addr, uint64_t *value)
 {
 	struct thread *thread;

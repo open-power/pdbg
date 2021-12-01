@@ -1101,6 +1101,20 @@ int thread_stop_all(void);
 int thread_sreset_all(void);
 
 /**
+ * @brief Start execution of all the threads on a given processor
+ * @param[in] target the pib target to operate on
+ * @return 0 on success, -1 otherwise
+ */
+int thread_start_proc(struct pdbg_target *target);
+
+/**
+ * @brief Stop execution of all the threads on a given processor
+ * @param[in] target the pib target to operate on
+ * @return 0 on success, -1 otherwise
+ */
+int thread_stop_proc(struct pdbg_target *target);
+
+/**
  * @brief Return the thread status information
  *
  * @param[in]  target the thread target to operate on
