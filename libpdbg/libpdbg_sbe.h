@@ -126,6 +126,16 @@ int sbe_set_state(struct pdbg_target *target, enum sbe_state state);
  */
 int sbe_is_ipl_done(struct pdbg_target *target, bool *done);
 
+/**
+ * @brief Get the LPC timeout flag
+ *
+ * @param[in] target pib target to operate on
+ * @param[out] timeout_flag 0 if no timeout ocurred, 1 if LPC timed out
+ *
+ * @return 0 on success, -1 on failure
+ */
+int sbe_lpc_timeout(struct pdbg_target *target, uint32_t *timeout_flag);
+
 
 #ifdef __cplusplus
 }

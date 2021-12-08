@@ -334,3 +334,26 @@ int sbe_is_ipl_done(struct pdbg_target *pib, bool *done)
 
 	return 0;
 }
+
+int sbe_lpc_timeout(struct pdbg_target *target, uint32_t *timeout_flag)
+{
+	struct chipop *chipop;
+	int rc;
+
+	chipop = pib_to_chipop(target);
+	if (!chipop)
+		return -1;
+
+	if (!chipop->lpc_timeout) {
+		PR_ERROR("lpc_timeout() not implemented for the target\n");
+		return -1;
+	}
+
+	rc = chipop->lpc_timeout(chipop, timeout_flag);
+	if (rc) {
+		PR_ERROR("sbe lpc_timeout() returned rc=%d\n", rc);
+		return -1;
+	}
+
+	return 0;
+}
