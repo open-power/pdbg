@@ -78,6 +78,7 @@ struct chipop {
 	int (*mpipl_continue)(struct chipop *);
 	int (*mpipl_get_ti_info)(struct chipop *, uint8_t **, uint32_t *);
 	int (*dump)(struct chipop *, uint8_t, uint8_t, uint8_t, uint8_t **, uint32_t *);
+	int (*lpc_timeout)(struct chipop *, uint32_t *);
 };
 #define target_to_chipop(x) container_of(x, struct chipop, target)
 

@@ -240,6 +240,14 @@ static int sbefifo_op_dump(struct chipop *chipop, uint8_t type, uint8_t clock, u
 	return sbefifo_get_dump(sctx, type, clock, fa_collect, data, data_len);
 }
 
+static int sbefifo_op_lpc_timeout(struct chipop *chipop, uint32_t *timeout_flag)
+{
+	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+
+	return sbefifo_lpc_timeout(sctx, timeout_flag);
+}
+
 static struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
 {
 	struct pdbg_target *target;
@@ -836,6 +844,7 @@ static struct chipop sbefifo_chipop = {
 	.mpipl_continue = sbefifo_op_mpipl_continue,
 	.mpipl_get_ti_info = sbefifo_op_mpipl_get_ti_info,
 	.dump = sbefifo_op_dump,
+	.lpc_timeout = sbefifo_op_lpc_timeout,
 };
 DECLARE_HW_UNIT(sbefifo_chipop);
 
