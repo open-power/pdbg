@@ -185,6 +185,7 @@ int sbefifo_control_insn(struct sbefifo_context *sctx, uint8_t core_id, uint8_t 
 int sbefifo_get_ffdc(struct sbefifo_context *sctx);
 int sbefifo_get_capabilities(struct sbefifo_context *sctx, uint32_t *version, char **commit_id, char **release_tag, uint32_t **caps, uint32_t *caps_count);
 int sbefifo_quiesce(struct sbefifo_context *sctx);
+int sbefifo_lpc_timeout(struct sbefifo_context *sctx, uint32_t *timeout_flag);
 
 int sbefifo_mpipl_enter(struct sbefifo_context *sctx);
 int sbefifo_mpipl_continue(struct sbefifo_context *sctx);

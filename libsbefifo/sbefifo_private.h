@@ -59,6 +59,8 @@
 #define   SBEFIFO_CMD_GET_FFDC             0x01
 #define   SBEFIFO_CMD_GET_CAPABILITY       0x02
 #define   SBEFIFO_CMD_QUIESCE              0x03
+/* missing ids */
+#define   SBEFIFO_CMD_LPC_TIMEOUT          0x08
 
 #define SBEFIFO_CMD_CLASS_MPIPL          0xA900
 #define   SBEFIFO_CMD_ENTER_MPIPL          0x01

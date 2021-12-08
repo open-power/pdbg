@@ -211,3 +211,56 @@ int sbefifo_quiesce(struct sbefifo_context *sctx)
 
 	return rc;
 }
+
+static int sbefifo_lpc_timeout_push(uint8_t **buf, uint32_t *buflen)
+{
+	uint32_t *msg;
+	uint32_t nwords, cmd;
+
+	nwords = 2;
+	*buflen = nwords * sizeof(uint32_t);
+	msg = malloc(*buflen);
+	if (!msg)
+		return ENOMEM;
+
+	cmd = SBEFIFO_CMD_CLASS_GENERIC | SBEFIFO_CMD_LPC_TIMEOUT;
+
+	msg[0] = htobe32(nwords);
+	msg[1] = htobe32(cmd);
+
+	*buf = (uint8_t *)msg;
+	return 0;
+}
+
+static int sbefifo_lpc_timeout_pull(uint8_t *buf, uint32_t buflen, uint32_t *timeout_flag)
+{
+	if (buflen != sizeof(uint32_t))
+		return EPROTO;
+
+	*timeout_flag = be32toh(*(uint32_t *) &buf[0]);
+
+	return 0;
+}
+
+int sbefifo_lpc_timeout(struct sbefifo_context *sctx, uint32_t *timeout_flag)
+{
+	uint8_t *msg, *out;
+	uint32_t msg_len, out_len;
+	int rc;
+
+	rc = sbefifo_lpc_timeout_push(&msg, &msg_len);
+	if (rc)
+		return rc;
+
+	out_len = 1 * sizeof(uint32_t);
+	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	free(msg);
+	if (rc)
+		return rc;
+
+	rc = sbefifo_lpc_timeout_pull(out, out_len, timeout_flag);
+	if (out)
+		free(out);
+
+	return rc;
+}
