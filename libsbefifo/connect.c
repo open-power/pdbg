@@ -21,6 +21,17 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <sys/ioctl.h>
+
+#ifdef HAVE_LINUX_FSI_H
+#include <linux/fsi.h>
+#else
+#include <linux/ioctl.h>
+#endif /* HAVE_LINUX_FSI_H */
+
+#ifndef FSI_SBEFIFO_READ_TIMEOUT
+#define FSI_SBEFIFO_READ_TIMEOUT        _IOW('s', 0x00, unsigned int)
+#endif
 
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
@@ -104,6 +115,36 @@ void sbefifo_disconnect(struct sbefifo_context *sctx)
 int sbefifo_proc(struct sbefifo_context *sctx)
 {
 	return sctx->proc;
+}
+
+int sbefifo_set_long_timeout(struct sbefifo_context *sctx)
+{
+	unsigned int long_timeout = 30;
+	int rc;
+
+	LOG("long_timeout: %u sec\n", long_timeout);
+	rc = ioctl(sctx->fd, FSI_SBEFIFO_READ_TIMEOUT, &long_timeout);
+	if (rc == -1 && errno == ENOTTY) {
+		/* Do not fail if kernel does not implement ioctl */
+		rc = 0;
+	}
+
+	return rc;
+}
+
+int sbefifo_reset_timeout(struct sbefifo_context *sctx)
+{
+	unsigned int timeout = 0;
+	int rc;
+
+	LOG("reset_timeout\n");
+	rc = ioctl(sctx->fd, FSI_SBEFIFO_READ_TIMEOUT, &timeout);
+	if (rc == -1 && errno == ENOTTY) {
+		/* Do not fail if kernel does not implement ioctl */
+		rc = 0;
+	}
+
+	return rc;
 }
 
 void sbefifo_debug(const char *fmt, ...)
