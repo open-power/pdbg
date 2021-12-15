@@ -64,8 +64,15 @@ int sbefifo_istep_execute(struct sbefifo_context *sctx, uint8_t major, uint8_t m
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	out_len = 0;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;

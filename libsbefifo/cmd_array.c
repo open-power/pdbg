@@ -69,8 +69,15 @@ int sbefifo_control_fast_array(struct sbefifo_context *sctx, uint16_t target_typ
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	out_len = 0;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;
@@ -136,9 +143,16 @@ int sbefifo_control_trace_array(struct sbefifo_context *sctx, uint16_t target_ty
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	/* The size of returned data is just a guess */
 	out_len = 16 * sizeof(uint32_t);
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;

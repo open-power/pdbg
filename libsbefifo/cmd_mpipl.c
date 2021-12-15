@@ -61,8 +61,15 @@ int sbefifo_mpipl_enter(struct sbefifo_context *sctx)
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	out_len = 0;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;
@@ -112,8 +119,15 @@ int sbefifo_mpipl_continue(struct sbefifo_context *sctx)
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	out_len = 0;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;
@@ -224,8 +238,15 @@ int sbefifo_mpipl_get_ti_info(struct sbefifo_context *sctx, uint8_t **data, uint
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	out_len = 0;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;

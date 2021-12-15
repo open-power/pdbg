@@ -20,8 +20,13 @@
 #include <stdint.h>
 #include "libsbefifo.h"
 
+/*
+ * Long running commands will set a long (30 second) timeout when the kernel
+ * supports it.
+ */
+
 #define SBEFIFO_CMD_CLASS_CONTROL        0xA100
-#define   SBEFIFO_CMD_EXECUTE_ISTEP        0x01
+#define   SBEFIFO_CMD_EXECUTE_ISTEP        0x01 /* long running */
 #define   SBEFIFO_CMD_SUSPEND_IO           0x02
 
 #define SBEFIFO_CMD_CLASS_SCOM           0xA200
@@ -29,28 +34,28 @@
 #define   SBEFIFO_CMD_PUT_SCOM             0x02
 #define   SBEFIFO_CMD_MODIFY_SCOM          0x03
 #define   SBEFIFO_CMD_PUT_SCOM_MASK        0x04
-#define   SBEFIFO_CMD_MULTI_SCOM           0x05
+#define   SBEFIFO_CMD_MULTI_SCOM           0x05 /* long running */
 
 #define SBEFIFO_CMD_CLASS_RING           0xA300
-#define   SBEFIFO_CMD_GET_RING             0x01
-#define   SBEFIFO_CMD_PUT_RING             0x02
+#define   SBEFIFO_CMD_GET_RING             0x01 /* long running */
+#define   SBEFIFO_CMD_PUT_RING             0x02 /* long running */
 #define   SBEFIFO_CMD_PUT_RING_IMAGE       0x03
 
 #define SBEFIFO_CMD_CLASS_MEMORY         0xA400
-#define   SBEFIFO_CMD_GET_MEMORY           0x01
-#define   SBEFIFO_CMD_PUT_MEMORY           0x02
-#define   SBEFIFO_CMD_GET_SRAM             0x03
-#define   SBEFIFO_CMD_PUT_SRAM             0x04
+#define   SBEFIFO_CMD_GET_MEMORY           0x01 /* long running */
+#define   SBEFIFO_CMD_PUT_MEMORY           0x02 /* long running */
+#define   SBEFIFO_CMD_GET_SRAM             0x03 /* long running */
+#define   SBEFIFO_CMD_PUT_SRAM             0x04 /* long running */
 
 #define SBEFIFO_CMD_CLASS_REGISTER       0xA500
-#define   SBEFIFO_CMD_GET_REGISTER         0x01
-#define   SBEFIFO_CMD_PUT_REGISTER         0x02
+#define   SBEFIFO_CMD_GET_REGISTER         0x01 /* long running */
+#define   SBEFIFO_CMD_PUT_REGISTER         0x02 /* long running */
 #define   SBEFIFO_CMD_GET_HW_REGISTER      0x03
 #define   SBEFIFO_CMD_PUT_HW_REGISTER      0x04
 
 #define SBEFIFO_CMD_CLASS_ARRAY          0xA600
-#define   SBEFIFO_CMD_FAST_ARRAY           0x01
-#define   SBEFIFO_CMD_TRACE_ARRAY          0x02
+#define   SBEFIFO_CMD_FAST_ARRAY           0x01 /* long running */
+#define   SBEFIFO_CMD_TRACE_ARRAY          0x02 /* long running */
 
 #define SBEFIFO_CMD_CLASS_INSTRUCTION    0xA700
 #define   SBEFIFO_CMD_CONTROL_INSN         0x01
@@ -58,15 +63,15 @@
 #define SBEFIFO_CMD_CLASS_GENERIC        0xA800
 #define   SBEFIFO_CMD_GET_FFDC             0x01
 #define   SBEFIFO_CMD_GET_CAPABILITY       0x02
-#define   SBEFIFO_CMD_QUIESCE              0x03
+#define   SBEFIFO_CMD_QUIESCE              0x03 /* long running */
 /* missing ids */
 #define   SBEFIFO_CMD_LPC_TIMEOUT          0x08
 
 #define SBEFIFO_CMD_CLASS_MPIPL          0xA900
-#define   SBEFIFO_CMD_ENTER_MPIPL          0x01
-#define   SBEFIFO_CMD_CONTINUE_MPIPL       0x02
+#define   SBEFIFO_CMD_ENTER_MPIPL          0x01 /* long running */
+#define   SBEFIFO_CMD_CONTINUE_MPIPL       0x02 /* long running */
 #define   SBEFIFO_CMD_STOP_CLOCKS          0x03
-#define   SBEFIFO_CMD_GET_TI_INFO          0x04
+#define   SBEFIFO_CMD_GET_TI_INFO          0x04 /* long running */
 
 #define SBEFIFO_CMD_CLASS_DUMP           0xAA00
 #define   SBEFIFO_CMD_GET_DUMP             0x01

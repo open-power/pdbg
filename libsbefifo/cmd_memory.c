@@ -125,6 +125,12 @@ int sbefifo_mem_get(struct sbefifo_context *sctx, uint64_t addr, uint32_t size, 
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	/* length is 6th word in the request */
 	len = be32toh(*(uint32_t *)(msg + 20));
 	extra_bytes = 0;
@@ -137,10 +143,10 @@ int sbefifo_mem_get(struct sbefifo_context *sctx, uint64_t addr, uint32_t size, 
 
 	out_len = len + extra_bytes + 4;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;
-
 
 	rc = sbefifo_mem_get_pull(out, out_len, addr, size, flags, data);
 	if (out)
@@ -206,8 +212,15 @@ int sbefifo_mem_put(struct sbefifo_context *sctx, uint64_t addr, uint8_t *data, 
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	out_len = 1 * 4;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;
@@ -295,11 +308,18 @@ int sbefifo_sram_get(struct sbefifo_context *sctx, uint16_t chiplet_id, uint64_t
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	/* length is 6th word in the request */
 	len = be32toh(*(uint32_t *)(msg + 20));
 
 	out_len = len + 4;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;
@@ -375,8 +395,15 @@ int sbefifo_sram_put(struct sbefifo_context *sctx, uint16_t chiplet_id, uint64_t
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
+
 	out_len = 4;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;

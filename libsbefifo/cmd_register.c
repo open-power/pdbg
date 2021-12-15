@@ -88,11 +88,17 @@ int sbefifo_register_get(struct sbefifo_context *sctx, uint8_t core_id, uint8_t 
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc)
+		return rc;
+
 	out_len = reg_count * 8;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
 	free(msg);
 	if (rc)
 		return rc;
+
+	sbefifo_reset_timeout(sctx);
 
 	rc = sbefifo_register_get_pull(out, out_len, reg_count, value);
 	if (out)
@@ -154,11 +160,17 @@ int sbefifo_register_put(struct sbefifo_context *sctx, uint8_t core_id, uint8_t 
 	if (rc)
 		return rc;
 
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc)
+		return rc;
+
 	out_len = 0;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
 	free(msg);
 	if (rc)
 		return rc;
+
+	sbefifo_reset_timeout(sctx);
 
 	rc = sbefifo_register_put_pull(out, out_len);
 	if (out)
