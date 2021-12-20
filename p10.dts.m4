@@ -287,6 +287,18 @@ define(`GPIO_EXPANDER',
 ')
 
 dnl
+dnl PMIC([index])
+dnl
+define(`PMIC',
+`define(`id', eval(`$1 % 2'))dnl
+
+	CONCAT(pmic, id) {
+		compatible = "ibm,power10-pmic";
+		index = <$1>;
+	};
+')
+
+dnl
 dnl MEM_PORT_([index])
 dnl
 define(`MEM_PORT_',
@@ -441,6 +453,8 @@ define(`CHIP',
 									ADC(1)
 									GPIO_EXPANDER(0)
 									GPIO_EXPANDER(1)
+									PMIC(0)
+									PMIC(1)
 									};
 								};
 							};
@@ -452,6 +466,8 @@ define(`CHIP',
 									ADC(3)
 									GPIO_EXPANDER(2)
 									GPIO_EXPANDER(3)
+									PMIC(2)
+									PMIC(3)
 									};
 								};
 							};
@@ -465,6 +481,8 @@ define(`CHIP',
 									ADC(5)
 									GPIO_EXPANDER(4)
 									GPIO_EXPANDER(5)
+									PMIC(4)
+									PMIC(5)
 									};
 								};
 							};
@@ -476,6 +494,8 @@ define(`CHIP',
 									ADC(7)
 									GPIO_EXPANDER(6)
 									GPIO_EXPANDER(7)
+									PMIC(6)
+									PMIC(7)
 									};
 								};
 							};
@@ -498,6 +518,8 @@ define(`CHIP',
 									ADC(9)
 									GPIO_EXPANDER(8)
 									GPIO_EXPANDER(9)
+									PMIC(8)
+									PMIC(9)
 									};
 								};
 							};
@@ -509,6 +531,8 @@ define(`CHIP',
 									ADC(11)
 									GPIO_EXPANDER(10)
 									GPIO_EXPANDER(11)
+									PMIC(10)
+									PMIC(11)
 									};
 								};
 							};
@@ -522,6 +546,8 @@ define(`CHIP',
 									ADC(13)
 									GPIO_EXPANDER(12)
 									GPIO_EXPANDER(13)
+									PMIC(12)
+									PMIC(13)
 									};
 								};
 							};
@@ -533,6 +559,8 @@ define(`CHIP',
 									ADC(15)
 									GPIO_EXPANDER(14)
 									GPIO_EXPANDER(15)
+									PMIC(14)
+									PMIC(15)
 									};
 								};
 							};
