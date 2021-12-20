@@ -378,4 +378,9 @@ struct gpio_expander {
 };
 #define target_to_gpio_expander(x) container_of(x, struct gpio_expander, target)
 
+struct pmic {
+	struct pdbg_target target;
+};
+#define target_to_pmic(x) container_of(x, struct pmic, target)
+
 #endif /* __HWUNIT_H */
