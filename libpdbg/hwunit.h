@@ -368,4 +368,9 @@ struct nx {
 };
 #define target_to_nx(x) container_of(x, struct nx, target)
 
+struct adc {
+	struct pdbg_target target;
+};
+#define target_to_adc(x) container_of(x, struct adc, target)
+
 #endif /* __HWUNIT_H */

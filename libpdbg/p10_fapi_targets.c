@@ -563,6 +563,16 @@ struct nx p10_nx = {
 };
 DECLARE_HW_UNIT(p10_nx);
 
+struct adc p10_adc = {
+	.target = {
+		.name = "POWER10 Analog to Digital Converter",
+		.compatible = "ibm,power10-adc",
+		.class = "adc",
+		.translate = no_translate,
+	},
+};
+DECLARE_HW_UNIT(p10_adc);
+
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
@@ -587,4 +597,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_oscrefclk_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_tpm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_nx_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_adc_hw_unit);
 }
