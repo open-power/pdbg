@@ -263,6 +263,18 @@ define(`OCMB_',
 ')
 
 dnl
+dnl ADC([index])
+dnl
+define(`ADC',
+`define(`id', eval(`$1 % 2'))dnl
+
+	CONCAT(adc, id) {
+		compatible = "ibm,power10-adc";
+		index = <$1>;
+	};
+')
+
+dnl
 dnl MEM_PORT_([index])
 dnl
 define(`MEM_PORT_',
@@ -413,6 +425,8 @@ define(`CHIP',
 								OCMB_(0)
 									MEM_PORT_(0)
 										DIMM(0)
+									ADC(0)
+									ADC(1)
 									};
 								};
 							};
@@ -420,6 +434,8 @@ define(`CHIP',
 								OCMB_(1)
 									MEM_PORT_(1)
 										DIMM(1)
+									ADC(2)
+									ADC(3)
 									};
 								};
 							};
@@ -429,6 +445,8 @@ define(`CHIP',
 								OCMB_(2)
 									MEM_PORT_(2)
 										DIMM(2)
+									ADC(4)
+									ADC(5)
 									};
 								};
 							};
@@ -436,6 +454,8 @@ define(`CHIP',
 								OCMB_(3)
 									MEM_PORT_(3)
 										DIMM(3)
+									ADC(6)
+									ADC(7)
 									};
 								};
 							};
@@ -454,6 +474,8 @@ define(`CHIP',
 								OCMB_(4)
 									MEM_PORT_(4)
 										DIMM(4)
+									ADC(8)
+									ADC(9)
 									};
 								};
 							};
@@ -461,6 +483,8 @@ define(`CHIP',
 								OCMB_(5)
 									MEM_PORT_(5)
 										DIMM(5)
+									ADC(10)
+									ADC(11)
 									};
 								};
 							};
@@ -470,6 +494,8 @@ define(`CHIP',
 								OCMB_(6)
 									MEM_PORT_(6)
 										DIMM(6)
+									ADC(12)
+									ADC(13)
 									};
 								};
 							};
@@ -477,6 +503,8 @@ define(`CHIP',
 								OCMB_(7)
 									MEM_PORT_(7)
 										DIMM(7)
+									ADC(14)
+									ADC(15)
 									};
 								};
 							};
