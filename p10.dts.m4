@@ -297,6 +297,18 @@ define(`ADC',
 ')
 
 dnl
+dnl GPIO_EXPANDER([index])
+dnl
+define(`GPIO_EXPANDER',
+`define(`id', eval(`$1 % 2'))dnl
+
+	CONCAT(gpio_expander, id) {
+		compatible = "ibm,power10-gpio_expander";
+		index = <$1>;
+	};
+')
+
+dnl
 dnl PEC_([chiplet], [index])
 dnl
 define(`PEC_',
@@ -427,6 +439,8 @@ define(`CHIP',
 										DIMM(0)
 										ADC(0)
 										ADC(1)
+										GPIO_EXPANDER(0)
+										GPIO_EXPANDER(1)
 									};
 								};
 							};
@@ -436,6 +450,8 @@ define(`CHIP',
 										DIMM(1)
 										ADC(2)
 										ADC(3)
+										GPIO_EXPANDER(2)
+										GPIO_EXPANDER(3)
 									};
 								};
 							};
@@ -447,6 +463,8 @@ define(`CHIP',
 										DIMM(2)
 										ADC(4)
 										ADC(5)
+										GPIO_EXPANDER(4)
+										GPIO_EXPANDER(5)
 									};
 								};
 							};
@@ -456,6 +474,8 @@ define(`CHIP',
 										DIMM(3)
 										ADC(6)
 										ADC(7)
+										GPIO_EXPANDER(6)
+										GPIO_EXPANDER(7)
 									};
 								};
 							};
@@ -476,6 +496,8 @@ define(`CHIP',
 										DIMM(4)
 										ADC(8)
 										ADC(9)
+										GPIO_EXPANDER(8)
+										GPIO_EXPANDER(9)
 									};
 								};
 							};
@@ -485,6 +507,8 @@ define(`CHIP',
 										DIMM(5)
 										ADC(10)
 										ADC(11)
+										GPIO_EXPANDER(10)
+										GPIO_EXPANDER(11)
 									};
 								};
 							};
@@ -496,6 +520,8 @@ define(`CHIP',
 										DIMM(6)
 										ADC(12)
 										ADC(13)
+										GPIO_EXPANDER(12)
+										GPIO_EXPANDER(13)
 									};
 								};
 							};
@@ -505,6 +531,8 @@ define(`CHIP',
 										DIMM(7)
 										ADC(14)
 										ADC(15)
+										GPIO_EXPANDER(14)
+										GPIO_EXPANDER(15)
 									};
 								};
 							};
