@@ -373,4 +373,9 @@ struct adc {
 };
 #define target_to_adc(x) container_of(x, struct adc, target)
 
+struct gpio_expander {
+	struct pdbg_target target;
+};
+#define target_to_gpio_expander(x) container_of(x, struct gpio_expander, target)
+
 #endif /* __HWUNIT_H */
