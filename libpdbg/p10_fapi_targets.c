@@ -573,6 +573,16 @@ struct adc p10_adc = {
 };
 DECLARE_HW_UNIT(p10_adc);
 
+struct gpio_expander p10_gpio_expander= {
+	.target = {
+		.name = "POWER10 GPIO Expander",
+		.compatible = "ibm,power10-gpio_expander",
+		.class = "gpio_expander",
+		.translate = no_translate,
+	},
+};
+DECLARE_HW_UNIT(p10_gpio_expander);
+
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
@@ -598,4 +608,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_tpm_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_nx_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_adc_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_gpio_expander_hw_unit);
 }
