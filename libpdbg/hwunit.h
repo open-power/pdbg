@@ -349,7 +349,7 @@ struct smpgroup {
 #define target_to_smpgroup(x) container_of(x, struct smpgroup, target)
 
 struct dimm {
-    struct pdbg_target target;
+	struct pdbg_target target;
 };
 #define target_to_dimm(x) container_of(x, struct dimm, target)
 
@@ -359,12 +359,12 @@ struct oscrefclk {
 #define target_to_oscrefclk(x) container_of(x, struct oscrefclk, target)
 
 struct tpm {
-    struct pdbg_target target;
+	struct pdbg_target target;
 };
 #define target_to_tpm(x) container_of(x, struct tpm, target)
 
 struct nx {
-    struct pdbg_target target;
+	struct pdbg_target target;
 };
 #define target_to_nx(x) container_of(x, struct nx, target)
 

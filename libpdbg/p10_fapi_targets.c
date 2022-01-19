@@ -544,22 +544,22 @@ static struct oscrefclk p10_oscrefclk = {
 DECLARE_HW_UNIT(p10_oscrefclk);
 
 struct tpm p10_tpm = {
-    .target = {
-        .name = "POWER10 Trusted Platform Module",
-        .compatible = "ibm,power10-tpm",
-        .class = "tpm",
-        .translate = no_translate,
-    },
+	.target = {
+		.name = "POWER10 Trusted Platform Module",
+		.compatible = "ibm,power10-tpm",
+		.class = "tpm",
+		.translate = no_translate,
+	},
 };
 DECLARE_HW_UNIT(p10_tpm);
 
 struct nx p10_nx = {
-    .target = {
-        .name = "POWER10 Nest Accelerator unit",
-        .compatible = "ibm,power10-nx",
-        .class = "nx",
-        .translate = no_translate,
-    },
+	.target = {
+		.name = "POWER10 Nest Accelerator unit",
+		.compatible = "ibm,power10-nx",
+		.class = "nx",
+		.translate = no_translate,
+	},
 };
 DECLARE_HW_UNIT(p10_nx);
 
