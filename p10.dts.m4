@@ -44,10 +44,10 @@ dnl NX([index])
 dnl
 define(`NX',
 `
-   nx {
-       compatible = "ibm,power10-nx";
-       index = <$1>;
-   };
+	nx {
+		compatible = "ibm,power10-nx";
+		index = <$1>;
+	};
 ')
 
 dnl
