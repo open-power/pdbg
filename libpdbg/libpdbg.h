@@ -1441,6 +1441,15 @@ void pdbg_set_loglevel(int loglevel);
  */
 void pdbg_log(int loglevel, const char *fmt, ...);
 
+/**
+ * @brief Set the library context for short running application
+ *
+ * This distinguishes the long running applications using libpdbg from the
+ * pdbg tool like applications which terminate after short execution and do
+ * not set particular hardware state for a long time.
+ */
+bool pdbg_context_short(void);
+
 #ifdef __cplusplus
 }
 #endif

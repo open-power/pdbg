@@ -5,6 +5,7 @@
 #include "libpdbg.h"
 
 static pdbg_progress_tick_t progress_tick;
+static bool pdbg_short_context = false;
 
 struct pdbg_target *get_parent(struct pdbg_target *target, bool system)
 {
@@ -341,4 +342,20 @@ void pdbg_progress_tick(uint64_t cur, uint64_t end)
 void pdbg_set_progress_tick(pdbg_progress_tick_t fn)
 {
 	progress_tick = fn;
+}
+
+bool pdbg_context_short(void)
+{
+	if (pdbg_target_root()) {
+		pdbg_log(PDBG_ERROR, "pdbg_context_short() must be called before pdbg_targets_init()\n");
+		return false;
+	}
+
+	pdbg_short_context = true;
+	return true;
+}
+
+bool pdbg_context_is_short(void)
+{
+	return pdbg_short_context;
 }

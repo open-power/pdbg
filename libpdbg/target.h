@@ -95,4 +95,6 @@ bool target_is_virtual(struct pdbg_target *target);
 struct pdbg_target *target_to_real(struct pdbg_target *target, bool strict);
 struct pdbg_target *target_to_virtual(struct pdbg_target *target, bool strict);
 
+bool pdbg_context_is_short(void);
+
 #endif
