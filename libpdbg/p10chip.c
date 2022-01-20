@@ -200,6 +200,16 @@ static int p10_core_probe(struct pdbg_target *target)
 	uint64_t value;
 	int i = 0;
 
+	/*
+	 * BMC applications using libpdbg, do not need special wakeup
+	 * asserted by default. Only when running pdbg tool or equivalent
+	 * assert special wakeup.
+	 */
+	if (!pdbg_context_is_short()) {
+		core->release_spwkup = false;
+		return 0;
+	}
+
 	CHECK_ERR(pib_write(target, QME_SPWU_FSP, PPC_BIT(0)));
 	do {
 		usleep(1000);
