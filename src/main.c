@@ -597,6 +597,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	pdbg_context_short();
+
 	if (backend)
 		if (!pdbg_set_backend(backend, device_node))
 			return 1;
