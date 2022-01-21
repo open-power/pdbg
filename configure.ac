@@ -34,6 +34,11 @@ else
 	AC_SUBST([LIBFDT], ["-lfdt"])
 fi
 
+AC_CHECK_HEADER([linux/fsi.h],
+	[AC_DEFINE([HAVE_LINUX_FSI_H], 1,
+		   [Define to 1 if you have the <linux/fsi> header file])],
+	[])
+
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
