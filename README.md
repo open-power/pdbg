@@ -39,6 +39,53 @@ make
 rsync pdbg root@bmc:/usr/local/bin
 ```
 
+## Testing
+
+There is a test suite to perform some basic testing. The tests on the host
+are mostly unit tests that exercise the device tree based targetting code.
+
+```
+make check
+```
+
+### BMC testing
+
+To test on the bmc, make a build in a separate directory:
+
+```
+cd pdbg
+mkdir obj-arm
+cd obj-arm
+../configure --host=arm-openbmc-linux-gnueabi
+make -j
+```
+
+And create a configuration file `.test.pdbg` in the pdbg source directory:
+
+```
+BMC_HOST=rain71bmc.aus.stglabs.ibm.com
+BMC_USER=root
+BMC_PASS=passw0rd
+PDBG_ARM_BUILD=obj-arm
+```
+
+The BMC must have the host powered on and be accessable via ssh.
+
+Then run make check. It will test both the host unit tests, and copy the arm
+binary to the BMC and run it there:
+
+```
+-- BMC HW tests
+sending incremental file list
+created directory /tmp/pdbg
+...
+Checking if the host is up... yes
+  SKIP: /tmp/pdbg/pdbg -p0 getcfam 0xc09
+  SKIP: /tmp/pdbg/pdbg -p0 getscom 0xf000f
+  SKIP: /tmp/pdbg/pdbg -p0 putmem 0x31000000
+  SKIP: /tmp/pdbg/pdbg -p0 getmem --raw 0x31000000 0x8
+```
+
 ## Usage
 
 Several backends are supported depending on which system you are using and are
