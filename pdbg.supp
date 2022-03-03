@@ -1,0 +1,60 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:strdup
+   fun:take_name
+   fun:dt_new_node
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:get_target_class
+   fun:dt_pdbg_target_new
+   fun:dt_new_node
+   fun:dt_expand_node
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:strdup
+   fun:get_target_class
+   fun:dt_pdbg_target_new
+   fun:dt_new_node
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:dt_new_node
+   fun:dt_new_virtual
+   fun:pdbg_targets_init_virtual
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:dt_new_node
+   fun:dt_expand_node
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:dt_pdbg_target_new
+   fun:dt_new_node
+   ...
+}
