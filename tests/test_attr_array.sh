@@ -3,7 +3,7 @@
 . $(dirname "$0")/driver.sh
 
 FAKE_DTB=fake.dtb
-TEST_DTB=fake-attr.dtb
+TEST_DTB=fake-attr-array.dtb
 
 export PDBG_DTB=$TEST_DTB
 
