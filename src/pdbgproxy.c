@@ -396,9 +396,15 @@ static int read_from_client(int fd)
 		PR_INFO("0 bytes\n");
 		return -1;
 	} else {
+		int i;
+
 		buffer[nbytes] = '\0';
-		PR_INFO("%x\n", buffer[0]);
 		PR_INFO("Recv: %s\n", buffer);
+		pdbg_log(PDBG_DEBUG, " hex: ");
+		for (i = 0; i < nbytes; i++)
+			pdbg_log(PDBG_DEBUG, "%02x ", buffer[i]);
+		pdbg_log(PDBG_DEBUG, "\n");
+
 		parse_buffer(buffer, nbytes, &fd);
 	}
 
