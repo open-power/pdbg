@@ -64,6 +64,7 @@ static enum client_state state = IDLE;
 struct gdb_thread {
 	uint64_t pir;
 	bool attn_set;
+	bool initial_stopped;
 	bool stop_attn;
 	bool stop_ctrlc;
 };
@@ -1058,11 +1059,15 @@ static int gdbserver_start(struct pdbg_target *adu, uint16_t port)
 
 static int gdbserver(uint16_t port)
 {
-	struct pdbg_target *target, *adu, *first_target = NULL;
+	struct pdbg_target *target, *adu;
+	struct pdbg_target *first_target = NULL;
+	struct pdbg_target *first_stopped_target = NULL;
+	struct pdbg_target *first_attn_target = NULL;
 
 	for_each_path_target_class("thread", target) {
 		struct thread *thread = target_to_thread(target);
 		struct gdb_thread *gdb_thread;
+		struct thread_state status;
 
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
@@ -1080,6 +1085,13 @@ static int gdbserver(uint16_t port)
 
 		if (!first_target)
 			first_target = target;
+
+		status = thread_status(target);
+		if (status.quiesced) {
+			if (!first_stopped_target)
+				first_stopped_target = target;
+			gdb_thread->initial_stopped = true;
+		}
 	}
 
 	if (!first_target) {
@@ -1099,16 +1111,19 @@ static int gdbserver(uint16_t port)
 		PR_WARNING("GDBSERVER works best when targeting all threads (-a)\n");
 	}
 
-	thread_target = first_target;
-
 	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		if (thread_stop(target)) {
-			PR_ERROR("Could not stop thread %s\n",
-				 pdbg_target_path(target));
-			return -1;
+		if (!gdb_thread->initial_stopped) {
+			if (thread_stop(target)) {
+				PR_ERROR("Could not stop thread %s\n",
+					 pdbg_target_path(target));
+				return -1;
+			}
 		}
 	}
 
@@ -1129,9 +1144,46 @@ static int gdbserver(uint16_t port)
 			PR_ERROR("PIR exceeds 16-bits.");
 			goto out;
 		}
+
+		if (thread_check_attn(target)) {
+			PR_INFO("thread pir=%"PRIx64" hit attn\n", gdb_thread->pir);
+
+			if (!first_attn_target)
+				first_attn_target = target;
+			gdb_thread->stop_attn = true;
+			if (!gdb_thread->initial_stopped) {
+				PR_WARNING("thread pir=%"PRIx64" hit attn but was not stopped\n", gdb_thread->pir);
+				gdb_thread->initial_stopped = true;
+			}
+		}
 	}
 
-	start_all();
+	/* Target attn as a priority, then any stopped, then first */
+	if (first_attn_target)
+		thread_target = first_target;
+	else if (first_stopped_target)
+		thread_target = first_stopped_target;
+	else
+		thread_target = first_target;
+
+	/*
+	 * Resume threads now, except those that were initially stopped,
+	 * leave them so the client can inspect them.
+	 */
+	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (!gdb_thread->initial_stopped) {
+			if (thread_start(target)) {
+				PR_ERROR("Could not start thread %s\n",
+					 pdbg_target_path(target));
+			}
+		}
+	}
 
 	/* Select ADU target */
 	pdbg_for_each_class_target("mem", adu) {
@@ -1147,8 +1199,26 @@ static int gdbserver(uint16_t port)
 	gdbserver_start(adu, port);
 
 out:
-	if (all_stopped)
-		__start_all();
+	if (!all_stopped)
+		stop_all();
+
+	/*
+	 * Only resume those which were not initially stopped
+	 */
+	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (!gdb_thread->initial_stopped) {
+			if (thread_start(target)) {
+				PR_ERROR("Could not start thread %s\n",
+					 pdbg_target_path(target));
+			}
+		}
+	}
 
 	return 0;
 }
