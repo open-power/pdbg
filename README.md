@@ -553,6 +553,13 @@ $ gdb
 Debugging info:
 (gdb) set debug remote 10
 
+Long-running operations or high latency links:
+The gdb client timeout defaults to 2 seconds after which it re-transmits
+commands. The gdb server does not deal with this robustly today and this
+can cause hangs and other unexpected results. If gdb client stops
+responding, behaves strangely or complains about bad or unexpected remote
+packets, try increasing the timeout. E.g.,
+(gdb) set remotetimeout 60
 
 Notes:
 1. DON'T RUN PDBG OVER FSI WHILE HOSTBOOT IS RUNNING. Weird things seem to
