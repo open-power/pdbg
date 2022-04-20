@@ -534,8 +534,9 @@ There are also low level htm commands which can also be used:
  - `dump` will dump the trace to a file.
 
 ### GDBSERVER
-At the moment gdbserver is only supported on P8 while the cores are in the
-kernel. 
+At the moment gdbserver is only supported on P8 and P9.
+
+Memory access can only be performed on kernel memory.
 
 To run a gdbserver on a P8 machine from a BMC running openbmc:
 
@@ -547,7 +548,7 @@ $ ./pdbg -d p8 -p0 -c11 -t0 gdbserver 44
 
 On your local machine:
 $ gdb
-(gdb)  set architecture powerpc:common64
+(gdb) set architecture powerpc:common64
 (gdb) target remote palm5-bmc:44
 
 Debugging info:
@@ -566,6 +567,13 @@ Notes:
 happen.
 2. If you want to view the kernel call trace then run gdb on the vmlinux that
 the host is running (the kernel needs to be compiled with debug symbols).
+3. The kernel HARDLOCKUP watchdog can interact badly with GDBSERVER (and all
+pdbg direct controls for that matter). Disabling it before debugging is a
+good idea.
+4. Idle states have often had problems with pdbg direct controls. If things are
+misbehaving, booting Linux with powersave=off is the first thing to try.
+5. attn instructions seem to cause host hangs on POWER9. gdb breakpoints should
+not be used.
 
 ## Submitting patches
 

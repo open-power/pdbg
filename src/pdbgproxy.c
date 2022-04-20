@@ -105,6 +105,9 @@ static void detach(uint64_t *stack, void *priv)
 
 #define POWER8_HID_ENABLE_ATTN			PPC_BIT(31)
 
+#define POWER9_HID_ENABLE_ATTN			PPC_BIT(3)
+#define POWER9_HID_FLUSH_ICACHE			PPC_BIT(2)
+
 static int set_attn(bool enable)
 {
 	uint64_t hid;
@@ -122,6 +125,17 @@ static int set_attn(bool enable)
 				return 0;
 			hid &= ~POWER8_HID_ENABLE_ATTN;
 		}
+	} else if (pdbg_target_compatible(thread_target, "ibm,power9-thread")) {
+		if (enable) {
+			if (hid & POWER9_HID_ENABLE_ATTN)
+				return 0;
+			hid |= POWER9_HID_ENABLE_ATTN;
+		} else {
+			if (!(hid & POWER9_HID_ENABLE_ATTN))
+				return 0;
+			hid &= ~POWER9_HID_ENABLE_ATTN;
+		}
+		hid |= POWER9_HID_FLUSH_ICACHE;
 	} else {
 		return -1;
 	}
@@ -658,11 +672,18 @@ static int gdbserver(uint16_t port)
 		return 0;
 	}
 
-	//
-	// Temporary until I can get this working a bit smoother on p9
-	if (!pdbg_target_compatible(thread, "ibm,power8-thread")) {
-		PR_ERROR("GDBSERVER is only available on POWER8\n");
+	if (!pdbg_target_compatible(thread, "ibm,power8-thread") &&
+	    !pdbg_target_compatible(thread, "ibm,power9-thread")) {
+		PR_ERROR("GDBSERVER is only available on POWER8 and POWER9\n");
 		return -1;
+	}
+
+	if (pdbg_target_compatible(thread, "ibm,power9-thread")) {
+		/*
+		 * XXX: If we advertise no swbreak support on POWER9 does
+		 * that prevent the client using them?
+		 */
+		PR_WARNING("Breakpoints may cause host crashes on POWER9 and should not be used\n");
 	}
 
 	/* Check endianess in MSR */
