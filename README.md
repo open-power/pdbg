@@ -538,13 +538,20 @@ At the moment gdbserver is only supported on P8 and P9 and P10.
 
 Memory access can only be performed on kernel memory.
 
-To run a gdbserver on a P8 machine from a BMC running openbmc:
+To run a gdbserver on a machine from a BMC running OpenBMC:
 
-Stop all the threads of the core you want to look at
-$ ./pdbg -d p8 -c11 -a stop
+Stop all the threads of the core(s) you want to look at. Ideally all
+threads in the machine should be debugged:
 
-Run gdbserver on thread 0 of core 11, accessible through port 44
-$ ./pdbg -d p8 -p0 -c11 -t0 gdbserver 44
+$ ./pdbg -a stop
+
+Run gdbserver on the target threads, accessible through port 44
+$ ./pdbg -a gdbserver 44
+
+The thread-id tid is set to the PIR of the corresponding thread, the
+hard_smp_processor_id. Be warned, "info threads" or other gdb operations
+that iterate over all threads may be very slow when debugging a lot
+of threads, especially over slow remote links.
 
 On your local machine:
 $ gdb

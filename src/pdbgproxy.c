@@ -142,6 +142,58 @@ static void set_thread(uint64_t *stack, void *priv)
 	send_response(fd, ERROR(EEXIST));
 }
 
+static int threadinfo_iterator;
+
+static void qs_threadinfo(uint64_t *stack, void *priv)
+{
+	struct pdbg_target *target;
+	char data[MAX_RESP_LEN] = "m";
+	size_t s = 1;
+	int iter = 0;
+	bool found = false;
+
+	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (!found && iter < threadinfo_iterator) {
+			iter++;
+			continue;
+		}
+
+		found = true;
+
+		if (iter == threadinfo_iterator)
+			s += snprintf(data + s, sizeof(data) - s,
+				      "%04" PRIx64, gdb_thread->pir);
+		else
+			s += snprintf(data + s, sizeof(data) - s,
+				      ",%04" PRIx64, gdb_thread->pir);
+		threadinfo_iterator++;
+
+		if (sizeof(data) - s < 9) /* comma, 7 digits, NUL */
+			break;
+
+	}
+
+	PR_INFO("qf_threadinfo %s\n", data);
+
+	if (s > 1)
+		send_response(fd, data);
+	else
+		send_response(fd, "l");
+}
+
+static void qf_threadinfo(uint64_t *stack, void *priv)
+{
+	threadinfo_iterator = 0;
+
+	qs_threadinfo(stack, priv);
+}
+
 static void send_stop_for_thread(struct pdbg_target *target)
 {
 	struct thread *thread = target_to_thread(target);
@@ -880,12 +932,14 @@ static command_cb callbacks[LAST_CMD + 1] = {
 	cmd_default,
 	get_gprs,
 	get_spr,
-	get_mem,
 	stop_reason,
 	get_thread,
 	set_thread,
 	v_contc,
 	v_conts,
+	qf_threadinfo,
+	qs_threadinfo,
+	get_mem,
 	put_mem,
 	interrupt,
 	detach,
@@ -1018,12 +1072,8 @@ static int gdbserver(uint16_t port)
 		memset(gdb_thread, 0, sizeof(*gdb_thread));
 		thread->gdbserver_priv = gdb_thread;
 
-		if (!first_target) {
+		if (!first_target)
 			first_target = target;
-		} else {
-			fprintf(stderr, "GDB server cannot be run on multiple threads at once.\n");
-			return 0;
-		}
 	}
 
 	if (!first_target) {
@@ -1037,6 +1087,10 @@ static int gdbserver(uint16_t port)
 		 * that prevent the client using them?
 		 */
 		PR_WARNING("Breakpoints may cause host crashes on POWER9 and should not be used\n");
+	}
+
+	if (!path_target_all_selected("thread", NULL)) {
+		PR_WARNING("GDBSERVER works best when targeting all threads (-a)\n");
 	}
 
 	thread_target = first_target;
