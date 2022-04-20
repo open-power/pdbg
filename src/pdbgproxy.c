@@ -47,7 +47,6 @@ static struct pdbg_target *adu_target;
 static struct timeval timeout;
 static int poll_interval = 100;
 static int fd = -1;
-static int littleendian = 1;
 enum client_state {IDLE, SIGNAL_WAIT};
 static enum client_state state = IDLE;
 
@@ -395,11 +394,6 @@ static void put_mem(uint64_t *stack, void *priv)
 	uint8_t gdb_break_opcode[] = {0x7d, 0x82, 0x10, 0x08};
 	int err = 0;
 
-	if (littleendian) {
-		attn_opcode[1] = 0x02;
-		attn_opcode[2] = 0x00;
-	}
-
 	addr = stack[0];
 	len = stack[1];
 	data = (uint8_t *)(unsigned long)stack[2];
@@ -412,6 +406,19 @@ static void put_mem(uint64_t *stack, void *priv)
 	}
 
 	if (len == 4 && !memcmp(data, gdb_break_opcode, 4)) {
+		uint64_t msr;
+
+		/* Check endianess in MSR */
+		err = thread_getmsr(thread_target, &msr);
+		if (err) {
+			PR_ERROR("Couldn't read the MSR. Are all threads on this chiplet quiesced?\n");
+			goto out;
+		}
+		if (msr & 1) { /* little endian */
+			attn_opcode[1] = 0x02;
+			attn_opcode[2] = 0x00;
+		}
+
 		/* According to linux-ppc-low.c gdb only uses this
 		 * op-code for sw break points so we replace it with
 		 * the correct attn opcode which is what we need for
@@ -419,6 +426,7 @@ static void put_mem(uint64_t *stack, void *priv)
 		 *
 		 * TODO: Upstream a patch to gdb so that it uses the
 		 * right opcode for baremetal debug. */
+
 		PR_INFO("Breakpoint opcode detected, replacing with attn\n");
 		memcpy(data, attn_opcode, 4);
 
@@ -723,8 +731,6 @@ int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_
 static int gdbserver(uint16_t port)
 {
 	struct pdbg_target *target, *adu, *thread = NULL;
-	uint64_t msr;
-	int rc;
 
 	for_each_path_target_class("thread", target) {
 		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
@@ -757,14 +763,6 @@ static int gdbserver(uint16_t port)
 		 */
 		PR_WARNING("Breakpoints may cause host crashes on POWER9 and should not be used\n");
 	}
-
-	/* Check endianess in MSR */
-	rc = thread_getmsr(thread, &msr);
-	if (rc) {
-		PR_ERROR("Couldn't read the MSR. Are all threads on this chiplet quiesced?\n");
-		return 1;
-	}
-	littleendian = 0x01 & msr;
 
 	/* Select ADU target */
 	pdbg_for_each_class_target("mem", adu) {
