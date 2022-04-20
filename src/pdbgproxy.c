@@ -405,7 +405,7 @@ static int read_from_client(int fd)
 	return 0;
 }
 
-command_cb callbacks[LAST_CMD + 1] = {
+static command_cb callbacks[LAST_CMD + 1] = {
 	cmd_default,
 	get_gprs,
 	get_spr,
