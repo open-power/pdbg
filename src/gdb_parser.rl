@@ -60,7 +60,7 @@
 		   ','
 		   xdigit+ $hex_digit %push);
 
-	put_mem = ('M' any* @{cmd = PUT_MEM;}
+	put_mem = ('M' @{cmd = PUT_MEM;}
 		   xdigit+ $hex_digit %push
 		   ','
 		   xdigit+ $hex_digit %push
