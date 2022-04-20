@@ -30,7 +30,16 @@
 
 #ifndef DISABLE_GDBSERVER
 
-/* Maximum packet size */
+/*
+ * If the client sents qSupported then it can handle unlimited length response.
+ * Shouldn't need more than 8k for now. If we had to handle old clients, 512
+ * should be a lower limit.
+ */
+#define MAX_RESP_LEN	8192
+
+/*
+ * Maximum packet size. We don't advertise this to the client (TODO).
+ */
 #define BUFFER_SIZE    	8192
 
 /* GDB packets */
@@ -38,7 +47,6 @@
 #define ACK "+"
 #define NACK "-"
 #define OK "OK"
-#define TRAP "S05"
 #define ERROR(e) "E"STR(e)
 
 #define TEST_SKIBOOT_ADDR 0x40000000
@@ -56,6 +64,8 @@ static enum client_state state = IDLE;
 struct gdb_thread {
 	uint64_t pir;
 	bool attn_set;
+	bool stop_attn;
+	bool stop_ctrlc;
 };
 
 static void destroy_client(int dead_fd);
@@ -132,9 +142,32 @@ static void set_thread(uint64_t *stack, void *priv)
 	send_response(fd, ERROR(EEXIST));
 }
 
+static void send_stop_for_thread(struct pdbg_target *target)
+{
+	struct thread *thread = target_to_thread(target);
+	struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+	uint64_t pir = gdb_thread->pir;
+	char data[MAX_RESP_LEN];
+	size_t s = 0;
+	int sig;
+
+	if (gdb_thread->stop_attn)
+		sig = 5; /* TRAP */
+	else if (gdb_thread->stop_ctrlc)
+		sig = 2; /* INT */
+	else
+		sig = 0; /* default / initial stop reason */
+
+	s += snprintf(data + s, sizeof(data) - s, "T%02uthread:%04" PRIx64 ";%s", sig, pir, sig == 5 ? "swbreak:;" : "");
+
+	send_response(fd, data);
+}
+
 static void stop_reason(uint64_t *stack, void *priv)
 {
-	send_response(fd, TRAP);
+	PR_INFO("stop_reason\n");
+
+	send_stop_for_thread(thread_target);
 }
 
 static void detach(uint64_t *stack, void *priv)
@@ -539,8 +572,17 @@ out:
 
 static void v_conts(uint64_t *stack, void *priv)
 {
+	struct thread *thread = target_to_thread(thread_target);
+	struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+
+	PR_INFO("thread_step\n");
+
 	thread_step(thread_target, 1);
-	send_response(fd, TRAP);
+
+	gdb_thread->stop_ctrlc = false;
+	gdb_thread->stop_attn = false;
+
+	send_stop_for_thread(thread_target);
 }
 
 static void __start_all(void)
@@ -568,6 +610,8 @@ static void start_all(void)
 	struct pdbg_target *target;
 
 	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread;
 		struct thread_state status;
 
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
@@ -577,6 +621,11 @@ static void start_all(void)
 		status = thread_status(target);
 		if (!status.quiesced)
 			PR_ERROR("starting thread not quiesced\n");
+
+		gdb_thread = thread->gdbserver_priv;
+
+		gdb_thread->stop_attn = false;
+		gdb_thread->stop_ctrlc = false;
 	}
 
 	__start_all();
@@ -691,6 +740,8 @@ static void stop_all(void)
 
 			PR_INFO("thread pir=%"PRIx64" hit attn\n", gdb_thread->pir);
 
+			gdb_thread->stop_attn = true;
+
 			if (!(status.active))
 				PR_ERROR("Error thread inactive after trap\n");
 			/* Restore NIA to before break */
@@ -706,13 +757,18 @@ static void interrupt(uint64_t *stack, void *priv)
 {
 	PR_INFO("Interrupt from gdb client\n");
 	if (state != IDLE) {
+		struct thread *thread = target_to_thread(thread_target);
+		struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+
 		stop_all();
+		if (!gdb_thread->stop_attn)
+			gdb_thread->stop_ctrlc = true;
 
 		state = IDLE;
 		poll_interval = VCONT_POLL_DELAY;
 	}
 
-	send_response(fd, TRAP);
+	send_stop_for_thread(thread_target);
 }
 
 static bool poll_threads(void)
@@ -735,6 +791,8 @@ static bool poll_threads(void)
 
 static void poll(void)
 {
+	struct pdbg_target *target;
+
 	if (state != SIGNAL_WAIT)
 		return;
 
@@ -745,12 +803,27 @@ static void poll(void)
 
 	stop_all();
 
+	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		gdb_thread = thread->gdbserver_priv;
+
+		if (gdb_thread->stop_attn) {
+			thread_target = target;
+			break;
+		}
+	}
+
 	set_attn(false);
 
 	state = IDLE;
 	poll_interval = VCONT_POLL_DELAY;
 
-	send_response(fd, TRAP);
+	send_stop_for_thread(thread_target);
 }
 
 static void cmd_default(uint64_t *stack, void *priv)
