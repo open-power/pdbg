@@ -683,60 +683,73 @@ static void stop_all(void)
 			PR_ERROR("Could not quiesce thread\n");
 			/* How to fix? */
 		}
+
+		if (thread_check_attn(target)) {
+			struct thread *thread = target_to_thread(target);
+			struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+			uint64_t nia;
+
+			PR_INFO("thread pir=%"PRIx64" hit attn\n", gdb_thread->pir);
+
+			if (!(status.active))
+				PR_ERROR("Error thread inactive after trap\n");
+			/* Restore NIA to before break */
+			if (thread_getnia(target, &nia))
+				PR_ERROR("Error during getnia\n");
+			if (thread_putnia(target, nia - 4))
+				PR_ERROR("Error during putnia\n");
+		}
 	}
 }
 
 static void interrupt(uint64_t *stack, void *priv)
 {
-	struct thread_state status;
-
 	PR_INFO("Interrupt from gdb client\n");
+	if (state != IDLE) {
+		stop_all();
 
-	stop_all();
-
-	status = thread_status(thread_target);
-	if (!(status.quiesced)) {
-		PR_ERROR("Could not quiesce thread\n");
-		return;
+		state = IDLE;
+		poll_interval = VCONT_POLL_DELAY;
 	}
-	state = IDLE;
-	poll_interval = VCONT_POLL_DELAY;
+
 	send_response(fd, TRAP);
+}
+
+static bool poll_threads(void)
+{
+	struct pdbg_target *target;
+
+	for_each_path_target_class("thread", target) {
+		struct thread_state status;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		target->probe(target);
+		status = thread_status(target);
+		if (status.quiesced)
+			return true;
+	}
+	return false;
 }
 
 static void poll(void)
 {
-	struct thread_state status;
-
 	if (state != SIGNAL_WAIT)
 		return;
 
-	thread_target->probe(thread_target);
-	status = thread_status(thread_target);
-
-	if (!(status.quiesced))
+	if (!poll_threads())
 		return;
+
+	/* Something hit a breakpoint */
+
+	stop_all();
 
 	set_attn(false);
 
 	state = IDLE;
 	poll_interval = VCONT_POLL_DELAY;
 
-	if (thread_check_attn(thread_target)) {
-		uint64_t nia;
-
-		if (!(status.active)) {
-			PR_ERROR("Thread inactive after trap\n");
-			send_response(fd, ERROR(EPERM));
-			return;
-		}
-
-		/* Restore NIA */
-		if (thread_getnia(thread_target, &nia))
-			PR_ERROR("Error during getnia\n");
-		if (thread_putnia(thread_target, nia - 4))
-			PR_ERROR("Error during putnia\n");
-	}
 	send_response(fd, TRAP);
 }
 
