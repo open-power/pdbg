@@ -118,7 +118,7 @@ static struct action actions[] = {
 	{ "threadstatus", "", "Print the status of a thread" },
 	{ "sreset",  "", "Reset" },
 	{ "regs",  "[--backtrace]", "State (optionally display backtrace)" },
-	{ "gdbserver", "", "Start a gdb server" },
+	{ "gdbserver <port>", "", "Start a gdb server listening on <port>" },
 	{ "istep", "<major> <minor>|0", "Execute istep on SBE" },
 	{ "geti2c", "<device> <reg> <n>", "Read n bytes from i2c device" },
 	{ "puti2c", "<device> <reg> <value>", "Write a value to i2c device" },
