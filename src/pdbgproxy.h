@@ -2,7 +2,7 @@
 #define __PDBGPROXY_H
 
 enum gdb_command {NONE, GET_GPRS, GET_SPR, GET_MEM,
-                 STOP_REASON, SET_THREAD, V_CONTC, V_CONTS,
+                 STOP_REASON, GET_THREAD, SET_THREAD, V_CONTC, V_CONTS,
                  PUT_MEM, INTERRUPT, DETACH, LAST_CMD};
 typedef void (*command_cb)(uint64_t *stack, void *priv);
 

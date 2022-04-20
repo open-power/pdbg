@@ -106,8 +106,6 @@
 
 	stop_reason = ('?' @{cmd = STOP_REASON;});
 
-	set_thread = ('H' any* @{cmd = SET_THREAD;});
-
 	detach = ('D' @{cmd = DETACH;}
 		     xdigit+ $hex_digit %push);
 
@@ -118,6 +116,10 @@
 	qf_threadinfo = ('qfThreadInfo' @{rsp = "m1l";});
 	q_start_noack = ('QStartNoAckMode' @{rsp = "OK"; send_ack(priv); ack_mode = false;});
 
+	# thread info
+	get_thread = ('qC' @{cmd = GET_THREAD;});
+	set_thread = ('Hg' ('p' xdigit+ '.')+ xdigit+ $hex_digit %push @{cmd = SET_THREAD;});
+
 	# vCont packet parsing
 	v_contq = ('vCont?' @{rsp = "vCont;c;C;s;S";});
 	v_contc = ('vCont;c' any* @{cmd = V_CONTC;});
@@ -126,7 +128,7 @@
 
 	interrupt = (3 @{ if (command_callbacks) command_callbacks[INTERRUPT](stack, priv); PR_INFO("RAGEL:interrupt\n");});
 
-	commands = (get_mem | get_gprs | get_spr | stop_reason | set_thread |
+	commands = (get_mem | get_gprs | get_spr | stop_reason | get_thread | set_thread |
 		    q_attached | q_C | q_supported | qf_threadinfo | q_C |
 		    q_start_noack | v_contq | v_contc | v_conts | put_mem |
 		    detach | unknown );

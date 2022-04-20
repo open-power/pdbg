@@ -93,9 +93,42 @@ void send_ack(void *priv)
 	send(fd, ACK, 1, 0);
 }
 
+static void get_thread(uint64_t *stack, void *priv)
+{
+	struct thread *thread = target_to_thread(thread_target);
+	struct gdb_thread *gdb_thread = thread->gdbserver_priv;
+	char data[3+4+2+1]; /* 'QCp' + 4 hex digits + '.0' + NUL */
+
+	snprintf(data, sizeof(data), "QC%04" PRIx64, gdb_thread->pir);
+
+	PR_INFO("get_thread pir=%"PRIx64"\n", gdb_thread->pir);
+
+	send_response(fd, data);
+}
+
 static void set_thread(uint64_t *stack, void *priv)
 {
-	send_response(fd, OK);
+	struct pdbg_target *target;
+	uint64_t pir = stack[0];
+
+	PR_INFO("set_thread pir=%"PRIx64"\n", pir);
+
+	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		gdb_thread = thread->gdbserver_priv;
+
+		if (gdb_thread->pir == pir) {
+			thread_target = target;
+			send_response(fd, OK);
+			return;
+		}
+	}
+	send_response(fd, ERROR(EEXIST));
 }
 
 static void stop_reason(uint64_t *stack, void *priv)
@@ -684,6 +717,7 @@ static command_cb callbacks[LAST_CMD + 1] = {
 	get_spr,
 	get_mem,
 	stop_reason,
+	get_thread,
 	set_thread,
 	v_contc,
 	v_conts,
