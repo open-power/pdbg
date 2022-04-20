@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -640,11 +641,27 @@ static command_cb callbacks[LAST_CMD + 1] = {
 	detach,
 	NULL};
 
-int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_t port)
+static volatile bool gdbserver_running = true;
+
+static void SIGINT_handler(int sig)
+{
+	gdbserver_running = false;
+}
+
+static int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_t port)
 {
 	int sock, i;
+	struct sigaction sa;
 	struct sockaddr_in name;
 	fd_set active_fd_set, read_fd_set;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = SIGINT_handler;
+	sa.sa_flags = SA_RESETHAND | SA_NODEFER;
+	if (sigaction(SIGINT, &sa, NULL) == -1) {
+		perror("sigaction");
+		return -1;
+	}
 
 	parser_init(callbacks);
 	thread_target = thread;
@@ -674,7 +691,7 @@ int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_
 	FD_ZERO(&active_fd_set);
 	FD_SET(sock, &active_fd_set);
 
-	while (1) {
+	while (gdbserver_running) {
 		read_fd_set = active_fd_set;
 		timeout.tv_sec = 0;
 		timeout.tv_usec = poll_interval;
@@ -724,6 +741,8 @@ int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_
 
 		poll();
 	}
+
+	printf("gdbserver: got ctrl-C, cleaning up (second ctrl-C to kill immediately).\n");
 
 	return 1;
 }
@@ -776,6 +795,7 @@ static int gdbserver(uint16_t port)
 	}
 
 	gdbserver_start(thread, adu, port);
+
 	return 0;
 }
 #else
