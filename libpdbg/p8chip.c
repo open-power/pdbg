@@ -611,36 +611,6 @@ static int p8_get_hid0(struct pdbg_target *chip, uint64_t *value)
 	return 0;
 }
 
-static int p8_put_hid0(struct pdbg_target *chip, uint64_t value)
-{
-	CHECK_ERR(pib_write(chip, HID0_REG, value));
-	return 0;
-}
-
-static int p8_enable_attn(struct thread *thread)
-{
-	struct pdbg_target *core;
-	uint64_t hid0;
-
-	core = pdbg_target_require_parent("core", &thread->target);
-
-	/* Need to enable the attn instruction in HID0 */
-	if (p8_get_hid0(core, &hid0)) {
-		PR_ERROR("Unable to get HID0\n");
-		return 1;
-	}
-	PR_INFO("HID0 was 0x%"PRIx64 " \n", hid0);
-
-	hid0 |= EN_ATTN;
-
-	PR_INFO("writing 0x%"PRIx64 " to HID0\n", hid0);
-	if (p8_put_hid0(core, hid0)) {
-		PR_ERROR("Unable to set HID0\n");
-		return 1;
-	}
-	return 0;
-}
-
 static struct thread p8_thread = {
 	.target = {
 		.name = "POWER8 Thread",
@@ -657,7 +627,6 @@ static struct thread p8_thread = {
 	.ram_setup = p8_ram_setup,
 	.ram_instruction = p8_ram_instruction,
 	.ram_destroy = p8_ram_destroy,
-	.enable_attn = p8_enable_attn,
 	.getmem = ram_getmem,
 	.getregs = ram_getregs,
 	.getgpr = ram_getgpr,

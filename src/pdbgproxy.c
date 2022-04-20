@@ -24,6 +24,7 @@
 #include "optcmd.h"
 #include "debug.h"
 #include "path.h"
+#include "sprs.h"
 
 #ifndef DISABLE_GDBSERVER
 
@@ -99,6 +100,35 @@ static void detach(uint64_t *stack, void *priv)
 {
 	PR_INFO("Detach debug session with client. pid %16" PRIi64 "\n", stack[0]);
 	send_response(fd, OK);
+}
+
+#define POWER8_HID_ENABLE_ATTN			PPC_BIT(31)
+
+static int set_attn(bool enable)
+{
+	uint64_t hid;
+
+	if (thread_getspr(thread_target, SPR_HID, &hid))
+		return -1;
+
+	if (pdbg_target_compatible(thread_target, "ibm,power8-thread")) {
+		if (enable) {
+			if (hid & POWER8_HID_ENABLE_ATTN)
+				return 0;
+			hid |= POWER8_HID_ENABLE_ATTN;
+		} else {
+			if (!(hid & POWER8_HID_ENABLE_ATTN))
+				return 0;
+			hid &= ~POWER8_HID_ENABLE_ATTN;
+		}
+	} else {
+		return -1;
+	}
+
+	if (thread_putspr(thread_target, SPR_HID, hid))
+		return -1;
+
+	return 0;
 }
 
 /* 32 registers represented as 16 char hex numbers with null-termination */
@@ -255,7 +285,6 @@ static void put_mem(uint64_t *stack, void *priv)
 	uint8_t attn_opcode[] = {0x00, 0x00, 0x02, 0x00};
 	uint8_t gdb_break_opcode[] = {0x7d, 0x82, 0x10, 0x08};
 	int err = 0;
-	struct thread *thread = target_to_thread(thread_target);
 
 	if (littleendian) {
 		attn_opcode[1] = 0x02;
@@ -285,8 +314,10 @@ static void put_mem(uint64_t *stack, void *priv)
 		memcpy(data, attn_opcode, 4);
 
 		/* Need to enable the attn instruction in HID0 */
-		if (thread->enable_attn(thread))
+		if (set_attn(true)) {
+			err = 2;
 			goto out;
+		}
 	}
 
 	if (mem_write(adu_target, addr, data, len, 0, false)) {

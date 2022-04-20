@@ -155,7 +155,6 @@ struct thread {
 	int (*ram_setup)(struct thread *);
 	int (*ram_instruction)(struct thread *, uint64_t opcode, uint64_t *scratch);
 	int (*ram_destroy)(struct thread *);
-	int (*enable_attn)(struct thread *);
 
 	int (*getmem)(struct thread *, uint64_t, uint64_t *);
 	int (*getregs)(struct thread *, struct thread_regs *regs);
