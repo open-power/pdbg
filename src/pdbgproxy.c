@@ -603,8 +603,6 @@ static void put_mem(uint64_t *stack, void *priv)
 {
 	uint64_t addr, len;
 	uint8_t *data;
-	uint8_t attn_opcode[] = {0x00, 0x00, 0x02, 0x00};
-	uint8_t gdb_break_opcode[] = {0x7d, 0x82, 0x10, 0x08};
 	int err = 0;
 
 	addr = stack[0];
@@ -616,38 +614,6 @@ static void put_mem(uint64_t *stack, void *priv)
 		PR_ERROR("TODO: No virtual address support for putmem\n");
 		err = 1;
 		goto out;
-	}
-
-	if (len == 4 && !memcmp(data, gdb_break_opcode, 4)) {
-		uint64_t msr;
-
-		/* Check endianess in MSR */
-		err = thread_getmsr(thread_target, &msr);
-		if (err) {
-			PR_ERROR("Couldn't read the MSR. Are all threads on this chiplet quiesced?\n");
-			goto out;
-		}
-		if (msr & 1) { /* little endian */
-			attn_opcode[1] = 0x02;
-			attn_opcode[2] = 0x00;
-		}
-
-		/* According to linux-ppc-low.c gdb only uses this
-		 * op-code for sw break points so we replace it with
-		 * the correct attn opcode which is what we need for
-		 * breakpoints.
-		 *
-		 * TODO: Upstream a patch to gdb so that it uses the
-		 * right opcode for baremetal debug. */
-
-		PR_INFO("Breakpoint opcode detected, replacing with attn\n");
-		memcpy(data, attn_opcode, 4);
-
-		/* Need to enable the attn instruction in HID0 */
-		if (set_attn(true)) {
-			err = 2;
-			goto out;
-		}
 	}
 
 	if (write_memory(addr, len, data, 8)) {
