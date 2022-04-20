@@ -6,6 +6,7 @@ enum gdb_command {NONE, GET_GPRS, GET_SPR,
                  V_CONTC, V_CONTS,
                  QF_THREADINFO, QS_THREADINFO,
                  GET_MEM, PUT_MEM,
+                 SET_BREAK, CLEAR_BREAK,
                  INTERRUPT, DETACH, LAST_CMD};
 
 typedef void (*command_cb)(uint64_t *stack, void *priv);

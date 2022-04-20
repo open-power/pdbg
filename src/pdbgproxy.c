@@ -664,6 +664,192 @@ out:
 		send_response(fd, OK);
 }
 
+#define MAX_BPS 64
+static uint64_t bps[MAX_BPS];
+static uint32_t saved_insn[MAX_BPS];
+static int nr_bps = 0;
+
+static int set_bp(uint64_t addr)
+{
+	int i;
+
+	if (nr_bps == MAX_BPS)
+		return -1;
+
+	if (addr == -1ULL)
+		return -1;
+
+	for (i = 0; i < MAX_BPS; i++) {
+		if (bps[i] == -1ULL) {
+			bps[i] = addr;
+			nr_bps++;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+static int clear_bp(uint64_t addr)
+{
+	int i;
+
+	if (nr_bps == 0)
+		return -1;
+
+	if (addr == -1ULL)
+		return -1;
+
+	for (i = 0; i < MAX_BPS; i++) {
+		if (bps[i] == addr) {
+			bps[i] = -1ULL;
+			nr_bps--;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+static int get_insn(uint64_t addr, uint32_t *insn)
+{
+	uint64_t linear_map;
+
+	linear_map = get_real_addr(addr);
+	if (linear_map != -1UL) {
+		if (read_memory(linear_map, 4, insn, 1)) {
+			PR_ERROR("Unable to read memory\n");
+			return -1;
+		}
+	} else {
+		/* Virtual address */
+		return -1;
+	}
+
+	return 0;
+}
+
+static int put_insn(uint64_t addr, uint32_t insn)
+{
+	uint64_t linear_map;
+
+	linear_map = get_real_addr(addr);
+	if (linear_map != -1UL) {
+		if (write_memory(linear_map, 4, &insn, 8)) {
+			PR_ERROR("Unable to write memory\n");
+			return -1;
+		}
+	} else {
+		/* Virtual address */
+		return -1;
+	}
+
+	return 0;
+}
+
+static void init_breakpoints(void)
+{
+	int i;
+
+	for (i = 0; i < MAX_BPS; i++)
+		bps[i] = -1ULL;
+}
+
+static bool match_breakpoint(uint64_t addr)
+{
+	int i;
+
+	if (nr_bps == 0)
+		return false;
+
+	for (i = 0; i < MAX_BPS; i++) {
+		if (bps[i] == addr)
+			return true;
+	}
+
+	return false;
+}
+
+static int install_breakpoints(void)
+{
+	uint8_t attn_opcode[] = {0x00, 0x00, 0x02, 0x00};
+	uint32_t *attn = (uint32_t *)&attn_opcode[0];
+	uint64_t msr;
+	int i;
+
+	if (!nr_bps)
+		return 0;
+
+	/* Check endianess in MSR */
+	if (thread_getmsr(thread_target, &msr)) {
+		PR_ERROR("Couldn't read the MSR to set breakpoint endian");
+		return -1;
+	}
+
+	if (msr & 1) /* currently little endian */
+		*attn = bswap_32(*attn);
+
+	for (i = 0; i < MAX_BPS; i++) {
+		if (bps[i] == -1ULL)
+			continue;
+		if (get_insn(bps[i], &saved_insn[i]))
+			continue; /* XXX: handle properly */
+		if (put_insn(bps[i], *attn))
+			continue; /* XXX: handle properly */
+	}
+
+	set_attn(true);
+
+	return 0;
+}
+
+static int uninstall_breakpoints(void)
+{
+	int i;
+
+	if (!nr_bps)
+		return 0;
+
+	for (i = 0; i < MAX_BPS; i++) {
+		if (bps[i] == -1ULL)
+			continue;
+		if (put_insn(bps[i], saved_insn[i]))
+			continue; /* XXX: handle properly */
+
+	}
+
+	set_attn(false);
+
+	return 0;
+}
+
+
+static void set_break(uint64_t *stack, void *priv)
+{
+	uint64_t addr;
+
+	/* stack[0] is the address */
+	addr = stack[0];
+
+	if (!set_bp(addr))
+		send_response(fd, OK);
+	else
+		send_response(fd, ERROR(ENOMEM));
+}
+
+static void clear_break(uint64_t *stack, void *priv)
+{
+	uint64_t addr;
+
+	/* stack[0] is the address */
+	addr = stack[0];
+
+	if (!clear_bp(addr))
+		send_response(fd, OK);
+	else
+		send_response(fd, ERROR(ENOENT));
+}
+
 static void v_conts(uint64_t *stack, void *priv)
 {
 	struct thread *thread = target_to_thread(thread_target);
@@ -708,6 +894,8 @@ static void __start_all(void)
 static void start_all(void)
 {
 	struct pdbg_target *target;
+
+	install_breakpoints();
 
 	for_each_path_target_class("thread", target) {
 		struct thread *thread = target_to_thread(target);
@@ -843,14 +1031,26 @@ static void stop_all(void)
 			gdb_thread->stop_attn = true;
 
 			if (!(status.active))
-				PR_ERROR("Error thread inactive after trap\n");
-			/* Restore NIA to before break */
+				PR_ERROR("Error thread inactive after attn\n");
+
 			if (thread_getnia(target, &nia))
 				PR_ERROR("Error during getnia\n");
-			if (thread_putnia(target, nia - 4))
-				PR_ERROR("Error during putnia\n");
+
+			/*
+			 * If we hit a non-breakpoint attn we still want to
+			 * switch to that thread, but we don't rewind the nip
+			 * so as to advance over the attn.
+			 */
+			if (match_breakpoint(nia - 4)) {
+				PR_INFO("thread pir=%"PRIx64" attn is breakpoint\n", gdb_thread->pir);
+				/* Restore NIA to breakpoint address */
+				if (thread_putnia(target, nia - 4))
+					PR_ERROR("Error during putnia\n");
+			}
 		}
 	}
+
+	uninstall_breakpoints();
 }
 
 static void interrupt(uint64_t *stack, void *priv)
@@ -917,8 +1117,6 @@ static void poll(void)
 			break;
 		}
 	}
-
-	set_attn(false);
 
 	state = IDLE;
 	poll_interval = VCONT_POLL_DELAY;
@@ -991,6 +1189,8 @@ static command_cb callbacks[LAST_CMD + 1] = {
 	qs_threadinfo,
 	get_mem,
 	put_mem,
+	set_break,
+	clear_break,
 	interrupt,
 	detach,
 	NULL};
@@ -1106,6 +1306,8 @@ static int gdbserver(uint16_t port)
 	struct pdbg_target *first_target = NULL;
 	struct pdbg_target *first_stopped_target = NULL;
 	struct pdbg_target *first_attn_target = NULL;
+
+	init_breakpoints();
 
 	for_each_path_target_class("thread", target) {
 		struct thread *thread = target_to_thread(target);

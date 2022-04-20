@@ -121,6 +121,10 @@
 	qf_threadinfo = ('qfThreadInfo' @{cmd = QF_THREADINFO;});
 	qs_threadinfo = ('qsThreadInfo' @{cmd = QS_THREADINFO;});
 
+	# breakpoints
+	set_break = ('Z0,' xdigit+ $hex_digit %push ',4' @{cmd = SET_BREAK;});
+	clear_break = ('z0,' xdigit+ $hex_digit %push ',4' @{cmd = CLEAR_BREAK;});
+
 	# vCont packet parsing
 	v_contq = ('vCont?' @{rsp = "vCont;c;C;s;S";});
 	v_contc = ('vCont;c' any* @{cmd = V_CONTC;});
@@ -135,6 +139,7 @@
 		    v_contq | v_contc | v_conts |
 		    qf_threadinfo | qs_threadinfo |
 		    get_mem | put_mem |
+		    set_break | clear_break |
 		    detach | unknown );
 
 	cmd = (('$' ((commands & ^'#'*) >reset $crc)
