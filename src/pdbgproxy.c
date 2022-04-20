@@ -51,7 +51,7 @@
 
 #define TEST_SKIBOOT_ADDR 0x40000000
 
-static bool all_stopped = true; /* must be started with targets stopped */
+static bool all_stopped = false;
 static struct pdbg_target *thread_target = NULL;
 static struct pdbg_target *adu_target;
 static struct timeval timeout;
@@ -222,9 +222,13 @@ static void stop_reason(uint64_t *stack, void *priv)
 	send_stop_for_thread(thread_target);
 }
 
+static void start_all(void);
+
 static void detach(uint64_t *stack, void *priv)
 {
 	PR_INFO("Detach debug session with client. pid %16" PRIi64 "\n", stack[0]);
+	start_all();
+
 	send_response(fd, OK);
 }
 
@@ -891,6 +895,8 @@ static void create_client(int new_fd)
 {
 	PR_INFO("Client connected\n");
 	fd = new_fd;
+	if (!all_stopped)
+		stop_all();
 }
 
 static void destroy_client(int dead_fd)
@@ -1096,25 +1102,36 @@ static int gdbserver(uint16_t port)
 	thread_target = first_target;
 
 	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (thread_stop(target)) {
+			PR_ERROR("Could not stop thread %s\n",
+				 pdbg_target_path(target));
+			return -1;
+		}
+	}
+
+	for_each_path_target_class("thread", target) {
 		struct thread *thread = target_to_thread(target);
-		struct gdb_thread *gdb_thread;
+		struct gdb_thread *gdb_thread = thread->gdbserver_priv;
 
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		gdb_thread = thread->gdbserver_priv;
-
 		if (thread_getspr(target, SPR_PIR, &gdb_thread->pir)) {
 			PR_ERROR("Error reading PIR. Are all thread in the target cores quiesced?\n");
-			return 0;
+			goto out;
 		}
 
 		if (gdb_thread->pir & ~0xffffULL) {
 			/* This limit is just due to some string array sizes */
 			PR_ERROR("PIR exceeds 16-bits.");
-			return 0;
+			goto out;
 		}
 	}
+
+	start_all();
 
 	/* Select ADU target */
 	pdbg_for_each_class_target("mem", adu) {
@@ -1124,10 +1141,14 @@ static int gdbserver(uint16_t port)
 
 	if (!adu) {
 		fprintf(stderr, "No ADU found\n");
-		return 0;
+		goto out;
 	}
 
 	gdbserver_start(adu, port);
+
+out:
+	if (all_stopped)
+		__start_all();
 
 	return 0;
 }
