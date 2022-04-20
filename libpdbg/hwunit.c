@@ -44,6 +44,7 @@ static const struct hw_unit_info *find_driver(enum pdbg_backend backend,
 		p = g_hw_unit[backend][i];
 		target = p->hw_unit;
 
+		// XXX: should this be using pdbg_target_compatible?
 		if (!strcmp(target->compatible, compat))
 			return p;
 	}

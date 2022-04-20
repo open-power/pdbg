@@ -532,8 +532,8 @@ static int gdbserver(uint16_t port)
 
 	//
 	// Temporary until I can get this working a bit smoother on p9
-	if (strcmp(thread->compatible, "ibm,power8-thread")) {
-		PR_ERROR("GDBSERVER is only tested on POWER8\n");
+	if (!pdbg_target_compatible(thread, "ibm,power8-thread")) {
+		PR_ERROR("GDBSERVER is only available on POWER8\n");
 		return -1;
 	}
 
