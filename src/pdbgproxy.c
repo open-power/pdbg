@@ -43,6 +43,7 @@
 
 #define TEST_SKIBOOT_ADDR 0x40000000
 
+static bool all_stopped = true; /* must be started with targets stopped */
 static struct pdbg_target *thread_target = NULL;
 static struct pdbg_target *adu_target;
 static struct timeval timeout;
@@ -542,10 +543,50 @@ static void v_conts(uint64_t *stack, void *priv)
 	send_response(fd, TRAP);
 }
 
+static void __start_all(void)
+{
+	struct pdbg_target *target;
+
+	if (!all_stopped)
+		PR_ERROR("starting while not all stopped\n");
+
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (thread_start(target)) {
+			PR_ERROR("Could not start thread %s\n",
+				 pdbg_target_path(target));
+		}
+	}
+
+	all_stopped = false;
+}
+
+static void start_all(void)
+{
+	struct pdbg_target *target;
+
+	for_each_path_target_class("thread", target) {
+		struct thread_state status;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		target->probe(target);
+		status = thread_status(target);
+		if (!status.quiesced)
+			PR_ERROR("starting thread not quiesced\n");
+	}
+
+	__start_all();
+}
+
 #define VCONT_POLL_DELAY 100000
 static void v_contc(uint64_t *stack, void *priv)
 {
-	thread_start(thread_target);
+	start_all();
+
 	state = SIGNAL_WAIT;
 	poll_interval = 1;
 }
@@ -603,13 +644,55 @@ static bool thread_check_attn(struct pdbg_target *target)
 	return false;
 }
 
+static void __stop_all(void)
+{
+	struct pdbg_target *target;
+
+	if (all_stopped)
+		PR_ERROR("stopping while all stopped\n");
+
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		if (thread_stop(target)) {
+			PR_ERROR("Could not stop thread %s\n",
+				 pdbg_target_path(target));
+			/* How to fix? */
+		}
+	}
+
+	all_stopped = true;
+}
+
+static void stop_all(void)
+{
+	struct pdbg_target *target;
+
+	__stop_all();
+
+	for_each_path_target_class("thread", target) {
+		struct thread_state status;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		target->probe(target);
+		status = thread_status(target);
+		if (!status.quiesced) {
+			PR_ERROR("Could not quiesce thread\n");
+			/* How to fix? */
+		}
+	}
+}
+
 static void interrupt(uint64_t *stack, void *priv)
 {
 	struct thread_state status;
 
 	PR_INFO("Interrupt from gdb client\n");
 
-	thread_stop(thread_target);
+	stop_all();
 
 	status = thread_status(thread_target);
 	if (!(status.quiesced)) {
