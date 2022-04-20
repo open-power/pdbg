@@ -385,10 +385,10 @@ static void destroy_client(int dead_fd)
 
 static int read_from_client(int fd)
 {
-	char buffer[BUFFER_SIZE + 1];
+	char buffer[BUFFER_SIZE];
 	int nbytes;
 
-	nbytes = read(fd, buffer, sizeof(buffer));
+	nbytes = read(fd, buffer, sizeof(buffer) - 1);
 	if (nbytes < 0) {
 		perror(__FUNCTION__);
 		return -1;
