@@ -51,6 +51,11 @@ static int fd = -1;
 enum client_state {IDLE, SIGNAL_WAIT};
 static enum client_state state = IDLE;
 
+/* Attached to thread->gdbserver_priv */
+struct gdb_thread {
+	uint64_t pir;
+};
+
 static void destroy_client(int dead_fd);
 
 static uint8_t gdbcrc(char *data)
@@ -666,7 +671,7 @@ static void SIGINT_handler(int sig)
 	gdbserver_running = false;
 }
 
-static int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_t port)
+static int gdbserver_start(struct pdbg_target *adu, uint16_t port)
 {
 	int sock, i;
 	struct sigaction sa;
@@ -682,7 +687,6 @@ static int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, 
 	}
 
 	parser_init(callbacks);
-	thread_target = thread;
 	adu_target = adu;
 
 	sock = socket(PF_INET, SOCK_STREAM, 0);
@@ -767,38 +771,68 @@ static int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, 
 
 static int gdbserver(uint16_t port)
 {
-	struct pdbg_target *target, *adu, *thread = NULL;
+	struct pdbg_target *target, *adu, *first_target = NULL;
 
 	for_each_path_target_class("thread", target) {
-		if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
 
-		if (!thread) {
-			thread = target;
+		if (!pdbg_target_compatible(target, "ibm,power8-thread") &&
+		    !pdbg_target_compatible(target, "ibm,power9-thread") &&
+		    !pdbg_target_compatible(target, "ibm,power10-thread")) {
+			PR_ERROR("GDBSERVER is only available on POWER8,9,10\n");
+			return -1;
+		}
+
+		gdb_thread = malloc(sizeof(struct gdb_thread));
+		memset(gdb_thread, 0, sizeof(*gdb_thread));
+		thread->gdbserver_priv = gdb_thread;
+
+		if (!first_target) {
+			first_target = target;
 		} else {
 			fprintf(stderr, "GDB server cannot be run on multiple threads at once.\n");
 			return 0;
 		}
 	}
 
-	if (!thread) {
+	if (!first_target) {
 		fprintf(stderr, "No thread selected\n");
 		return 0;
 	}
 
-	if (!pdbg_target_compatible(thread, "ibm,power8-thread") &&
-	    !pdbg_target_compatible(thread, "ibm,power9-thread") &&
-	    !pdbg_target_compatible(thread, "ibm,power10-thread")) {
-		PR_ERROR("GDBSERVER is only available on POWER8,9,10\n");
-		return -1;
-	}
-
-	if (pdbg_target_compatible(thread, "ibm,power9-thread")) {
+	if (pdbg_target_compatible(first_target, "ibm,power9-thread")) {
 		/*
 		 * XXX: If we advertise no swbreak support on POWER9 does
 		 * that prevent the client using them?
 		 */
 		PR_WARNING("Breakpoints may cause host crashes on POWER9 and should not be used\n");
+	}
+
+	thread_target = first_target;
+
+	for_each_path_target_class("thread", target) {
+		struct thread *thread = target_to_thread(target);
+		struct gdb_thread *gdb_thread;
+
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		gdb_thread = thread->gdbserver_priv;
+
+		if (thread_getspr(target, SPR_PIR, &gdb_thread->pir)) {
+			PR_ERROR("Error reading PIR. Are all thread in the target cores quiesced?\n");
+			return 0;
+		}
+
+		if (gdb_thread->pir & ~0xffffULL) {
+			/* This limit is just due to some string array sizes */
+			PR_ERROR("PIR exceeds 16-bits.");
+			return 0;
+		}
 	}
 
 	/* Select ADU target */
@@ -812,7 +846,7 @@ static int gdbserver(uint16_t port)
 		return 0;
 	}
 
-	gdbserver_start(thread, adu, port);
+	gdbserver_start(adu, port);
 
 	return 0;
 }

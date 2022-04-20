@@ -139,6 +139,7 @@ struct core {
 struct thread {
 	struct pdbg_target target;
 	struct thread_state status;
+	void *gdbserver_priv;
 	int id;
 	struct thread_state (*state)(struct thread *);
 	int (*step)(struct thread *, int);
