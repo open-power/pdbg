@@ -62,10 +62,12 @@
 		/* *data should point to the CRC */
 		if (crc != *data) {
 			printf("CRC error cmd %d\n", cmd);
-			send_nack(priv);
+			if (ack_mode)
+				send_nack(priv);
 		} else {
 			PR_INFO("Cmd %d\n", cmd);
-			send_ack(priv);
+			if (ack_mode)
+				send_ack(priv);
 
 			/* Push the response onto the stack */
 			if (rsp)
@@ -112,8 +114,9 @@
 	# TODO: We don't actually listen to what's supported
 	q_attached = ('qAttached:' xdigit* @{rsp = "1";});
 	q_C = ('qC' @{rsp = "QC1";});
-	q_supported = ('qSupported:' any* >{rsp = "multiprocess+;vContSupported+";});
+	q_supported = ('qSupported:' any* >{rsp = "multiprocess+;vContSupported+;QStartNoAckMode+"; ack_mode = true;});
 	qf_threadinfo = ('qfThreadInfo' @{rsp = "m1l";});
+	q_start_noack = ('QStartNoAckMode' @{rsp = "OK"; send_ack(priv); ack_mode = false;});
 
 	# vCont packet parsing
 	v_contq = ('vCont?' @{rsp = "vCont;c;C;s;S";});
@@ -125,7 +128,8 @@
 
 	commands = (get_mem | get_gprs | get_spr | stop_reason | set_thread |
 		    q_attached | q_C | q_supported | qf_threadinfo | q_C |
-		    v_contq | v_contc | v_conts | put_mem | detach | unknown );
+		    q_start_noack | v_contq | v_contc | v_conts | put_mem |
+		    detach | unknown );
 
 	cmd = (('$' ((commands & ^'#'*) >reset $crc)
 	      ('#' xdigit{2} $hex_digit @end)) >{PR_INFO("RAGEL:cmd\n");});
@@ -148,6 +152,8 @@ static uint8_t crc;
 static int cs;
 
 static command_cb *command_callbacks;
+
+static bool ack_mode = true;
 
 %%write data;
 
