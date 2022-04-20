@@ -39,6 +39,13 @@ make
 rsync pdbg root@bmc:/usr/local/bin
 ```
 
+### Updating generated files
+
+Some generated files are shipped with the source to reduce the toolchain
+requirement for builds. Currently src/gdb_parser.rl creates
+src/gdb_parser_precompile.c so that needs to be updated if the .rl file is
+changed. `make generated` to update such generated files.
+
 ## Testing
 
 There is a test suite to perform some basic testing. The tests on the host

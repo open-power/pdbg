@@ -340,4 +340,16 @@ p9z-fsi.dts: p9z-fsi.dts.m4 p9-fsi.dtsi
 %.c: %.rl
 	$(RAGEL_V)$(RAGEL) -o $@ $<
 
+generated_targets =
+if HAVE_RAGEL
+generated_targets += src/gdb_parser_precompile.c
+
+src/gdb_parser_precompile.c: src/gdb_parser.rl FORCE
+	$(RAGEL_V)$(RAGEL) -o $@ $<
+endif
+
+generated: $(generated_targets)
+
 MOSTLYCLEANFILES = *.dtb.S *.dtb $(DT) *.dt.h p9-fsi.dtsi src/gdb_parser.c
+
+FORCE:
