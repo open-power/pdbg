@@ -351,7 +351,7 @@ _match:
 	break;
 	case 11:
 #line 79 "src/gdb_parser.rl"
-	{cmd = DISCONNECT;}
+	{cmd = DETACH;}
 	break;
 	case 12:
 #line 83 "src/gdb_parser.rl"

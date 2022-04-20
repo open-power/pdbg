@@ -95,9 +95,9 @@ static void stop_reason(uint64_t *stack, void *priv)
 	send_response(fd, TRAP);
 }
 
-static void disconnect(uint64_t *stack, void *priv)
+static void detach(uint64_t *stack, void *priv)
 {
-	PR_INFO("Terminating connection with client. pid %16" PRIi64 "\n", stack[0]);
+	PR_INFO("Detach debug session with client. pid %16" PRIi64 "\n", stack[0]);
 	send_response(fd, OK);
 }
 
@@ -416,7 +416,7 @@ command_cb callbacks[LAST_CMD + 1] = {
 	v_conts,
 	put_mem,
 	interrupt,
-	disconnect,
+	detach,
 	NULL};
 
 int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_t port)
