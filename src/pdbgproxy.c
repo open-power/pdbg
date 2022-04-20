@@ -183,10 +183,10 @@ static void get_spr(uint64_t *stack, void *priv)
 {
 	char data[REG_DATA_SIZE];
 	uint64_t value;
+	uint32_t value32;
 
 	switch (stack[0]) {
 	case 0x40:
-		/* Get PC/NIA */
 		if (thread_getnia(thread_target, &value))
 			PR_ERROR("Error reading NIA\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
@@ -194,7 +194,6 @@ static void get_spr(uint64_t *stack, void *priv)
 		break;
 
 	case 0x41:
-		/* Get MSR */
 		if (thread_getmsr(thread_target, &value))
 			PR_ERROR("Error reading MSR\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
@@ -202,35 +201,54 @@ static void get_spr(uint64_t *stack, void *priv)
 		break;
 
 	case 0x42:
-		/* Get CR */
-		if (thread_getcr(thread_target, (uint32_t *)&value))
+		if (thread_getcr(thread_target, &value32))
 			PR_ERROR("Error reading CR \n");
-		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh((uint64_t)value32));
 		send_response(fd, data);
 		break;
 
 	case 0x43:
-		/* Get LR */
-		if (thread_getspr(thread_target, 8, &value))
+		if (thread_getspr(thread_target, SPR_LR, &value))
 			PR_ERROR("Error reading LR\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
 		break;
 
 	case 0x44:
-		/* Get CTR */
-		if (thread_getspr(thread_target, 9, &value))
+		if (thread_getspr(thread_target, SPR_CTR, &value))
 			PR_ERROR("Error reading CTR\n");
 		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
 		send_response(fd, data);
 		break;
 
 	case 0x45:
-		/* We can't get the whole XER register in RAM mode as part of it
-		 * is in latches that we need to stop the clocks to get. Probably
-		 * not helpful to only return part of a register in a debugger so
-		 * return unavailable. */
-		send_response(fd, "xxxxxxxxxxxxxxxx");
+		/*
+		 * Not all XER register bits may be recoverable with RAM
+		 * mode accesses, so this may be not entirely accurate.
+		 */
+		if (thread_getspr(thread_target, SPR_XER, &value))
+			PR_ERROR("Error reading XER\n");
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
+		send_response(fd, data);
+		break;
+
+	case 0x46:
+		if (thread_getspr(thread_target, SPR_FPSCR, &value))
+			PR_ERROR("Error reading FPSCR\n");
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
+		send_response(fd, data);
+		break;
+	case 0x67:
+		if (thread_getspr(thread_target, SPR_VSCR, &value))
+			PR_ERROR("Error reading VSCR\n");
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
+		send_response(fd, data);
+		break;
+	case 0x68:
+		if (thread_getspr(thread_target, SPR_VRSAVE, &value))
+			PR_ERROR("Error reading VRSAVE\n");
+		snprintf(data, REG_DATA_SIZE, "%016" PRIx64 , be64toh(value));
+		send_response(fd, data);
 		break;
 
 	default:
