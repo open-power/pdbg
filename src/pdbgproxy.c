@@ -320,11 +320,20 @@ static void v_contc(uint64_t *stack, void *priv)
 
 static void interrupt(uint64_t *stack, void *priv)
 {
-	PR_INFO("Interrupt\n");
-	thread_stop(thread_target);
-	send_response(fd, TRAP);
+	struct thread_state status;
 
-	return;
+	PR_INFO("Interrupt from gdb client\n");
+
+	thread_stop(thread_target);
+
+	status = thread_status(thread_target);
+	if (!(status.quiesced)) {
+		PR_ERROR("Could not quiesce thread\n");
+		return;
+	}
+	state = IDLE;
+	poll_interval = VCONT_POLL_DELAY;
+	send_response(fd, TRAP);
 }
 
 static void poll(void)
