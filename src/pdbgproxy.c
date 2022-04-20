@@ -54,6 +54,7 @@ static enum client_state state = IDLE;
 /* Attached to thread->gdbserver_priv */
 struct gdb_thread {
 	uint64_t pir;
+	bool attn_set;
 };
 
 static void destroy_client(int dead_fd);
@@ -116,39 +117,49 @@ static void detach(uint64_t *stack, void *priv)
 #define POWER10_HID_ENABLE_ATTN			PPC_BIT(3)
 #define POWER10_HID_FLUSH_ICACHE		PPC_BIT(2)
 
-static int set_attn(bool enable)
+static int thread_set_attn(struct pdbg_target *target, bool enable)
 {
+	struct thread *thread = target_to_thread(target);
+	struct gdb_thread *gdb_thread = thread->gdbserver_priv;
 	uint64_t hid;
 
-	if (thread_getspr(thread_target, SPR_HID, &hid))
+	if (!enable && !gdb_thread->attn_set) {
+		/* Don't clear attn if we didn't enable it */
+		return 0;
+	}
+
+	if (thread_getspr(target, SPR_HID, &hid))
 		return -1;
 
-	if (pdbg_target_compatible(thread_target, "ibm,power8-thread")) {
+	if (pdbg_target_compatible(target, "ibm,power8-thread")) {
 		if (enable) {
 			if (hid & POWER8_HID_ENABLE_ATTN)
 				return 0;
 			hid |= POWER8_HID_ENABLE_ATTN;
+			gdb_thread->attn_set = true;
 		} else {
 			if (!(hid & POWER8_HID_ENABLE_ATTN))
 				return 0;
 			hid &= ~POWER8_HID_ENABLE_ATTN;
 		}
-	} else if (pdbg_target_compatible(thread_target, "ibm,power9-thread")) {
+	} else if (pdbg_target_compatible(target, "ibm,power9-thread")) {
 		if (enable) {
 			if (hid & POWER9_HID_ENABLE_ATTN)
 				return 0;
 			hid |= POWER9_HID_ENABLE_ATTN;
+			gdb_thread->attn_set = true;
 		} else {
 			if (!(hid & POWER9_HID_ENABLE_ATTN))
 				return 0;
 			hid &= ~POWER9_HID_ENABLE_ATTN;
 		}
 		hid |= POWER9_HID_FLUSH_ICACHE;
-	} else if (pdbg_target_compatible(thread_target, "ibm,power10-thread")) {
+	} else if (pdbg_target_compatible(target, "ibm,power10-thread")) {
 		if (enable) {
 			if (hid & POWER10_HID_ENABLE_ATTN)
 				return 0;
 			hid |= POWER10_HID_ENABLE_ATTN;
+			gdb_thread->attn_set = true;
 		} else {
 			if (!(hid & POWER10_HID_ENABLE_ATTN))
 				return 0;
@@ -159,10 +170,27 @@ static int set_attn(bool enable)
 		return -1;
 	}
 
-	if (thread_putspr(thread_target, SPR_HID, hid))
+	if (thread_putspr(target, SPR_HID, hid))
 		return -1;
 
 	return 0;
+}
+
+static int set_attn(bool enable)
+{
+	struct pdbg_target *target;
+	int err = 0;
+
+	for_each_path_target_class("thread", target) {
+		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+			continue;
+
+		err = thread_set_attn(target, enable);
+		if (err)
+			break;
+	}
+
+	return err;
 }
 
 /* 32 registers represented as 16 char hex numbers with null-termination */
