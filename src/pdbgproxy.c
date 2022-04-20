@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <getopt.h>
 #include <errno.h>
+#include <byteswap.h>
 #include <ccan/array_size/array_size.h>
 
 #include <bitutils.h>
@@ -229,6 +230,86 @@ static uint64_t get_real_addr(uint64_t addr)
 	return addr;
 }
 
+/*
+ * TODO: Move write_memory and read_memory into libpdbg helper and advertise
+ * alignment requirement of a target, or have the back-ends use it directly
+ * (latter may have the problem that implicit R-M-W is undesirable at very low
+ * level operations if we only wanted to write).
+ */
+
+/* WARNING: _a *MUST* be a power of two */
+#define ALIGN_UP(_v, _a)	(((_v) + (_a) - 1) & ~((_a) - 1))
+#define ALIGN_DOWN(_v, _a)	((_v) & ~((_a) - 1))
+
+static int write_memory(uint64_t addr, uint64_t len, void *buf, size_t align)
+{
+	uint64_t start_addr, end_addr;
+	void *tmpbuf = NULL;
+	void *src;
+	int err = 0;
+
+	start_addr = ALIGN_DOWN(addr, align);
+	end_addr = ALIGN_UP(addr + len, align);
+
+	if (addr != start_addr || (addr + len) != end_addr) {
+		tmpbuf = malloc(end_addr - start_addr);
+		if (mem_read(adu_target, start_addr, tmpbuf, end_addr - start_addr, 0, false)) {
+			PR_ERROR("Unable to read memory for RMW\n");
+			err = -1;
+			goto out;
+		}
+		memcpy(tmpbuf + (addr - start_addr), buf, len);
+		src = tmpbuf;
+	} else {
+		src = buf;
+	}
+
+	if (mem_write(adu_target, start_addr, src, end_addr - start_addr, 0, false)) {
+		PR_ERROR("Unable to write memory\n");
+		err = -1;
+	}
+
+out:
+	if (tmpbuf)
+		free(tmpbuf);
+
+	return err;
+}
+
+static int read_memory(uint64_t addr, uint64_t len, void *buf, size_t align)
+{
+	uint64_t start_addr, end_addr;
+	void *tmpbuf = NULL;
+	void *dst;
+	int err = 0;
+
+	start_addr = ALIGN_DOWN(addr, align);
+	end_addr = ALIGN_UP(addr + len, align);
+
+	if (addr != start_addr || (addr + len) != end_addr) {
+		tmpbuf = malloc(end_addr - start_addr);
+		dst = tmpbuf;
+	} else {
+		dst = buf;
+	}
+
+	if (mem_read(adu_target, start_addr, dst, end_addr - start_addr, 0, false)) {
+		PR_ERROR("Unable to read memory\n");
+		err = -1;
+		goto out;
+	}
+
+	if (addr != start_addr || (addr + len) != end_addr)
+		memcpy(buf, tmpbuf + (addr - start_addr), len);
+
+out:
+	if (tmpbuf)
+		free(tmpbuf);
+
+	return err;
+}
+
+
 static void get_mem(uint64_t *stack, void *priv)
 {
 	uint64_t addr, len, linear_map;
@@ -252,7 +333,7 @@ static void get_mem(uint64_t *stack, void *priv)
 
 	linear_map = get_real_addr(addr);
 	if (linear_map != -1UL) {
-		if (mem_read(adu_target, linear_map, (uint8_t *) data, len, 0, false)) {
+		if (read_memory(linear_map, len, data, 1)) {
 			PR_ERROR("Unable to read memory\n");
 			err = 1;
 		}
@@ -320,7 +401,7 @@ static void put_mem(uint64_t *stack, void *priv)
 		}
 	}
 
-	if (mem_write(adu_target, addr, data, len, 0, false)) {
+	if (write_memory(addr, len, data, 8)) {
 		PR_ERROR("Unable to write memory\n");
 		err = 3;
 	}
