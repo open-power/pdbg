@@ -253,6 +253,7 @@ static void put_mem(uint64_t *stack, void *priv)
 	uint64_t addr, len;
 	uint8_t *data;
 	uint8_t attn_opcode[] = {0x00, 0x00, 0x02, 0x00};
+	uint8_t gdb_break_opcode[] = {0x7d, 0x82, 0x10, 0x08};
 	int err = 0;
 	struct thread *thread = target_to_thread(thread_target);
 
@@ -263,7 +264,7 @@ static void put_mem(uint64_t *stack, void *priv)
 
 	addr = stack[0];
 	len = stack[1];
-	data = (uint8_t *) &stack[2];
+	data = (uint8_t *)(unsigned long)stack[2];
 
 	addr = get_real_addr(addr);
 	if (addr == -1UL) {
@@ -272,8 +273,7 @@ static void put_mem(uint64_t *stack, void *priv)
 		goto out;
 	}
 
-
-	if (len == 4 && stack[2] == 0x0810827d) {
+	if (len == 4 && !memcmp(data, gdb_break_opcode, 4)) {
 		/* According to linux-ppc-low.c gdb only uses this
 		 * op-code for sw break points so we replace it with
 		 * the correct attn opcode which is what we need for
@@ -282,15 +282,12 @@ static void put_mem(uint64_t *stack, void *priv)
 		 * TODO: Upstream a patch to gdb so that it uses the
 		 * right opcode for baremetal debug. */
 		PR_INFO("Breakpoint opcode detected, replacing with attn\n");
-		data = attn_opcode;
+		memcpy(data, attn_opcode, 4);
 
 		/* Need to enable the attn instruction in HID0 */
 		if (thread->enable_attn(thread))
 			goto out;
-	} else
-		stack[2] = __builtin_bswap64(stack[2]) >> 32;
-
-	PR_INFO("put_mem 0x%016" PRIx64 " = 0x%016" PRIx64 "\n", addr, stack[2]);
+	}
 
 	if (mem_write(adu_target, addr, data, len, 0, false)) {
 		PR_ERROR("Unable to write memory\n");
@@ -298,6 +295,8 @@ static void put_mem(uint64_t *stack, void *priv)
 	}
 
 out:
+	free(data); // allocated by gdb_parser.rl
+
 	if (err)
 		send_response(fd, ERROR(EPERM));
 	else

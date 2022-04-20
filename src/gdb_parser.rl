@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -39,6 +40,24 @@
 			*data += *p - 'A' + 10;
 	}
 
+	action mem_hex_digit {
+		uint8_t *d;
+		uint64_t idx = mem_data_i / 2; /* 2 chars per byte */
+
+		assert(idx < mem_data_length);
+		d = &mem_data[idx];
+
+		*d <<= 4;
+		if (*p >= '0' && *p <= '9')
+			*d += *p - '0';
+		else if (*p >= 'a' && *p <= 'f')
+			*d += *p - 'a' + 10;
+		else if (*p >= 'A' && *p <= 'F')
+			*d += *p - 'A' + 10;
+
+		mem_data_i++;
+	}
+
 	action end {
 		/* *data should point to the CRC */
 		if (crc != *data) {
@@ -69,7 +88,14 @@
 		   ','
 		   xdigit+ $hex_digit %push
 		   ':'
-		   xdigit+ $hex_digit %push);
+		   @{	mem_data_length = *(data - 1);
+			mem_data = calloc(1, mem_data_length); // handler frees
+			*data = (unsigned long)mem_data;
+			data++;
+			assert(data < &stack[10]);
+			mem_data_i = 0;
+		   }
+		   xdigit+ $mem_hex_digit);
 
 	get_gprs = ('g' @{cmd = GET_GPRS;});
 
@@ -114,6 +140,9 @@
 
 static enum gdb_command cmd = NONE;
 static uint64_t stack[10], *data = stack;
+static uint8_t *mem_data;
+static uint64_t mem_data_length;
+static uint64_t mem_data_i;
 static char *rsp;
 static uint8_t crc;
 static int cs;
