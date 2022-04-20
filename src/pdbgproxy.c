@@ -108,6 +108,9 @@ static void detach(uint64_t *stack, void *priv)
 #define POWER9_HID_ENABLE_ATTN			PPC_BIT(3)
 #define POWER9_HID_FLUSH_ICACHE			PPC_BIT(2)
 
+#define POWER10_HID_ENABLE_ATTN			PPC_BIT(3)
+#define POWER10_HID_FLUSH_ICACHE		PPC_BIT(2)
+
 static int set_attn(bool enable)
 {
 	uint64_t hid;
@@ -136,6 +139,17 @@ static int set_attn(bool enable)
 			hid &= ~POWER9_HID_ENABLE_ATTN;
 		}
 		hid |= POWER9_HID_FLUSH_ICACHE;
+	} else if (pdbg_target_compatible(thread_target, "ibm,power10-thread")) {
+		if (enable) {
+			if (hid & POWER10_HID_ENABLE_ATTN)
+				return 0;
+			hid |= POWER10_HID_ENABLE_ATTN;
+		} else {
+			if (!(hid & POWER10_HID_ENABLE_ATTN))
+				return 0;
+			hid &= ~POWER10_HID_ENABLE_ATTN;
+		}
+		hid |= POWER10_HID_FLUSH_ICACHE;
 	} else {
 		return -1;
 	}
@@ -673,8 +687,9 @@ static int gdbserver(uint16_t port)
 	}
 
 	if (!pdbg_target_compatible(thread, "ibm,power8-thread") &&
-	    !pdbg_target_compatible(thread, "ibm,power9-thread")) {
-		PR_ERROR("GDBSERVER is only available on POWER8 and POWER9\n");
+	    !pdbg_target_compatible(thread, "ibm,power9-thread") &&
+	    !pdbg_target_compatible(thread, "ibm,power10-thread")) {
+		PR_ERROR("GDBSERVER is only available on POWER8,9,10\n");
 		return -1;
 	}
 

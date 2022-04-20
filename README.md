@@ -534,7 +534,7 @@ There are also low level htm commands which can also be used:
  - `dump` will dump the trace to a file.
 
 ### GDBSERVER
-At the moment gdbserver is only supported on P8 and P9.
+At the moment gdbserver is only supported on P8 and P9 and P10.
 
 Memory access can only be performed on kernel memory.
 
