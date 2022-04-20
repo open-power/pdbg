@@ -448,6 +448,8 @@ int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_
 		return -1;
 	}
 
+	printf("gdbserver: listening on port %d\n", port);
+
 	FD_ZERO(&active_fd_set);
 	FD_SET(sock, &active_fd_set);
 
@@ -463,17 +465,29 @@ int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_
 		for (i = 0; i < FD_SETSIZE; i++) {
 			if (FD_ISSET(i, &read_fd_set)) {
 				if (i == sock) {
+					char host[NI_MAXHOST];
+					struct sockaddr saddr;
+					socklen_t slen;
 					int new;
-					new = accept(sock, NULL, NULL);
+
+					new = accept(sock, &saddr, &slen);
 					if (new < 0) {
 						perror(__FUNCTION__);
 						return -1;
 					}
 
-					if (fd > 0)
+					if (getnameinfo(&saddr, slen,
+							host, sizeof(host),
+							NULL, 0,
+							NI_NUMERICHOST) == 0) {
+						printf("gdbserver: connection from gdb client %s\n", host);
+					}
+
+					if (fd > 0) {
 						/* It only makes sense to accept a single client */
+						printf("gdbserver: another client already connected\n");
 						close(new);
-					else {
+					} else {
 						create_client(new);
 						FD_SET(new, &active_fd_set);
 					}
@@ -481,6 +495,7 @@ int gdbserver_start(struct pdbg_target *thread, struct pdbg_target *adu, uint16_
 					if (read_from_client(i) < 0) {
 						destroy_client(i);
 						FD_CLR(i, &active_fd_set);
+						printf("gdbserver: ended connection with gdb client\n");
 					}
 				}
 			}
