@@ -382,6 +382,8 @@ static void poll(void)
 		if (!(status.quiesced))
 			break;
 
+		set_attn(false);
+
 		state = IDLE;
 		poll_interval = VCONT_POLL_DELAY;
 		if (!(status.active)) {
