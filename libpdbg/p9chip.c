@@ -157,14 +157,14 @@ static int p9_thread_stop(struct thread *thread)
 	int i = 0;
 
 	thread_write(thread, P9_DIRECT_CONTROL, PPC_BIT(7 + 8*thread->id));
-	while (!(thread->state(thread).quiesced)) {
+	do {
 		usleep(1000);
 		if (i++ > RAS_STATUS_TIMEOUT) {
 			PR_ERROR("Unable to quiesce thread\n");
-			break;
+			return 1;
 		}
-	}
-	thread->status = thread->state(thread);
+		thread->status = thread->state(thread);
+	} while (!thread->status.quiesced);
 
 	return 0;
 }
