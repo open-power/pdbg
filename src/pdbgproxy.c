@@ -202,7 +202,11 @@ static void send_stop_for_thread(struct pdbg_target *target)
 	uint64_t pir = gdb_thread->pir;
 	char data[MAX_RESP_LEN];
 	size_t s = 0;
+	struct thread_regs regs;
+	uint64_t value;
+	uint32_t value32;
 	int sig;
+	int i;
 
 	if (gdb_thread->stop_attn)
 		sig = 5; /* TRAP */
@@ -212,6 +216,39 @@ static void send_stop_for_thread(struct pdbg_target *target)
 		sig = 0; /* default / initial stop reason */
 
 	s += snprintf(data + s, sizeof(data) - s, "T%02uthread:%04" PRIx64 ";%s", sig, pir, sig == 5 ? "swbreak:;" : "");
+
+	if (thread_getregs(target, &regs))
+		PR_ERROR("Error reading gprs\n");
+
+	for (i = 0; i < 32; i++)
+		s += snprintf(data + s, sizeof(data) - s, "%x:%016" PRIx64 ";", i, be64toh(regs.gprs[i]));
+
+	thread_getnia(target, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%016" PRIx64 ";", 0x40, be64toh(value));
+
+	thread_getmsr(target, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%016" PRIx64 ";", 0x41, be64toh(value));
+
+	thread_getcr(target, &value32);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%08" PRIx32 ";", 0x42, be32toh(value32));
+
+	thread_getspr(target, SPR_LR, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%016" PRIx64 ";", 0x43, be64toh(value));
+
+	thread_getspr(target, SPR_CTR, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%016" PRIx64 ";", 0x44, be64toh(value));
+
+	thread_getspr(target, SPR_XER, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%08" PRIx32 ";", 0x45, be32toh(value));
+
+	thread_getspr(target, SPR_FPSCR, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%08" PRIx32 ";", 0x46, be32toh(value));
+
+	thread_getspr(target, SPR_VSCR, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%08" PRIx32 ";", 0x67, be32toh(value));
+
+	thread_getspr(target, SPR_VRSAVE, &value);
+	s += snprintf(data + s, sizeof(data) - s, "%x:%08" PRIx32 ";", 0x68, be32toh(value));
 
 	send_response(fd, data);
 }
