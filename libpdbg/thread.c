@@ -371,7 +371,6 @@ void thread_print_regs(struct thread_regs *regs)
 int thread_getregs(struct pdbg_target *target, struct thread_regs *regs)
 {
 	struct thread *thread;
-	int err;
 
 	assert(pdbg_target_is_class(target, "thread"));
 
@@ -385,11 +384,7 @@ int thread_getregs(struct pdbg_target *target, struct thread_regs *regs)
 		return -1;
 	}
 
-	err = thread->getregs(thread, regs);
-	if (!err)
-		thread_print_regs(regs);
-
-	return err;
+	return thread->getregs(thread, regs);
 }
 
 int thread_getgpr(struct pdbg_target *target, int gpr, uint64_t *value)

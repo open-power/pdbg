@@ -380,8 +380,6 @@ int ram_getregs(struct thread *thread, struct thread_regs *regs)
 
 	CHECK_ERR(thread->ram_destroy(thread));
 
-	thread_print_regs(regs);
-
 	return 0;
 }
 

@@ -362,6 +362,8 @@ static int thread_regs_print(struct reg_flags flags)
 		if (thread_getregs(thread, &regs))
 			continue;
 
+		thread_print_regs(&regs);
+
 		if (flags.do_backtrace) {
 			struct pdbg_target *adu;
 
