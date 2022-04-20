@@ -457,6 +457,59 @@ static void v_contc(uint64_t *stack, void *priv)
 	poll_interval = 1;
 }
 
+#define P9_SPATTN_AND	0x20010A98
+#define P9_SPATTN	0x20010A99
+
+#define P10_SPATTN_AND	0x20028498
+#define P10_SPATTN	0x20028499
+
+static bool thread_check_attn(struct pdbg_target *target)
+{
+	struct thread *thread = target_to_thread(target);
+	struct pdbg_target *core;
+	uint64_t spattn;
+
+	if (pdbg_target_compatible(target, "ibm,power8-thread")) {
+		return true; /* XXX */
+	} else if (pdbg_target_compatible(target, "ibm,power9-thread")) {
+		core = pdbg_target_require_parent("core", target);
+		if (pib_read(core, P9_SPATTN, &spattn)) {
+			PR_ERROR("SPATTN read failed\n");
+			return false;
+		}
+
+		if (spattn & PPC_BIT(1 + 4*thread->id)) {
+			uint64_t mask = ~PPC_BIT(1 + 4*thread->id);
+
+			if (pib_write(core, P9_SPATTN_AND, mask)) {
+				PR_ERROR("SPATTN clear failed\n");
+				return false;
+			}
+
+			return true;
+		}
+	} else if (pdbg_target_compatible(target, "ibm,power10-thread")) {
+		core = pdbg_target_require_parent("core", target);
+		if (pib_read(core, P10_SPATTN, &spattn)) {
+			PR_ERROR("SPATTN read failed\n");
+			return false;
+		}
+
+		if (spattn & PPC_BIT(1 + 4*thread->id)) {
+			uint64_t mask = ~PPC_BIT(1 + 4*thread->id);
+
+			if (pib_write(core, P10_SPATTN_AND, mask)) {
+				PR_ERROR("SPATTN clear failed\n");
+				return false;
+			}
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void interrupt(uint64_t *stack, void *priv)
 {
 	struct thread_state status;
@@ -477,7 +530,6 @@ static void interrupt(uint64_t *stack, void *priv)
 
 static void poll(void)
 {
-	uint64_t nia;
 	struct thread_state status;
 
 	thread_target->probe(thread_target);
@@ -495,17 +547,22 @@ static void poll(void)
 
 		state = IDLE;
 		poll_interval = VCONT_POLL_DELAY;
-		if (!(status.active)) {
-			PR_ERROR("Thread inactive after trap\n");
-			send_response(fd, ERROR(EPERM));
-			return;
-		}
 
-		/* Restore NIA */
-		if (thread_getnia(thread_target, &nia))
-			PR_ERROR("Error during getnia\n");
-		if (thread_putnia(thread_target, nia - 4))
-			PR_ERROR("Error during putnia\n");
+		if (thread_check_attn(thread_target)) {
+			uint64_t nia;
+
+			if (!(status.active)) {
+				PR_ERROR("Thread inactive after trap\n");
+				send_response(fd, ERROR(EPERM));
+				return;
+			}
+
+			/* Restore NIA */
+			if (thread_getnia(thread_target, &nia))
+				PR_ERROR("Error during getnia\n");
+			if (thread_putnia(thread_target, nia - 4))
+				PR_ERROR("Error during putnia\n");
+		}
 		send_response(fd, TRAP);
 		break;
 	}
