@@ -1,14 +1,16 @@
 
 #line 1 "src/gdb_parser.rl"
-#include <stdio.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 #include "src/pdbgproxy.h"
+#include "debug.h"
 
 
-#line 108 "src/gdb_parser.rl"
+#line 113 "src/gdb_parser.rl"
 
 
 static enum gdb_command cmd = NONE;
@@ -17,168 +19,157 @@ static char *rsp;
 static uint8_t crc;
 static int cs;
 
-command_cb *command_callbacks;
+static command_cb *command_callbacks;
 
 
-#line 24 "src/gdb_parser_precompile.c"
+#line 26 "src/gdb_parser_precompile.c"
 static const char _gdb_actions[] = {
 	0, 1, 0, 1, 1, 1, 2, 1, 
-	3, 2, 1, 0, 2, 2, 1, 2, 
-	3, 1, 2, 3, 4, 2, 5, 1, 
-	2, 6, 1, 2, 7, 1, 2, 8, 
-	1, 2, 9, 1, 2, 10, 1, 2, 
-	11, 1, 2, 12, 1, 2, 13, 1, 
+	3, 1, 14, 1, 19, 1, 20, 1, 
+	21, 1, 22, 2, 0, 1, 2, 2, 
+	1, 2, 3, 1, 2, 3, 4, 2, 
+	10, 1, 2, 12, 1, 2, 13, 1, 
 	2, 14, 1, 2, 15, 1, 2, 16, 
-	1, 2, 17, 1, 2, 18, 1, 2, 
-	19, 0, 3, 1, 19, 0
+	1, 2, 17, 1, 2, 18, 1, 3, 
+	0, 5, 1, 3, 0, 6, 1, 3, 
+	0, 7, 1, 3, 0, 8, 1, 3, 
+	0, 9, 1, 3, 0, 11, 1
 };
 
 static const unsigned char _gdb_key_offsets[] = {
-	0, 0, 2, 14, 15, 21, 27, 30, 
-	38, 46, 53, 60, 61, 68, 76, 83, 
-	91, 98, 106, 111, 113, 115, 117, 119, 
-	121, 123, 125, 127, 134, 136, 138, 140, 
-	142, 144, 146, 148, 150, 152, 153, 155, 
-	157, 159, 161, 163, 165, 167, 169, 171, 
-	173, 175, 177, 179, 181, 184, 187, 188, 
-	189, 191
+	0, 0, 10, 11, 17, 23, 30, 37, 
+	38, 45, 53, 60, 68, 75, 83, 88, 
+	90, 92, 94, 96, 98, 100, 102, 104, 
+	111, 113, 115, 117, 119, 121, 123, 125, 
+	127, 129, 130, 132, 134, 136, 138, 140, 
+	142, 144, 146, 148, 150, 152, 154, 156, 
+	158, 161, 164, 165, 166
 };
 
 static const char _gdb_trans_keys[] = {
-	3, 36, 35, 43, 45, 63, 68, 72, 
-	77, 103, 109, 112, 113, 118, 35, 48, 
-	57, 65, 70, 97, 102, 48, 57, 65, 
-	70, 97, 102, 3, 35, 36, 3, 36, 
-	48, 57, 65, 70, 97, 102, 3, 36, 
+	35, 63, 68, 72, 77, 103, 109, 112, 
+	113, 118, 35, 48, 57, 65, 70, 97, 
+	102, 48, 57, 65, 70, 97, 102, 35, 
 	48, 57, 65, 70, 97, 102, 35, 48, 
+	57, 65, 70, 97, 102, 35, 35, 48, 
+	57, 65, 70, 97, 102, 35, 44, 48, 
 	57, 65, 70, 97, 102, 35, 48, 57, 
-	65, 70, 97, 102, 35, 35, 48, 57, 
-	65, 70, 97, 102, 35, 44, 48, 57, 
+	65, 70, 97, 102, 35, 58, 48, 57, 
 	65, 70, 97, 102, 35, 48, 57, 65, 
-	70, 97, 102, 35, 58, 48, 57, 65, 
-	70, 97, 102, 35, 48, 57, 65, 70, 
-	97, 102, 35, 44, 48, 57, 65, 70, 
-	97, 102, 35, 65, 67, 83, 102, 35, 
-	116, 35, 116, 35, 97, 35, 99, 35, 
-	104, 35, 101, 35, 100, 35, 58, 35, 
-	48, 57, 65, 70, 97, 102, 35, 117, 
-	35, 112, 35, 112, 35, 111, 35, 114, 
-	35, 116, 35, 101, 35, 100, 35, 58, 
-	35, 35, 84, 35, 104, 35, 114, 35, 
-	101, 35, 97, 35, 100, 35, 73, 35, 
-	110, 35, 102, 35, 111, 35, 67, 35, 
-	111, 35, 110, 35, 116, 35, 59, 63, 
-	35, 99, 115, 35, 35, 3, 36, 3, 
-	35, 36, 0
+	70, 97, 102, 35, 44, 48, 57, 65, 
+	70, 97, 102, 35, 65, 67, 83, 102, 
+	35, 116, 35, 116, 35, 97, 35, 99, 
+	35, 104, 35, 101, 35, 100, 35, 58, 
+	35, 48, 57, 65, 70, 97, 102, 35, 
+	117, 35, 112, 35, 112, 35, 111, 35, 
+	114, 35, 116, 35, 101, 35, 100, 35, 
+	58, 35, 35, 84, 35, 104, 35, 114, 
+	35, 101, 35, 97, 35, 100, 35, 73, 
+	35, 110, 35, 102, 35, 111, 35, 67, 
+	35, 111, 35, 110, 35, 116, 35, 59, 
+	63, 35, 99, 115, 35, 35, 3, 36, 
+	43, 45, 0
 };
 
 static const char _gdb_single_lengths[] = {
-	0, 2, 12, 1, 0, 0, 3, 2, 
-	2, 1, 1, 1, 1, 2, 1, 2, 
-	1, 2, 5, 2, 2, 2, 2, 2, 
-	2, 2, 2, 1, 2, 2, 2, 2, 
-	2, 2, 2, 2, 2, 1, 2, 2, 
+	0, 10, 1, 0, 0, 1, 1, 1, 
+	1, 2, 1, 2, 1, 2, 5, 2, 
+	2, 2, 2, 2, 2, 2, 2, 1, 
 	2, 2, 2, 2, 2, 2, 2, 2, 
-	2, 2, 2, 2, 3, 3, 1, 1, 
-	2, 3
+	2, 1, 2, 2, 2, 2, 2, 2, 
+	2, 2, 2, 2, 2, 2, 2, 2, 
+	3, 3, 1, 1, 4
 };
 
 static const char _gdb_range_lengths[] = {
-	0, 0, 0, 0, 3, 3, 0, 3, 
-	3, 3, 3, 0, 3, 3, 3, 3, 
-	3, 3, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 3, 0, 0, 0, 0, 
+	0, 0, 0, 3, 3, 3, 3, 0, 
+	3, 3, 3, 3, 3, 3, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 3, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0
+	0, 0, 0, 0, 0
 };
 
-static const short _gdb_index_offsets[] = {
-	0, 0, 3, 16, 18, 22, 26, 30, 
-	36, 42, 47, 52, 54, 59, 65, 70, 
-	76, 81, 87, 93, 96, 99, 102, 105, 
-	108, 111, 114, 117, 122, 125, 128, 131, 
-	134, 137, 140, 143, 146, 149, 151, 154, 
-	157, 160, 163, 166, 169, 172, 175, 178, 
-	181, 184, 187, 190, 193, 197, 201, 203, 
-	205, 208
+static const unsigned char _gdb_index_offsets[] = {
+	0, 0, 11, 13, 17, 21, 26, 31, 
+	33, 38, 44, 49, 55, 60, 66, 72, 
+	75, 78, 81, 84, 87, 90, 93, 96, 
+	101, 104, 107, 110, 113, 116, 119, 122, 
+	125, 128, 130, 133, 136, 139, 142, 145, 
+	148, 151, 154, 157, 160, 163, 166, 169, 
+	172, 176, 180, 182, 184
 };
 
 static const char _gdb_indicies[] = {
-	1, 2, 0, 4, 5, 5, 6, 7, 
-	8, 9, 10, 11, 12, 13, 14, 3, 
-	4, 3, 15, 15, 15, 16, 17, 17, 
-	17, 16, 19, 20, 21, 18, 1, 2, 
-	22, 22, 22, 0, 1, 2, 17, 17, 
-	17, 0, 4, 23, 23, 23, 3, 24, 
-	23, 23, 23, 3, 4, 25, 4, 26, 
-	26, 26, 3, 4, 27, 26, 26, 26, 
-	3, 4, 28, 28, 28, 3, 4, 29, 
-	28, 28, 28, 3, 4, 30, 30, 30, 
-	3, 4, 29, 30, 30, 30, 3, 4, 
-	31, 32, 33, 34, 3, 4, 35, 3, 
-	4, 36, 3, 4, 37, 3, 4, 38, 
-	3, 4, 39, 3, 4, 40, 3, 4, 
-	41, 3, 4, 42, 3, 4, 43, 43, 
-	43, 3, 4, 44, 3, 4, 45, 3, 
-	4, 46, 3, 4, 47, 3, 4, 48, 
-	3, 4, 49, 3, 4, 50, 3, 4, 
-	51, 3, 4, 52, 3, 4, 53, 4, 
-	54, 3, 4, 55, 3, 4, 56, 3, 
-	4, 57, 3, 4, 58, 3, 4, 59, 
-	3, 4, 60, 3, 4, 61, 3, 4, 
-	62, 3, 4, 63, 3, 4, 64, 3, 
-	4, 65, 3, 4, 66, 3, 4, 67, 
-	3, 4, 68, 69, 3, 4, 70, 71, 
-	3, 4, 72, 4, 73, 1, 2, 0, 
-	19, 20, 21, 18, 0
+	1, 2, 3, 4, 5, 6, 7, 8, 
+	9, 10, 0, 12, 11, 13, 13, 13, 
+	14, 15, 15, 15, 14, 12, 16, 16, 
+	16, 11, 17, 16, 16, 16, 11, 12, 
+	18, 12, 19, 19, 19, 11, 12, 20, 
+	19, 19, 19, 11, 12, 21, 21, 21, 
+	11, 12, 22, 21, 21, 21, 11, 12, 
+	23, 23, 23, 11, 12, 22, 23, 23, 
+	23, 11, 12, 24, 25, 26, 27, 11, 
+	12, 28, 11, 12, 29, 11, 12, 30, 
+	11, 12, 31, 11, 12, 32, 11, 12, 
+	33, 11, 12, 34, 11, 12, 35, 11, 
+	12, 36, 36, 36, 11, 12, 37, 11, 
+	12, 38, 11, 12, 39, 11, 12, 40, 
+	11, 12, 41, 11, 12, 42, 11, 12, 
+	43, 11, 12, 44, 11, 12, 45, 11, 
+	47, 46, 12, 48, 11, 12, 49, 11, 
+	12, 50, 11, 12, 51, 11, 12, 52, 
+	11, 12, 53, 11, 12, 54, 11, 12, 
+	55, 11, 12, 56, 11, 12, 57, 11, 
+	12, 58, 11, 12, 59, 11, 12, 60, 
+	11, 12, 61, 11, 12, 62, 63, 11, 
+	12, 64, 65, 11, 12, 66, 12, 67, 
+	68, 69, 70, 71, 14, 0
 };
 
 static const char _gdb_trans_targs[] = {
-	1, 2, 2, 3, 4, 57, 3, 9, 
-	11, 12, 3, 16, 9, 18, 48, 5, 
-	0, 56, 6, 2, 7, 2, 8, 10, 
-	4, 11, 13, 14, 15, 9, 17, 19, 
-	3, 28, 38, 20, 21, 22, 23, 24, 
-	25, 26, 27, 27, 29, 30, 31, 32, 
-	33, 34, 35, 36, 37, 37, 39, 40, 
-	41, 42, 43, 44, 45, 46, 47, 3, 
-	49, 50, 51, 52, 53, 3, 54, 55, 
-	54, 55
+	2, 3, 2, 5, 7, 8, 2, 12, 
+	5, 14, 44, 2, 3, 4, 0, 52, 
+	6, 3, 7, 9, 10, 11, 5, 13, 
+	15, 2, 24, 34, 16, 17, 18, 19, 
+	20, 21, 22, 23, 23, 25, 26, 27, 
+	28, 29, 30, 31, 32, 33, 2, 3, 
+	35, 36, 37, 38, 39, 40, 41, 42, 
+	43, 2, 45, 46, 47, 48, 49, 2, 
+	50, 51, 50, 51, 52, 1, 52, 52
 };
 
 static const char _gdb_trans_actions[] = {
-	0, 63, 1, 3, 0, 3, 33, 39, 
-	3, 24, 27, 21, 30, 3, 3, 7, 
-	0, 18, 3, 66, 0, 9, 7, 15, 
-	5, 36, 15, 12, 15, 12, 15, 3, 
-	45, 3, 3, 3, 3, 3, 3, 3, 
-	3, 3, 3, 42, 3, 3, 3, 3, 
-	3, 3, 3, 3, 3, 48, 3, 3, 
-	3, 3, 3, 3, 3, 3, 3, 51, 
-	3, 3, 3, 3, 3, 54, 3, 3, 
-	57, 60
+	19, 1, 71, 75, 19, 59, 63, 55, 
+	67, 19, 19, 3, 0, 7, 0, 28, 
+	25, 5, 31, 25, 22, 25, 22, 25, 
+	3, 37, 3, 3, 3, 3, 3, 3, 
+	3, 3, 3, 3, 34, 3, 3, 3, 
+	3, 3, 3, 3, 3, 3, 40, 9, 
+	3, 3, 3, 3, 3, 3, 3, 3, 
+	3, 43, 3, 3, 3, 3, 3, 46, 
+	3, 3, 49, 52, 11, 13, 15, 17
 };
 
-static const int gdb_start = 56;
-static const int gdb_first_final = 56;
+static const int gdb_start = 52;
+static const int gdb_first_final = 52;
 static const int gdb_error = 0;
 
-static const int gdb_en_main = 56;
+static const int gdb_en_main = 52;
 
 
-#line 119 "src/gdb_parser.rl"
+#line 124 "src/gdb_parser.rl"
 
 void parser_init(command_cb *callbacks)
 {
 	
-#line 177 "src/gdb_parser_precompile.c"
+#line 168 "src/gdb_parser_precompile.c"
 	{
 	cs = gdb_start;
 	}
 
-#line 123 "src/gdb_parser.rl"
+#line 128 "src/gdb_parser.rl"
 
 	command_callbacks = callbacks;
 }
@@ -186,10 +177,10 @@ void parser_init(command_cb *callbacks)
 int parse_buffer(char *buf, size_t len, void *priv)
 {
 	char *p = buf;
-	char *pe = p + len + 1;
+	char *pe = p + len;
 
 	
-#line 193 "src/gdb_parser_precompile.c"
+#line 184 "src/gdb_parser_precompile.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -264,30 +255,31 @@ _match:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 11 "src/gdb_parser.rl"
+#line 13 "src/gdb_parser.rl"
 	{
 		cmd = 0;
 		rsp = NULL;
 		data = stack;
 		memset(stack, 0, sizeof(stack));
 		crc = 0;
+		PR_INFO("RAGEL: CRC reset\n");
 	}
 	break;
 	case 1:
-#line 19 "src/gdb_parser.rl"
+#line 22 "src/gdb_parser.rl"
 	{
 		crc += *p;
 	}
 	break;
 	case 2:
-#line 23 "src/gdb_parser.rl"
+#line 26 "src/gdb_parser.rl"
 	{
 		data++;
 		assert(data < &stack[10]);
 	}
 	break;
 	case 3:
-#line 28 "src/gdb_parser.rl"
+#line 31 "src/gdb_parser.rl"
 	{
 		*data *= 16;
 
@@ -300,14 +292,14 @@ _match:
 	}
 	break;
 	case 4:
-#line 39 "src/gdb_parser.rl"
+#line 42 "src/gdb_parser.rl"
 	{
 		/* *data should point to the CRC */
 		if (crc != *data) {
-			printf("CRC error\n");
+			printf("CRC error cmd %d\n", cmd);
 			send_nack(priv);
 		} else {
-			printf("Cmd %d\n", cmd);
+			PR_INFO("Cmd %d\n", cmd);
 			send_ack(priv);
 
 			/* Push the response onto the stack */
@@ -316,71 +308,84 @@ _match:
 			else
 				*data = 0;
 
-			command_callbacks[cmd](stack, priv);
+			if (command_callbacks)
+				command_callbacks[cmd](stack, priv);
 		}
 	}
 	break;
 	case 5:
-#line 58 "src/gdb_parser.rl"
+#line 62 "src/gdb_parser.rl"
 	{cmd = GET_MEM;}
 	break;
 	case 6:
-#line 63 "src/gdb_parser.rl"
+#line 67 "src/gdb_parser.rl"
 	{cmd = PUT_MEM;}
 	break;
 	case 7:
-#line 70 "src/gdb_parser.rl"
+#line 74 "src/gdb_parser.rl"
 	{cmd = GET_GPRS;}
 	break;
 	case 8:
-#line 72 "src/gdb_parser.rl"
+#line 76 "src/gdb_parser.rl"
 	{cmd = GET_SPR;}
 	break;
 	case 9:
-#line 75 "src/gdb_parser.rl"
+#line 79 "src/gdb_parser.rl"
 	{cmd = STOP_REASON;}
 	break;
 	case 10:
-#line 77 "src/gdb_parser.rl"
+#line 81 "src/gdb_parser.rl"
 	{cmd = SET_THREAD;}
 	break;
 	case 11:
-#line 79 "src/gdb_parser.rl"
+#line 83 "src/gdb_parser.rl"
 	{cmd = DETACH;}
 	break;
 	case 12:
-#line 83 "src/gdb_parser.rl"
+#line 87 "src/gdb_parser.rl"
 	{rsp = "1";}
 	break;
 	case 13:
-#line 84 "src/gdb_parser.rl"
+#line 88 "src/gdb_parser.rl"
 	{rsp = "QC1";}
 	break;
 	case 14:
-#line 85 "src/gdb_parser.rl"
+#line 89 "src/gdb_parser.rl"
 	{rsp = "multiprocess+;vContSupported+";}
 	break;
 	case 15:
-#line 86 "src/gdb_parser.rl"
+#line 90 "src/gdb_parser.rl"
 	{rsp = "m1l";}
 	break;
 	case 16:
-#line 89 "src/gdb_parser.rl"
+#line 93 "src/gdb_parser.rl"
 	{rsp = "vCont;c;C;s;S";}
 	break;
 	case 17:
-#line 90 "src/gdb_parser.rl"
+#line 94 "src/gdb_parser.rl"
 	{cmd = V_CONTC;}
 	break;
 	case 18:
-#line 91 "src/gdb_parser.rl"
+#line 95 "src/gdb_parser.rl"
 	{cmd = V_CONTS;}
 	break;
 	case 19:
-#line 93 "src/gdb_parser.rl"
-	{command_callbacks[INTERRUPT](stack, priv);}
+#line 98 "src/gdb_parser.rl"
+	{ if (command_callbacks) command_callbacks[INTERRUPT](stack, priv); PR_INFO("RAGEL:interrupt\n");}
 	break;
-#line 384 "src/gdb_parser_precompile.c"
+	case 20:
+#line 105 "src/gdb_parser.rl"
+	{PR_INFO("RAGEL:cmd\n");}
+	break;
+	case 21:
+#line 108 "src/gdb_parser.rl"
+	{PR_INFO("RAGEL:ack\n");}
+	break;
+	case 22:
+#line 109 "src/gdb_parser.rl"
+	{PR_INFO("RAGEL:nack\n");}
+	break;
+#line 389 "src/gdb_parser_precompile.c"
 		}
 	}
 
@@ -393,18 +398,37 @@ _again:
 	_out: {}
 	}
 
-#line 133 "src/gdb_parser.rl"
+#line 138 "src/gdb_parser.rl"
+
+	if (cs == gdb_error) {
+		printf("parse error\n");
+		return -1;
+	}
 
 	return 0;
 }
 
 #if 0
+void send_nack(void *priv)
+{
+	printf("Send: -\n");
+}
+
+void send_ack(void *priv)
+{
+	printf("Send: +\n");
+}
+
 int main(int argc, char **argv)
 {
 	parser_init(NULL);
 
-	if (argc > 1)
-		parse_buffer(argv[1], strlen(argv[1]), NULL);
+	if (argc > 1) {
+		int i;
+		for (i = 1; i < argc; i++)
+			parse_buffer(argv[i], strlen(argv[i]), NULL);
+	}
+
 	return 0;
 }
 #endif

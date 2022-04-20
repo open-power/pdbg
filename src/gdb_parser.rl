@@ -1,9 +1,11 @@
-#include <stdio.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 #include "src/pdbgproxy.h"
+#include "debug.h"
 
 %%{
 	machine gdb;
@@ -14,6 +16,7 @@
 		data = stack;
 		memset(stack, 0, sizeof(stack));
 		crc = 0;
+		PR_INFO("RAGEL: CRC reset\n");
 	}
 
 	action crc {
@@ -39,10 +42,10 @@
 	action end {
 		/* *data should point to the CRC */
 		if (crc != *data) {
-			printf("CRC error\n");
+			printf("CRC error cmd %d\n", cmd);
 			send_nack(priv);
 		} else {
-			printf("Cmd %d\n", cmd);
+			PR_INFO("Cmd %d\n", cmd);
 			send_ack(priv);
 
 			/* Push the response onto the stack */
@@ -51,7 +54,8 @@
 			else
 				*data = 0;
 
-			command_callbacks[cmd](stack, priv);
+			if (command_callbacks)
+				command_callbacks[cmd](stack, priv);
 		}
 	}
 
@@ -82,28 +86,29 @@
 	# TODO: We don't actually listen to what's supported
 	q_attached = ('qAttached:' xdigit* @{rsp = "1";});
 	q_C = ('qC' @{rsp = "QC1";});
-	q_supported = ('qSupported:' any* @{rsp = "multiprocess+;vContSupported+";});
+	q_supported = ('qSupported:' any* >{rsp = "multiprocess+;vContSupported+";});
 	qf_threadinfo = ('qfThreadInfo' @{rsp = "m1l";});
 
 	# vCont packet parsing
 	v_contq = ('vCont?' @{rsp = "vCont;c;C;s;S";});
 	v_contc = ('vCont;c' any* @{cmd = V_CONTC;});
 	v_conts = ('vCont;s' any* @{cmd = V_CONTS;});
+	unknown = (any*);
 
-	interrupt = (3 @{command_callbacks[INTERRUPT](stack, priv);});
+	interrupt = (3 @{ if (command_callbacks) command_callbacks[INTERRUPT](stack, priv); PR_INFO("RAGEL:interrupt\n");});
 
 	commands = (get_mem | get_gprs | get_spr | stop_reason | set_thread |
 		    q_attached | q_C | q_supported | qf_threadinfo | q_C |
-		    v_contq | v_contc | v_conts | put_mem | detach );
+		    v_contq | v_contc | v_conts | put_mem | detach | unknown );
 
-	cmd = ((commands & ^'#'*) | ^'#'*) $crc
-	      ('#' xdigit{2} $hex_digit @end);
+	cmd = (('$' ((commands & ^'#'*) >reset $crc)
+	      ('#' xdigit{2} $hex_digit @end)) >{PR_INFO("RAGEL:cmd\n");});
 
 	# We ignore ACK/NACK for the moment
-	ack = ('+');
-	nack = ('-');
+	ack = ('+' >{PR_INFO("RAGEL:ack\n");});
+	nack = ('-' >{PR_INFO("RAGEL:nack\n");});
 
-	main := (( ^('$' | interrupt)*('$' | interrupt) @reset) (cmd | ack | nack))*;
+	main := (cmd | interrupt | ack | nack)*;
 
 }%%
 
@@ -113,7 +118,7 @@ static char *rsp;
 static uint8_t crc;
 static int cs;
 
-command_cb *command_callbacks;
+static command_cb *command_callbacks;
 
 %%write data;
 
@@ -127,20 +132,39 @@ void parser_init(command_cb *callbacks)
 int parse_buffer(char *buf, size_t len, void *priv)
 {
 	char *p = buf;
-	char *pe = p + len + 1;
+	char *pe = p + len;
 
 	%%write exec;
+
+	if (cs == gdb_error) {
+		printf("parse error\n");
+		return -1;
+	}
 
 	return 0;
 }
 
 #if 0
+void send_nack(void *priv)
+{
+	printf("Send: -\n");
+}
+
+void send_ack(void *priv)
+{
+	printf("Send: +\n");
+}
+
 int main(int argc, char **argv)
 {
 	parser_init(NULL);
 
-	if (argc > 1)
-		parse_buffer(argv[1], strlen(argv[1]), NULL);
+	if (argc > 1) {
+		int i;
+		for (i = 1; i < argc; i++)
+			parse_buffer(argv[i], strlen(argv[i]), NULL);
+	}
+
 	return 0;
 }
 #endif
