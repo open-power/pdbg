@@ -708,40 +708,36 @@ static void poll(void)
 {
 	struct thread_state status;
 
+	if (state != SIGNAL_WAIT)
+		return;
+
 	thread_target->probe(thread_target);
 	status = thread_status(thread_target);
 
-	switch (state) {
-	case IDLE:
-		break;
+	if (!(status.quiesced))
+		return;
 
-	case SIGNAL_WAIT:
-		if (!(status.quiesced))
-			break;
+	set_attn(false);
 
-		set_attn(false);
+	state = IDLE;
+	poll_interval = VCONT_POLL_DELAY;
 
-		state = IDLE;
-		poll_interval = VCONT_POLL_DELAY;
+	if (thread_check_attn(thread_target)) {
+		uint64_t nia;
 
-		if (thread_check_attn(thread_target)) {
-			uint64_t nia;
-
-			if (!(status.active)) {
-				PR_ERROR("Thread inactive after trap\n");
-				send_response(fd, ERROR(EPERM));
-				return;
-			}
-
-			/* Restore NIA */
-			if (thread_getnia(thread_target, &nia))
-				PR_ERROR("Error during getnia\n");
-			if (thread_putnia(thread_target, nia - 4))
-				PR_ERROR("Error during putnia\n");
+		if (!(status.active)) {
+			PR_ERROR("Thread inactive after trap\n");
+			send_response(fd, ERROR(EPERM));
+			return;
 		}
-		send_response(fd, TRAP);
-		break;
+
+		/* Restore NIA */
+		if (thread_getnia(thread_target, &nia))
+			PR_ERROR("Error during getnia\n");
+		if (thread_putnia(thread_target, nia - 4))
+			PR_ERROR("Error during putnia\n");
 	}
+	send_response(fd, TRAP);
 }
 
 static void cmd_default(uint64_t *stack, void *priv)
