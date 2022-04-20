@@ -686,13 +686,19 @@ static void __start_all(void)
 	if (!all_stopped)
 		PR_ERROR("starting while not all stopped\n");
 
-	for_each_path_target_class("thread", target) {
-		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
-			continue;
+	if (path_target_all_selected("thread", NULL)) {
+		if (thread_start_all()) {
+			PR_ERROR("Could not start threads\n");
+		}
+	} else {
+		for_each_path_target_class("thread", target) {
+			if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+				continue;
 
-		if (thread_start(target)) {
-			PR_ERROR("Could not start thread %s\n",
-				 pdbg_target_path(target));
+			if (thread_start(target)) {
+				PR_ERROR("Could not start thread %s\n",
+					 pdbg_target_path(target));
+			}
 		}
 	}
 
@@ -706,15 +712,9 @@ static void start_all(void)
 	for_each_path_target_class("thread", target) {
 		struct thread *thread = target_to_thread(target);
 		struct gdb_thread *gdb_thread;
-		struct thread_state status;
 
 		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 			continue;
-
-		target->probe(target);
-		status = thread_status(target);
-		if (!status.quiesced)
-			PR_ERROR("starting thread not quiesced\n");
 
 		gdb_thread = thread->gdbserver_priv;
 
@@ -794,14 +794,20 @@ static void __stop_all(void)
 	if (all_stopped)
 		PR_ERROR("stopping while all stopped\n");
 
-	for_each_path_target_class("thread", target) {
-		if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
-			continue;
+	if (path_target_all_selected("thread", NULL)) {
+		if (thread_stop_all()) {
+			PR_ERROR("Could not stop threads\n");
+		}
+	} else {
+		for_each_path_target_class("thread", target) {
+			if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+				continue;
 
-		if (thread_stop(target)) {
-			PR_ERROR("Could not stop thread %s\n",
-				 pdbg_target_path(target));
-			/* How to fix? */
+			if (thread_stop(target)) {
+				PR_ERROR("Could not stop thread %s\n",
+					 pdbg_target_path(target));
+				/* How to fix? */
+			}
 		}
 	}
 
