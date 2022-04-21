@@ -116,6 +116,7 @@ endif
 libpdbg/dtb.c: $(DT_headers)
 
 src/pdbg-gdb_parser.$(OBJEXT): CFLAGS+=-Wno-unused-const-variable
+src/pdbg-gdb_parser_precompile.$(OBJEXT): CFLAGS+=-Wno-unused-const-variable
 
 pdbg_LDADD = libpdbg.la libccan.a \
 	-L.libs -lrt
