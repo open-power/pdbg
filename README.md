@@ -555,7 +555,6 @@ of threads, especially over slow remote links.
 
 On your local machine:
 $ gdb
-(gdb) set architecture powerpc:common64
 (gdb) target remote palm5-bmc:44
 
 Debugging info:

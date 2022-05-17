@@ -111,8 +111,9 @@
 
 	# TODO: We don't actually listen to what's supported
 	q_attached = ('qAttached:' xdigit* @{rsp = "1";});
-	q_supported = ('qSupported:' any* >{rsp = "multiprocess+;swbreak+;hwbreak-;qRelocInsn-;vContSupported+;QThreadEvents-;no-resumed-;QStartNoAckMode+"; ack_mode = true;});
+	q_supported = ('qSupported:' any* >{rsp = "multiprocess+;swbreak+;hwbreak-;qRelocInsn-;vContSupported+;QThreadEvents-;no-resumed-;QStartNoAckMode+;qXfer:features:read+"; ack_mode = true;});
 	q_start_noack = ('QStartNoAckMode' @{rsp = "OK"; send_ack(priv); ack_mode = false;});
+	q_target  = ('qXfer:features:read:target.xml' any* >{rsp = "l<target><architecture>powerpc:common64</architecture></target>";});
 
 	# thread info
 	is_alive = ('T' ('p' xdigit+ '.')+ xdigit+ @{rsp = "OK";});
@@ -134,7 +135,7 @@
 	interrupt = (3 @{ if (command_callbacks) command_callbacks[INTERRUPT](stack, priv); PR_INFO("RAGEL:interrupt\n");});
 
 	commands = (get_gprs | get_spr |
-		    q_attached | q_supported | q_start_noack |
+		    q_attached | q_supported | q_start_noack | q_target |
 		    stop_reason | is_alive | get_thread | set_thread |
 		    v_contq | v_contc | v_conts |
 		    qf_threadinfo | qs_threadinfo |
