@@ -297,7 +297,7 @@ int sbe_get_state(struct pdbg_target *pib, enum sbe_state *state)
 		if (rc)
 			return -1;
 
-		*state = msg.sbe_booted ? SBE_STATE_BOOTED : SBE_STATE_NOT_USABLE;
+		*state = msg.sbe_booted ? SBE_STATE_BOOTED : SBE_STATE_CHECK_CFAM;
 	} else {
 		*state = value;
 	}
