@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
-        run: sudo apt-get install -yy make autoconf automake libtool
+        run: sudo apt update && sudo apt-get install -qq
+          make autoconf automake libtool
           gcc-arm-linux-gnueabi libc-dev-armel-cross
           gcc-powerpc64le-linux-gnu libc-dev-ppc64el-cross
           git device-tree-compiler
