@@ -1,9 +1,9 @@
-AC_INIT([libfdt], [1.2])
+AC_INIT([libfdt],[1.2])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 
 AC_PROG_CC
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_FILES([Makefile])
