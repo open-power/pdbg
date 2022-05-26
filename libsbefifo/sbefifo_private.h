@@ -74,7 +74,7 @@
 #define   SBEFIFO_CMD_GET_TI_INFO          0x04 /* long running */
 
 #define SBEFIFO_CMD_CLASS_DUMP           0xAA00
-#define   SBEFIFO_CMD_GET_DUMP             0x01
+#define   SBEFIFO_CMD_GET_DUMP             0x01 /* long running */
 
 struct sbefifo_context {
 	int fd;

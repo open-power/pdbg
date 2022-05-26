@@ -75,10 +75,16 @@ int sbefifo_get_dump(struct sbefifo_context *sctx, uint8_t type, uint8_t clock, 
 	rc = sbefifo_get_dump_push(type, clock, fa_collect, &msg, &msg_len);
 	if (rc)
 		return rc;
+	rc = sbefifo_set_long_timeout(sctx);
+	if (rc) {
+		free(msg);
+		return rc;
+	}
 
 	/* dump size can be as large as 80MB */
 	out_len = 80 * 1024 * 1024;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
+	sbefifo_reset_timeout(sctx);
 	free(msg);
 	if (rc)
 		return rc;
