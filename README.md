@@ -540,12 +540,15 @@ Memory access can only be performed on kernel memory.
 
 To run a gdbserver on a machine from a BMC running OpenBMC:
 
-Stop all the threads of the core(s) you want to look at. Ideally all
-threads in the machine should be debugged:
+* Read NOTES and set up the BMC and host as recommended.
+
+* (Optional) Stop the threads of the core(s) you want to look at. Ideally
+  all threads in the machine should be debugged:
 
 $ ./pdbg -a stop
 
-Run gdbserver on the target threads, accessible through port 44
+* Run gdbserver on the target threads, accessible through port 44
+
 $ ./pdbg -a gdbserver 44
 
 The thread-id tid is set to the PIR of the corresponding thread, the
@@ -580,6 +583,12 @@ good idea.
 misbehaving, booting Linux with powersave=off is the first thing to try.
 5. attn instructions seem to cause host hangs on POWER9. gdb breakpoints should
 not be used.
+6. attn instructions can cause the service processor to begin error handling.
+   If breakpoints are to be used, the attn handler service on the BMC should
+   be stopped first (don't forget to start it again when done).
+
+   systemctl stop attn_handler.service
+
 
 ## Submitting patches
 
