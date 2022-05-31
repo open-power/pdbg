@@ -878,7 +878,7 @@ DECLARE_HW_UNIT(sbefifo_pib);
 
 static struct thread sbefifo_thread = {
 	.target = {
-		.name = "SBE FFIO Chip-op based Thread",
+		.name = "SBE FIFO Chip-op based Thread",
 		.compatible = "ibm,power-thread",
 		.class = "thread",
 		.probe = sbefifo_thread_probe,
