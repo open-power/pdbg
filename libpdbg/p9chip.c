@@ -94,6 +94,7 @@ struct thread_state p9_thread_state(struct thread *thread)
 {
 	uint64_t value;
 	struct thread_state thread_state;
+	uint8_t smt_mode;
 
 	thread_read(thread, P9_RAS_STATUS, &value);
 
@@ -102,13 +103,30 @@ struct thread_state p9_thread_state(struct thread *thread)
 	thread_read(thread, P9_THREAD_INFO, &value);
 	thread_state.active = !!(value & PPC_BIT(thread->id));
 
+	smt_mode = GETFIELD(PPC_BITMASK(8,9), value);
+	switch (smt_mode) {
+	case 0:
+		thread_state.smt_state = PDBG_SMT_1;
+		break;
+
+	case 2:
+		thread_state.smt_state = PDBG_SMT_2;
+		break;
+
+	case 3:
+		thread_state.smt_state = PDBG_SMT_4;
+		break;
+
+	default:
+		thread_state.smt_state = PDBG_SMT_UNKNOWN;
+		break;
+	}
+
 	thread_read(thread, P9_CORE_THREAD_STATE, &value);
 	if (value & PPC_BIT(56 + thread->id))
 		thread_state.sleep_state = PDBG_THREAD_STATE_STOP;
 	else
 		thread_state.sleep_state = PDBG_THREAD_STATE_RUN;
-
-	thread_state.smt_state = PDBG_SMT_UNKNOWN;
 
 	return thread_state;
 }
