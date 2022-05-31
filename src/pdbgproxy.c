@@ -303,6 +303,9 @@ static int thread_set_attn(struct pdbg_target *target, bool enable)
 				return 0;
 			hid &= ~POWER8_HID_ENABLE_ATTN;
 		}
+		if (thread_putspr(target, SPR_HID, hid))
+			return -1;
+
 	} else if (pdbg_target_compatible(target, "ibm,power9-thread")) {
 		if (enable) {
 			if (hid & POWER9_HID_ENABLE_ATTN)
@@ -314,7 +317,22 @@ static int thread_set_attn(struct pdbg_target *target, bool enable)
 				return 0;
 			hid &= ~POWER9_HID_ENABLE_ATTN;
 		}
-		hid |= POWER9_HID_FLUSH_ICACHE;
+
+		if (hid & POWER9_HID_FLUSH_ICACHE) {
+			PR_WARNING("set_attn found HID flush icache bit unexpectedly set\n");
+			hid &= ~POWER9_HID_FLUSH_ICACHE;
+		}
+
+		/* Change the ENABLE_ATTN bit in the register */
+		if (thread_putspr(target, SPR_HID, hid))
+			return -1;
+		/* FLUSH_ICACHE 0->1 to flush */
+		if (thread_putspr(target, SPR_HID, hid | POWER9_HID_FLUSH_ICACHE))
+			return -1;
+		/* Restore FLUSH_ICACHE back to 0 */
+		if (thread_putspr(target, SPR_HID, hid))
+			return -1;
+
 	} else if (pdbg_target_compatible(target, "ibm,power10-thread")) {
 		if (enable) {
 			if (hid & POWER10_HID_ENABLE_ATTN)
@@ -326,13 +344,23 @@ static int thread_set_attn(struct pdbg_target *target, bool enable)
 				return 0;
 			hid &= ~POWER10_HID_ENABLE_ATTN;
 		}
-		hid |= POWER10_HID_FLUSH_ICACHE;
+		if (hid & POWER10_HID_FLUSH_ICACHE) {
+			PR_WARNING("set_attn found HID flush icache bit unexpectedly set\n");
+			hid &= ~POWER10_HID_FLUSH_ICACHE;
+		}
+
+		/* Change the ENABLE_ATTN bit in the register */
+		if (thread_putspr(target, SPR_HID, hid))
+			return -1;
+		/* FLUSH_ICACHE 0->1 to flush */
+		if (thread_putspr(target, SPR_HID, hid | POWER10_HID_FLUSH_ICACHE))
+			return -1;
+		/* Restore FLUSH_ICACHE back to 0 */
+		if (thread_putspr(target, SPR_HID, hid))
+			return -1;
 	} else {
 		return -1;
 	}
-
-	if (thread_putspr(target, SPR_HID, hid))
-		return -1;
 
 	return 0;
 }
