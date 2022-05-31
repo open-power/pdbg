@@ -66,6 +66,7 @@ struct gdb_thread {
 	bool attn_set;
 	bool initial_stopped;
 	bool stop_attn;
+	bool stop_sstep;
 	bool stop_ctrlc;
 };
 
@@ -208,7 +209,7 @@ static void send_stop_for_thread(struct pdbg_target *target)
 	int sig;
 	int i;
 
-	if (gdb_thread->stop_attn)
+	if (gdb_thread->stop_attn || gdb_thread->stop_sstep)
 		sig = 5; /* TRAP */
 	else if (gdb_thread->stop_ctrlc)
 		sig = 2; /* INT */
@@ -853,8 +854,9 @@ static void v_conts(uint64_t *stack, void *priv)
 
 	thread_step(thread_target, 1);
 
-	gdb_thread->stop_ctrlc = false;
 	gdb_thread->stop_attn = false;
+	gdb_thread->stop_sstep = true;
+	gdb_thread->stop_ctrlc = false;
 
 	send_stop_for_thread(thread_target);
 }
@@ -901,6 +903,7 @@ static void start_all(void)
 		gdb_thread = thread->gdbserver_priv;
 
 		gdb_thread->stop_attn = false;
+		gdb_thread->stop_sstep = false;
 		gdb_thread->stop_ctrlc = false;
 	}
 
