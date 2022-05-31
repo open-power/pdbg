@@ -247,6 +247,9 @@ static struct thread_state p8_thread_state(struct thread *thread)
 	/* Clear debug mode */
 	pib_write(&thread->target, RAS_MODE_REG, mode_reg);
 
+	thread_status.lpar_per_thread = false;
+	thread_status.fused_core_mode = false;
+
 	return thread_status;
 }
 

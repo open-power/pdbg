@@ -128,6 +128,9 @@ struct thread_state p9_thread_state(struct thread *thread)
 	else
 		thread_state.sleep_state = PDBG_THREAD_STATE_RUN;
 
+	thread_state.lpar_per_thread = !(value & PPC_BIT(62));
+	thread_state.fused_core_mode = !!(value & PPC_BIT(63));
+
 	return thread_state;
 }
 

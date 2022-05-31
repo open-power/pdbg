@@ -1043,6 +1043,8 @@ enum pdbg_smt_state {
 struct thread_state {
 	bool active;
 	bool quiesced;
+	bool lpar_per_thread;
+	bool fused_core_mode;
 	enum pdbg_sleep_state sleep_state;
 	enum pdbg_smt_state smt_state;
 };
