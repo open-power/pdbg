@@ -322,7 +322,9 @@ static int sbefifo_pib_thread_start(struct pib *pib)
 
 	rc = sbefifo_pib_thread_op(pib, SBEFIFO_INSN_OP_START);
 
-	sbefifo_pib_update_threads(&pib->target);
+	if (!rc) {
+		sbefifo_pib_update_threads(&pib->target);
+	}
 
 	return rc;
 }
@@ -437,7 +439,9 @@ static int sbefifo_thread_start(struct thread *thread)
 
 	rc = sbefifo_thread_op(thread, SBEFIFO_INSN_OP_START);
 
-	thread->status = thread->state(thread);
+	if (!rc) {
+		thread->status = thread->state(thread);
+	}
 
 	return rc;
 }
