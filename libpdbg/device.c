@@ -657,6 +657,73 @@ static void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode)
 	vnode->vnode = node;
 }
 
+/**
+ * @brief A function to delete the children from the list
+ * 
+ * This function is called for a valid target/node to delete the children
+ * from the list. Should be only called internally. Recursive in nature
+ * 
+ * @param target The target node for which the children will be reset
+ * 
+ * @see pdbg_reset_dt_root for more details
+ */
+static void pdbg_reset_children(struct pdbg_target* target)
+{
+	struct pdbg_target* childTraget = NULL;
+	enum pdbg_target_status status;
+
+	/* Does this target actually exist? */
+	if (target)
+	{
+		status = pdbg_target_status(target);
+		if (status != PDBG_TARGET_ENABLED)
+			return;
+	}
+	pdbg_for_each_child_target(target, childTraget)
+	{			
+		if (childTraget)
+		{
+			pdbg_reset_children(childTraget);
+		}
+		if (!list_empty(&target->children) && target->class_link.next && target->class_link.prev)
+		{
+			list_del_from(&target->children, &target->class_link);
+		}
+	}
+	/**
+	 * As this is recursive in nature so only it would be exiting loop
+	 * when the last child node is taken into account and ready to be
+	 * free. Thus freeing it here. Putting it into the for loop would
+	 * cause it a double delete. 
+	 */
+	if (childTraget)
+	{
+		free(childTraget);
+		childTraget = NULL;
+	}
+}
+
+/**
+ * @brief Reset the root node of a earlier set device tree
+ * 
+ * This function is called internally from targets init function to reset
+ * the root node of the device tree which if was set earlier as well.
+ * 
+ * @see pdbg_targets_init for more details
+ */
+static void pdbg_reset_dt_root()
+{
+	if (pdbg_dt_root)
+	{
+		pdbg_reset_children(pdbg_dt_root);
+		if (pdbg_dt_root)
+		{
+			free(pdbg_dt_root);
+			pdbg_dt_root = NULL;
+		}
+	}
+}
+
 static void pdbg_targets_init_virtual(struct pdbg_target *node, struct pdbg_target *root)
 {
 	struct pdbg_target *vnode, *child = NULL;
@@ -703,12 +770,12 @@ skip:
 
 bool pdbg_targets_init(void *fdt)
 {
-	struct pdbg_dtb *dtb;
-
 	if (pdbg_dt_root) {
-		PR_WARNING("pdbg_targets_init() must be called only once\n");
-		return true;
+		PR_INFO("pdbg_dt_root is already pointing to a dev tree, resetting it for the new one\n");
+		pdbg_reset_dt_root();
 	}
+
+	struct pdbg_dtb* dtb = pdbg_default_dtb(fdt);
 
 	dtb = pdbg_default_dtb(fdt);
 
