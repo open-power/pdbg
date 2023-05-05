@@ -39,10 +39,6 @@ static uint32_t last_phandle = 0;
 
 static struct pdbg_target *pdbg_dt_root;
 
-/* forward declaration */
-static int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target *b);
-static const char *get_unitname(const struct pdbg_target *node);
-
 static const char *take_name(const char *name)
 {
 	if (!is_rodata(name) && !(name = strdup(name))) {
@@ -52,84 +48,11 @@ static const char *take_name(const char *name)
 	return name;
 }
 
-/*
- * If a string contains alphanumeric characters then it extracts
- * the number from that string (from the end only) and
- * returns the extracted number and the chopped off string
- */ 
-static unsigned int strip_num_at_the_end(char *str) 
-{
-	/* If the str does not have a number at the end, return 0xFFFF*/
-	unsigned int only_number = 0xFFFF;
-	int len = strlen(str);
-	/* Last character is not a number, so exit*/
-	if(!isdigit(str[len - 1])) {
-		return only_number;
-	}
-	/* Traverse from the end to find the first alphabet followed by a digit/numerical value */
-	for(int i = (len - 1); i >= 0; i--) {
-		if(!isdigit(str[i])) {
-			/* This is the first character from the end. So 
-			 * copy the number starting from the next index 
-			 */   
-			char new_num_str[len+1];
-			strcpy(new_num_str, &str[i+1]);
-			str[i+1] = '\0';
-			only_number = atoi(new_num_str);
-			return only_number;
-		}
-	}
-  /*If it comes here the entire string is a numerical value */
-  only_number = atoi(str);
-  str[0] = '\0';
-  return only_number;
-}
-
-/*
- * Find the class the target belongs to, and add the target to
- * the list at a specific position so that it remains sorted
- */ 
-void sort_and_add_class_link(struct pdbg_target *target)
-{
-	struct pdbg_target_class *target_class;
-	
-	target_class = get_target_class(target);
-
-	if (list_empty(&target_class->targets)) {
-		list_add(&target_class->targets, &target->class_link);
-		return;
-	}
-
-	bool add_before = false;
-	struct pdbg_target *node = NULL;
-	pdbg_for_each_target(target_class->name, NULL, node) {
-		int cmp = dt_cmp_subnodes(node, target);
-		if (cmp == 0) {
-			/* Duplicate entry, don't add */
-			return;
-		}
-		
-		/* insert before the first node that's larger
-		 * the the node we're inserting 
-		 */
-		if (cmp > 0){
-			add_before = true;
-			break;
-		}
-	}
-
-	if(add_before) {
-		list_add_before(&target_class->targets, &target->class_link, &node->class_link);
-	}
-	else {
-		list_add_tail(&target_class->targets, &target->class_link);
-	}
-}
-
 /* Adds information representing an actual target */
-static struct pdbg_target *dt_pdbg_target_new(const void *fdt, int node_offset, const char *name)
+static struct pdbg_target *dt_pdbg_target_new(const void *fdt, int node_offset)
 {
 	struct pdbg_target *target;
+	struct pdbg_target_class *target_class;
 	const struct hw_unit_info *hw_info = NULL;
 	const struct fdt_property *prop;
 	size_t size;
@@ -163,9 +86,9 @@ static struct pdbg_target *dt_pdbg_target_new(const void *fdt, int node_offset, 
 	 * guaranteed to be the struct pdbg_target (see the comment
 	 * above DECLARE_HW_UNIT). */
 	memcpy(target, hw_info->hw_unit, size);
-	target->dn_name = take_name(name);
+	target_class = get_target_class(target);
+	list_add_tail(&target_class->targets, &target->class_link);
 
-	sort_and_add_class_link(target);
 	return target;
 }
 
@@ -175,7 +98,7 @@ static struct pdbg_target *dt_new_node(const char *name, void *fdt, int node_off
 	size_t size = sizeof(*node);
 
 	if (fdt)
-		node = dt_pdbg_target_new(fdt, node_offset, name);
+		node = dt_pdbg_target_new(fdt, node_offset);
 
 	if (!node)
 		node = calloc(1, size);
@@ -207,16 +130,13 @@ static const char *get_unitname(const struct pdbg_target *node)
 	return c + 1;
 }
 
-/* Compare the pdbg_targets according to their name. Initially check where it falls
- * as per alphabetical order. Then from there use the number at the end of the name to
- * sort numerically within that group
- * ae.g. perv3 shall be placed after omi0 and before perv10
- */
 static int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target *b)
 {
 	const char *a_unit = get_unitname(a);
 	const char *b_unit = get_unitname(b);
+
 	ptrdiff_t basenamelen = a_unit - a->dn_name;
+
 	/* sort hex unit addresses by number */
 	if (a_unit && b_unit && !strncmp(a->dn_name, b->dn_name, basenamelen)) {
 		unsigned long long a_num, b_num;
@@ -229,28 +149,7 @@ static int dt_cmp_subnodes(const struct pdbg_target *a, const struct pdbg_target
 		if (*a_end == 0 && *b_end == 0)
 			return (a_num > b_num) - (a_num < b_num);
 	}
-	char a_name_without_num[strlen(a->dn_name) + 1];
-	char b_name_without_num[strlen(b->dn_name) + 1];
-	unsigned int a_only_num = 0, b_only_num = 0;
 
-	/* Create a copy as we are going to chop the number from it 
-	 *and we dont want to update the original string
-	 */
-	strcpy(a_name_without_num, a->dn_name);
-	strcpy(b_name_without_num, b->dn_name);
-
-	/* Collect the numbers into variables to compare */
-	a_only_num = strip_num_at_the_end(a_name_without_num);
-	b_only_num = strip_num_at_the_end(b_name_without_num);
-
-	/* If both of the targets are of the same group, sort using the number at the end
-	 * Ensure that the target has a number at the end 
-	 */
-	if(strcmp(a_name_without_num, b_name_without_num) == 0 &&
-		(a_only_num != 0xFFFF) && (b_only_num != 0xFFFF))
-	{
-		return (a_only_num > b_only_num) - (a_only_num < b_only_num);
-	}
 	return strcmp(a->dn_name, b->dn_name);
 }
 
