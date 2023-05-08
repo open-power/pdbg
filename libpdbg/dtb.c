@@ -412,9 +412,15 @@ fail:
 
 bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option)
 {
-	if (pdbg_target_root() && (pdbg_backend == backend)) 
+	if (pdbg_target_root()) 
 	{
-		pdbg_log(PDBG_ERROR, "New Backend is same as the previous one. Not resetting it further\n");
+		pdbg_log(PDBG_ERROR, "pdbg_set_backend() must be called before pdbg_targets_init() or after calling pdbg_clear_dt_root() if a dev tree is already set\n");
+		return false;
+	}
+
+	if (pdbg_backend == backend)
+	{
+		pdbg_log(PDBG_ERROR, "New backend is same as the current backend. Not proceeding further\n");
 		return false;
 	}
 	
