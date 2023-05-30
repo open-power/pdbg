@@ -701,6 +701,74 @@ skip:
 	}
 }
 
+/**
+ * @brief It releases/deletes a target from its target_class list.
+ * 		  Each pdbg_target object (except the virtuals one) has an
+ *        associated target class linked via it's class_link. This
+ * 		  function deletes/removes a target form the list of associated
+ * 		  pdbg_target_class object. For internal use only.
+ * 
+ * @param target The pdbg_target object which will be removed from it's associated
+ * 				 pdbg_target_class list
+ * 
+ * @see pdbg_release_target for more details
+ */
+static void pdbg_del_target_from_target_class_list(struct pdbg_target* target)
+{
+	if (!target)
+		return;
+
+	struct pdbg_target_class* target_class = get_target_class(target);
+	if (target_class)
+		list_del_from(&target_class->targets, &target->class_link);
+}
+
+/**
+ * @brief A function to delete/release an existing pdbg_target object along
+ * 		  with its children from the node list/dev tree. Recursive in nature.
+ * 		  For internal use only.
+ * 
+ * @param target The target node for which the children and then the node itself
+ * 				 will be released/freed. Also remove the target from its parent's
+ * 				 children's list if it is having one
+ * 
+ * @see pdbg_release_dt_root for more details
+ */
+static void pdbg_release_target(struct pdbg_target* target)
+{
+	if (!target)
+		return;
+
+	struct pdbg_target *childTarget, *next = NULL;
+	list_for_each_safe(&target->children, childTarget, next, list)
+		pdbg_release_target(childTarget);
+		
+	if (target->class)
+			pdbg_del_target_from_target_class_list(target);
+
+	struct pdbg_target* parentTarget = target->parent;
+	if (parentTarget)
+		list_del_from(&parentTarget->children, &target->list);
+
+	if (target)
+		free(target);
+	target = NULL;
+}
+
+void pdbg_release_dt_root()
+{
+	if (pdbg_dt_root)
+	{	
+		pdbg_release_target(pdbg_dt_root);
+		if (pdbg_dt_root)
+			pdbg_dt_root = NULL;
+		//Reset the phandle count to zero
+		last_phandle = 0;
+		//Clear the existing target classes
+		clear_target_classes();
+	}
+}
+
 bool pdbg_targets_init(void *fdt)
 {
 	struct pdbg_dtb *dtb;

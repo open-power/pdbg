@@ -83,6 +83,17 @@ struct pdbg_target_class *require_target_class(const char *name);
 struct pdbg_target_class *get_target_class(struct pdbg_target *target);
 bool pdbg_target_is_class(struct pdbg_target *target, const char *class);
 
+/**
+ * @brief Clears the list of target classes
+ * 		  It clears the list of target classes
+ * 		  from the global static list target_classes
+ * 		  once the device tree is cleared and associated
+ * 		  all pdbg_target objects are destroyed
+ * 
+ * @see   pdbg_release_dt_root() for more details
+ */
+void clear_target_classes();
+
 extern struct list_head empty_list;
 extern struct list_head target_classes;
 

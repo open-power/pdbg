@@ -412,11 +412,12 @@ fail:
 
 bool pdbg_set_backend(enum pdbg_backend backend, const char *backend_option)
 {
-	if (pdbg_target_root()) {
-		pdbg_log(PDBG_ERROR, "pdbg_set_backend() must be called before pdbg_targets_init()\n");
+	if (pdbg_target_root()) 
+	{
+		pdbg_log(PDBG_ERROR, "pdbg_set_backend() must be called before pdbg_targets_init() or after calling pdbg_release_dt_root() if a dev tree is already set\n");
 		return false;
 	}
-
+	
 	pdbg_backend = backend;
 	pdbg_backend_option = backend_option;
 
