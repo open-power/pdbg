@@ -801,6 +801,9 @@ bool pdbg_targets_init(void *fdt)
 	dt_expand(pdbg_dt_root, dtb->system.fdt);
 
 	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);
+	//Before returning close any FD that might be still open
+	close(dtb->system.fd);
+	close(dtb->backend.fd);
 	return true;
 }
 
