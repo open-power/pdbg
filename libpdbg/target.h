@@ -97,4 +97,15 @@ struct pdbg_target *target_to_virtual(struct pdbg_target *target, bool strict);
 
 bool pdbg_context_is_short(void);
 
+/**
+ * @brief Clears the list of target classes
+ * 		  It clears the list of target classes
+ * 		  from the global static list target_classes
+ * 		  once the device tree is cleared and associated
+ * 		  all pdbg_target objects are destroyed
+ * 
+ * @see   pdbg_release_dt_root() for more details
+ */
+void clear_target_classes();
+
 #endif
