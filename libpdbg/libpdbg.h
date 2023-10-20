@@ -1452,6 +1452,18 @@ void pdbg_log(int loglevel, const char *fmt, ...);
  */
 bool pdbg_context_short(void);
 
+/**
+ * @brief Clears/Releases the existing device tree and it's root node
+ * 
+ * This function needs to be called if for some very good reason we are
+ * switching the backend in the running process. It clears/releases the 
+ * existing dev tree (if any) children by children along with the root node.
+ * 
+ * Call this function before ##pdbg_set_backend() if there is a
+ * dev tree already is in place and we are switching the backend
+ */
+void pdbg_release_dt_root();
+
 #ifdef __cplusplus
 }
 #endif

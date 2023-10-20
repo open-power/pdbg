@@ -11,7 +11,8 @@ GIT_SHA1 ?= `git --work-tree=$(top_srcdir) --git-dir=$(top_srcdir)/.git describe
 libpdbg_tests = libpdbg_target_test \
 		libpdbg_probe_test1 \
 		libpdbg_probe_test2 \
-		libpdbg_probe_test3
+		libpdbg_probe_test3 \
+		libpdbg_release_dt_root_test
 
 bin_PROGRAMS = pdbg
 check_PROGRAMS = $(libpdbg_tests) libpdbg_dtree_test \
@@ -248,6 +249,11 @@ libpdbg_target_test_SOURCES = src/tests/libpdbg_target_test.c
 libpdbg_target_test_CFLAGS = $(libpdbg_test_cflags)
 libpdbg_target_test_LDFLAGS = $(libpdbg_test_ldflags)
 libpdbg_target_test_LDADD = $(libpdbg_test_ldadd)
+
+libpdbg_release_dt_root_test_SOURCES = src/tests/libpdbg_release_dt_root_test.c
+libpdbg_release_dt_root_test_CFLAGS = $(libpdbg_test_cflags)
+libpdbg_release_dt_root_test_LDFLAGS = $(libpdbg_test_ldflags)
+libpdbg_release_dt_root_test_LDADD = $(libpdbg_test_ldadd)
 
 libpdbg_probe_test1_SOURCES = src/tests/libpdbg_probe_test.c
 libpdbg_probe_test1_CFLAGS = $(libpdbg_test_cflags) -DTEST_ID=1
