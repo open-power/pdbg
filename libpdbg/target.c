@@ -641,13 +641,13 @@ struct pdbg_target *target_to_virtual(struct pdbg_target *target, bool strict)
 
 void clear_target_classes()
 {
-	struct pdbg_target_class *child = NULL;
-	struct pdbg_target_class *next = NULL;
-	list_for_each_safe(&target_classes, child, next, class_head_link)
-	{
-		list_del_from(&target_classes, &child->class_head_link);
-		if (child)
-			free(child);
-		child = NULL;
-	}
+    struct pdbg_target_class *child = NULL;
+    struct pdbg_target_class *next = NULL;
+    list_for_each_safe(&target_classes, child, next, class_head_link)
+    {
+        list_del_from(&target_classes, &child->class_head_link);
+        if (child)
+            free(child);
+        child = NULL;
+    }
 }
