@@ -1373,6 +1373,28 @@ int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val);
 int ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val);
 
 /**
+ * @brief Read a Odyssey OCMB SCOM register
+ *
+ * @param[in] target odyssey ocmb target
+ * @param[in] addr the address offset relative to target
+ * @param[out] val the read data
+ *
+ * @return 0 on success, -1 on failure
+ */
+int ody_ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val);
+
+/**
+ * @brief Write a Odyssey OCMB SCOM register
+ *
+ * @param[in] target odyssey ocmb target
+ * @param[in] addr the address offset relative to target
+ * @param[in] val the write data
+ *
+ * @return 0 on success, -1 on failure
+ */
+int ody_ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val);
+
+/**
  * @brief Type for specifying a progress callback for long running
  * operations
  *

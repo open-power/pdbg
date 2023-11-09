@@ -448,6 +448,44 @@ int ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val)
 	return ocmb->putscom(ocmb, addr, val);
 }
 
+int ody_ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
+{
+	struct ocmb *ocmb;
+
+	assert(pdbg_target_is_class(target, "ocmb"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	ocmb = target_to_ocmb(target);
+
+	if (!ocmb->odygetscom) {
+		PR_ERROR("odygetscom() not implemented for the target\n");
+		return -1;
+	}
+
+	return ocmb->odygetscom(ocmb, addr, val);
+}
+
+int ody_ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val)
+{
+	struct ocmb *ocmb;
+
+	assert(pdbg_target_is_class(target, "ocmb"));
+
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	ocmb = target_to_ocmb(target);
+
+	if (!ocmb->odyputscom) {
+		PR_ERROR("odyputscom() not implemented for the target\n");
+		return -1;
+	}
+
+	return ocmb->odyputscom(ocmb, addr, val);
+}
+
 /* Finds the given class. Returns NULL if not found. */
 struct pdbg_target_class *find_target_class(const char *name)
 {
