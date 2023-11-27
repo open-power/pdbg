@@ -784,6 +784,7 @@ static struct sbefifo_context *sbefifo_op_get_context(struct sbefifo *sbefifo)
 static int sbefifo_probe(struct pdbg_target *target)
 {
 	struct sbefifo *sf = target_to_sbefifo(target);
+
 	const char *sbefifo_path;
 	int rc, proc;
 
@@ -811,6 +812,31 @@ static int sbefifo_probe(struct pdbg_target *target)
 	}
 
 	return 0;
+}
+
+struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
+{
+	assert(is_ody_ocmb_chip(target));
+
+	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc",
+							target));
+	uint32_t ocmb_index = pdbg_target_index(target) % 0x8;
+	struct pdbg_target *ltarget;
+
+	struct sbefifo *sbefifo = NULL;
+	pdbg_for_each_class_target("sbefifo", ltarget) {
+		uint32_t index = pdbg_target_index(ltarget);
+		uint32_t proc = 0;
+		if(!pdbg_target_u32_property(ltarget, "proc", &proc)) {
+			if(index == ocmb_index && proc == ocmb_proc) {
+				sbefifo = target_to_sbefifo(ltarget);
+				break;
+			}
+		}
+	}
+	assert(sbefifo);
+
+	return sbefifo;
 }
 
 static void sbefifo_release(struct pdbg_target *target)

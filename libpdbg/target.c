@@ -492,6 +492,28 @@ struct pdbg_target_class *get_target_class(struct pdbg_target *target)
 	return target_class;
 }
 
+/*ddr5 ocmb is itself a chip but in device tree as it is kept under
+ perv, mc, mcc, omi probing parent chips might fail */
+enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
+{
+	assert(is_ody_ocmb_chip(target));
+	//find the corresponding sbefifo, probe and if probe is sucess return enabled
+	//TODO:run some scom on the target to see if it can communicate
+	struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(target);
+	if (sbefifo->target.probe && sbefifo->target.probe(&sbefifo->target)) {
+		sbefifo->target.status = PDBG_TARGET_NONEXISTENT;
+		return PDBG_TARGET_NONEXISTENT;
+	}
+	if (target->probe && target->probe(target)) {
+		target->status = PDBG_TARGET_NONEXISTENT;
+		return PDBG_TARGET_NONEXISTENT;
+	}
+
+	target->status = PDBG_TARGET_ENABLED;
+	sbefifo->target.status = PDBG_TARGET_ENABLED;
+	return PDBG_TARGET_ENABLED;
+}
+
 /* We walk the tree root down disabling targets which might/should
  * exist but don't */
 enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
@@ -509,6 +531,13 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 		/* We've already tried probing this target and by assumption
 		 * it's status won't have changed */
 		   return status;
+
+	/* ddr5 is a chip itself but in device tree it is put under chiplet,
+	   mc, mcc, omi so do not probe targets above ddr5 ocmb
+	*/
+	if(is_ody_ocmb_chip(target)){
+		return pdbg_target_probe_ody_ocmb(target);
+	}
 
 	parent = get_parent(target, false);
 	if (parent) {
