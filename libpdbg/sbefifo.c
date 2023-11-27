@@ -784,6 +784,7 @@ static struct sbefifo_context *sbefifo_op_get_context(struct sbefifo *sbefifo)
 static int sbefifo_probe(struct pdbg_target *target)
 {
 	struct sbefifo *sf = target_to_sbefifo(target);
+
 	const char *sbefifo_path;
 	int rc, proc;
 

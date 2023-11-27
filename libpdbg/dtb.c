@@ -57,6 +57,7 @@
 static enum pdbg_proc pdbg_proc = PDBG_PROC_UNKNOWN;
 static enum pdbg_backend pdbg_backend = PDBG_DEFAULT_BACKEND;
 static const char *pdbg_backend_option;
+
 static struct pdbg_dtb pdbg_dtb = {
 	.backend = {
 		.fd = -1,
@@ -606,6 +607,23 @@ static void close_dtb(struct pdbg_mfile *mfile)
 		munmap(mfile->fdt, mfile->len);
 		close(mfile->fd);
 	}
+}
+
+static const uint16_t ODYSSEY_CHIP_ID = 0x60C0; //MRW
+static const uint8_t ATTR_TYPE_OCMB_CHIP = 75; //attribute_info.H
+bool is_ody_ocmb_chip(struct pdbg_target *target)
+{
+	uint8_t type = 0;
+	pdbg_target_get_attribute(target, "ATTR_TYPE", 1, 1, &type);
+	if(type != ATTR_TYPE_OCMB_CHIP) {
+		return false;
+	}
+	uint32_t chipId = 0;
+	pdbg_target_get_attribute(target, "ATTR_CHIP_ID", 4, 1, &chipId);
+	if(chipId == ODYSSEY_CHIP_ID) {
+		return true;
+	}
+	return false;
 }
 
 __attribute__((destructor))

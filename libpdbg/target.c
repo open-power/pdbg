@@ -492,6 +492,28 @@ struct pdbg_target_class *get_target_class(struct pdbg_target *target)
 	return target_class;
 }
 
+/*ddr5 ocmb(oddyssey) is a chip but in device tree it is kept under perv, mc,
+ mcc, omi so probing ocmb will probe parent chips which will fail */
+enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
+{
+	assert(is_ody_ocmb_chip(target));
+	//find the corresponding sbefifo, probe and if probe is sucess return enabled
+	struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(target);
+	if (sbefifo->target.probe && sbefifo->target.probe(&sbefifo->target)) {
+		sbefifo->target.status = PDBG_TARGET_NONEXISTENT;
+		return PDBG_TARGET_NONEXISTENT;
+	}
+
+	if (target->probe && target->probe(target)) {
+		target->status = PDBG_TARGET_NONEXISTENT;
+		return PDBG_TARGET_NONEXISTENT;
+	}
+
+	target->status = PDBG_TARGET_ENABLED;
+	sbefifo->target.status = PDBG_TARGET_ENABLED;
+	return PDBG_TARGET_ENABLED;
+}
+
 /* We walk the tree root down disabling targets which might/should
  * exist but don't */
 enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
@@ -509,6 +531,12 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 		/* We've already tried probing this target and by assumption
 		 * it's status won't have changed */
 		   return status;
+
+	/* oddyssey ddr5 ocmb is a chip itself but in device tree it is placed
+	   under chiplet, mc, mcc, omi so do not probe parent targets.
+	*/
+	if(is_ody_ocmb_chip(target))
+		return pdbg_target_probe_ody_ocmb(target);
 
 	parent = get_parent(target, false);
 	if (parent) {
@@ -650,4 +678,35 @@ void clear_target_classes()
             free(child);
         child = NULL;
     }
+}
+
+struct pdbg_target *get_backend_target(const char* class,
+						struct pdbg_target *ocmb)
+{
+	assert(is_ody_ocmb_chip(ocmb));
+
+	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc",
+							ocmb));
+	uint32_t ocmb_index = pdbg_target_index(ocmb) % 0x8;
+
+	struct pdbg_target *target;
+	pdbg_for_each_class_target(class, target) {
+		uint32_t index = pdbg_target_index(target);
+		uint32_t proc = 0;
+		if(!pdbg_target_u32_property(target, "proc", &proc)) {
+			if(index == ocmb_index && proc == ocmb_proc) {
+				return target;
+			}
+		}
+	}
+
+	assert(NULL);
+
+	return NULL;
+}
+
+struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
+{
+	struct pdbg_target *sbefifo_target = get_backend_target("sbefifo", target);
+	return target_to_sbefifo(sbefifo_target);
 }
