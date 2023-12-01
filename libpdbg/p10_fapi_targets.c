@@ -473,6 +473,8 @@ static int p10_chiplet_probe(struct pdbg_target *target)
 
 static uint64_t p10_chiplet_translate(struct chiplet *chiplet, uint64_t addr)
 {
+	//For both odyssey perv and proc perv targets, 
+	//the translation logic remains the same
 	return set_chiplet_id(addr, pdbg_target_index(t(chiplet)));
 }
 
@@ -514,12 +516,64 @@ static struct smpgroup p10_smpgroup = {
 };
 DECLARE_HW_UNIT(p10_smpgroup);
 
+static uint64_t p10_memport_translate(struct mem_port *memport, uint64_t addr)
+{
+	const uint16_t ODYSSEY_CHIP_ID = 0x60C0;
+	struct pdbg_target *target = get_parent(t(memport), false);
+	if(strcmp(target->class,"ocmb") == 0)
+	{
+		uint32_t chipId = 0;
+		pdbg_target_get_attribute(target, "ATTR_CHIP_ID", 4, 1, &chipId);
+		if(chipId != ODYSSEY_CHIP_ID)
+		{
+			//If it is not odyssey chip, no translation is required.
+			return 0; 
+		}
+	}
+	else
+	{
+		printf("ERROR: It should not come here at all. memport is not under ocmb!!!\n");
+		return 0; 
+	}
+	const uint8_t ODY_MEMPORT0_RING_ID = 0x6;  // RDF0
+	const uint8_t ODY_MEMPORT1_RING_ID = 0xA;  // RDF1
+	const uint8_t ODY_MEMPORT0_PHY_RING_ID = 0xC;
+	const uint8_t ODY_MEMPORT1_PHY_RING_ID = 0xD;
+	uint8_t l_ring = get_ring_id(addr);
+
+	if (l_ring == ODY_MEMPORT0_RING_ID || l_ring == ODY_MEMPORT1_RING_ID)
+	{
+		if (pdbg_target_index(t(memport)) == 0)
+		{
+			set_ody_ring_id(addr, ODY_MEMPORT0_RING_ID);
+		}
+		else
+		{
+			set_ody_ring_id(addr, ODY_MEMPORT1_RING_ID);
+		}
+	}
+
+	if (l_ring == ODY_MEMPORT0_PHY_RING_ID || l_ring == ODY_MEMPORT1_PHY_RING_ID)
+	{
+		if (pdbg_target_index(t(memport)) == 0)
+		{
+			set_ody_ring_id(addr, ODY_MEMPORT0_PHY_RING_ID);
+		}
+		else
+		{
+			set_ody_ring_id(addr, ODY_MEMPORT1_PHY_RING_ID);
+		}
+	}
+	return addr;
+}
+
+
 struct mem_port p10_mem_port = {
 	.target = {
 		.name = "POWER10 mem_port",
 		.compatible = "ibm,power10-memport",
 		.class = "mem_port",
-		.translate = no_translate,
+		.translate = translate_cast(p10_memport_translate),
 	},
 };
 DECLARE_HW_UNIT(p10_mem_port);

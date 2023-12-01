@@ -85,6 +85,13 @@ static uint64_t set_ring_id(uint64_t addr, uint64_t ring)
     return addr;
 }
 
+static uint64_t set_ody_ring_id(uint64_t addr, uint8_t ring)
+{
+    addr &= 0xFFFFFFFFFFFFC3FFULL;
+    addr |= ((ring & 0xF) << 10);
+    return addr;
+}
+
 static uint32_t get_io_lane(uint64_t addr)
 {
     return (addr >> 32) & 0x1F;

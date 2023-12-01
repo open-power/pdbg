@@ -19,7 +19,6 @@ struct list_head target_classes = LIST_HEAD_INIT(target_classes);
 static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, const char *name, uint64_t *addr)
 {
 	uint64_t old_addr = *addr;
-
 	/* Check class */
 	while (strcmp(target->class, name)) {
 		if (target->translate) {
@@ -155,6 +154,19 @@ int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 	return rc;
 }
 
+int ocmb_read(struct pdbg_target *target, uint64_t addr, uint64_t *data)
+{
+	uint64_t target_addr = addr;
+	int rc;
+
+	target = get_class_target_addr(target, "ocmb", &target_addr);
+	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
+		return -1;
+	/* Using translated address*/
+	ocmb_getscom(target, target_addr, data);
+
+	return rc;
+}
 int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 {
 	struct pib *pib;
@@ -446,44 +458,6 @@ int ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val)
 	}
 
 	return ocmb->putscom(ocmb, addr, val);
-}
-
-int ody_ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
-{
-	struct ocmb *ocmb;
-
-	assert(pdbg_target_is_class(target, "ocmb"));
-
-	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
-		return -1;
-
-	ocmb = target_to_ocmb(target);
-
-	if (!ocmb->odygetscom) {
-		PR_ERROR("odygetscom() not implemented for the target\n");
-		return -1;
-	}
-
-	return ocmb->odygetscom(ocmb, addr, val);
-}
-
-int ody_ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val)
-{
-	struct ocmb *ocmb;
-
-	assert(pdbg_target_is_class(target, "ocmb"));
-
-	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
-		return -1;
-
-	ocmb = target_to_ocmb(target);
-
-	if (!ocmb->odyputscom) {
-		PR_ERROR("odyputscom() not implemented for the target\n");
-		return -1;
-	}
-
-	return ocmb->odyputscom(ocmb, addr, val);
 }
 
 /* Finds the given class. Returns NULL if not found. */

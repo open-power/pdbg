@@ -231,17 +231,14 @@ int sbefifo_hw_register_get(struct sbefifo_context *sctx, uint8_t target_type, u
 		return ENOSYS;
 
 	rc = sbefifo_hw_register_get_push(target_type, instance_id, reg_id, &msg, &msg_len);
-	printf("deepa sbefifo_hw_register_get_push rc: %d\n", rc);
 	if (rc)
 		return rc;
 	out_len = 8;
 	rc = sbefifo_operation(sctx, msg, msg_len, &out, &out_len);
 	free(msg);
-	printf("deepa sbefifo_operation rc: %d", rc);
 	if (rc)
 		return rc;
 	rc = sbefifo_hw_register_get_pull(out, out_len, value);
-	printf("deepa sbefifo_hw_register_get_pull rc: %d", rc);
 	if (out)
 		free(out);
 

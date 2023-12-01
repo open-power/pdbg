@@ -60,10 +60,8 @@ static int sbefifo_transport(struct sbefifo_context *sctx, uint8_t *msg, uint32_
 	int rc;
 	size_t buflen;
 
-printf("deepa: sbefifo_transport %d", msg_len);
 	buflen = msg_len;
 	rc = sbefifo_write(sctx, msg, buflen);
-	printf("deepa: sbefifo_write rc %d\n", rc);
 	if (rc) {
 		LOG("write: cmd=%08x, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), rc);
 		return rc;
@@ -71,7 +69,6 @@ printf("deepa: sbefifo_transport %d", msg_len);
 
 	buflen = *out_len;
 	rc = sbefifo_read(sctx, out, &buflen);
-	printf("deepa: sbefifo_read rc %d\n", rc);
 
 	if (rc) {
 		LOG("read: cmd=%08x, buflen=%zu, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), buflen, rc);
@@ -150,10 +147,8 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 
 	assert(msg);
 	assert(msg_len > 0);
-printf("deepa: Before connection\n");
 	if (!sctx->transport && sctx->fd == -1)
 		return ENOTCONN;
-printf("deepa: after connection\n");
 	/*
 	 * Allocate extra memory for FFDC (SBEFIFO_MAX_FFDC_SIZE = 0x2000)
 	 * Use *out_len as a hint to expected reply length
@@ -162,17 +157,14 @@ printf("deepa: after connection\n");
 	buf = malloc(buflen);
 	if (!buf)
 		return ENOMEM;
-printf("deepa: after allocation\n");
 	cmd = be32toh(*(uint32_t *)(msg + 4));
 
 	LOG("request: cmd=%08x, len=%u\n", cmd, msg_len);
-	printf("request: cmd=%08x, len=%u\n", cmd, msg_len);
 
 	if (sctx->transport)
 		rc = sctx->transport(msg, msg_len, buf, &buflen, sctx->priv);
 	else
 		rc = sbefifo_transport(sctx, msg, msg_len, buf, &buflen);
-printf("deepa: after transport rc::::%d\n", rc);
 	if (rc) {
 		free(buf);
 
@@ -185,9 +177,7 @@ printf("deepa: after transport rc::::%d\n", rc);
 
 		return rc;
 	}
-printf("deepa: before sbefifo_parse_output\n");
 	rc = sbefifo_parse_output(sctx, cmd, buf, buflen, out, out_len);
-printf("deepa: after sbefifo_parse_output\n");	
 	free(buf);
 	return rc;
 }

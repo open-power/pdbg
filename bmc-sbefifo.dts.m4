@@ -83,18 +83,18 @@ define(`HMFSI',
 ')dnl
 
 dnl
-dnl SBEFIFO_OCMB([index], [proc], [proc], [proc+1], [port] [])
+dnl SBEFIFO_OCMB([index], [proc], [proc+1], [port] [])
 dnl
 define(`SBEFIFO_OCMB',
 `
 	sbefifo-ocmb@$3$4{ /* Bogus address */
-		#address-cells = <0x1>;
+		#address-cells = <0x2>;
 		#size-cells = <0x1>;
 		compatible = "ibm,kernel-sbefifo";
-		reg = <0x0 0x1>; /*dummy to fix dts warning*/
+		reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
 		index = <0x$1>;
 		proc = <0x$2>;
-		port = <0x$3>;
+		port = <$4>;
 		device-path = "/dev/sbefifo$3$4";
 	};
 ')dnl
@@ -105,14 +105,14 @@ dnl
 define(`HMFSI_OCMB',
 `
 	hmfsi-ocmb@$3$4 {
-		#address-cells = <0x1>;
+		#address-cells = <0x2>;
 		#size-cells = <0x1>;
 		compatible = "ibm,kernel-fsi";
 		device-path = "/i2cr$3$4/slave@00:00/raw";
-		reg = <0x0 0x1>; /*dummy to fix dts warning*/
+		reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
 		index = <0x$1>;
 		proc = <0x$2>;
-		port = <0x$3>;
+		port = <$4>;
 
 		SBEFIFO_OCMB($1, $2, $3, $4)
 	};

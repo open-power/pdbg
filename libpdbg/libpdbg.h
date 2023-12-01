@@ -1361,6 +1361,18 @@ int opb_write(struct pdbg_target *target, uint32_t addr, uint32_t data);
  */
 int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val);
 
+
+/**
+ * @brief Read a OCMB or its child target SCOM register
+ *
+ * @param[in] target ocmb or its child target (mem_port, perv)
+ * @param[in] addr the address offset relative to target
+ * @param[out] val the read data
+ *
+ * @return 0 on success, -1 on failure
+ */
+int ocmb_read(struct pdbg_target *target, uint64_t addr, uint64_t *data);
+
 /**
  * @brief Write a OCMB SCOM register
  *
@@ -1371,28 +1383,6 @@ int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val);
  * @return 0 on success, -1 on failure
  */
 int ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val);
-
-/**
- * @brief Read a Odyssey OCMB SCOM register
- *
- * @param[in] target odyssey ocmb target
- * @param[in] addr the address offset relative to target
- * @param[out] val the read data
- *
- * @return 0 on success, -1 on failure
- */
-int ody_ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val);
-
-/**
- * @brief Write a Odyssey OCMB SCOM register
- *
- * @param[in] target odyssey ocmb target
- * @param[in] addr the address offset relative to target
- * @param[in] val the write data
- *
- * @return 0 on success, -1 on failure
- */
-int ody_ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val);
 
 /**
  * @brief Type for specifying a progress callback for long running

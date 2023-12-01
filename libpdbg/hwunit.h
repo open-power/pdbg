@@ -340,8 +340,6 @@ struct ocmb {
 	struct pdbg_target target;
 	int (*getscom)(struct ocmb *, uint64_t, uint64_t *);
 	int (*putscom)(struct ocmb *, uint64_t, uint64_t);
-	int (*odygetscom)(struct ocmb *, uint64_t, uint64_t *);
-	int (*odyputscom)(struct ocmb *, uint64_t, uint64_t);
 };
 #define target_to_ocmb(x) container_of(x, struct ocmb, target);
 
