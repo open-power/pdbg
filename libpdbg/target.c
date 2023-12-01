@@ -162,9 +162,9 @@ int ocmb_read(struct pdbg_target *target, uint64_t addr, uint64_t *data)
 	target = get_class_target_addr(target, "ocmb", &target_addr);
 	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 		return -1;
+
 	/* Using translated address*/
 	ocmb_getscom(target, target_addr, data);
-
 	return rc;
 }
 int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
@@ -504,6 +504,115 @@ struct pdbg_target_class *get_target_class(struct pdbg_target *target)
 	return target_class;
 }
 
+struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
+{
+	struct ocmb *ocmb = target_to_ocmb(target);
+	// ocmb targets have proc and index
+	// sbefifo backend target has proc, index and device path
+	// map ocmb proc, index to sbefifo target proc and index to the
+	// sbefifo target matching the ocmb target
+	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc", &ocmb->target));
+	uint32_t ocmb_index = pdbg_target_index(&ocmb->target) % 0x8;
+
+	struct sbefifo *sbefifo = NULL;
+	size_t len = 0;
+	pdbg_for_each_class_target("sbefifo", target) {
+		uint32_t index = pdbg_target_index(target);
+		int proc = 0;
+		int port = 0;
+		const char* devpath =
+			(const char*)pdbg_target_property(target, "device-path", &len);
+		int result = sscanf(devpath, "/dev/sbefifo%1d%2d", &proc, &port);
+		if (result == 2) {
+			//sbefifo proc starts with 1, if ocmb proc is 0 then sbefifo proc is 1
+			if(index == ocmb_index && proc == (ocmb_proc+1) ) {
+				sbefifo = target_to_sbefifo(target);
+				break;
+			}
+		}
+	}
+	assert(sbefifo);
+
+	return sbefifo;
+}
+
+struct pib *ody_ocmb_to_pib(struct pdbg_target *target)
+{
+	struct ocmb *ocmb = target_to_ocmb(target);
+	// ocmb targets have proc and index
+	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc", &ocmb->target));
+	uint32_t ocmb_index = pdbg_target_index(&ocmb->target) % 0x8;
+
+	struct pib *pib = NULL;
+	size_t len = 0;
+	pdbg_for_each_class_target("pib", target) {
+		uint32_t index = pdbg_target_index(target);
+		int proc = 0;
+		int port = 0;
+		const char* devpath =
+			(const char*)pdbg_target_property(target, "device-path", &len);
+		int result = sscanf(devpath, "/dev/scom%1d%2d", &proc, &port);
+		if (result == 2) {
+			//pib proc starts with 1, if ocmb proc is 0 then pib proc is 1
+			if(index == ocmb_index && proc == (ocmb_proc+1) ) {
+				pib = target_to_pib(target);
+				break;
+			}
+		}
+	}
+	assert(pib);
+
+	return pib;
+}
+
+enum pdbg_target_status ocmb_target_probe(struct pdbg_target *target)
+{
+	int rc;
+	rc = target->probe(target); 
+	if(!rc)
+	{
+		target->status = PDBG_TARGET_ENABLED;
+		if(pdbg_get_backend() == PDBG_BACKEND_KERNEL)
+		{
+			struct pib *pib_target;
+			// If it is sbefifo mode, find the sbefifo mapped to this ocmb
+			pib_target = ody_ocmb_to_pib(target);
+			//TODO: May be invoke the regulat pdbg_target_probe() below and see
+			rc = pib_target->target.probe(&pib_target->target);
+			if(rc == 0)
+			{
+				pib_target->target.status = PDBG_TARGET_ENABLED;
+				return PDBG_TARGET_ENABLED;
+			}
+		}
+		else if(pdbg_get_backend() == PDBG_BACKEND_SBEFIFO)
+		{
+			struct sbefifo *sbefifo_target;
+			// If it is sbefifo mode, find the sbefifo mapped to this ocmb
+			sbefifo_target = ody_ocmb_to_sbefifo(target);
+			//TODO: May be invoke the regulat pdbg_target_probe() below and see
+			rc = sbefifo_target->target.probe(&sbefifo_target->target);
+			if(rc == 0)
+			{
+				sbefifo_target->target.status = PDBG_TARGET_ENABLED;
+				return PDBG_TARGET_ENABLED;
+			}
+		}
+	}
+	return PDBG_TARGET_DISABLED;
+}
+
+bool isOdyChip(struct pdbg_target *target)
+{
+	const uint16_t ODYSSEY_CHIP_ID = 0x60C0;
+	uint32_t chipId = 0;
+	pdbg_target_get_attribute(target, "ATTR_CHIP_ID", 4, 1, &chipId);
+	if(chipId == ODYSSEY_CHIP_ID)
+	{
+		return true;
+	}
+	return false;
+}
 /* We walk the tree root down disabling targets which might/should
  * exist but don't */
 enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
@@ -512,6 +621,12 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 	enum pdbg_target_status status;
 
 	assert(target);
+	//The odyssey chip probing is different as the parent in the dts
+	//is not the actual parent of ocmb chip. So we need probe different targets
+	if(isOdyChip(target))
+	{
+		return ocmb_target_probe(target);
+	}
 
 	status = pdbg_target_status(target);
 	assert(status != PDBG_TARGET_RELEASED);

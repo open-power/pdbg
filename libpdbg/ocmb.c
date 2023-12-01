@@ -19,6 +19,7 @@
 
 #include "hwunit.h"
 
+#include <fcntl.h>
 
 static const uint16_t ODYSSEY_CHIP_ID = 0x60C0;
 
@@ -40,38 +41,6 @@ static struct sbefifo *ocmb_to_sbefifo(struct ocmb *ocmb)
 	return sbefifo;
 }
 
-static struct sbefifo *ody_ocmb_to_sbefifo(struct ocmb *ocmb)
-{
-	// ocmb targets have proc and index
-	// sbefifo backend target has proc, index and device path
-	// map ocmb proc, index to sbefifo target proc and index to the
-	// sbefifo target matching the ocmb target
-	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc", &ocmb->target));
-	uint32_t ocmb_index = pdbg_target_index(&ocmb->target) % 0x8;
-	struct pdbg_target *target;
-
-	struct sbefifo *sbefifo = NULL;
-	size_t len = 0;
-	pdbg_for_each_class_target("sbefifo", target) {
-		uint32_t index = pdbg_target_index(target);
-		int proc = 0;
-		int port = 0;
-		const char* devpath =
-			(const char*)pdbg_target_property(target, "device-path", &len);
-		int result = sscanf(devpath, "/dev/sbefifo%1d%2d", &proc, &port);
-		if (result == 2) {
-			//sbefifo proc starts with 1, if ocmb proc is 0 then sbefifo proc is 1
-			if(index == ocmb_index && proc == (ocmb_proc+1) ) {
-				sbefifo = target_to_sbefifo(target);
-				break;
-			}
-		}
-	}
-	assert(sbefifo);
-
-	return sbefifo;
-}
-
 static int sbefifo_ocmb_getscom(struct ocmb *ocmb, uint64_t addr, uint64_t *value)
 {
 
@@ -79,7 +48,8 @@ static int sbefifo_ocmb_getscom(struct ocmb *ocmb, uint64_t addr, uint64_t *valu
 	pdbg_target_get_attribute(&ocmb->target, "ATTR_CHIP_ID", 4, 1, &chipId);
 	if(chipId == ODYSSEY_CHIP_ID)
 	{
-		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(ocmb);
+		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(&ocmb->target);
+
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 
 		return sbefifo_scom_get(sctx, addr, value);
@@ -128,15 +98,25 @@ static int sbefifo_ocmb_putscom(struct ocmb *ocmb, uint64_t addr, uint64_t value
 	}
 }
 
+int ocmb_probe(struct pdbg_target *target)
+{
+	return 0;
+}
+
 static struct ocmb sbefifo_ocmb = {
 	.target = {
 		.name = "SBE FIFO Chip-op based OCMB",
 		.compatible = "ibm,power-ocmb",
-		.class = "ocmb",
+		.class = "odyocmb",
+		.probe = ocmb_probe,
 	},
 	.getscom = sbefifo_ocmb_getscom,
 	.putscom = sbefifo_ocmb_putscom,
+	
 };
+
+
+
 DECLARE_HW_UNIT(sbefifo_ocmb);
 
 __attribute__((constructor))

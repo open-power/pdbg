@@ -107,5 +107,7 @@ bool pdbg_context_is_short(void);
  * @see   pdbg_release_dt_root() for more details
  */
 void clear_target_classes();
+struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target);
+struct pib *ody_ocmb_to_pib(struct pdbg_target *target);
 
 #endif
