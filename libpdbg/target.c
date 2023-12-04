@@ -707,6 +707,6 @@ struct pdbg_target *get_backend_target(const char* class,
 
 struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
 {
-	struct pdbg_target *sbefifo_target = get_backend_target("sbefifo", target);
+	struct pdbg_target *sbefifo_target = get_backend_target("sbefifo-ody", target);
 	return target_to_sbefifo(sbefifo_target);
 }
