@@ -824,7 +824,7 @@ struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
 	struct pdbg_target *ltarget;
 
 	struct sbefifo *sbefifo = NULL;
-	pdbg_for_each_class_target("sbefifo", ltarget) {
+	pdbg_for_each_class_target("sbefifo-ody", ltarget) {
 		uint32_t index = pdbg_target_index(ltarget);
 		uint32_t proc = 0;
 		if(!pdbg_target_u32_property(ltarget, "proc", &proc)) {
@@ -945,10 +945,23 @@ static struct sbefifo kernel_sbefifo = {
 };
 DECLARE_HW_UNIT(kernel_sbefifo);
 
+static struct sbefifo kernel_sbefifo_ody = {
+	.target = {
+		.name =	"Kernel based FSI SBE FIFO",
+		.compatible = "ibm,kernel-sbefifo-ody",
+		.class = "sbefifo-ody",
+		.probe = sbefifo_probe,
+		.release = sbefifo_release,
+	},
+	.get_sbefifo_context = sbefifo_op_get_context,
+};
+DECLARE_HW_UNIT(kernel_sbefifo_ody);
+
 __attribute__((constructor))
 static void register_sbefifo(void)
 {
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_sbefifo_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_sbefifo_ody_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_chipop_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_pib_hw_unit);
 	pdbg_hwunit_register(PDBG_BACKEND_SBEFIFO, &sbefifo_thread_hw_unit);

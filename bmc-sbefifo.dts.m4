@@ -90,7 +90,7 @@ define(`SBEFIFO_ODY',
 	sbefifo-ody@$3$4{ /* Bogus address */
 		#address-cells = <0x2>;
 		#size-cells = <0x1>;
-		compatible = "ibm,kernel-sbefifo";
+		compatible = "ibm,kernel-sbefifo-ody";
 		reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
 		index = <0x$1>;
 		proc = <0x$2>;
