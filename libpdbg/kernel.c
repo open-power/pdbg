@@ -258,6 +258,28 @@ static int kernel_pib_probe(struct pdbg_target *target)
 	return 0;
 }
 
+struct pdbg_target* get_ody_pib_target(struct pdbg_target *target)
+{
+	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc", target));
+	uint32_t ocmb_index = pdbg_target_index(target) % 0x8;
+
+	struct pdbg_target *pib = NULL;
+	struct pdbg_target *ody_target;
+	pdbg_for_each_class_target("pib", ody_target) {
+		uint32_t index = pdbg_target_index(ody_target);
+		uint32_t proc = 0;
+		if(!pdbg_target_u32_property(ody_target, "proc", &proc)) {
+			if(index == ocmb_index && proc == ocmb_proc) {
+				pib = ody_target;
+				break;
+			}
+		}
+	}
+	assert(pib);
+
+	return pib;
+}
+
 struct pib kernel_pib = {
 	.target = {
 		.name =	"Kernel based FSI SCOM",
