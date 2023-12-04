@@ -62,6 +62,7 @@ const char *kernel_get_fsi_path(void)
 
 static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 {
+	printf("kernel_fsi_getcfam address 0%x \n", addr64); 
 	int rc;
 	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
 
@@ -83,6 +84,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 		return rc;
 	}
 	*value = be32toh(tmp);
+	printf("kernel_fsi_getcfam value 0%x \n", *value); 
 
 	return 0;
 }
@@ -157,6 +159,7 @@ int kernel_fsi_probe(struct pdbg_target *target)
 	fsi_path = pdbg_target_property(target, "device-path", NULL);
 	assert(fsi_path);
 
+	printf("kernel_fsi_probe fsi_path set is %s \n", fsi_path);
 	rc = asprintf(&path, "%s%s", kernel_get_fsi_path(), fsi_path);
 	if (rc < 0) {
 		PR_ERROR("Unable to create fsi path\n");
@@ -214,6 +217,20 @@ static struct fsi kernel_fsi = {
 };
 DECLARE_HW_UNIT(kernel_fsi);
 
+static struct fsi kernel_fsi_ody = {
+    .target = {
+        .name = "Kernel based FSI master for oddyssey",
+        .compatible = "ibm,kernel-fsi-ody",
+        .class = "fsi-ody",
+        .probe = kernel_fsi_probe,
+        .release = kernel_fsi_release,
+    },
+    .read = kernel_fsi_getcfam,
+    .write = kernel_fsi_putcfam,
+};
+DECLARE_HW_UNIT(kernel_fsi_ody);
+
+
 static int kernel_pib_getscom(struct pib *pib, uint64_t addr, uint64_t *value)
 {
 	int rc;
@@ -270,9 +287,24 @@ struct pib kernel_pib = {
 };
 DECLARE_HW_UNIT(kernel_pib);
 
+struct pib kernel_pib_ody = {
+    .target = {
+        .name = "Kernel based FSI SCOM for oddyssey",
+        .compatible = "ibm,kernel-pib-ody",
+        .class = "pib-ody",
+        .probe = kernel_pib_probe,
+    },
+    .read = kernel_pib_getscom,
+    .write = kernel_pib_putscom,
+};
+DECLARE_HW_UNIT(kernel_pib_ody);
+
+
 __attribute__((constructor))
 static void register_kernel(void)
 {
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_fsi_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_fsi_ody_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_pib_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &kernel_pib_ody_hw_unit);
 }

@@ -155,6 +155,32 @@ int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 	return rc;
 }
 
+int pib_ody_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
+{
+	struct pib *pib;
+	uint64_t target_addr = addr;
+	int rc;
+	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	pib = target_to_pib(pib_dt);
+
+	if (!pib->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
+
+	if (target_addr & PPC_BIT(0))
+		rc = pib_indirect_read(pib, target_addr, data);
+	else
+		rc = pib->read(pib, target_addr, data);
+
+	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
+		 rc, target_addr, *data, pdbg_target_path(&pib->target));
+
+	return rc;
+}
+
 int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 {
 	struct pib *pib;
@@ -162,6 +188,35 @@ int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 	int rc;
 
 	pib_dt = get_class_target_addr(pib_dt, "pib", &target_addr);
+
+	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	pib = target_to_pib(pib_dt);
+
+	if (!pib->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
+
+	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
+		 target_addr, data);
+	if (target_addr & PPC_BIT(0))
+		rc = pib_indirect_write(pib, target_addr, data);
+	else
+		rc = pib->write(pib, target_addr, data);
+
+	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
+		 rc, target_addr, data, pdbg_target_path(&pib->target));
+
+	return rc;
+}
+
+int pib_ody_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
+{
+	struct pib *pib;
+	uint64_t target_addr = addr;
+	int rc;
 
 	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
 		return -1;
@@ -297,6 +352,45 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 	uint64_t addr64 = addr;
 
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
+	fsi = target_to_fsi(fsi_dt);
+
+	if (!fsi->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
+
+	rc = fsi->write(fsi, addr64, data);
+	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+		 rc, addr64, data, pdbg_target_path(&fsi->target));
+	return rc;
+}
+
+int fsi_ody_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
+{
+	printf("fsi_ody_read \n");
+	struct fsi *fsi;
+	int rc;
+	uint64_t addr64 = addr;
+
+	fsi = target_to_fsi(fsi_dt);
+
+	if (!fsi->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
+
+	rc = fsi->read(fsi, addr64, data);
+	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+		 rc, addr64, *data, pdbg_target_path(&fsi->target));
+	return rc;
+}
+
+int fsi_ody_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
+{
+	struct fsi *fsi;
+	int rc;
+	uint64_t addr64 = addr;
+
 	fsi = target_to_fsi(fsi_dt);
 
 	if (!fsi->write) {
@@ -497,20 +591,43 @@ struct pdbg_target_class *get_target_class(struct pdbg_target *target)
 enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
 {
 	assert(is_ody_ocmb_chip(target));
-	//find the corresponding sbefifo, probe and if probe is sucess return enabled
-	struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(target);
-	if (sbefifo->target.probe && sbefifo->target.probe(&sbefifo->target)) {
-		sbefifo->target.status = PDBG_TARGET_NONEXISTENT;
-		return PDBG_TARGET_NONEXISTENT;
-	}
+	if(pdbg_get_backend() == PDBG_BACKEND_KERNEL)
+	{
+		struct pdbg_target *pibtarget = get_ody_pib_target(target);
+		if (pibtarget->probe && pibtarget->probe(pibtarget)) {
+			pibtarget->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
 
-	if (target->probe && target->probe(target)) {
-		target->status = PDBG_TARGET_NONEXISTENT;
-		return PDBG_TARGET_NONEXISTENT;
-	}
+		struct pdbg_target *fsitarget = get_ody_fsi_target(target);
+		if (fsitarget->probe && fsitarget->probe(fsitarget)) {
+			fsitarget->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
+		
+		if (target->probe && target->probe(target)) {
+			target->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
 
-	target->status = PDBG_TARGET_ENABLED;
-	sbefifo->target.status = PDBG_TARGET_ENABLED;
+		target->status = PDBG_TARGET_ENABLED;
+		pibtarget->status = PDBG_TARGET_ENABLED;
+	}
+	else
+	{
+		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(target);
+		if (sbefifo->target.probe && sbefifo->target.probe(&sbefifo->target)) {
+			sbefifo->target.status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
+		if (target->probe && target->probe(target)) {
+			target->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
+
+		target->status = PDBG_TARGET_ENABLED;
+		sbefifo->target.status = PDBG_TARGET_ENABLED;
+	}
 	return PDBG_TARGET_ENABLED;
 }
 
@@ -709,4 +826,14 @@ struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
 {
 	struct pdbg_target *sbefifo_target = get_backend_target("sbefifo-ody", target);
 	return target_to_sbefifo(sbefifo_target);
+}
+
+struct pdbg_target* get_ody_pib_target(struct pdbg_target *target)
+{
+	return get_backend_target("pib-ody", target);
+}
+
+struct pdbg_target* get_ody_fsi_target(struct pdbg_target *target)
+{
+	return get_backend_target("fsi-ody", target);
 }
