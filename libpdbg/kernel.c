@@ -62,6 +62,7 @@ const char *kernel_get_fsi_path(void)
 
 static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 {
+	printf("kernel_fsi_getcfam address 0%x \n", addr64); 
 	int rc;
 	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
 
@@ -83,6 +84,7 @@ static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 		return rc;
 	}
 	*value = be32toh(tmp);
+	printf("kernel_fsi_getcfam value 0%x \n", *value); 
 
 	return 0;
 }
@@ -157,6 +159,7 @@ int kernel_fsi_probe(struct pdbg_target *target)
 	fsi_path = pdbg_target_property(target, "device-path", NULL);
 	assert(fsi_path);
 
+	printf("kernel_fsi_probe fsi_path set is %s \n", fsi_path);
 	rc = asprintf(&path, "%s%s", kernel_get_fsi_path(), fsi_path);
 	if (rc < 0) {
 		PR_ERROR("Unable to create fsi path\n");
@@ -260,6 +263,7 @@ static int kernel_pib_probe(struct pdbg_target *target)
 
 struct pdbg_target* get_ody_pib_target(struct pdbg_target *target)
 {
+	//TODO need to assert if the target passed is not of ocmb type
 	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc", target));
 	uint32_t ocmb_index = pdbg_target_index(target) % 0x8;
 
@@ -278,6 +282,30 @@ struct pdbg_target* get_ody_pib_target(struct pdbg_target *target)
 	assert(pib);
 
 	return pib;
+}
+
+struct pdbg_target* get_ody_fsi_target(struct pdbg_target *target)
+{
+	//TODO need to assert if the target passed is not of ocmb type
+	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc", target));
+	uint32_t ocmb_index = pdbg_target_index(target) % 0x8;
+
+	printf("get_ody_fsi_target ocmb_proc %d ocmb_index %d \n", ocmb_proc, ocmb_index);
+	struct pdbg_target *fsi = NULL;
+	struct pdbg_target *fsi_target;
+	pdbg_for_each_class_target("fsi", fsi_target) {
+		uint32_t index = pdbg_target_index(fsi_target);
+		uint32_t proc = 0;
+		if(!pdbg_target_u32_property(fsi_target, "proc", &proc)) {
+			if(index == ocmb_index && proc == ocmb_proc) {
+				fsi = fsi_target;
+				break;
+			}
+		}
+	}
+	assert(fsi);
+
+	return fsi;
 }
 
 struct pib kernel_pib = {
