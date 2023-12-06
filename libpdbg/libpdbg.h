@@ -761,6 +761,24 @@ int fsi_write(struct pdbg_target *target, uint32_t addr, uint32_t val);
 int fsi_write_mask(struct pdbg_target *target, uint32_t addr, uint32_t val, uint32_t mask);
 
 /**
+ * @brief Read a CFAM FSI register
+ * @param[in] target the pdbg_target
+ * @param[in] addr the CFAM address offset
+ * @param[out] val the read data
+ * @return int 0 if successful, -1 otherwise
+ */
+int fsi_ody_read(struct pdbg_target *target, uint32_t addr, uint32_t *val);
+
+/**
+ * @brief Write a CFAM FSI register
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address offset relative to target
+ * @param[in] val the write data
+ * @return int 0 if successful, -1 otherwise
+ */
+int fsi_ody_write(struct pdbg_target *target, uint32_t addr, uint32_t val);
+
+/**
  * @brief Read a PIB SCOM register
  * @param[in] target the pdbg_target
  * @param[in] addr the address offset relative to target
@@ -818,6 +836,7 @@ int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t 
 
 struct pdbg_target* get_ody_pib_target(struct pdbg_target* target);
 
+struct pdbg_target* get_ody_fsi_target(struct pdbg_target* target);
 /**
  * @brief Read data from i2c device
  *

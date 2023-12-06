@@ -365,6 +365,45 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 	return rc;
 }
 
+int fsi_ody_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
+{
+	printf("fsi_ody_read \n");
+	struct fsi *fsi;
+	int rc;
+	uint64_t addr64 = addr;
+
+	fsi = target_to_fsi(fsi_dt);
+
+	if (!fsi->read) {
+		PR_ERROR("read() not implemented for the target\n");
+		return -1;
+	}
+
+	rc = fsi->read(fsi, addr64, data);
+	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+		 rc, addr64, *data, pdbg_target_path(&fsi->target));
+	return rc;
+}
+
+int fsi_ody_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
+{
+	struct fsi *fsi;
+	int rc;
+	uint64_t addr64 = addr;
+
+	fsi = target_to_fsi(fsi_dt);
+
+	if (!fsi->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
+
+	rc = fsi->write(fsi, addr64, data);
+	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+		 rc, addr64, data, pdbg_target_path(&fsi->target));
+	return rc;
+}
+
 int fsi_write_mask(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data, uint32_t mask)
 {
 	uint32_t value;
@@ -560,6 +599,13 @@ enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
 			pibtarget->status = PDBG_TARGET_NONEXISTENT;
 			return PDBG_TARGET_NONEXISTENT;
 		}
+
+		struct pdbg_target *fsitarget = get_ody_fsi_target(target);
+		if (fsitarget->probe && fsitarget->probe(fsitarget)) {
+			fsitarget->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
+		
 		if (target->probe && target->probe(target)) {
 			target->status = PDBG_TARGET_NONEXISTENT;
 			return PDBG_TARGET_NONEXISTENT;
