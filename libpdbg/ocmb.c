@@ -39,32 +39,44 @@ static struct sbefifo *ocmb_to_sbefifo(struct ocmb *ocmb)
 
 static int sbefifo_ocmb_getscom(struct ocmb *ocmb, uint64_t addr, uint64_t *value)
 {
-	struct sbefifo *sbefifo = ocmb_to_sbefifo(ocmb);
-	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-	uint8_t instance_id;
+	if(is_ody_ocmb_chip(&ocmb->target)) {
+		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(&ocmb->target);
+		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+		return sbefifo_scom_get(sctx, addr, value);
+	} else	{
+		struct sbefifo *sbefifo = ocmb_to_sbefifo(ocmb);
+		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+		uint8_t instance_id;
 
-	instance_id = pdbg_target_index(&ocmb->target) & 0xff;
+		instance_id = pdbg_target_index(&ocmb->target) & 0xff;
 
-	return sbefifo_hw_register_get(sctx,
-				       SBEFIFO_TARGET_TYPE_OCMB,
-				       instance_id,
-				       addr,
-				       value);
+		return sbefifo_hw_register_get(sctx,
+						SBEFIFO_TARGET_TYPE_OCMB,
+						instance_id,
+						addr,
+						value);
+	}
 }
 
 static int sbefifo_ocmb_putscom(struct ocmb *ocmb, uint64_t addr, uint64_t value)
 {
-	struct sbefifo *sbefifo = ocmb_to_sbefifo(ocmb);
-	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-	uint8_t instance_id;
+	if(is_ody_ocmb_chip(&ocmb->target))	{
+		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(&ocmb->target);
+		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+		return sbefifo_scom_put(sctx, addr, value);
+	} else {
+		struct sbefifo *sbefifo = ocmb_to_sbefifo(ocmb);
+		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
+		uint8_t instance_id;
 
-	instance_id = pdbg_target_index(&ocmb->target) & 0xff;
+		instance_id = pdbg_target_index(&ocmb->target) & 0xff;
 
-	return sbefifo_hw_register_put(sctx,
-				       SBEFIFO_TARGET_TYPE_OCMB,
-				       instance_id,
-				       addr,
-				       value);
+		return sbefifo_hw_register_put(sctx,
+						SBEFIFO_TARGET_TYPE_OCMB,
+						instance_id,
+						addr,
+						value);
+	}
 }
 
 static struct ocmb sbefifo_ocmb = {

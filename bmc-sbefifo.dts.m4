@@ -81,6 +81,34 @@ define(`HMFSI',
 	};
 ')dnl
 
+//ocmb ody ddr5 chip SBE instance will be mapped to /dev/sbefifoXYY
+//device path where X is proc and YY is port. BMC need to use this
+//path for get/put scom to SBE instance of the ocmb ddr5 chip.
+
+//ody ocmb chips will be defined in system device tree, where as how
+//the sbe instances of these ody ocmb chips will be defined in this
+//backend device tree
+
+//ody ocmb system device tree targets will be mapped to backend
+//ody sbefifo device tree targets based on proc, ocmb chip index
+dnl
+dnl SBEFIFO_ODY([index], [proc], [path-index], [port] [])
+dnl
+define(`SBEFIFO_ODY',
+`
+	sbefifo-ody@$3$4{ /* Bogus address */
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		compatible = "ibm,kernel-sbefifo-ody";
+		reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
+		index = <0x$1>;
+		proc = <0x$2>;
+		port = <$4>;
+		device-path = "/dev/sbefifo$3$4";
+	};
+
+')dnl
+
 dnl
 dnl BMC_I2CBUS([index])
 dnl
@@ -131,4 +159,77 @@ define(`BMC_I2CBUS',
 	HMFSI(400000, 7, 7, 8)
 
 	FSI_POST()
+
+	SBEFIFO_ODY(0, 0, 1, 00)
+	SBEFIFO_ODY(1, 0, 1, 01)
+	SBEFIFO_ODY(2, 0, 1, 10)
+	SBEFIFO_ODY(3, 0, 1, 11)
+	SBEFIFO_ODY(4, 0, 1, 12)
+	SBEFIFO_ODY(5, 0, 1, 13)
+	SBEFIFO_ODY(6, 0, 1, 14)
+	SBEFIFO_ODY(7, 0, 1, 15)
+
+	SBEFIFO_ODY(0, 1, 2, 02)
+	SBEFIFO_ODY(1, 1, 2, 03)
+	SBEFIFO_ODY(2, 1, 2, 10)
+	SBEFIFO_ODY(3, 1, 2, 11)
+	SBEFIFO_ODY(4, 1, 2, 14)
+	SBEFIFO_ODY(5, 1, 2, 15)
+	SBEFIFO_ODY(6, 1, 2, 16)
+	SBEFIFO_ODY(7, 1, 2, 17)
+
+
+	SBEFIFO_ODY(0, 2, 3, 00)
+	SBEFIFO_ODY(1, 2, 3, 01)
+	SBEFIFO_ODY(2, 2, 3, 10)
+	SBEFIFO_ODY(3, 2, 3, 11)
+	SBEFIFO_ODY(4, 2, 3, 12)
+	SBEFIFO_ODY(5, 2, 3, 13)
+	SBEFIFO_ODY(6, 2, 3, 14)
+	SBEFIFO_ODY(7, 2, 3, 15)
+
+	SBEFIFO_ODY(0, 3, 4, 02)
+	SBEFIFO_ODY(1, 3, 4, 03)
+	SBEFIFO_ODY(2, 3, 4, 10)
+	SBEFIFO_ODY(3, 3, 4, 11)
+	SBEFIFO_ODY(4, 3, 4, 14)
+	SBEFIFO_ODY(5, 3, 4, 15)
+	SBEFIFO_ODY(6, 3, 4, 16)
+	SBEFIFO_ODY(7, 3, 4, 17)
+
+	SBEFIFO_ODY(0, 4, 5, 00)
+	SBEFIFO_ODY(1, 4, 5, 01)
+	SBEFIFO_ODY(2, 4, 5, 10)
+	SBEFIFO_ODY(3, 4, 5, 11)
+	SBEFIFO_ODY(4, 4, 5, 12)
+	SBEFIFO_ODY(5, 4, 5, 13)
+	SBEFIFO_ODY(6, 4, 5, 14)
+	SBEFIFO_ODY(7, 4, 5, 15)
+
+	SBEFIFO_ODY(0, 5, 6, 02)
+	SBEFIFO_ODY(1, 5, 6, 03)
+	SBEFIFO_ODY(2, 5, 6, 10)
+	SBEFIFO_ODY(3, 5, 6, 11)
+	SBEFIFO_ODY(4, 5, 6, 14)
+	SBEFIFO_ODY(5, 5, 6, 15)
+	SBEFIFO_ODY(6, 5, 6, 16)
+	SBEFIFO_ODY(7, 5, 6, 17)
+
+	SBEFIFO_ODY(0, 6, 7, 00)
+	SBEFIFO_ODY(1, 6, 7, 01)
+	SBEFIFO_ODY(2, 6, 7, 10)
+	SBEFIFO_ODY(3, 6, 7, 11)
+	SBEFIFO_ODY(4, 6, 7, 12)
+	SBEFIFO_ODY(5, 6, 7, 13)
+	SBEFIFO_ODY(6, 6, 7, 14)
+	SBEFIFO_ODY(7, 6, 7, 15)
+
+	SBEFIFO_ODY(0, 7, 8, 02)
+	SBEFIFO_ODY(1, 7, 8, 03)
+	SBEFIFO_ODY(2, 7, 8, 10)
+	SBEFIFO_ODY(3, 7, 8, 11)
+	SBEFIFO_ODY(4, 7, 8, 14)
+	SBEFIFO_ODY(5, 7, 8, 15)
+	SBEFIFO_ODY(6, 7, 8, 16)
+	SBEFIFO_ODY(7, 7, 8, 17)
 };
