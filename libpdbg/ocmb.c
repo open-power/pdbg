@@ -69,7 +69,7 @@ static int sbefifo_ocmb_putscom(struct ocmb *ocmb, uint64_t addr, uint64_t value
 
 static struct ocmb sbefifo_ocmb = {
 	.target = {
-		.name = "SBE FIFO Chip-op based OCMB",
+		.name = "OCMB",
 		.compatible = "ibm,power-ocmb",
 		.class = "ocmb",
 	},
