@@ -132,6 +132,20 @@ int sbefifo_set_long_timeout(struct sbefifo_context *sctx)
 	return rc;
 }
 
+int sbefifo_set_long_long_timeout(struct sbefifo_context *sctx)
+{
+	unsigned int long_timeout = 120;
+	int rc;
+
+	LOG("long_timeout: %u sec\n", long_timeout);
+	rc = ioctl(sctx->fd, FSI_SBEFIFO_READ_TIMEOUT, &long_timeout);
+	if (rc == -1 && errno == ENOTTY) {
+		/* Do not fail if kernel does not implement ioctl */
+		rc = 0;
+	}
+
+	return rc;
+}
 int sbefifo_reset_timeout(struct sbefifo_context *sctx)
 {
 	unsigned int timeout = 0;

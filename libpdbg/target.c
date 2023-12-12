@@ -367,7 +367,6 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 
 int fsi_ody_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 {
-	printf("fsi_ody_read \n");
 	struct fsi *fsi;
 	int rc;
 	uint64_t addr64 = addr;
@@ -626,8 +625,23 @@ enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
 			return PDBG_TARGET_NONEXISTENT;
 		}
 
+		//probe the chip-op target
+		struct pdbg_target *co_target = get_ody_chipop_target(target);
+		if (co_target && co_target->probe && co_target->probe(co_target)) {
+			co_target->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
+
+		struct pdbg_target *fsi_target = get_ody_fsi_target(target);
+		if (fsi_target && fsi_target->probe && fsi_target->probe(fsi_target)) {
+			fsi_target->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
+		
 		target->status = PDBG_TARGET_ENABLED;
 		sbefifo->target.status = PDBG_TARGET_ENABLED;
+		co_target->status = PDBG_TARGET_ENABLED;
+		fsi_target->status = PDBG_TARGET_ENABLED;
 	}
 	return PDBG_TARGET_ENABLED;
 }
@@ -821,7 +835,6 @@ struct pdbg_target *get_backend_target(const char* class,
 	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc",
 							ocmb));
 	uint32_t ocmb_index = pdbg_target_index(ocmb) % 0x8;
-
 	struct pdbg_target *target;
 	pdbg_for_each_class_target(class, target) {
 		uint32_t index = pdbg_target_index(target);
@@ -844,6 +857,12 @@ struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
 	return target_to_sbefifo(sbefifo_target);
 }
 
+struct chipop_ody *ody_ocmb_to_chipop(struct pdbg_target *target)
+{
+	struct pdbg_target *co_target = get_backend_target("sbefifo-chipop-ody", target);
+	return target_to_chipop_ody(co_target);
+}
+
 struct pdbg_target* get_ody_pib_target(struct pdbg_target *target)
 {
 	return get_backend_target("pib-ody", target);
@@ -853,3 +872,10 @@ struct pdbg_target* get_ody_fsi_target(struct pdbg_target *target)
 {
 	return get_backend_target("fsi-ody", target);
 }
+
+struct pdbg_target* get_ody_chipop_target(struct pdbg_target *target)
+{
+	return get_backend_target("chipop-ody", target);
+}
+
+
