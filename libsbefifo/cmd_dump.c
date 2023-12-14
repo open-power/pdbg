@@ -75,8 +75,7 @@ int sbefifo_get_dump(struct sbefifo_context *sctx, uint8_t type, uint8_t clock, 
 	rc = sbefifo_get_dump_push(type, clock, fa_collect, &msg, &msg_len);
 	if (rc)
 		return rc;
-
-	rc = sbefifo_set_long_timeout(sctx);
+	rc = sbefifo_set_long_long_timeout(sctx);
 	if (rc) {
 		free(msg);
 		return rc;

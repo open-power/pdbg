@@ -761,6 +761,24 @@ int fsi_write(struct pdbg_target *target, uint32_t addr, uint32_t val);
 int fsi_write_mask(struct pdbg_target *target, uint32_t addr, uint32_t val, uint32_t mask);
 
 /**
+ * @brief Read a CFAM FSI register
+ * @param[in] target the pdbg_target
+ * @param[in] addr the CFAM address offset
+ * @param[out] val the read data
+ * @return int 0 if successful, -1 otherwise
+ */
+int fsi_ody_read(struct pdbg_target *target, uint32_t addr, uint32_t *val);
+
+/**
+ * @brief Write a CFAM FSI register
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address offset relative to target
+ * @param[in] val the write data
+ * @return int 0 if successful, -1 otherwise
+ */
+int fsi_ody_write(struct pdbg_target *target, uint32_t addr, uint32_t val);
+
+/**
  * @brief Read a PIB SCOM register
  * @param[in] target the pdbg_target
  * @param[in] addr the address offset relative to target
@@ -777,6 +795,24 @@ int pib_read(struct pdbg_target *target, uint64_t addr, uint64_t *val);
  * @return int 0 if successful, -1 otherwise
  */
 int pib_write(struct pdbg_target *target, uint64_t addr, uint64_t val);
+
+/**
+ * @brief Read a PIB odyssey ocmb SCOM register
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address offset relative to target
+ * @param[out] val the read data
+ * @return int 0 if successful, -1 otherwise
+ */
+int pib_ody_read(struct pdbg_target *target, uint64_t addr, uint64_t *val);
+
+/**
+ * @brief Write a PIB odyssey ocmb SCOM register
+ * @param[in] target the pdbg_target
+ * @param[in] addr the address offset relative to target
+ * @param[out] val the write data
+ * @return int 0 if successful, -1 otherwise
+ */
+int pib_ody_write(struct pdbg_target *target, uint64_t addr, uint64_t val);
 
 /**
  * @brief Write a PIB SCOM register with a mask
@@ -797,6 +833,27 @@ int pib_write_mask(struct pdbg_target *target, uint64_t addr, uint64_t val, uint
  * @return int 0 if successful, -1 otherwise
  */
 int pib_wait(struct pdbg_target *pib_dt, uint64_t addr, uint64_t mask, uint64_t data);
+
+/**
+ * @brief Get the PIB pdbg target for the matching odyssey ocmb chip target
+ * @param[in] target the ocmb pdbg_target
+ * @return pib target
+ */
+struct pdbg_target* get_ody_pib_target(struct pdbg_target* target);
+
+/**
+ * @brief Get the fsi pdbg target for the matching odyssey ocmb chip target
+ * @param[in] target ocmb pdbg_target
+ * @return fsi target
+ */
+struct pdbg_target* get_ody_fsi_target(struct pdbg_target* target);
+
+/**
+ * @brief Get the fsi pdbg target for the matching odyssey ocmb chip target
+ * @param[in] target ocmb pdbg_target
+ * @return fsi target
+ */
+struct pdbg_target* get_ody_chipop_target(struct pdbg_target* target);
 
 /**
  * @brief Read data from i2c device

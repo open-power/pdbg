@@ -170,55 +170,101 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 	return 0;
 }
 
-int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
+int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock,
+		uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
 {
-	struct chipop *chipop;
-	int rc;
+	if(!is_ody_ocmb_chip(target)) {
+		struct chipop *chipop;
+		int rc;
 
-	chipop = pib_to_chipop(target);
-	if (!chipop)
-		return -1;
+		chipop = pib_to_chipop(target);
+		if (!chipop)
+			return -1;
 
-	if (!chipop->dump) {
-		PR_ERROR("dump() not implemented for the target\n");
-		return -1;
+		if (!chipop->dump) {
+			PR_ERROR("dump() not implemented for the target\n");
+			return -1;
+		}
+
+		rc = chipop->dump(chipop, type, clock, fa_collect, data, data_len);
+		if (rc) {
+			PR_ERROR("sbe dump() returned rc=%d\n", rc);
+			return -1;
+		}
+	} else {
+		struct chipop_ody *chipop;
+		int rc;
+		struct pdbg_target *co_target = get_ody_chipop_target(target);
+		chipop = target_to_chipop_ody(co_target);
+		if (!chipop)
+			return -1;
+
+		if (!chipop->dump) {
+			PR_ERROR("dump() not implemented for the target\n");
+			return -1;
+		}
+		rc = chipop->dump(chipop, type, clock, fa_collect, data, data_len);
+		if (rc) {
+			PR_ERROR("sbe dump() returned rc=%d\n", rc);
+			return -1;
+		}
 	}
-
-	rc = chipop->dump(chipop, type, clock, fa_collect, data, data_len);
-	if (rc) {
-		PR_ERROR("sbe dump() returned rc=%d\n", rc);
-		return -1;
-	}
-
 	return 0;
 }
 
-int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc, uint32_t *ffdc_len)
+int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc,
+				uint32_t *ffdc_len)
 {
-	struct chipop *chipop;
-	const uint8_t *data = NULL;
-	uint32_t len = 0;
+	if(!is_ody_ocmb_chip(target)) {
+		struct chipop *chipop;
+		const uint8_t *data = NULL;
+		uint32_t len = 0;
 
-	chipop = pib_to_chipop(target);
-	if (!chipop)
-		return -1;
+		chipop = pib_to_chipop(target);
+		if (!chipop)
+			return -1;
 
-	if (!chipop->ffdc_get) {
-		PR_ERROR("ffdc_get() not implemented for the target\n");
-		return -1;
-	}
+		if (!chipop->ffdc_get) {
+			PR_ERROR("ffdc_get() not implemented for the target\n");
+			return -1;
+		}
 
-	*status = chipop->ffdc_get(chipop, &data, &len);
-	if (data && len > 0) {
-		*ffdc = malloc(len);
-		assert(*ffdc);
-		memcpy(*ffdc, data, len);
-		*ffdc_len = len;
+		*status = chipop->ffdc_get(chipop, &data, &len);
+		if (data && len > 0) {
+			*ffdc = malloc(len);
+			assert(*ffdc);
+			memcpy(*ffdc, data, len);
+			*ffdc_len = len;
+		} else {
+			*ffdc = NULL;
+			*ffdc_len = 0;
+		}
 	} else {
-		*ffdc = NULL;
-		*ffdc_len = 0;
-	}
+		struct chipop_ody *chipop;
+		const uint8_t *data = NULL;
+		uint32_t len = 0;
 
+		struct pdbg_target *co_target = get_ody_chipop_target(target);
+		chipop = target_to_chipop_ody(co_target);
+		if (!chipop)
+			return -1;
+
+		if (!chipop->ffdc_get) {
+			PR_ERROR("ffdc_get() not implemented for the target\n");
+			return -1;
+		}
+
+		*status = chipop->ffdc_get(target, &data, &len);
+		if (data && len > 0) {
+			*ffdc = malloc(len);
+			assert(*ffdc);
+			memcpy(*ffdc, data, len);
+			*ffdc_len = len;
+		} else {
+			*ffdc = NULL;
+			*ffdc_len = 0;
+		}
+	}
 	return 0;
 }
 

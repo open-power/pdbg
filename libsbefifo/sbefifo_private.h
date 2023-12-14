@@ -89,6 +89,7 @@ struct sbefifo_context {
 };
 
 int sbefifo_set_long_timeout(struct sbefifo_context *sctx);
+int sbefifo_set_long_long_timeout(struct sbefifo_context *sctx);
 int sbefifo_reset_timeout(struct sbefifo_context *sctx);
 void sbefifo_debug(const char *fmt, ...);
 
