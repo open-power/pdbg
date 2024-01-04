@@ -627,6 +627,20 @@ bool is_ody_ocmb_chip(struct pdbg_target *target)
 	return false;
 }
 
+bool is_child_of_ody_chip(struct pdbg_target *target)
+{
+	struct pdbg_target *ocmb = NULL;
+	assert(target);
+
+	ocmb = pdbg_target_parent("ocmb", target);
+	/*If it has a parent and the parent is of odyssey ocmb chip
+	return true */
+	if( (ocmb) && (is_ody_ocmb_chip(ocmb)) )
+		return true;
+	
+	return false;
+}
+
 __attribute__((destructor))
 static void pdbg_close_targets(void)
 {

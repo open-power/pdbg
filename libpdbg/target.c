@@ -507,7 +507,17 @@ int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
 {
 	struct ocmb *ocmb;
 
-	assert(pdbg_target_is_class(target, "ocmb"));
+	assert(pdbg_target_is_class(target, "ocmb") || is_child_of_ody_chip(target));
+
+	/*TODO: https://jsw.ibm.com/browse/PFEBMC-1931 
+		Handling Odyssey as a special case can be removed,
+		once device tree hierarchy for ocmb is fixed */
+	/*It is memport or perv under odyssey ocmb, 
+		so we need to translate before calling getscom */
+	if(is_child_of_ody_chip(target))
+	{
+		target = get_class_target_addr(target, "ocmb", &addr);
+	}
 
 	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 		return -1;
@@ -526,7 +536,17 @@ int ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val)
 {
 	struct ocmb *ocmb;
 
-	assert(pdbg_target_is_class(target, "ocmb"));
+	assert(pdbg_target_is_class(target, "ocmb") || is_child_of_ody_chip(target));
+
+	/*TODO: https://jsw.ibm.com/browse/PFEBMC-1931 
+		Handling Odyssey as a special case can be removed,
+		once device tree hierarchy for ocmb is fixed */
+	/*It is memport or perv under odyssey ocmb, 
+		so we need to translate before calling getscom */
+	if(is_child_of_ody_chip(target))
+	{
+		target = get_class_target_addr(target, "ocmb", &addr);
+	}
 
 	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 		return -1;
@@ -590,7 +610,21 @@ struct pdbg_target_class *get_target_class(struct pdbg_target *target)
  are failing, for now treating ody ocmb as special case*/
 enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
 {
-	assert(is_ody_ocmb_chip(target));
+	assert(is_ody_ocmb_chip(target) || is_child_of_ody_chip(target));
+
+	if(is_child_of_ody_chip(target))
+	{
+		if (target && target->probe && target->probe(target)) {
+			target->status = PDBG_TARGET_NONEXISTENT;
+			return PDBG_TARGET_NONEXISTENT;
+		}
+		target->status = PDBG_TARGET_ENABLED;
+
+		//point to the ocmb target and continue, it will not be NULL for sure
+		struct pdbg_target *parent_target = pdbg_target_parent("ocmb", target);
+		return pdbg_target_probe_ody_ocmb(parent_target);
+	}
+
 	if(pdbg_get_backend() == PDBG_BACKEND_KERNEL)
 	{
 		struct pdbg_target *pibtarget = get_ody_pib_target(target);
@@ -667,7 +701,7 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 	/* odyssey ddr5 ocmb is a chip itself but in device tree it is placed
 	   under chiplet, mc, mcc, omi so do not probe parent targets.
 	*/
-	if(is_ody_ocmb_chip(target))
+	if(is_ody_ocmb_chip(target) || is_child_of_ody_chip(target))
 		return pdbg_target_probe_ody_ocmb(target);
 
 	parent = get_parent(target, false);
