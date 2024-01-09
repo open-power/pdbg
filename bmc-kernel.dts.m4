@@ -24,7 +24,7 @@ define(`PIB_ODY',
 		#address-cells = <0x2>;
 		#size-cells = <0x1>;
 		reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
-		compatible = "ibm,kernel-pib-ody";
+		compatible = "ibm,kernel-pib";
 		index = <0x$1>;
 		proc = <0x$2>;
 		port = <$4>;
@@ -146,7 +146,7 @@ define(`HMFSI_ODY',
 	hmfsi-ody@$3$4 {
 		#address-cells = <0x2>;
 		#size-cells = <0x1>;
-		compatible = "ibm,kernel-fsi-ody";
+		compatible = "ibm,kernel-fsi";
 		device-path = "/i2cr$3$4/slave@00:00/raw";
 		reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
 		index = <0x$1>;

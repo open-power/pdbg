@@ -865,12 +865,12 @@ struct chipop_ody *ody_ocmb_to_chipop(struct pdbg_target *target)
 
 struct pdbg_target* get_ody_pib_target(struct pdbg_target *target)
 {
-	return get_backend_target("pib-ody", target);
+	return get_backend_target("pib", target);
 }
 
 struct pdbg_target* get_ody_fsi_target(struct pdbg_target *target)
 {
-	return get_backend_target("fsi-ody", target);
+	return get_backend_target("fsi", target);
 }
 
 struct pdbg_target* get_ody_chipop_target(struct pdbg_target *target)
