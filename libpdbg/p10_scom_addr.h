@@ -97,6 +97,13 @@ static uint64_t set_io_lane(uint64_t addr, uint64_t lane)
     return addr;
 }
 
+static uint64_t set_ody_ring_id(uint64_t addr, uint8_t ring)
+{
+    addr &= 0xFFFFFFFFFFFFC3FFULL;
+    addr |= ((ring & 0xF) << 10);
+    return addr;
+}
+
 static uint8_t get_sat_id(uint64_t addr)
 {
 	return ((addr >> 6) & 0xF);
