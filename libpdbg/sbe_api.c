@@ -308,6 +308,43 @@ static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 	return 0;
 }
 
+static int sbe_ody_read_msg_register(struct pdbg_target *fsi, uint32_t *value)
+{
+	int rc;
+
+	assert(fsi);
+	assert(pdbg_target_is_class(fsi, "fsi-ody"));
+
+	if (pdbg_target_status(fsi) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	rc = fsi_ody_read(fsi, SBE_MSG_REG, value);
+	if (rc) {
+		PR_NOTICE("Failed to read sbe mailbox register\n");
+		return rc;
+	}
+
+	return 0;
+}
+
+static int sbe_ody_read_state_register(struct pdbg_target *fsi, uint32_t *value)
+{
+	int rc;
+
+	assert(fsi);
+	assert(pdbg_target_is_class(fsi, "fsi-ody"));
+
+	if (pdbg_target_status(fsi) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	rc = fsi_ody_read(fsi, SBE_STATE_REG, value);
+	if (rc) {
+		PR_NOTICE("Failed to read sbe state register\n");
+		return rc;
+	}
+	return 0;
+}
+
 static int sbe_write_state_register(struct pdbg_target *pib, uint32_t value)
 {
 	struct pdbg_target *fsi = pdbg_target_parent_virtual("fsi", pib);
@@ -343,6 +380,27 @@ int sbe_get_state(struct pdbg_target *pib, enum sbe_state *state)
 		if (rc)
 			return -1;
 
+		*state = msg.sbe_booted ? SBE_STATE_BOOTED : SBE_STATE_CHECK_CFAM;
+	} else {
+		*state = value;
+	}
+
+	return 0;
+}
+
+int sbe_ody_get_state(struct pdbg_target *fsi, enum sbe_state *state)
+{
+	union sbe_msg_register msg;
+	uint32_t value;
+	int rc;
+
+	rc = sbe_ody_read_state_register(fsi, &value);
+	if (rc)
+		return -1;
+	if (value == SBE_STATE_CHECK_CFAM) {
+		rc = sbe_ody_read_msg_register(fsi, &msg.reg);
+		if (rc)
+			return -1;
 		*state = msg.sbe_booted ? SBE_STATE_BOOTED : SBE_STATE_CHECK_CFAM;
 	} else {
 		*state = value;

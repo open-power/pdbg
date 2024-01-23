@@ -105,6 +105,18 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa
 int sbe_get_state(struct pdbg_target *target, enum sbe_state *state);
 
 /**
+ * @brief Get Odyssey sbe state
+ *
+ * Get the current state of Odyssey SBE
+ *
+ * @param[in] target fsi target to operate on
+ * @param[out] state sbe state
+ *
+ * @return 0 on success, -1 on failure
+ */
+int sbe_ody_get_state(struct pdbg_target *fsi, enum sbe_state *state);
+
+/**
  * @brief Set sbe state
  *
  * Set the current state of SBE
