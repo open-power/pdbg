@@ -320,7 +320,7 @@ static int sbe_ody_read_msg_register(struct pdbg_target *fsi, uint32_t *value)
 
 	rc = fsi_ody_read(fsi, SBE_MSG_REG, value);
 	if (rc) {
-		PR_NOTICE("Failed to read sbe mailbox register\n");
+		PR_NOTICE("Failed to read ody sbe mailbox register\n");
 		return rc;
 	}
 
@@ -339,7 +339,7 @@ static int sbe_ody_read_state_register(struct pdbg_target *fsi, uint32_t *value)
 
 	rc = fsi_ody_read(fsi, SBE_STATE_REG, value);
 	if (rc) {
-		PR_NOTICE("Failed to read sbe state register\n");
+		PR_NOTICE("Failed to read ody sbe state register\n");
 		return rc;
 	}
 	return 0;
@@ -359,6 +359,25 @@ static int sbe_write_state_register(struct pdbg_target *pib, uint32_t value)
 	rc = fsi_write(fsi, SBE_STATE_REG, value);
 	if (rc) {
 		PR_NOTICE("Failed to write sbe state register\n");
+		return rc;
+	}
+
+	return 0;
+}
+
+static int sbe_ody_write_state_register(struct pdbg_target *fsi, uint32_t value)
+{
+	int rc;
+
+	assert(fsi);
+	assert(pdbg_target_is_class(fsi, "fsi-ody"));
+
+	if (pdbg_target_status(fsi) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	rc = fsi_ody_write(fsi, SBE_STATE_REG, value);
+	if (rc) {
+		PR_NOTICE("Failed to write ody sbe state register\n");
 		return rc;
 	}
 
@@ -415,6 +434,18 @@ int sbe_set_state(struct pdbg_target *pib, enum sbe_state state)
 	int rc;
 
 	rc = sbe_write_state_register(pib, value);
+	if (rc)
+		return -1;
+
+	return 0;
+}
+
+int sbe_ody_set_state(struct pdbg_target *fsi, enum sbe_state state)
+{
+	uint32_t value = state;
+	int rc;
+
+	rc = sbe_ody_write_state_register(fsi, value);
 	if (rc)
 		return -1;
 
