@@ -644,6 +644,7 @@ enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
 			return PDBG_TARGET_NONEXISTENT;
 		}
 
+		fsitarget->status = PDBG_TARGET_ENABLED;
 		target->status = PDBG_TARGET_ENABLED;
 		pibtarget->status = PDBG_TARGET_ENABLED;
 	}
