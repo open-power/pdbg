@@ -78,6 +78,28 @@ static struct chipop *pib_to_chipop(struct pdbg_target *pib)
 	return NULL;
 }
 
+static struct chipop *pib_ody_to_chipop_ody(struct pdbg_target *pib)
+{
+	struct pdbg_target *chipop;
+	uint32_t index;
+
+	assert(pdbg_target_is_class(pib, "pib-ody"));
+
+	if (pdbg_target_status(pib) != PDBG_TARGET_ENABLED)
+		return NULL;
+
+	index = pdbg_target_index(pib);
+
+	pdbg_for_each_class_target("chipop-ody", chipop) {
+		if (pdbg_target_index(chipop) != index)
+			continue;
+
+		if (pdbg_target_probe(chipop) == PDBG_TARGET_ENABLED)
+			return target_to_chipop(chipop);
+	}
+
+	return NULL;
+}
 int sbe_istep(struct pdbg_target *target, uint32_t major, uint32_t minor)
 {
 	struct chipop *chipop;
@@ -173,41 +195,33 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
 int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock,
 		uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
 {
-	if(!is_ody_ocmb_chip(target)) {
-		struct chipop *chipop;
-		int rc;
+	struct chipop *chipop;
+	int rc;
 
-		chipop = pib_to_chipop(target);
-		if (!chipop)
-			return -1;
+	if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+		return -1;
 
-		if (!chipop->dump) {
-			PR_ERROR("dump() not implemented for the target\n");
-			return -1;
-		}
-
-		rc = chipop->dump(chipop, type, clock, fa_collect, data, data_len);
-		if (rc) {
-			PR_ERROR("sbe dump() returned rc=%d\n", rc);
-			return -1;
-		}
+	const char* name = pdbg_target_class_name(target);
+	if(strcmp(name, "pib-ody") == 0) {
+		chipop = pib_ody_to_chipop_ody(target);
 	} else {
-		struct chipop_ody *chipop;
-		int rc;
-		struct pdbg_target *co_target = get_ody_chipop_target(target);
-		chipop = target_to_chipop_ody(co_target);
-		if (!chipop)
-			return -1;
+		chipop = pib_to_chipop(target);
+	}
+	if (!chipop)
+		return -1;
 
-		if (!chipop->dump) {
-			PR_ERROR("dump() not implemented for the target\n");
-			return -1;
-		}
-		rc = chipop->dump(chipop, type, clock, fa_collect, data, data_len);
-		if (rc) {
-			PR_ERROR("sbe dump() returned rc=%d\n", rc);
-			return -1;
-		}
+	if (pdbg_target_probe(&chipop->target) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	if (!chipop->dump) {
+		PR_ERROR("dump() not implemented for the target\n");
+		return -1;
+	}
+
+	rc = chipop->dump(chipop, type, clock, fa_collect, data, data_len);
+	if (rc) {
+		PR_ERROR("sbe dump() returned rc=%d\n", rc);
+		return -1;
 	}
 	return 0;
 }
@@ -215,55 +229,40 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock,
 int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc,
 				uint32_t *ffdc_len)
 {
-	if(!is_ody_ocmb_chip(target)) {
-		struct chipop *chipop;
-		const uint8_t *data = NULL;
-		uint32_t len = 0;
+	struct chipop *chipop;
+	const uint8_t *data = NULL;
+	uint32_t len = 0;
 
-		chipop = pib_to_chipop(target);
-		if (!chipop)
-			return -1;
+	if (pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+		return -1;
 
-		if (!chipop->ffdc_get) {
-			PR_ERROR("ffdc_get() not implemented for the target\n");
-			return -1;
-		}
-
-		*status = chipop->ffdc_get(chipop, &data, &len);
-		if (data && len > 0) {
-			*ffdc = malloc(len);
-			assert(*ffdc);
-			memcpy(*ffdc, data, len);
-			*ffdc_len = len;
-		} else {
-			*ffdc = NULL;
-			*ffdc_len = 0;
-		}
+	const char*	name = pdbg_target_class_name(target);
+	if(strcmp(name, "pib-ody") == 0) {
+		chipop = pib_ody_to_chipop_ody(target);
 	} else {
-		struct chipop_ody *chipop;
-		const uint8_t *data = NULL;
-		uint32_t len = 0;
+		chipop = pib_to_chipop(target);
+	}
+	if (!chipop)
+		return -1;
 
-		struct pdbg_target *co_target = get_ody_chipop_target(target);
-		chipop = target_to_chipop_ody(co_target);
-		if (!chipop)
-			return -1;
+	if (pdbg_target_probe(&chipop->target) != PDBG_TARGET_ENABLED) {
+		return -1;
+	}
 
-		if (!chipop->ffdc_get) {
-			PR_ERROR("ffdc_get() not implemented for the target\n");
-			return -1;
-		}
+	if (!chipop->ffdc_get) {
+		PR_ERROR("ffdc_get() not implemented for the target\n");
+		return -1;
+	}
 
-		*status = chipop->ffdc_get(target, &data, &len);
-		if (data && len > 0) {
-			*ffdc = malloc(len);
-			assert(*ffdc);
-			memcpy(*ffdc, data, len);
-			*ffdc_len = len;
-		} else {
-			*ffdc = NULL;
-			*ffdc_len = 0;
-		}
+	*status = chipop->ffdc_get(chipop, &data, &len);
+	if (data && len > 0) {
+		*ffdc = malloc(len);
+		assert(*ffdc);
+		memcpy(*ffdc, data, len);
+		*ffdc_len = len;
+	} else {
+		*ffdc = NULL;
+		*ffdc_len = 0;
 	}
 	return 0;
 }
@@ -288,6 +287,25 @@ static int sbe_read_msg_register(struct pdbg_target *pib, uint32_t *value)
 	return 0;
 }
 
+static int sbe_ody_read_msg_register(struct pdbg_target *fsi, uint32_t *value)
+{
+	int rc;
+
+	assert(fsi);
+	assert(pdbg_target_is_class(fsi, "fsi-ody"));
+
+	if (pdbg_target_status(fsi) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	rc = fsi_ody_read(fsi, SBE_MSG_REG, value);
+	if (rc) {
+		PR_NOTICE("Failed to read ody sbe mailbox register\n");
+		return rc;
+	}
+
+	return 0;
+}
+
 static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 {
 	struct pdbg_target *fsi = pdbg_target_parent_virtual("fsi", pib);
@@ -302,25 +320,6 @@ static int sbe_read_state_register(struct pdbg_target *pib, uint32_t *value)
 	rc = fsi_read(fsi, SBE_STATE_REG, value);
 	if (rc) {
 		PR_NOTICE("Failed to read sbe state register\n");
-		return rc;
-	}
-
-	return 0;
-}
-
-static int sbe_ody_read_msg_register(struct pdbg_target *fsi, uint32_t *value)
-{
-	int rc;
-
-	assert(fsi);
-	assert(pdbg_target_is_class(fsi, "fsi-ody"));
-
-	if (pdbg_target_status(fsi) != PDBG_TARGET_ENABLED)
-		return -1;
-
-	rc = fsi_ody_read(fsi, SBE_MSG_REG, value);
-	if (rc) {
-		PR_NOTICE("Failed to read ody sbe mailbox register\n");
 		return rc;
 	}
 

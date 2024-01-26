@@ -86,13 +86,6 @@ struct chipop {
 };
 #define target_to_chipop(x) container_of(x, struct chipop, target)
 
-struct chipop_ody {
-	struct pdbg_target target;
-	uint32_t (*ffdc_get)(struct pdbg_target *, const uint8_t **, uint32_t *);
-	int (*dump)(struct chipop_ody *, uint8_t, uint8_t, uint8_t, uint8_t **, uint32_t *);
-};
-#define target_to_chipop_ody(x) container_of(x, struct chipop_ody, target)
-
 struct sbefifo {
 	struct pdbg_target target;
 	struct sbefifo_context *sf_ctx;

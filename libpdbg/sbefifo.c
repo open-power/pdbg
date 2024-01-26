@@ -168,39 +168,7 @@ static int sbefifo_op_putmem_pba(struct mem *sbefifo_mem,
 
 static uint32_t sbefifo_op_ffdc_get(struct chipop *chipop, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
-	struct pdbg_target *fsi = pdbg_target_require_parent("fsi", &chipop->target);
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
-	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-	uint32_t status, value = 0;
-	int rc;
-
-	status = sbefifo_ffdc_get(sctx, ffdc, ffdc_len);
-	if (status)
-		return status;
-
-	/* Check if async FFDC is set */
-	rc = fsi_read(fsi, SBE_MSG_REG, &value);
-	if (rc) {
-		PR_NOTICE("Failed to read sbe mailbox register\n");
-		goto end;
-	}
-
-	if ((value & SBE_MSG_ASYNC_FFDC) == SBE_MSG_ASYNC_FFDC) {
-		sbefifo_get_ffdc(sbefifo->sf_ctx);
-		return sbefifo_ffdc_get(sctx, ffdc, ffdc_len);
-	}
-
-end:
-	*ffdc = NULL;
-	*ffdc_len = 0;
-	return 0;
-
-}
-
-static uint32_t sbefifo_op_ody_ffdc_get(struct pdbg_target *ocmb, const uint8_t **ffdc, uint32_t *ffdc_len)
-{
-	struct pdbg_target *fsi = get_ody_fsi_target(ocmb);
-	struct sbefifo *sbefifo = target_to_sbefifo(ocmb);
 	
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint32_t status, value = 0;
@@ -210,11 +178,26 @@ static uint32_t sbefifo_op_ody_ffdc_get(struct pdbg_target *ocmb, const uint8_t 
 	if (status)
 		return status;
 
-	/* Check if async FFDC is set */
-	rc = fsi_ody_read(fsi, SBE_MSG_REG, &value);
-	if (rc) {
-		PR_NOTICE("Failed to read sbe mailbox register\n");
-		goto end;
+	const char* co_class = pdbg_target_class_name(&chipop->target);
+	if (strcmp(co_class, "chipop-ody") == 0)
+	{
+		struct pdbg_target *fsi = pdbg_target_require_parent("fsi-ody", &chipop->target);
+		/* Check if async FFDC is set */
+		rc = fsi_ody_read(fsi, SBE_MSG_REG, &value);
+		if (rc) {
+			PR_NOTICE("Failed to read sbe mailbox register\n");
+			goto end;
+		}
+	}
+	else
+	{
+		struct pdbg_target *fsi = pdbg_target_require_parent("fsi", &chipop->target);
+		/* Check if async FFDC is set */
+		rc = fsi_read(fsi, SBE_MSG_REG, &value);
+		if (rc) {
+			PR_NOTICE("Failed to read sbe mailbox register\n");
+			goto end;
+		}
 	}
 
 	if ((value & SBE_MSG_ASYNC_FFDC) == SBE_MSG_ASYNC_FFDC) {
@@ -226,8 +209,8 @@ end:
 	*ffdc = NULL;
 	*ffdc_len = 0;
 	return 0;
-
 }
+
 static int sbefifo_op_istep(struct chipop *chipop,
 			    uint32_t major, uint32_t minor)
 {
@@ -263,14 +246,8 @@ static int sbefifo_op_mpipl_get_ti_info(struct chipop *chipop, uint8_t **data, u
 	return sbefifo_mpipl_get_ti_info(sctx, data, data_len);
 }
 
-static int sbefifo_op_dump(struct chipop *chipop, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
-{
-	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
-	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-
-	return sbefifo_get_dump(sctx, type, clock, fa_collect, data, data_len);
-}
-static int sbefifo_op_ody_dump(struct chipop_ody *chipop, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
+static int sbefifo_op_dump(struct chipop *chipop, uint8_t type, uint8_t clock,
+		uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
@@ -898,14 +875,14 @@ static struct chipop sbefifo_chipop = {
 };
 DECLARE_HW_UNIT(sbefifo_chipop);
 
-static struct chipop_ody sbefifo_chipop_ody = {
+static struct chipop sbefifo_chipop_ody = {
 	.target = {
 		.name = "SBE FIFO Chip-op engine odyssey",
 		.compatible = "ibm,sbefifo-chipop-ody",
 		.class = "chipop-ody",
 	},
-	.dump = sbefifo_op_ody_dump,
-	.ffdc_get = sbefifo_op_ody_ffdc_get,
+	.dump = sbefifo_op_dump,
+	.ffdc_get = sbefifo_op_ffdc_get,
 };
 DECLARE_HW_UNIT(sbefifo_chipop_ody);
 
@@ -924,6 +901,16 @@ static struct pib sbefifo_pib = {
 	.fd = -1,
 };
 DECLARE_HW_UNIT(sbefifo_pib);
+
+static struct pib sbefifo_pib_ody = {
+	.target = {
+		.name = "SBE FIFO Chip-op based PIB",
+		.compatible = "ibm,sbefifo-pib-ody",
+		.class = "pib-ody",
+	},
+	.fd = -1,
+};
+DECLARE_HW_UNIT(sbefifo_pib_ody);
 
 static struct thread sbefifo_thread = {
 	.target = {
@@ -988,6 +975,7 @@ static void register_sbefifo(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_chipop_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_chipop_ody_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_pib_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_pib_ody_hw_unit);
 	pdbg_hwunit_register(PDBG_BACKEND_SBEFIFO, &sbefifo_thread_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_mem_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &sbefifo_pba_hw_unit);

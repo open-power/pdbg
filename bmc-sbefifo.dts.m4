@@ -96,18 +96,18 @@ dnl HMFSI_ODY([index], [proc], [path-index], [port])
 dnl
 define(`HMFSI_ODY',
 `
-    hmfsi-ody@$3$4 {
-        #address-cells = <0x2>;
-        #size-cells = <0x1>;
-        compatible = "ibm,kernel-fsi-ody";
-        device-path = "/i2cr$3$4/slave@00:00/raw";
-        reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
-        index = <0x$1>;
-        proc = <0x$2>;
-        port = <$4>;
+	hmfsi-ody@$3$4 {
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		compatible = "ibm,kernel-fsi-ody";
+		device-path = "/i2cr$3$4/slave@00:00/raw";
+		reg = <0x0 0x$1 0x8000>; /*dummy to fix dts warning*/
+		index = <0x$1>;
+		proc = <0x$2>;
+		port = <$4>;
 
-        SBEFIFO_ODY($1, $2, $3, $4)
-    };
+		SBEFIFO_ODY($1, $2, $3, $4)
+	};
 ')dnl
 
 dnl
@@ -115,7 +115,7 @@ dnl SBEFIFO_ODY([index], [proc], [path-index], [port] [])
 dnl
 define(`SBEFIFO_ODY',
 `
-	sbefifo-ody@$3$4{ /* Bogus address */
+	sbefifo@2400{ /* Bogus address */
 		#address-cells = <0x2>;
 		#size-cells = <0x1>;
 		compatible = "ibm,kernel-sbefifo-ody";
@@ -125,7 +125,15 @@ define(`SBEFIFO_ODY',
 		port = <$4>;
 		device-path = "/dev/sbefifo$3$4";
 
-		sbefifo-chipop-ody {
+		sbefifo-pib {
+			#address-cells = <0x2>;
+			#size-cells = <0x1>;
+			compatible = "ibm,sbefifo-pib-ody";
+			index = <0x$1>;
+			system-path = "/proc$2/ocmb$1/pib";
+		};
+
+		sbefifo-chipop {
 			compatible = "ibm,sbefifo-chipop-ody";
 			index = <0x$1>;
 			proc = <0x$2>;
@@ -195,67 +203,67 @@ define(`BMC_I2CBUS',
 	HMFSI_ODY(6, 0, 1, 14)
 	HMFSI_ODY(7, 0, 1, 15)
 
-	HMFSI_ODY(0, 1, 2, 02)
-	HMFSI_ODY(1, 1, 2, 03)
-	HMFSI_ODY(2, 1, 2, 10)
-	HMFSI_ODY(3, 1, 2, 11)
-	HMFSI_ODY(4, 1, 2, 14)
-	HMFSI_ODY(5, 1, 2, 15)
-	HMFSI_ODY(6, 1, 2, 16)
-	HMFSI_ODY(7, 1, 2, 17)
+	HMFSI_ODY(18, 1, 2, 02)
+	HMFSI_ODY(19, 1, 2, 03)
+	HMFSI_ODY(1a, 1, 2, 10)
+	HMFSI_ODY(1b, 1, 2, 11)
+	HMFSI_ODY(1c, 1, 2, 14)
+	HMFSI_ODY(1d, 1, 2, 15)
+	HMFSI_ODY(1e, 1, 2, 16)
+	HMFSI_ODY(1f, 1, 2, 17)
 
 
-	HMFSI_ODY(0, 2, 3, 00)
-	HMFSI_ODY(1, 2, 3, 01)
-	HMFSI_ODY(2, 2, 3, 10)
-	HMFSI_ODY(3, 2, 3, 11)
-	HMFSI_ODY(4, 2, 3, 12)
-	HMFSI_ODY(5, 2, 3, 13)
-	HMFSI_ODY(6, 2, 3, 14)
-	HMFSI_ODY(7, 2, 3, 15)
+	HMFSI_ODY(20, 2, 3, 00)
+	HMFSI_ODY(21, 2, 3, 01)
+	HMFSI_ODY(22, 2, 3, 10)
+	HMFSI_ODY(23, 2, 3, 11)
+	HMFSI_ODY(24, 2, 3, 12)
+	HMFSI_ODY(25, 2, 3, 13)
+	HMFSI_ODY(26, 2, 3, 14)
+	HMFSI_ODY(27, 2, 3, 15)
 
-	HMFSI_ODY(0, 3, 4, 02)
-	HMFSI_ODY(1, 3, 4, 03)
-	HMFSI_ODY(2, 3, 4, 10)
-	HMFSI_ODY(3, 3, 4, 11)
-	HMFSI_ODY(4, 3, 4, 14)
-	HMFSI_ODY(5, 3, 4, 15)
-	HMFSI_ODY(6, 3, 4, 16)
-	HMFSI_ODY(7, 3, 4, 17)
+	HMFSI_ODY(38, 3, 4, 02)
+	HMFSI_ODY(39, 3, 4, 03)
+	HMFSI_ODY(3a, 3, 4, 10)
+	HMFSI_ODY(3b, 3, 4, 11)
+	HMFSI_ODY(3c, 3, 4, 14)
+	HMFSI_ODY(3d, 3, 4, 15)
+	HMFSI_ODY(3e, 3, 4, 16)
+	HMFSI_ODY(3f, 3, 4, 17)
 
-	HMFSI_ODY(0, 4, 5, 00)
-	HMFSI_ODY(1, 4, 5, 01)
-	HMFSI_ODY(2, 4, 5, 10)
-	HMFSI_ODY(3, 4, 5, 11)
-	HMFSI_ODY(4, 4, 5, 12)
-	HMFSI_ODY(5, 4, 5, 13)
-	HMFSI_ODY(6, 4, 5, 14)
-	HMFSI_ODY(7, 4, 5, 15)
+	HMFSI_ODY(40, 4, 5, 00)
+	HMFSI_ODY(41, 4, 5, 01)
+	HMFSI_ODY(42, 4, 5, 10)
+	HMFSI_ODY(43, 4, 5, 11)
+	HMFSI_ODY(44, 4, 5, 12)
+	HMFSI_ODY(45, 4, 5, 13)
+	HMFSI_ODY(46, 4, 5, 14)
+	HMFSI_ODY(47, 4, 5, 15)
 
-	HMFSI_ODY(0, 5, 6, 02)
-	HMFSI_ODY(1, 5, 6, 03)
-	HMFSI_ODY(2, 5, 6, 10)
-	HMFSI_ODY(3, 5, 6, 11)
-	HMFSI_ODY(4, 5, 6, 14)
-	HMFSI_ODY(5, 5, 6, 15)
-	HMFSI_ODY(6, 5, 6, 16)
-	HMFSI_ODY(7, 5, 6, 17)
+	HMFSI_ODY(58, 5, 6, 02)
+	HMFSI_ODY(59, 5, 6, 03)
+	HMFSI_ODY(5a, 5, 6, 10)
+	HMFSI_ODY(5b, 5, 6, 11)
+	HMFSI_ODY(5c, 5, 6, 14)
+	HMFSI_ODY(5d, 5, 6, 15)
+	HMFSI_ODY(5e, 5, 6, 16)
+	HMFSI_ODY(5f, 5, 6, 17)
 
-	HMFSI_ODY(0, 6, 7, 00)
-	HMFSI_ODY(1, 6, 7, 01)
-	HMFSI_ODY(2, 6, 7, 10)
-	HMFSI_ODY(3, 6, 7, 11)
-	HMFSI_ODY(4, 6, 7, 12)
-	HMFSI_ODY(5, 6, 7, 13)
-	HMFSI_ODY(6, 6, 7, 14)
-	HMFSI_ODY(7, 6, 7, 15)
+	HMFSI_ODY(60, 6, 7, 00)
+	HMFSI_ODY(61, 6, 7, 01)
+	HMFSI_ODY(62, 6, 7, 10)
+	HMFSI_ODY(63, 6, 7, 11)
+	HMFSI_ODY(64, 6, 7, 12)
+	HMFSI_ODY(65, 6, 7, 13)
+	HMFSI_ODY(66, 6, 7, 14)
+	HMFSI_ODY(67, 6, 7, 15)
 
-	HMFSI_ODY(0, 7, 8, 02)
-	HMFSI_ODY(1, 7, 8, 03)
-	HMFSI_ODY(2, 7, 8, 10)
-	HMFSI_ODY(3, 7, 8, 11)
-	HMFSI_ODY(4, 7, 8, 14)
-	HMFSI_ODY(5, 7, 8, 15)
-	HMFSI_ODY(6, 7, 8, 16)
-	HMFSI_ODY(7, 7, 8, 17)
+	HMFSI_ODY(78, 7, 8, 02)
+	HMFSI_ODY(79, 7, 8, 03)
+	HMFSI_ODY(7a, 7, 8, 10)
+	HMFSI_ODY(7b, 7, 8, 11)
+	HMFSI_ODY(7c, 7, 8, 14)
+	HMFSI_ODY(7d, 7, 8, 15)
+	HMFSI_ODY(7e, 7, 8, 16)
+	HMFSI_ODY(7f, 7, 8, 17)
 };

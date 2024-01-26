@@ -19,17 +19,18 @@ struct list_head target_classes = LIST_HEAD_INIT(target_classes);
 static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, const char *name, uint64_t *addr)
 {
 	uint64_t old_addr = *addr;
-
 	/* Check class */
 	while (strcmp(target->class, name)) {
 		if (target->translate) {
 			*addr = target->translate(target, *addr);
 			target = target_parent(name, target, false);
+			
 			assert(target);
 			break;
 		} else {
 			*addr += pdbg_target_address(target, NULL);
 		}
+
 
 		/* Keep walking the tree translating addresses */
 		target = get_parent(target, false);
@@ -125,16 +126,14 @@ static int pib_indirect_write(struct pib *pib, uint64_t addr, uint64_t data)
 
 	return 0;
 }
-
-int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
+int _pib_read(struct pdbg_target *pib_dt, const char* class, uint64_t addr, uint64_t *data)
 {
 	struct pib *pib;
 	uint64_t target_addr = addr;
 	int rc;
+	pib_dt = get_class_target_addr(pib_dt, class, &target_addr);
 
-	pib_dt = get_class_target_addr(pib_dt, "pib", &target_addr);
-
-	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
+	if (pdbg_target_probe(pib_dt) != PDBG_TARGET_ENABLED)
 		return -1;
 
 	pib = target_to_pib(pib_dt);
@@ -149,96 +148,61 @@ int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
 	else
 		rc = pib->read(pib, target_addr, data);
 
-	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
+	PR_NOTICE("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
 		 rc, target_addr, *data, pdbg_target_path(&pib->target));
 
 	return rc;
 }
 
+int pib_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
+{
+    return _pib_read(pib_dt, "pib", addr, data);
+}
+
 int pib_ody_read(struct pdbg_target *pib_dt, uint64_t addr, uint64_t *data)
+{
+    return _pib_read(pib_dt, "pib-ody", addr, data);
+}
+
+int _pib_write(struct pdbg_target *pib_dt, const char* class, uint64_t addr, uint64_t data)
 {
 	struct pib *pib;
 	uint64_t target_addr = addr;
 	int rc;
-	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
+
+	pib_dt = get_class_target_addr(pib_dt, class, &target_addr);
+
+	if (pdbg_target_probe(pib_dt) != PDBG_TARGET_ENABLED)
 		return -1;
 
 	pib = target_to_pib(pib_dt);
 
-	if (!pib->read) {
-		PR_ERROR("read() not implemented for the target\n");
+	if (!pib->write) {
+		PR_ERROR("write() not implemented for the target\n");
 		return -1;
 	}
 
+	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
+		 target_addr, data);
 	if (target_addr & PPC_BIT(0))
-		rc = pib_indirect_read(pib, target_addr, data);
+		rc = pib_indirect_write(pib, target_addr, data);
 	else
-		rc = pib->read(pib, target_addr, data);
+		rc = pib->write(pib, target_addr, data);
 
-	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
-		 rc, target_addr, *data, pdbg_target_path(&pib->target));
+	PR_NOTICE("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
+		 rc, target_addr, data, pdbg_target_path(&pib->target));
 
 	return rc;
 }
 
 int pib_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 {
-	struct pib *pib;
-	uint64_t target_addr = addr;
-	int rc;
-
-	pib_dt = get_class_target_addr(pib_dt, "pib", &target_addr);
-
-	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
-		return -1;
-
-	pib = target_to_pib(pib_dt);
-
-	if (!pib->write) {
-		PR_ERROR("write() not implemented for the target\n");
-		return -1;
-	}
-
-	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
-		 target_addr, data);
-	if (target_addr & PPC_BIT(0))
-		rc = pib_indirect_write(pib, target_addr, data);
-	else
-		rc = pib->write(pib, target_addr, data);
-
-	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
-		 rc, target_addr, data, pdbg_target_path(&pib->target));
-
-	return rc;
+    return _pib_write(pib_dt, "pib", addr, data);
 }
 
 int pib_ody_write(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data)
 {
-	struct pib *pib;
-	uint64_t target_addr = addr;
-	int rc;
-
-	if (pdbg_target_status(pib_dt) != PDBG_TARGET_ENABLED)
-		return -1;
-
-	pib = target_to_pib(pib_dt);
-
-	if (!pib->write) {
-		PR_ERROR("write() not implemented for the target\n");
-		return -1;
-	}
-
-	PR_DEBUG("addr:0x%08" PRIx64 " data:0x%016" PRIx64 "\n",
-		 target_addr, data);
-	if (target_addr & PPC_BIT(0))
-		rc = pib_indirect_write(pib, target_addr, data);
-	else
-		rc = pib->write(pib, target_addr, data);
-
-	PR_DEBUG("rc = %d, addr = 0x%016" PRIx64 ", data = 0x%016" PRIx64 ", target = %s\n",
-		 rc, target_addr, data, pdbg_target_path(&pib->target));
-
-	return rc;
+    return _pib_write(pib_dt, "pib-ody", addr, data);
 }
 
 int pib_write_mask(struct pdbg_target *pib_dt, uint64_t addr, uint64_t data, uint64_t mask)
@@ -325,13 +289,17 @@ int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data)
 	return opb->write(opb, addr64, data);
 }
 
-int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
+static int _fsi_read(struct pdbg_target *fsi_dt, const char* class, uint32_t addr, uint32_t *data)
 {
 	struct fsi *fsi;
 	int rc;
 	uint64_t addr64 = addr;
 
-	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
+	fsi_dt = get_class_target_addr(fsi_dt, class, &addr64);
+
+	if (pdbg_target_probe(fsi_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+	
 	fsi = target_to_fsi(fsi_dt);
 
 	if (!fsi->read) {
@@ -340,67 +308,54 @@ int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 	}
 
 	rc = fsi->read(fsi, addr64, data);
-	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+	PR_NOTICE("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
 		 rc, addr64, *data, pdbg_target_path(&fsi->target));
+
+	return rc;
+}
+
+
+int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
+{
+	return _fsi_read(fsi_dt, "fsi", addr, data);
+}
+
+int fsi_ody_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
+{
+	return _fsi_read(fsi_dt, "fsi-ody", addr, data);
+}
+
+static int _fsi_write(struct pdbg_target *fsi_dt, const char* class, uint32_t addr, uint32_t data)
+{
+	struct fsi *fsi;
+	int rc;
+	uint64_t addr64 = addr;
+
+	fsi_dt = get_class_target_addr(fsi_dt, class, &addr64);
+	if (pdbg_target_probe(fsi_dt) != PDBG_TARGET_ENABLED)
+		return -1;
+
+	fsi = target_to_fsi(fsi_dt);
+
+	if (!fsi->write) {
+		PR_ERROR("write() not implemented for the target\n");
+		return -1;
+	}
+
+	rc = fsi->write(fsi, addr64, data);
+	PR_NOTICE("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
+		 rc, addr64, data, pdbg_target_path(&fsi->target));
 	return rc;
 }
 
 int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 {
-	struct fsi *fsi;
-	int rc;
-	uint64_t addr64 = addr;
-
-	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
-	fsi = target_to_fsi(fsi_dt);
-
-	if (!fsi->write) {
-		PR_ERROR("write() not implemented for the target\n");
-		return -1;
-	}
-
-	rc = fsi->write(fsi, addr64, data);
-	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
-		 rc, addr64, data, pdbg_target_path(&fsi->target));
-	return rc;
-}
-
-int fsi_ody_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
-{
-	struct fsi *fsi;
-	int rc;
-	uint64_t addr64 = addr;
-
-	fsi = target_to_fsi(fsi_dt);
-
-	if (!fsi->read) {
-		PR_ERROR("read() not implemented for the target\n");
-		return -1;
-	}
-
-	rc = fsi->read(fsi, addr64, data);
-	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
-		 rc, addr64, *data, pdbg_target_path(&fsi->target));
-	return rc;
+	return _fsi_write(fsi_dt, "fsi", addr, data);
 }
 
 int fsi_ody_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 {
-	struct fsi *fsi;
-	int rc;
-	uint64_t addr64 = addr;
-
-	fsi = target_to_fsi(fsi_dt);
-
-	if (!fsi->write) {
-		PR_ERROR("write() not implemented for the target\n");
-		return -1;
-	}
-
-	rc = fsi->write(fsi, addr64, data);
-	PR_DEBUG("rc = %d, addr = 0x%05" PRIx64 ", data = 0x%08" PRIx32 ", target = %s\n",
-		 rc, addr64, data, pdbg_target_path(&fsi->target));
-	return rc;
+	return _fsi_write(fsi_dt, "fsi-ody", addr, data);
 }
 
 int fsi_write_mask(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data, uint32_t mask)
@@ -507,17 +462,7 @@ int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
 {
 	struct ocmb *ocmb;
 
-	assert(pdbg_target_is_class(target, "ocmb") || is_child_of_ody_chip(target));
-
-	/*TODO: https://jsw.ibm.com/browse/PFEBMC-1931 
-		Handling Odyssey as a special case can be removed,
-		once device tree hierarchy for ocmb is fixed */
-	/*It is memport or perv under odyssey ocmb, 
-		so we need to translate before calling getscom */
-	if(is_child_of_ody_chip(target))
-	{
-		target = get_class_target_addr(target, "ocmb", &addr);
-	}
+	target = get_class_target_addr(target, "ocmb", &addr);
 
 	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 		return -1;
@@ -536,17 +481,7 @@ int ocmb_putscom(struct pdbg_target *target, uint64_t addr, uint64_t val)
 {
 	struct ocmb *ocmb;
 
-	assert(pdbg_target_is_class(target, "ocmb") || is_child_of_ody_chip(target));
-
-	/*TODO: https://jsw.ibm.com/browse/PFEBMC-1931 
-		Handling Odyssey as a special case can be removed,
-		once device tree hierarchy for ocmb is fixed */
-	/*It is memport or perv under odyssey ocmb, 
-		so we need to translate before calling getscom */
-	if(is_child_of_ody_chip(target))
-	{
-		target = get_class_target_addr(target, "ocmb", &addr);
-	}
+	target = get_class_target_addr(target, "ocmb", &addr);
 
 	if (pdbg_target_status(target) != PDBG_TARGET_ENABLED)
 		return -1;
@@ -605,81 +540,6 @@ struct pdbg_target_class *get_target_class(struct pdbg_target *target)
 	return target_class;
 }
 
-/*ddr5 ocmb is itself a chip but in device tree as it is kept under
- perv, mc, mcc, omi so probing ocmb will probe its parent chips which
- are failing, for now treating ody ocmb as special case*/
-enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
-{
-	assert(is_ody_ocmb_chip(target) || is_child_of_ody_chip(target));
-
-	if(is_child_of_ody_chip(target))
-	{
-		if (target && target->probe && target->probe(target)) {
-			target->status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-		target->status = PDBG_TARGET_ENABLED;
-
-		//point to the ocmb target and continue, it will not be NULL for sure
-		struct pdbg_target *parent_target = pdbg_target_parent("ocmb", target);
-		return pdbg_target_probe_ody_ocmb(parent_target);
-	}
-
-	if(pdbg_get_backend() == PDBG_BACKEND_KERNEL)
-	{
-		struct pdbg_target *pibtarget = get_ody_pib_target(target);
-		if (pibtarget && pibtarget->probe && pibtarget->probe(pibtarget)) {
-			pibtarget->status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-
-		struct pdbg_target *fsitarget = get_ody_fsi_target(target);
-		if (fsitarget && fsitarget->probe && fsitarget->probe(fsitarget)) {
-			fsitarget->status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-
-		if (target && target->probe && target->probe(target)) {
-			target->status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-
-		fsitarget->status = PDBG_TARGET_ENABLED;
-		target->status = PDBG_TARGET_ENABLED;
-		pibtarget->status = PDBG_TARGET_ENABLED;
-	}
-	else
-	{
-		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(target);
-		if (sbefifo && sbefifo->target.probe && sbefifo->target.probe(&sbefifo->target)) {
-			sbefifo->target.status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-		if (target && target->probe && target->probe(target)) {
-			target->status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-
-		//probe the chip-op target
-		struct pdbg_target *co_target = get_ody_chipop_target(target);
-		if (co_target && co_target->probe && co_target->probe(co_target)) {
-			co_target->status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-
-		struct pdbg_target *fsi_target = get_ody_fsi_target(target);
-		if (fsi_target && fsi_target->probe && fsi_target->probe(fsi_target)) {
-			fsi_target->status = PDBG_TARGET_NONEXISTENT;
-			return PDBG_TARGET_NONEXISTENT;
-		}
-		
-		target->status = PDBG_TARGET_ENABLED;
-		sbefifo->target.status = PDBG_TARGET_ENABLED;
-		co_target->status = PDBG_TARGET_ENABLED;
-		fsi_target->status = PDBG_TARGET_ENABLED;
-	}
-	return PDBG_TARGET_ENABLED;
-}
 
 /* We walk the tree root down disabling targets which might/should
  * exist but don't */
@@ -689,21 +549,13 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 	enum pdbg_target_status status;
 
 	assert(target);
-
 	status = pdbg_target_status(target);
 	assert(status != PDBG_TARGET_RELEASED);
-
 	if (status == PDBG_TARGET_DISABLED || status == PDBG_TARGET_NONEXISTENT
 	    || status == PDBG_TARGET_ENABLED)
 		/* We've already tried probing this target and by assumption
 		 * it's status won't have changed */
 		   return status;
-
-	/* odyssey ddr5 ocmb is a chip itself but in device tree it is placed
-	   under chiplet, mc, mcc, omi so do not probe parent targets.
-	*/
-	if(is_ody_ocmb_chip(target) || is_child_of_ody_chip(target))
-		return pdbg_target_probe_ody_ocmb(target);
 
 	parent = get_parent(target, false);
 	if (parent) {
@@ -836,15 +688,15 @@ struct pdbg_target *target_to_virtual(struct pdbg_target *target, bool strict)
 
 void clear_target_classes()
 {
-    struct pdbg_target_class *child = NULL;
-    struct pdbg_target_class *next = NULL;
-    list_for_each_safe(&target_classes, child, next, class_head_link)
-    {
-        list_del_from(&target_classes, &child->class_head_link);
-        if (child)
-            free(child);
-        child = NULL;
-    }
+	struct pdbg_target_class *child = NULL;
+	struct pdbg_target_class *next = NULL;
+	list_for_each_safe(&target_classes, child, next, class_head_link)
+	{
+		list_del_from(&target_classes, &child->class_head_link);
+		if (child)
+			free(child);
+		child = NULL;
+	}
 }
 
 struct pdbg_target *get_backend_target(const char* class,
@@ -863,21 +715,13 @@ struct pdbg_target *get_backend_target(const char* class,
 
 	//ody ocmb system device tree targets need to be mapped to backend
 	//ody sbefifo device tree targets for communication with the SBE instance.
-	//Mapping is done based on proc, ocmb chip index of the ody ocmb system target
-	//with the proc, ocmb index and port number defined in the backend device
-	//tree
-
-	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc",
-							ocmb));
-	uint32_t ocmb_index = pdbg_target_index(ocmb) % 0x8;
+	
+	//map the ody backend target index to that of the ocmb index
+	uint32_t ocmb_index = pdbg_target_index(ocmb);
 	struct pdbg_target *target;
 	pdbg_for_each_class_target(class, target) {
-		uint32_t index = pdbg_target_index(target);
-		uint32_t proc = 0;
-		if(!pdbg_target_u32_property(target, "proc", &proc)) {
-			if(index == ocmb_index && proc == ocmb_proc) {
-				return target;
-			}
+		if(pdbg_target_index(target) == ocmb_index) {
+			return target;
 		}
 	}
 
@@ -886,16 +730,9 @@ struct pdbg_target *get_backend_target(const char* class,
 	return NULL;
 }
 
-struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target)
+struct pdbg_target* get_ody_sbefifo_target(struct pdbg_target *target)
 {
-	struct pdbg_target *sbefifo_target = get_backend_target("sbefifo-ody", target);
-	return target_to_sbefifo(sbefifo_target);
-}
-
-struct chipop_ody *ody_ocmb_to_chipop(struct pdbg_target *target)
-{
-	struct pdbg_target *co_target = get_backend_target("sbefifo-chipop-ody", target);
-	return target_to_chipop_ody(co_target);
+	return get_backend_target("sbefifo-ody", target);
 }
 
 struct pdbg_target* get_ody_pib_target(struct pdbg_target *target)

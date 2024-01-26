@@ -21,12 +21,13 @@
 
 static struct sbefifo *ocmb_to_sbefifo(struct ocmb *ocmb)
 {
-	struct pdbg_target *pib = pdbg_target_require_parent("pib", &ocmb->target);
 	struct pdbg_target *target;
 	struct sbefifo *sbefifo = NULL;
-
+	uint32_t index = pdbg_target_index(&ocmb->target);
+	//first digit is proc second digit is ocmb instance number
+	uint32_t proc_index = index >> 4;
 	pdbg_for_each_class_target("sbefifo", target) {
-		if (pdbg_target_index(target) == pdbg_target_index(pib)) {
+		if (pdbg_target_index(target) == proc_index) {
 			sbefifo = target_to_sbefifo(target);
 			break;
 		}
@@ -39,17 +40,25 @@ static struct sbefifo *ocmb_to_sbefifo(struct ocmb *ocmb)
 
 static int sbefifo_ocmb_getscom(struct ocmb *ocmb, uint64_t addr, uint64_t *value)
 {
+	if(pdbg_target_probe(&ocmb->target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	if(is_ody_ocmb_chip(&ocmb->target)) {
-		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(&ocmb->target);
+		struct pdbg_target *target = get_ody_sbefifo_target(&ocmb->target);
+		if(pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			return -1;
+
+		struct sbefifo *sbefifo = target_to_sbefifo(target);
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 		return sbefifo_scom_get(sctx, addr, value);
 	} else	{
 		struct sbefifo *sbefifo = ocmb_to_sbefifo(ocmb);
+		if(pdbg_target_probe(&sbefifo->target) != PDBG_TARGET_ENABLED)
+			return -1;
+
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-		uint8_t instance_id;
-
-		instance_id = pdbg_target_index(&ocmb->target) & 0xff;
-
+		// ocmb id range for a processor chip is 0x0 to 0xf
+		uint8_t instance_id = pdbg_target_index(&ocmb->target) % 16;
 		return sbefifo_hw_register_get(sctx,
 						SBEFIFO_TARGET_TYPE_OCMB,
 						instance_id,
@@ -60,17 +69,26 @@ static int sbefifo_ocmb_getscom(struct ocmb *ocmb, uint64_t addr, uint64_t *valu
 
 static int sbefifo_ocmb_putscom(struct ocmb *ocmb, uint64_t addr, uint64_t value)
 {
+	if(pdbg_target_probe(&ocmb->target) != PDBG_TARGET_ENABLED)
+		return -1;
+
 	if(is_ody_ocmb_chip(&ocmb->target))	{
-		struct sbefifo *sbefifo = ody_ocmb_to_sbefifo(&ocmb->target);
+		struct pdbg_target *target = get_ody_sbefifo_target(&ocmb->target);
+		if(pdbg_target_probe(target) != PDBG_TARGET_ENABLED)
+			return -1;
+
+		struct sbefifo *sbefifo = target_to_sbefifo(target);
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 		return sbefifo_scom_put(sctx, addr, value);
+
 	} else {
 		struct sbefifo *sbefifo = ocmb_to_sbefifo(ocmb);
+		if(pdbg_target_probe(&sbefifo->target) != PDBG_TARGET_ENABLED)
+			return -1;
+
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-		uint8_t instance_id;
-
-		instance_id = pdbg_target_index(&ocmb->target) & 0xff;
-
+		// ocmb id range for a processor chip is 0x0 to 0xf
+		uint8_t instance_id = pdbg_target_index(&ocmb->target) %  16;
 		return sbefifo_hw_register_put(sctx,
 						SBEFIFO_TARGET_TYPE_OCMB,
 						instance_id,

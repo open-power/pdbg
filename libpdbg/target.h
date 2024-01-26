@@ -117,26 +117,10 @@ void clear_target_classes();
 bool is_ody_ocmb_chip(struct pdbg_target *target);
 
 /**
- * @brief Return true if given target is child of odyssey chip
- * @param[in] target - pdbg target
- *
- * @return true if target is of child of odyssey ocmb chip
+ * @brief Get the SBEFIFO pdbg target for the matching odyssey ocmb chip target
+ * @param[in] target the ocmb pdbg_target
+ * @return sbefifo target
  */
-bool is_child_of_ody_chip(struct pdbg_target *target);
+struct pdbg_target* get_ody_sbefifo_target(struct pdbg_target* target);
 
-/**
- * @brief Return matching backend sbefifo target for ocmb target
- * @param[in] target - pdbg target
- *
- * @return backend sbefifo odyssey target
- */
-struct sbefifo *ody_ocmb_to_sbefifo(struct pdbg_target *target);
-
-/**
- * @brief Return matching backend sbefifo chipop target for ocmb target
- * @param[in] target - pdbg target
- *
- * @return backend sbefifo odyssey chipop target
- */
-struct chipop_ody *ody_ocmb_to_chipop(struct pdbg_target *target);
 #endif

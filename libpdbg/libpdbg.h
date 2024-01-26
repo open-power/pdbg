@@ -849,9 +849,9 @@ struct pdbg_target* get_ody_pib_target(struct pdbg_target* target);
 struct pdbg_target* get_ody_fsi_target(struct pdbg_target* target);
 
 /**
- * @brief Get the fsi pdbg target for the matching odyssey ocmb chip target
+ * @brief Get the sbeffifo chipop pdbg target for the matching odyssey ocmb chip target
  * @param[in] target ocmb pdbg_target
- * @return fsi target
+ * @return co target
  */
 struct pdbg_target* get_ody_chipop_target(struct pdbg_target* target);
 
