@@ -869,13 +869,15 @@ struct pdbg_target *get_backend_target(const char* class,
 
 	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc",
 							ocmb));
-	uint32_t ocmb_index = pdbg_target_index(ocmb) % 0x8;
+	uint32_t fapi_pos = 0;
+	pdbg_target_get_attribute(ocmb, "ATTR_FAPI_POS", 4, 1, &fapi_pos);
+	fapi_pos = fapi_pos % 0x8;
 	struct pdbg_target *target;
 	pdbg_for_each_class_target(class, target) {
 		uint32_t index = pdbg_target_index(target);
 		uint32_t proc = 0;
 		if(!pdbg_target_u32_property(target, "proc", &proc)) {
-			if(index == ocmb_index && proc == ocmb_proc) {
+			if(index == fapi_pos && proc == ocmb_proc) {
 				return target;
 			}
 		}
