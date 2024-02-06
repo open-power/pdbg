@@ -40,13 +40,16 @@
 #include "p9r-fsi.dt.h"
 #include "p9z-fsi.dt.h"
 #include "bmc-kernel.dt.h"
+#include "bmc-kernel-rainier.dt.h"
+#include "bmc-kernel-everest.dt.h"
 #include "p8-host.dt.h"
 #include "p9-host.dt.h"
 #include "p10-host.dt.h"
 #include "p8-cronus.dt.h"
 #include "cronus.dt.h"
 #include "bmc-sbefifo.dt.h"
-
+#include "bmc-sbefifo-rainier.dt.h"
+#include "bmc-sbefifo-everest.dt.h"
 #include "p8.dt.h"
 #include "p9.dt.h"
 #include "p10.dt.h"
@@ -60,6 +63,9 @@ static const char *pdbg_backend_option;
 
 static const uint16_t ODYSSEY_CHIP_ID = 0x60C0;
 static const uint8_t ATTR_TYPE_OCMB_CHIP = 75;
+static const char* RAINIER_2U = "Rainier 2U";
+static const char* RAINIER_4U = "Rainier 4U";
+static const char* EVEREST = "Everest";
 
 static struct pdbg_dtb pdbg_dtb = {
 	.backend = {
@@ -105,6 +111,44 @@ static bool get_chipid(uint32_t *chip_id)
 
 	*chip_id = (cfam_id >> 4) & 0xff;
 	return true;
+}
+
+static char* get_p10_system_type()
+{
+	FILE* file = fopen("/proc/device-tree/model", "r");
+	if (file == NULL) {
+		pdbg_log(PDBG_ERROR, "Unable to read device-tree model file: %s", strerror(errno));
+		return "";
+	}
+
+	// Determine the size of the file
+	fseek(file, 0, SEEK_END);
+	long file_size = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	// Allocate memory for the file content
+	char* buffer = (char*)malloc(file_size + 1);
+
+	if (buffer == NULL) {
+		pdbg_log(PDBG_ERROR, "Memory allocation failed");
+		return "";
+	}
+
+	// Read the file content into the buffer
+	size_t bytes_read = fread(buffer, 1, file_size, file);
+
+	if (bytes_read != file_size) {
+		pdbg_log(PDBG_ERROR, "Error reading file");
+		return "";
+	}
+
+	// Null-terminate the buffer to create a valid C-string
+	buffer[bytes_read] = '\0';
+
+	// Close the file
+	fclose(file);
+
+	return buffer;
 }
 
 /* Determines the most appropriate backend for the host system we are
@@ -258,8 +302,21 @@ static void bmc_target(struct pdbg_dtb *dtb)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p10")) {
 			pdbg_proc = PDBG_PROC_P10;
-			if (!dtb->backend.fdt)
-				dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
+			if (!dtb->backend.fdt) {
+				char *system_type = get_p10_system_type();
+				if (strcmp(system_type, EVEREST) == 0) {
+					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel everest target");
+					dtb->backend.fdt = &_binary_bmc_kernel_everest_dtb_o_start;
+				} else if (strcmp(system_type, RAINIER_2U) == 0 ||
+					strcmp(system_type, RAINIER_4U) == 0) {
+					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
+					dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
+				} else {
+					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel target");
+					dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
+				}
+				free(system_type);
+			}
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p10_dtb_o_start;
 		} else {
@@ -277,8 +334,21 @@ static void bmc_target(struct pdbg_dtb *dtb)
 	case CHIP_ID_P10:
 		pdbg_log(PDBG_INFO, "Found a POWER10 OpenBMC based system\n");
 		pdbg_proc = PDBG_PROC_P10;
-		if (!dtb->backend.fdt)
-			dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
+		if (!dtb->backend.fdt) {
+			char *system_type = get_p10_system_type();
+			if (strcmp(system_type, EVEREST) == 0) {
+				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel everest target");
+				dtb->backend.fdt = &_binary_bmc_kernel_everest_dtb_o_start;
+			} else if (strcmp(system_type, RAINIER_2U) == 0 ||
+				strcmp(system_type, RAINIER_4U) == 0) {
+				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
+				dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
+			} else {
+				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel target");
+				dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
+			}
+			free(system_type);
+		}
 		if (!dtb->system.fdt)
 			dtb->system.fdt = &_binary_p10_dtb_o_start;
 		break;
@@ -321,8 +391,23 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 				dtb->system.fdt = &_binary_p9_dtb_o_start;
 		} else if (!strcmp(pdbg_backend_option, "p10")) {
 			pdbg_proc = PDBG_PROC_P10;
-			if (!dtb->backend.fdt)
-				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+			if (!dtb->backend.fdt) {
+				char *system_type = get_p10_system_type();
+				if (strcmp(system_type, EVEREST) == 0) {
+					pdbg_log(PDBG_INFO,
+						"sbefifo_target - loading bmc sbefifo everest target");
+					dtb->backend.fdt = &_binary_bmc_sbefifo_everest_dtb_o_start;
+				} else if (strcmp(system_type, RAINIER_2U) == 0 ||
+							strcmp(system_type, RAINIER_4U) == 0) {
+					pdbg_log(PDBG_INFO,
+						"sbefifo_target - loading bmc sbefifo rainier target");
+					dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
+				} else {
+					pdbg_log(PDBG_INFO, "sbefifo_target - loading bmc sbefifo target");
+					dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+				}
+				free(system_type);
+			}
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p10_dtb_o_start;
 		} else {
@@ -340,8 +425,23 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 	case CHIP_ID_P10:
 		pdbg_log(PDBG_INFO, "Found a POWER10 OpenBMC based system\n");
 		pdbg_proc = PDBG_PROC_P10;
-		if (!dtb->backend.fdt)
-			dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+		if (!dtb->backend.fdt) {
+			char *system_type = get_p10_system_type();
+			if (strcmp(system_type, EVEREST) == 0) {
+				pdbg_log(PDBG_INFO,
+					"sbefifo_target - loading bmc sbefifo everest target");
+				dtb->backend.fdt = &_binary_bmc_sbefifo_everest_dtb_o_start;
+			} else if (strcmp(system_type, RAINIER_2U) == 0 ||
+				strcmp(system_type, RAINIER_4U) == 0) {
+				pdbg_log(PDBG_INFO,
+					"sbefifo_target - loading bmc sbefifo rainier target");
+				dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
+			} else {
+				pdbg_log(PDBG_INFO, "sbefifo_target - loading bmc sbefifo target");
+				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
+			}
+			free(system_type);
+		}
 		if (!dtb->system.fdt)
 			dtb->system.fdt = &_binary_p10_dtb_o_start;
 		break;

@@ -62,8 +62,9 @@ endif
 DT = fake.dts fake-backend.dts fake2.dts fake2-backend.dts \
      p8-cronus.dts cronus.dts \
      p8-fsi.dts p8-i2c.dts p8-kernel.dts \
-     p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts bmc-kernel.dts \
-     bmc-sbefifo.dts \
+     p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts \
+     bmc-kernel.dts bmc-kernel-rainier.dts bmc-kernel-everest.dts \
+     bmc-sbefifo.dts bmc-sbefifo-rainier.dts bmc-sbefifo-everest.dts \
      p8-host.dts p9-host.dts p10-host.dts p8.dts p9.dts p10.dts
 
 DT_sources = $(DT:.dts=.dtb.S)
