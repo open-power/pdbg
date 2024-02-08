@@ -488,6 +488,17 @@ static struct chiplet p10_chiplet = {
 };
 DECLARE_HW_UNIT(p10_chiplet);
 
+static struct chiplet ody_chiplet = {
+	.target = {
+		.name = "POWER10 Ody Chiplet",
+		.compatible = "ibm,ody-chiplet",
+		.class = "ody_chiplet",
+		.translate = translate_cast(p10_chiplet_translate),
+	},
+	.getring = p10_chiplet_getring,
+};
+DECLARE_HW_UNIT(ody_chiplet);
+
 static uint64_t no_translate(struct pdbg_target *target, uint64_t addr)
 {
 	/*  No translation performed */
@@ -658,6 +669,7 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_pauc_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_pau_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_chiplet_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &ody_chiplet_hw_unit);	
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_fc_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_smpgroup_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_mem_port_hw_unit);
