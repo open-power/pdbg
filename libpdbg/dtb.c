@@ -63,9 +63,8 @@ static const char *pdbg_backend_option;
 
 static const uint16_t ODYSSEY_CHIP_ID = 0x60C0;
 static const uint8_t ATTR_TYPE_OCMB_CHIP = 75;
-static const char* RAINIER_2U = "Rainier 2U";
-static const char* RAINIER_4U = "Rainier 4U";
-static const char* EVEREST = "Everest";
+static const char* RAINIER = "rainier";
+static const char* EVEREST = "everest";
 
 static struct pdbg_dtb pdbg_dtb = {
 	.backend = {
@@ -111,6 +110,22 @@ static bool get_chipid(uint32_t *chip_id)
 
 	*chip_id = (cfam_id >> 4) & 0xff;
 	return true;
+}
+
+bool contains_substring_ignoring_case(const char* buffer, const char* substring) {
+	size_t bufferLen = strlen(buffer);
+	size_t substringLen = strlen(substring);
+
+	for (size_t i = 0; i <= bufferLen - substringLen; ++i) {
+		size_t j;
+		for (j = 0; j < substringLen; ++j) {
+			if (tolower(buffer[i + j]) != tolower(substring[j]))
+				break;
+		}
+		if (j == substringLen)
+			return true; // Substring found
+	}
+	return false; // Substring not found
 }
 
 static char* get_p10_system_type()
@@ -304,11 +319,10 @@ static void bmc_target(struct pdbg_dtb *dtb)
 			pdbg_proc = PDBG_PROC_P10;
 			if (!dtb->backend.fdt) {
 				char *system_type = get_p10_system_type();
-				if (strcmp(system_type, EVEREST) == 0) {
+				if (contains_substring_ignoring_case(system_type, EVEREST)) {
 					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel everest target");
 					dtb->backend.fdt = &_binary_bmc_kernel_everest_dtb_o_start;
-				} else if (strcmp(system_type, RAINIER_2U) == 0 ||
-					strcmp(system_type, RAINIER_4U) == 0) {
+				} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
 					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
 					dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
 				} else {
@@ -336,11 +350,10 @@ static void bmc_target(struct pdbg_dtb *dtb)
 		pdbg_proc = PDBG_PROC_P10;
 		if (!dtb->backend.fdt) {
 			char *system_type = get_p10_system_type();
-			if (strcmp(system_type, EVEREST) == 0) {
+			if (contains_substring_ignoring_case(system_type, EVEREST)) {
 				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel everest target");
 				dtb->backend.fdt = &_binary_bmc_kernel_everest_dtb_o_start;
-			} else if (strcmp(system_type, RAINIER_2U) == 0 ||
-				strcmp(system_type, RAINIER_4U) == 0) {
+			} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
 				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
 				dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
 			} else {
@@ -393,12 +406,11 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 			pdbg_proc = PDBG_PROC_P10;
 			if (!dtb->backend.fdt) {
 				char *system_type = get_p10_system_type();
-				if (strcmp(system_type, EVEREST) == 0) {
+				if (contains_substring_ignoring_case(system_type, EVEREST)) {
 					pdbg_log(PDBG_INFO,
 						"sbefifo_target - loading bmc sbefifo everest target");
 					dtb->backend.fdt = &_binary_bmc_sbefifo_everest_dtb_o_start;
-				} else if (strcmp(system_type, RAINIER_2U) == 0 ||
-							strcmp(system_type, RAINIER_4U) == 0) {
+				} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
 					pdbg_log(PDBG_INFO,
 						"sbefifo_target - loading bmc sbefifo rainier target");
 					dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
@@ -427,12 +439,11 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 		pdbg_proc = PDBG_PROC_P10;
 		if (!dtb->backend.fdt) {
 			char *system_type = get_p10_system_type();
-			if (strcmp(system_type, EVEREST) == 0) {
+			if (contains_substring_ignoring_case(system_type, EVEREST)) {
 				pdbg_log(PDBG_INFO,
 					"sbefifo_target - loading bmc sbefifo everest target");
 				dtb->backend.fdt = &_binary_bmc_sbefifo_everest_dtb_o_start;
-			} else if (strcmp(system_type, RAINIER_2U) == 0 ||
-				strcmp(system_type, RAINIER_4U) == 0) {
+			} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
 				pdbg_log(PDBG_INFO,
 					"sbefifo_target - loading bmc sbefifo rainier target");
 				dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
