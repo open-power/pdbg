@@ -109,14 +109,6 @@ bool pdbg_context_is_short(void);
 void clear_target_classes();
 
 /**
- * @brief Return true if given target is odyssey chip
- * @param[in] target - pdbg target
- *
- * @return true if target is of odyssey ocmb chip
- */
-bool is_ody_ocmb_chip(struct pdbg_target *target);
-
-/**
  * @brief Return true if given target is child of odyssey chip
  * @param[in] target - pdbg target
  *

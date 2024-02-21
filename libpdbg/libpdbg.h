@@ -856,6 +856,14 @@ struct pdbg_target* get_ody_fsi_target(struct pdbg_target* target);
 struct pdbg_target* get_ody_chipop_target(struct pdbg_target* target);
 
 /**
+ * @brief Return true if given target is odyssey chip
+ * @param[in] target - pdbg target
+ *
+ * @return true if target is of odyssey ocmb chip
+ */
+bool is_ody_ocmb_chip(struct pdbg_target *target);
+
+/**
  * @brief Read data from i2c device
  *
  * The target can be:
