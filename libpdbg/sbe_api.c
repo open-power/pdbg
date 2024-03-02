@@ -246,15 +246,22 @@ int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc,
 
 		struct pdbg_target *co_target = get_ody_chipop_target(target);
 		chipop = target_to_chipop_ody(co_target);
-		if (!chipop)
+		if (!chipop) {
+			PR_ERROR("chipop target not found for ody ocmb chip\n");
 			return -1;
-
+		}
 		if (!chipop->ffdc_get) {
 			PR_ERROR("ffdc_get() not implemented for the target\n");
 			return -1;
 		}
 
-		*status = chipop->ffdc_get(target, &data, &len);
+		struct pdbg_target *fsi = get_ody_fsi_target(target);
+
+		if (!fsi) {
+			PR_ERROR("fsi target not found for ody ocmb chip\n");
+			return -1;
+		}
+		*status = chipop->ffdc_get(chipop, fsi, &data, &len);
 		if (data && len > 0) {
 			*ffdc = malloc(len);
 			assert(*ffdc);
