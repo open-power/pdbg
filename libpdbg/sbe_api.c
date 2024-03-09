@@ -213,14 +213,10 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock,
 }
 
 int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc,
-				uint32_t *ffdc_len)
+			uint32_t *ffdc_len)
 {
 	if(!is_ody_ocmb_chip(target)) {
-		struct chipop *chipop;
-		const uint8_t *data = NULL;
-		uint32_t len = 0;
-
-		chipop = pib_to_chipop(target);
+		struct chipop *chipop = pib_to_chipop(target);
 		if (!chipop)
 			return -1;
 
@@ -229,23 +225,10 @@ int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc,
 			return -1;
 		}
 
-		*status = chipop->ffdc_get(chipop, &data, &len);
-		if (data && len > 0) {
-			*ffdc = malloc(len);
-			assert(*ffdc);
-			memcpy(*ffdc, data, len);
-			*ffdc_len = len;
-		} else {
-			*ffdc = NULL;
-			*ffdc_len = 0;
-		}
+		*status = chipop->ffdc_get(chipop, (const uint8_t**)ffdc, ffdc_len);
 	} else {
-		struct chipop_ody *chipop;
-		const uint8_t *data = NULL;
-		uint32_t len = 0;
-
 		struct pdbg_target *co_target = get_ody_chipop_target(target);
-		chipop = target_to_chipop_ody(co_target);
+		struct chipop_ody *chipop = target_to_chipop_ody(co_target);
 		if (!chipop) {
 			PR_ERROR("chipop target not found for ody ocmb chip\n");
 			return -1;
@@ -261,16 +244,7 @@ int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc,
 			PR_ERROR("fsi target not found for ody ocmb chip\n");
 			return -1;
 		}
-		*status = chipop->ffdc_get(chipop, fsi, &data, &len);
-		if (data && len > 0) {
-			*ffdc = malloc(len);
-			assert(*ffdc);
-			memcpy(*ffdc, data, len);
-			*ffdc_len = len;
-		} else {
-			*ffdc = NULL;
-			*ffdc_len = 0;
-		}
+		*status = chipop->ffdc_get(chipop, fsi, (const uint8_t**)ffdc, ffdc_len);
 	}
 	return 0;
 }
