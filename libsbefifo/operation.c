@@ -133,6 +133,10 @@ int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
 		*out = NULL;
 	}
 
+	//if there is ffdc data for success store it in internal buffer
+	if((buflen - offset-4) > *out_len) {
+		sbefifo_ffdc_set(sctx, status_word, buf + offset, buflen - offset-4);
+	}
 	return 0;
 }
 
