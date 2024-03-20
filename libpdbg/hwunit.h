@@ -390,4 +390,9 @@ struct pmic {
 };
 #define target_to_pmic(x) container_of(x, struct pmic, target)
 
+struct occ {
+        struct pdbg_target target;
+};
+#define target_to_occ(x) container_of(x, struct occ, target)
+
 #endif /* __HWUNIT_H */

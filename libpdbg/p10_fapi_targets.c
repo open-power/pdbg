@@ -652,6 +652,16 @@ struct pmic p10_pmic= {
 };
 DECLARE_HW_UNIT(p10_pmic);
 
+struct occ p10_occ= {
+	.target = {
+		.name = "POWER10 On Chip Controller",
+		.compatible = "ibm,power10-occ",
+		.class = "occ",
+		.translate = no_translate,
+	},
+};
+DECLARE_HW_UNIT(p10_occ);
+
 __attribute__((constructor))
 static void register_p10_fapi_targets(void)
 {
@@ -680,4 +690,5 @@ static void register_p10_fapi_targets(void)
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_adc_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_gpio_expander_hw_unit);
 	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_pmic_hw_unit);
+	pdbg_hwunit_register(PDBG_DEFAULT_BACKEND, &p10_occ_hw_unit);
 }
