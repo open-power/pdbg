@@ -197,11 +197,11 @@ end:
 
 }
 
-static uint32_t sbefifo_op_ody_ffdc_get(struct pdbg_target *ocmb, const uint8_t **ffdc, uint32_t *ffdc_len)
+static uint32_t sbefifo_op_ody_ffdc_get(struct chipop_ody *chipop, struct pdbg_target *fsi,
+					const uint8_t **ffdc, uint32_t *ffdc_len)
 {
-	struct pdbg_target *fsi = get_ody_fsi_target(ocmb);
-	struct sbefifo *sbefifo = target_to_sbefifo(ocmb);
-	
+	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
+
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 	uint32_t status, value = 0;
 	int rc;
