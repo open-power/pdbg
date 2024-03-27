@@ -25,6 +25,8 @@
 #include "libsbefifo.h"
 #include "sbefifo_private.h"
 
+static const uint16_t SBEFIFO_MAX_FFDC_SIZE = 0x8000;
+
 static int sbefifo_read(struct sbefifo_context *sctx, void *buf, size_t *buflen)
 {
 	ssize_t n;
@@ -133,6 +135,10 @@ int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
 		*out = NULL;
 	}
 
+	//if there is ffdc data for success store it in internal buffer
+	if((buflen - offset-4) > *out_len) {
+		sbefifo_ffdc_set(sctx, status_word, buf + offset, buflen - offset-4);
+	}
 	return 0;
 }
 
@@ -152,10 +158,10 @@ int sbefifo_operation(struct sbefifo_context *sctx,
 		return ENOTCONN;
 
 	/*
-	 * Allocate extra memory for FFDC (SBEFIFO_MAX_FFDC_SIZE = 0x2000)
+	 * Allocate extra memory for FFDC (SBEFIFO_MAX_FFDC_SIZE = 0x8000)32kb
 	 * Use *out_len as a hint to expected reply length
 	 */
-	buflen = (*out_len + 0x2000 + 3) & ~(uint32_t)3;
+	buflen = (*out_len + SBEFIFO_MAX_FFDC_SIZE + 3) & ~(uint32_t)3;
 	buf = malloc(buflen);
 	if (!buf)
 		return ENOMEM;

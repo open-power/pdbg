@@ -178,6 +178,11 @@ static uint32_t sbefifo_op_ffdc_get(struct chipop *chipop, const uint8_t **ffdc,
 	if (status)
 		return status;
 
+	//if there is ffdc data for success case then parse it
+	if (*ffdc_len > 0) {
+		return status;
+	}
+
 	/* Check if async FFDC is set */
 	rc = fsi_read(fsi, SBE_MSG_REG, &value);
 	if (rc) {
@@ -209,6 +214,11 @@ static uint32_t sbefifo_op_ody_ffdc_get(struct chipop_ody *chipop, struct pdbg_t
 	status = sbefifo_ffdc_get(sctx, ffdc, ffdc_len);
 	if (status)
 		return status;
+
+	//if there is ffdc data for success case then parse it
+	if (*ffdc_len > 0) {
+		return status;
+	}
 
 	/* Check if async FFDC is set */
 	rc = fsi_ody_read(fsi, SBE_MSG_REG, &value);
