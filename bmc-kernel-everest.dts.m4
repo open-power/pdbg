@@ -240,8 +240,8 @@ define(`HMFSI_ODY',
 	HMFSI_ODY(6, 4, 5, 14)
 	HMFSI_ODY(7, 4, 5, 15)
 
-	HMFSI_ODY(0, 5, 6, 02)
-	HMFSI_ODY(1, 5, 6, 03)
+	HMFSI_ODY(0, 5, 6, 03)
+	HMFSI_ODY(1, 5, 6, 02)
 	HMFSI_ODY(2, 5, 6, 10)
 	HMFSI_ODY(3, 5, 6, 11)
 	HMFSI_ODY(4, 5, 6, 14)
