@@ -48,7 +48,9 @@ void sbefifo_ffdc_set(struct sbefifo_context *sctx, uint32_t status, uint8_t *ff
 
 uint32_t sbefifo_ffdc_get(struct sbefifo_context *sctx, const uint8_t **ffdc, uint32_t *ffdc_len)
 {
-	*ffdc = sctx->ffdc;
+	if (sctx->ffdc_len > 0) {
+		*ffdc = sctx->ffdc;
+	}
 	*ffdc_len = sctx->ffdc_len;
 
 	return sctx->status;
