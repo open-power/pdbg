@@ -506,7 +506,6 @@ int mem_write(struct pdbg_target *target, uint64_t addr, uint8_t *input, uint64_
 int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
 {
 	struct ocmb *ocmb;
-
 	assert(pdbg_target_is_class(target, "ocmb") || is_child_of_ody_chip(target));
 
 	/*TODO: https://jsw.ibm.com/browse/PFEBMC-1931 
@@ -523,12 +522,10 @@ int ocmb_getscom(struct pdbg_target *target, uint64_t addr, uint64_t *val)
 		return -1;
 
 	ocmb = target_to_ocmb(target);
-
 	if (!ocmb->getscom) {
 		PR_ERROR("getscom() not implemented for the target\n");
 		return -1;
 	}
-
 	return ocmb->getscom(ocmb, addr, val);
 }
 
@@ -672,7 +669,6 @@ enum pdbg_target_status pdbg_target_probe_ody_ocmb(struct pdbg_target *target)
 			fsi_target->status = PDBG_TARGET_NONEXISTENT;
 			return PDBG_TARGET_NONEXISTENT;
 		}
-		
 		target->status = PDBG_TARGET_ENABLED;
 		sbefifo->target.status = PDBG_TARGET_ENABLED;
 		co_target->status = PDBG_TARGET_ENABLED;
@@ -869,15 +865,14 @@ struct pdbg_target *get_backend_target(const char* class,
 
 	uint32_t ocmb_proc = pdbg_target_index(pdbg_target_parent("proc",
 							ocmb));
-	uint32_t fapi_pos = 0;
-	pdbg_target_get_attribute(ocmb, "ATTR_FAPI_POS", 4, 1, &fapi_pos);
-	fapi_pos = fapi_pos % 0x8;
+	uint32_t ocmb_index = pdbg_target_index(ocmb);
+
 	struct pdbg_target *target;
 	pdbg_for_each_class_target(class, target) {
 		uint32_t index = pdbg_target_index(target);
 		uint32_t proc = 0;
 		if(!pdbg_target_u32_property(target, "proc", &proc)) {
-			if(index == fapi_pos && proc == ocmb_proc) {
+			if(index == ocmb_index && proc == ocmb_proc) {
 				return target;
 			}
 		}

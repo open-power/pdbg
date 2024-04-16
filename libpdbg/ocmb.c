@@ -48,7 +48,7 @@ static int sbefifo_ocmb_getscom(struct ocmb *ocmb, uint64_t addr, uint64_t *valu
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 		uint8_t instance_id;
 
-		instance_id = pdbg_target_index(&ocmb->target) & 0xff;
+		instance_id = pdbg_target_index(&ocmb->target) & 0x0f;
 
 		return sbefifo_hw_register_get(sctx,
 						SBEFIFO_TARGET_TYPE_OCMB,
@@ -69,7 +69,7 @@ static int sbefifo_ocmb_putscom(struct ocmb *ocmb, uint64_t addr, uint64_t value
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 		uint8_t instance_id;
 
-		instance_id = pdbg_target_index(&ocmb->target) & 0xff;
+		instance_id = pdbg_target_index(&ocmb->target) & 0x0f;
 
 		return sbefifo_hw_register_put(sctx,
 						SBEFIFO_TARGET_TYPE_OCMB,
