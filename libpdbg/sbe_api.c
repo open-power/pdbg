@@ -421,7 +421,7 @@ int sbe_ody_get_state(struct pdbg_target *fsi, enum sbe_state *state)
 	rc = sbe_ody_read_state_register(fsi, &value);
 	if (rc)
 		return -1;
-	if (value == SBE_STATE_CHECK_CFAM) {
+	if ((value == SBE_STATE_CHECK_CFAM) || (value == SBE_MSG_STATE_UNKNOWN)) {
 		rc = sbe_ody_read_msg_register(fsi, &msg.reg);
 		if (rc)
 			return -1;
