@@ -725,7 +725,7 @@ static void close_dtb(struct pdbg_mfile *mfile)
 
 bool is_ody_ocmb_chip(struct pdbg_target *target)
 {
-	uint8_t type;
+	uint8_t type = 0;
 	pdbg_target_get_attribute(target, "ATTR_TYPE", 1, 1, &type);
 	if(type != ATTR_TYPE_OCMB_CHIP) {
 		return false;
