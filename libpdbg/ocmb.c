@@ -48,7 +48,9 @@ static int sbefifo_ocmb_getscom(struct ocmb *ocmb, uint64_t addr, uint64_t *valu
 		struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 		uint8_t instance_id;
 
-		instance_id = pdbg_target_index(&ocmb->target) & 0x0f;
+		uint32_t fapi_pos = 0;
+		pdbg_target_get_attribute(&ocmb->target, "ATTR_FAPI_POS", 4, 1, &fapi_pos);
+		instance_id = fapi_pos & 0x0f;
 
 		return sbefifo_hw_register_get(sctx,
 						SBEFIFO_TARGET_TYPE_OCMB,
