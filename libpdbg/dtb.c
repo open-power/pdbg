@@ -65,6 +65,8 @@ static const uint16_t ODYSSEY_CHIP_ID = 0x60C0;
 static const uint8_t ATTR_TYPE_OCMB_CHIP = 75;
 static const char* RAINIER = "rainier";
 static const char* EVEREST = "everest";
+static const char* FUJI = "fuji";
+static const char* BLUERIDGE = "blueridge";
 
 static struct pdbg_dtb pdbg_dtb = {
 	.backend = {
@@ -115,6 +117,13 @@ static bool get_chipid(uint32_t *chip_id)
 bool contains_substring_ignoring_case(const char* buffer, const char* substring) {
 	size_t bufferLen = strlen(buffer);
 	size_t substringLen = strlen(substring);
+
+	//If the string that we are looking for is longer than the 
+	//given string, return as not found
+	if(substringLen > bufferLen)
+	{
+		return false;
+	}
 
 	for (size_t i = 0; i <= bufferLen - substringLen; ++i) {
 		size_t j;
@@ -319,10 +328,12 @@ static void bmc_target(struct pdbg_dtb *dtb)
 			pdbg_proc = PDBG_PROC_P10;
 			if (!dtb->backend.fdt) {
 				char *system_type = get_p10_system_type();
-				if (contains_substring_ignoring_case(system_type, EVEREST)) {
+				if (contains_substring_ignoring_case(system_type, EVEREST) || 
+					contains_substring_ignoring_case(system_type, FUJI)) {
 					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel everest target");
 					dtb->backend.fdt = &_binary_bmc_kernel_everest_dtb_o_start;
-				} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
+				} else if (contains_substring_ignoring_case(system_type, RAINIER)|| 
+					contains_substring_ignoring_case(system_type, BLUERIDGE)) {
 					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
 					dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
 				} else {
@@ -350,10 +361,12 @@ static void bmc_target(struct pdbg_dtb *dtb)
 		pdbg_proc = PDBG_PROC_P10;
 		if (!dtb->backend.fdt) {
 			char *system_type = get_p10_system_type();
-			if (contains_substring_ignoring_case(system_type, EVEREST)) {
+			if (contains_substring_ignoring_case(system_type, EVEREST) || 
+					contains_substring_ignoring_case(system_type, FUJI)) {
 				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel everest target");
 				dtb->backend.fdt = &_binary_bmc_kernel_everest_dtb_o_start;
-			} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
+			} else if (contains_substring_ignoring_case(system_type, RAINIER) || 
+					contains_substring_ignoring_case(system_type, BLUERIDGE)) {
 				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
 				dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
 			} else {
@@ -406,11 +419,13 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 			pdbg_proc = PDBG_PROC_P10;
 			if (!dtb->backend.fdt) {
 				char *system_type = get_p10_system_type();
-				if (contains_substring_ignoring_case(system_type, EVEREST)) {
+				if (contains_substring_ignoring_case(system_type, EVEREST) || 
+					contains_substring_ignoring_case(system_type, FUJI)) {
 					pdbg_log(PDBG_INFO,
 						"sbefifo_target - loading bmc sbefifo everest target");
 					dtb->backend.fdt = &_binary_bmc_sbefifo_everest_dtb_o_start;
-				} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
+				} else if (contains_substring_ignoring_case(system_type, RAINIER) || 
+					contains_substring_ignoring_case(system_type, BLUERIDGE)) {
 					pdbg_log(PDBG_INFO,
 						"sbefifo_target - loading bmc sbefifo rainier target");
 					dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
@@ -439,11 +454,13 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 		pdbg_proc = PDBG_PROC_P10;
 		if (!dtb->backend.fdt) {
 			char *system_type = get_p10_system_type();
-			if (contains_substring_ignoring_case(system_type, EVEREST)) {
+			if (contains_substring_ignoring_case(system_type, EVEREST) || 
+					contains_substring_ignoring_case(system_type, FUJI)) {
 				pdbg_log(PDBG_INFO,
 					"sbefifo_target - loading bmc sbefifo everest target");
 				dtb->backend.fdt = &_binary_bmc_sbefifo_everest_dtb_o_start;
-			} else if (contains_substring_ignoring_case(system_type, RAINIER)) {
+			} else if (contains_substring_ignoring_case(system_type, RAINIER) || 
+					contains_substring_ignoring_case(system_type, BLUERIDGE)) {
 				pdbg_log(PDBG_INFO,
 					"sbefifo_target - loading bmc sbefifo rainier target");
 				dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
