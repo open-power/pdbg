@@ -63,7 +63,7 @@ static const char *pdbg_backend_option;
 
 static const uint16_t ODYSSEY_CHIP_ID = 0x60C0;
 static const uint8_t ATTR_TYPE_OCMB_CHIP = 75;
-static const char* RAINIER = "rainier";
+static const char* RAINIER = "rainiest";
 static const char* EVEREST = "everest";
 static const char* FUJI = "fuji";
 static const char* BLUERIDGE = "blueridge";

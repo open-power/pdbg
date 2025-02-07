@@ -395,4 +395,40 @@ struct occ {
 };
 #define target_to_occ(x) container_of(x, struct occ, target)
 
+struct hubchip {
+	struct pdbg_target target;
+};
+#define target_to_hubchip(x) container_of(x, struct hubchip, target)
+
+struct procmodule {
+	struct pdbg_target target;
+};
+#define target_to_procmodule(x) container_of(x, struct procmodule, target)
+
+struct sled {
+	struct pdbg_target target;
+};
+#define target_to_sled(x) container_of(x, struct sled, target)
+
+struct computechip {
+	struct pdbg_target target;
+};
+#define target_to_computechip(x) container_of(x, struct computechip, target)
+
+struct tbusc {
+	struct pdbg_target target;
+};
+#define target_to_tbusc(x) container_of(x, struct tbusc, target)
+
+struct tbusl {
+	struct pdbg_target target;
+};
+#define target_to_tbusl(x) container_of(x, struct tbusl, target)
+
+struct l3cache {
+	struct pdbg_target target;
+};
+#define target_to_l3cache(x) container_of(x, struct l3cache, target)
+
+
 #endif /* __HWUNIT_H */

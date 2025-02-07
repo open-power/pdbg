@@ -318,7 +318,6 @@ static int sbefifo_pib_read(struct pib *pib, uint64_t addr, uint64_t *val)
 {
 	struct sbefifo *sbefifo = pib_to_sbefifo(&pib->target);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
-
 	return sbefifo_scom_get(sctx, addr, val);
 }
 
@@ -836,6 +835,7 @@ static int sbefifo_probe(struct pdbg_target *target)
 	int rc, proc;
 
 	sbefifo_path = pdbg_target_property(target, "device-path", NULL);
+	
 	assert(sbefifo_path);
 
 	switch (pdbg_get_proc()) {

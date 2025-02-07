@@ -10,7 +10,8 @@ define(`PIB',
 		compatible = "ibm,kernel-pib";
 		index = <0x$2>;
 		device-path = "/dev/scom$3";
-		system-path = "/proc$2/pib";
+
+		system-path = "/sled0/procmodule0/hubchip$2/pib";
 	};
 ')dnl
 
@@ -76,7 +77,7 @@ define(`FSI_PRE',
 		compatible = "ibm,kernel-fsi";
 		device-path = "/fsi0/slave@00:00/raw";
 		index = <0x$2>;
-		system-path = "/proc$2/fsi";
+		system-path = "/sled0/procmodule0/hubchip$2/fsi";
 		status = "mustexist";
 
 		PIB(1000, $2, $3)
@@ -119,7 +120,7 @@ define(`HMFSI',
 		compatible = "ibm,fsi-hmfsi";
 		port = <0x$2>;
 		index = <0x$3>;
-		system-path = "/proc$3/fsi";
+		system-path = "/sled0/procmodule0/hubchip$3/fsi";
 
 		PIB(1000, $3, $4)
 		SBEFIFO($3, $4)

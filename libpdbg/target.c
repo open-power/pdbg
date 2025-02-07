@@ -22,6 +22,7 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 
 	/* Check class */
 	while (strcmp(target->class, name)) {
+		
 		if (target->translate) {
 			*addr = target->translate(target, *addr);
 			target = target_parent(name, target, false);
@@ -33,7 +34,6 @@ static struct pdbg_target *get_class_target_addr(struct pdbg_target *target, con
 
 		/* Keep walking the tree translating addresses */
 		target = get_parent(target, false);
-
 		/* The root node doesn't have an address space so it's
 		 * an error in the device tree if we hit this. */
 		assert(target != pdbg_target_root());

@@ -14,19 +14,7 @@ define(`SBEFIFO',
 			#size-cells = <0x1>;
 			compatible = "ibm,sbefifo-pib";
 			index = <0x$1>;
-			system-path = "/proc$1/pib";
-		};
-
-		sbefifo-mem {
-			compatible = "ibm,sbefifo-mem";
-			index = <0x$1>;
-			system-path = "/mem$1";
-		};
-
-		sbefifo-pba {
-			compatible = "ibm,sbefifo-mem-pba";
-			index = <0x$1>;
-			system-path = "/mempba$1";
+			system-path = "/backplane0/proc_module0/hub_chip$1/pib";
 		};
 
 		sbefifo-chipop {
@@ -49,8 +37,8 @@ define(`FSI_PRE',
 		reg = <0x0 0x$1 0x8000>;
 		index = <0x$2>;
 		status = "mustexist";
-		system-path = "/proc$2/fsi";
-
+		system-path = "/backplane0/proc_module0/hub_chip$2/fsi";
+		
 		SBEFIFO($2, $3)
 ')dnl
 
@@ -75,9 +63,82 @@ define(`HMFSI',
 		reg = <0x0 0x$1 0x8000>;
 		port = <0x$2>;
 		index = <0x$3>;
-		system-path = "/proc$3/fsi";
-
+		system-path = "/backplane0/proc_module0/hub_chip$3/fsi";
+		
 		SBEFIFO($3, $4)
+	};
+')dnl
+
+
+
+dnl
+dnl COMPUTE_CHIP_SBEFIFO([index], [path-index])
+dnl
+define(`COMPUTE_CHIP_SBEFIFO',
+`
+	computechip_sbefifo@2400 { /* Bogus address */
+		reg = <0x0 0x2400 0x7>;
+		compatible = "ibm,kernel-sbefifo";
+		index = <0x1$1>;
+		device-path = "/dev/sbefifo$2";
+
+		computechip_sbefifo-pib {
+			#address-cells = <0x2>;
+			#size-cells = <0x1>;
+			compatible = "ibm,sbefifo-pib";
+			index = <0x1$1>;
+			system-path = "/backplane0/proc_module0/compute_chip$1/pib";
+		};
+
+		computechip_sbefifo-chipop {
+			compatible = "ibm,sbefifo-chipop";
+			index = <0x1$1>;
+		};
+	};
+')dnl
+
+dnl
+dnl COMPUTE_CHIP_FSI_PRE([addr], [index], [path-index])
+dnl
+define(`COMPUTE_CHIP_FSI_PRE',
+`
+	computechip_fsi@$1 {
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		compatible = "ibm,kernel-fsi";
+		device-path = "/fsi0/slave@00:00/raw";
+		reg = <0x0 0x$1 0x8000>;
+		index = <0x$2>;
+		status = "mustexist";
+		system-path = "/backplane0/proc_module0/compute_chip$2/fsi";
+		
+		COMPUTE_CHIP_SBEFIFO($2, $3)
+')dnl
+
+dnl
+dnl COMPUTE_CHIP_FSI_POST()
+dnl
+define(`COMPUTE_CHIP_FSI_POST',
+`
+	};
+')dnl
+
+dnl
+dnl COMPUTE_CHIP_HMFSI([addr], [port], [index], [path-index])
+dnl
+define(`COMPUTE_CHIP_HMFSI',
+`
+	computechip_hmfsi@$1 {
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		compatible = "ibm,kernel-fsi";
+		device-path = "/fsi1/slave@0$2:00/raw";
+		reg = <0x0 0x$1 0x8000>;
+		port = <0x$2>;
+		index = <0x$3>;
+		system-path = "/backplane0/proc_module0/compute_chip$3/fsi";
+		
+		COMPUTE_CHIP_SBEFIFO($3, $4)
 	};
 ')dnl
 
@@ -185,6 +246,18 @@ define(`BMC_I2CBUS',
 	HMFSI(400000, 7, 7, 8)
 
 	FSI_POST()
+
+	COMPUTE_CHIP_FSI_PRE(0, 0, 1)
+
+	COMPUTE_CHIP_HMFSI(100000, 1, 1, 2)
+	COMPUTE_CHIP_HMFSI(180000, 2, 2, 3)
+	COMPUTE_CHIP_HMFSI(200000, 3, 3, 4)
+	COMPUTE_CHIP_HMFSI(280000, 4, 4, 5)
+	COMPUTE_CHIP_HMFSI(300000, 5, 5, 6)
+	COMPUTE_CHIP_HMFSI(380000, 6, 6, 7)
+	COMPUTE_CHIP_HMFSI(400000, 7, 7, 8)
+
+	COMPUTE_CHIP_FSI_POST()
 
 	HMFSI_ODY(0, 0, 1, 11)
 	HMFSI_ODY(1, 0, 1, 10)
