@@ -35,7 +35,7 @@ static uint64_t p10_eq_translate(struct eq *eq, uint64_t addr)
 
 static struct eq p10_eq = {
 	.target = {
-		.name = "POWER10 eq",
+		.name = "POWER eq",
 		.compatible = "ibm,power10-eq",
 		.class = "eq",
 		.translate = translate_cast(p10_eq_translate),
@@ -57,7 +57,7 @@ static uint64_t p10_pec_translate(struct pec *pec, uint64_t addr)
 
 static struct pec p10_pec = {
 	.target = {
-		.name = "POWER10 pec",
+		.name = "POWER pec",
 		.compatible = "ibm,power10-pec",
 		.class = "pec",
 		.translate = translate_cast(p10_pec_translate),
@@ -88,7 +88,7 @@ static uint64_t p10_phb_translate(struct phb *phb, uint64_t addr)
 
 static struct phb p10_phb = {
 	.target = {
-		.name = "POWER10 phb",
+		.name = "POWER phb",
 		.compatible = "ibm,power10-phb",
 		.class = "phb",
 		.translate = translate_cast(p10_phb_translate),
@@ -103,7 +103,7 @@ static uint64_t p10_nmmu_translate(struct nmmu *nmmu, uint64_t addr)
 
 static struct nmmu p10_nmmu = {
 	.target = {
-		.name = "POWER10 nmmu",
+		.name = "POWER nmmu",
 		.compatible = "ibm,power10-nmmu",
 		.class = "nmmu",
 		.translate = translate_cast(p10_nmmu_translate),
@@ -140,7 +140,7 @@ static uint64_t p10_iohs_translate(struct iohs *iohs, uint64_t addr)
 
 static struct iohs p10_iohs = {
 	.target = {
-		.name = "POWER10 iohs",
+		.name = "POWER iohs",
 		.compatible = "ibm,power10-iohs",
 		.class = "iohs",
 		.translate = translate_cast(p10_iohs_translate),
@@ -157,7 +157,7 @@ static uint64_t p10_mimc_translate(struct pdbg_target *mimc, uint64_t addr)
 
 static struct mi p10_mi = {
 	.target = {
-		.name = "POWER10 mi",
+		.name = "POWER mi",
 		.compatible = "ibm,power10-mi",
 		.class = "mi",
 		.translate = p10_mimc_translate,
@@ -167,7 +167,7 @@ DECLARE_HW_UNIT(p10_mi);
 
 static struct mc p10_mc = {
 	.target = {
-		.name = "POWER10 mc",
+		.name = "POWER mc",
 		.compatible = "ibm,power10-mc",
 		.class = "mc",
 		.translate = p10_mimc_translate,
@@ -222,7 +222,7 @@ static uint64_t p10_mcc_translate(struct mcc *mcc, uint64_t addr)
 
 static struct mcc p10_mcc = {
 	.target = {
-		.name = "POWER10 mcc",
+		.name = "POWER mcc",
 		.compatible = "ibm,power10-mcc",
 		.class = "mcc",
 		.translate = translate_cast(p10_mcc_translate),
@@ -265,7 +265,7 @@ static uint64_t p10_omic_translate(struct omic *omic, uint64_t addr)
 
 static struct omic p10_omic = {
 	.target = {
-		.name = "POWER10 omic",
+		.name = "POWER omic",
 		.compatible = "ibm,power10-omic",
 		.class = "omic",
 		.translate = translate_cast(p10_omic_translate),
@@ -325,7 +325,7 @@ static uint64_t p10_omi_translate(struct omi *omi, uint64_t addr)
 
 static struct omi p10_omi = {
 	.target = {
-		.name = "POWER10 omi",
+		.name = "POWER omi",
 		.compatible = "ibm,power10-omi",
 		.class = "omi",
 		.translate = translate_cast(p10_omi_translate),
@@ -340,7 +340,7 @@ static uint64_t p10_pauc_translate(struct pauc *pauc, uint64_t addr)
 
 static struct pauc p10_pauc = {
 	.target = {
-		.name = "POWER10 pauc",
+		.name = "POWER pauc",
 		.compatible = "ibm,power10-pauc",
 		.class = "pauc",
 		.translate = translate_cast(p10_pauc_translate),
@@ -381,7 +381,7 @@ static uint64_t p10_pau_translate(struct pau *pau, uint64_t addr)
 
 static struct pau p10_pau = {
 	.target = {
-		.name = "POWER10 pau",
+		.name = "POWER pau",
 		.compatible = "ibm,power10-pau",
 		.class = "pau",
 		.translate = translate_cast(p10_pau_translate),
@@ -478,7 +478,7 @@ static uint64_t p10_chiplet_translate(struct chiplet *chiplet, uint64_t addr)
 
 static struct chiplet p10_chiplet = {
 	.target = {
-		.name = "POWER10 Chiplet",
+		.name = "POWER Chiplet",
 		.compatible = "ibm,power10-chiplet",
 		.class = "chiplet",
 		.probe = p10_chiplet_probe,
@@ -490,7 +490,7 @@ DECLARE_HW_UNIT(p10_chiplet);
 
 static struct chiplet ody_chiplet = {
 	.target = {
-		.name = "POWER10 Ody Chiplet",
+		.name = "POWER Ody Chiplet",
 		.compatible = "ibm,ody-chiplet",
 		.class = "ody_chiplet",
 		.translate = translate_cast(p10_chiplet_translate),
@@ -507,7 +507,7 @@ static uint64_t no_translate(struct pdbg_target *target, uint64_t addr)
 
 static struct fc p10_fc = {
 	.target = {
-		.name = "POWER10 Fused Core",
+		.name = "POWER Fused Core",
 		.compatible = "ibm,power10-fc",
 		.class = "fc",
 		.translate = no_translate,
@@ -517,7 +517,7 @@ DECLARE_HW_UNIT(p10_fc);
 
 static struct smpgroup p10_smpgroup = {
 	.target = {
-		.name = "POWER10 SMP Group",
+		.name = "POWER SMP Group",
 		.compatible = "ibm,power10-smpgroup",
 		.class = "smpgroup",
 		.translate = no_translate,
@@ -575,7 +575,7 @@ static uint64_t p10_memport_translate(struct mem_port *memport, uint64_t addr)
 
 struct mem_port p10_mem_port = {
 	.target = {
-		.name = "POWER10 mem_port",
+		.name = "POWER mem_port",
 		.compatible = "ibm,power10-memport",
 		.class = "mem_port",
 		.translate = translate_cast(p10_memport_translate),
@@ -585,7 +585,7 @@ DECLARE_HW_UNIT(p10_mem_port);
 
 static struct dimm p10_dimm = {
 	.target = {
-		.name = "POWER10 DIMM",
+		.name = "POWER DIMM",
 		.compatible = "ibm,power10-dimm",
 		.class = "dimm",
 		.translate = no_translate,
@@ -595,7 +595,7 @@ DECLARE_HW_UNIT(p10_dimm);
 
 static struct oscrefclk p10_oscrefclk = {
 	.target = {
-		.name = "POWER10 osc reference clock",
+		.name = "POWER osc reference clock",
 		.compatible = "ibm,power10-oscrefclk",
 		.class = "oscrefclk",
 	},
@@ -604,7 +604,7 @@ DECLARE_HW_UNIT(p10_oscrefclk);
 
 struct tpm p10_tpm = {
 	.target = {
-		.name = "POWER10 Trusted Platform Module",
+		.name = "POWER Trusted Platform Module",
 		.compatible = "ibm,power10-tpm",
 		.class = "tpm",
 		.translate = no_translate,
@@ -614,7 +614,7 @@ DECLARE_HW_UNIT(p10_tpm);
 
 struct nx p10_nx = {
 	.target = {
-		.name = "POWER10 Nest Accelerator unit",
+		.name = "POWER Nest Accelerator unit",
 		.compatible = "ibm,power10-nx",
 		.class = "nx",
 		.translate = no_translate,
@@ -624,7 +624,7 @@ DECLARE_HW_UNIT(p10_nx);
 
 struct adc p10_adc = {
 	.target = {
-		.name = "POWER10 Analog to Digital Converter",
+		.name = "POWER Analog to Digital Converter",
 		.compatible = "ibm,power10-adc",
 		.class = "adc",
 		.translate = no_translate,
@@ -634,7 +634,7 @@ DECLARE_HW_UNIT(p10_adc);
 
 struct gpio_expander p10_gpio_expander= {
 	.target = {
-		.name = "POWER10 GPIO Expander",
+		.name = "POWER GPIO Expander",
 		.compatible = "ibm,power10-gpio_expander",
 		.class = "gpio_expander",
 		.translate = no_translate,
@@ -644,7 +644,7 @@ DECLARE_HW_UNIT(p10_gpio_expander);
 
 struct pmic p10_pmic= {
 	.target = {
-		.name = "POWER10 Power Management Integrated Circuit",
+		.name = "POWER Power Management Integrated Circuit",
 		.compatible = "ibm,power10-pmic",
 		.class = "pmic",
 		.translate = no_translate,
@@ -654,7 +654,7 @@ DECLARE_HW_UNIT(p10_pmic);
 
 struct occ p10_occ= {
 	.target = {
-		.name = "POWER10 On Chip Controller",
+		.name = "POWER On Chip Controller",
 		.compatible = "ibm,power10-occ",
 		.class = "occ",
 		.translate = no_translate,
