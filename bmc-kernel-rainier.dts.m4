@@ -11,10 +11,26 @@ define(`PIB',
 		index = <0x$2>;
 		device-path = "/dev/scom$3";
 
-		system-path = "/sled0/procmodule0/hubchip$2/pib";
+		system-path = "/backplane0/proc_module0/hub_chip$2/pib";
 	};
 ')dnl
 
+dnl
+dnl COMPUTE_CHIP_PIB([addr], [index], [path-index])
+dnl
+define(`COMPUTE_CHIP_PIB',
+`
+	compute_chip_pib@$1 {
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		reg = <0x0 0x$1 0x7>;
+		compatible = "ibm,kernel-pib";
+		index = <0x1$2>;
+		device-path = "/dev/scom$3";
+
+		system-path = "/backplane0/proc_module0/compute_chip$2/pib";
+	};
+')dnl
 
 dnl
 dnl PIB_ODY([index], [proc], [path-index], port)
@@ -46,21 +62,27 @@ define(`SBEFIFO',
 		index = <0x$1>;
 		device-path = "/dev/sbefifo$2";
 
-		sbefifo-mem {
-			compatible = "ibm,sbefifo-mem";
-			index = <0x$1>;
-			system-path = "/mem$1";
-		};
-
-		sbefifo-pba {
-			compatible = "ibm,sbefifo-mem-pba";
-			index = <0x$1>;
-			system-path = "/mempba$1";
-		};
-
 		sbefifo-chipop {
 			compatible = "ibm,sbefifo-chipop";
 			index = <0x$1>;
+		};
+	};
+')dnl
+
+dnl
+dnl COMPUTE_CHIP_SBEFIFO([index], [path-index])
+dnl
+define(`COMPUTE_CHIP_SBEFIFO',
+`
+	compute_chip_sbefifo@2400 { /* Bogus address */
+		reg = <0x0 0x2400 0x7>;
+		compatible = "ibm,kernel-sbefifo";
+		index = <0x1$1>;
+		device-path = "/dev/sbefifo$2";
+
+		sbefifo-chipop {
+			compatible = "ibm,sbefifo-chipop";
+			index = <0x1$1>;
 		};
 	};
 ')dnl
@@ -77,7 +99,7 @@ define(`FSI_PRE',
 		compatible = "ibm,kernel-fsi";
 		device-path = "/fsi0/slave@00:00/raw";
 		index = <0x$2>;
-		system-path = "/sled0/procmodule0/hubchip$2/fsi";
+		system-path = "/backplane0/proc_module0/hub_chip$2/fsi";
 		status = "mustexist";
 
 		PIB(1000, $2, $3)
@@ -88,6 +110,33 @@ dnl
 dnl FSI_POST()
 dnl
 define(`FSI_POST',
+`
+	};
+')dnl
+
+dnl
+dnl COMPUTE_CHIP_FSI_PRE([addr], [index], [path-index])
+dnl
+define(`COMPUTE_CHIP_FSI_PRE',
+`
+	compute_chip_fsi@$1 {
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		reg = <0x0 0x$1 0x8000>;
+		compatible = "ibm,kernel-fsi";
+		device-path = "/fsi0/slave@00:00/raw";
+		index = <0x$2>;
+		system-path = "/backplane0/proc_module0/compute_chip$2/fsi";
+		status = "mustexist";
+
+		COMPUTE_CHIP_PIB(1000, $2, $3)
+		COMPUTE_CHIP_SBEFIFO($2, $3)
+')dnl
+
+dnl
+dnl COMPUTE_CHIP_FSI_POST()
+dnl
+define(`COMPUTE_CHIP_FSI_POST',
 `
 	};
 ')dnl
@@ -120,10 +169,30 @@ define(`HMFSI',
 		compatible = "ibm,fsi-hmfsi";
 		port = <0x$2>;
 		index = <0x$3>;
-		system-path = "/sled0/procmodule0/hubchip$3/fsi";
+		system-path = "/backplane0/proc_module0/hub_chip$3/fsi";
 
 		PIB(1000, $3, $4)
 		SBEFIFO($3, $4)
+	};
+')dnl
+
+
+dnl
+dnl COMPUTE_CHIP_HMFSI([addr], [port], [index], [path-index])
+dnl
+define(`COMPUTE_CHIP_HMFSI',
+`
+	compute_chip_hmfsi@$1 {
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		reg = <0x0 0x$1 0x8000>;
+		compatible = "ibm,fsi-hmfsi";
+		port = <0x$2>;
+		index = <0x$3>;
+		system-path = "/backplane0/proc_module0/hub_chip$3/fsi";
+
+		COMPUTE_CHIP_PIB(1000, $3, $4)
+		COMPUTE_CHIP_SBEFIFO($3, $4)
 	};
 ')dnl
 
@@ -194,6 +263,18 @@ define(`HMFSI_ODY',
 	HMFSI(400000, 7, 7, 8)
 
 	FSI_POST()
+
+	COMPUTE_CHIP_FSI_PRE(0, 0, 1)
+
+	COMPUTE_CHIP_HMFSI(100000, 1, 1, 2)
+	COMPUTE_CHIP_HMFSI(180000, 2, 2, 3)
+	COMPUTE_CHIP_HMFSI(200000, 3, 3, 4)
+	COMPUTE_CHIP_HMFSI(280000, 4, 4, 5)
+	COMPUTE_CHIP_HMFSI(300000, 5, 5, 6)
+	COMPUTE_CHIP_HMFSI(380000, 6, 6, 7)
+	COMPUTE_CHIP_HMFSI(400000, 7, 7, 8)
+
+	COMPUTE_CHIP_FSI_POST()
 
 	HMFSI_ODY(0, 0, 1, 11)
 	HMFSI_ODY(1, 0, 1, 10)

@@ -62,9 +62,9 @@ const char *kernel_get_fsi_path(void)
 
 static int kernel_fsi_getcfam(struct fsi *fsi, uint32_t addr64, uint32_t *value)
 {
+	
 	int rc;
 	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
-
 	rc = lseek(fsi->fd, addr, SEEK_SET);
 	if (rc < 0) {
 		rc = errno;
@@ -91,7 +91,6 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 {
 	int rc;
 	uint32_t tmp, addr = (addr64 & 0x7ffc00) | ((addr64 & 0x3ff) << 2);
-
 	rc = lseek(fsi->fd, addr, SEEK_SET);
 	if (rc < 0) {
 		rc = errno;
@@ -162,7 +161,6 @@ int kernel_fsi_probe(struct pdbg_target *target)
 		PR_ERROR("Unable to create fsi path\n");
 		return rc;
 	}
-
 	while (tries) {
 		fsi->fd = open(path, O_RDWR | O_SYNC);
 		if (fsi->fd >= 0) {

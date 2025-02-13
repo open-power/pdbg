@@ -357,6 +357,9 @@ static void bmc_target(struct pdbg_dtb *dtb)
 
 	switch(chip_id) {
 	case CHIP_ID_P10:
+	//TODO:P12 - Need to have a separate case. Hopefully, this entire logic will be removed, if we move the 
+	//backend devicetree as part of system device tree.
+	case CHIP_ID_P12:
 		pdbg_log(PDBG_INFO, "Found a POWER10 OpenBMC based system\n");
 		pdbg_proc = PDBG_PROC_P10;
 		if (!dtb->backend.fdt) {
@@ -450,6 +453,9 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 
 	switch(chip_id) {
 	case CHIP_ID_P10:
+	case CHIP_ID_P12:
+	//TODO:P12 - Need to have a separate case. Hopefully, this entire logic will be removed, if we move the 
+	//backend devicetree as part of system device tree.
 		pdbg_log(PDBG_INFO, "Found a POWER10 OpenBMC based system\n");
 		pdbg_proc = PDBG_PROC_P10;
 		if (!dtb->backend.fdt) {

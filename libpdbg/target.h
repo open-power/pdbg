@@ -30,6 +30,7 @@
 #define CHIP_ID_P9  0xd1
 #define CHIP_ID_P9P 0xd9
 #define CHIP_ID_P10 0xda
+#define CHIP_ID_P12 0xde
 
 enum chip_type {CHIP_UNKNOWN, CHIP_P8, CHIP_P8NV, CHIP_P9, CHIP_P10};
 

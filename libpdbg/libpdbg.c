@@ -359,3 +359,46 @@ bool pdbg_context_is_short(void)
 {
 	return pdbg_short_context;
 }
+
+char* extract_string_after_colon(char* input) 
+{
+    // Find the position of ':'
+    char* pos = strchr(input, ':');
+	// Return pointer to substring after ':'
+    if (pos != NULL && *(pos + 1) != '\0') {
+        return pos + 1; 
+    }
+	// Return empty string if ':' is not found or nothing follows it
+    return ""; 
+}
+
+struct pdbg_target *pdbg_get_peer_target(struct pdbg_target *target)
+{
+	char tgtPeerPath[120];
+	if (!pdbg_target_get_attribute(target, "ATTR_PEER_PATH", 1, 120,
+				tgtPeerPath)) {
+					//unable to find the path
+					pdbg_log(PDBG_ERROR, "unable to find the attribute ATTR_PEER_PATH for %s\n", 
+						pdbg_target_path(target));
+	}
+	else
+	{
+		struct pdbg_target *same_class_target;
+		//The peer could only be of the same type, so look for all the targets of that type
+		pdbg_for_each_class_target(target->class, same_class_target)
+		{
+			char tgtPhyPath[120];
+			if (pdbg_target_get_attribute(same_class_target, "ATTR_PHYS_DEV_PATH", 1, 120,
+						tgtPhyPath)) {
+				//unable to find the path
+				if( strcmp(extract_string_after_colon(tgtPhyPath), extract_string_after_colon(tgtPeerPath)) == 0)
+				{
+					return same_class_target;
+				}
+			}
+		}
+	}
+	pdbg_log(PDBG_ERROR, "unable to find the peer target for %s\n", 
+		pdbg_target_path(target));
+	return NULL;
+}

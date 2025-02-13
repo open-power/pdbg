@@ -172,7 +172,7 @@ DECLARE_HW_UNIT(p12_tbusc);
 static struct tbusl p12_tbusl = {
 	.target = {
 		.name = "tbusl",
-		.compatible = "ibm,power12-tbus1",
+		.compatible = "ibm,power12-tbusl",
 		.class = "tbusl",
 		.translate = no_translate,
 	},

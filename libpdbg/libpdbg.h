@@ -337,6 +337,13 @@ struct pdbg_target *pdbg_target_parent_virtual(const char *klass, struct pdbg_ta
 struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_target *target);
 
 /**
+ * @brief Find a peer target of the given class
+ * @param[in] target the pdbg_target
+ * @return struct pdbg_target* of the peer class
+ */
+struct pdbg_target *pdbg_get_peer_target(struct pdbg_target *target);
+
+/**
  * @brief Overwrite the given property in device tree
  * @param[in] target pdbg_target to set the property on
  * @param[in] name name of the property to set

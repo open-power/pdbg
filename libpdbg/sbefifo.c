@@ -848,10 +848,11 @@ static int sbefifo_probe(struct pdbg_target *target)
 		break;
 
 	default:
-		PR_ERROR("SBEFIFO driver not supported\n");
-		return -1;
+		//TODO:P12 - Uncomment the below lines
+		//PR_ERROR("SBEFIFO driver not supported\n");
+		//return -1;
 	}
-
+	proc = SBEFIFO_PROC_P10; //TODO:P12 - Remove this assignment
 	rc = sbefifo_connect(sbefifo_path, proc, &sf->sf_ctx);
 	if (rc) {
 		PR_ERROR("Unable to open sbefifo driver %s\n", sbefifo_path);
