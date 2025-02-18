@@ -327,10 +327,10 @@ int opb_write(struct pdbg_target *opb_dt, uint32_t addr, uint32_t data)
 
 int fsi_read(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t *data)
 {
+	
 	struct fsi *fsi;
 	int rc;
 	uint64_t addr64 = addr;
-
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
 	fsi = target_to_fsi(fsi_dt);
 
@@ -350,10 +350,8 @@ int fsi_write(struct pdbg_target *fsi_dt, uint32_t addr, uint32_t data)
 	struct fsi *fsi;
 	int rc;
 	uint64_t addr64 = addr;
-
 	fsi_dt = get_class_target_addr(fsi_dt, "fsi", &addr64);
 	fsi = target_to_fsi(fsi_dt);
-
 	if (!fsi->write) {
 		PR_ERROR("write() not implemented for the target\n");
 		return -1;
@@ -689,7 +687,6 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 	enum pdbg_target_status status;
 
 	assert(target);
-
 	status = pdbg_target_status(target);
 	assert(status != PDBG_TARGET_RELEASED);
 
@@ -740,7 +737,9 @@ enum pdbg_target_status pdbg_target_probe(struct pdbg_target *target)
 	/* Make sure any virtual nodes are also probed */
 	vnode = target_to_virtual(target, true);
 	if (vnode)
+	{
 		pdbg_target_probe(vnode);
+	}
 
 	/* At this point any parents must exist and have already been probed */
 	if (target->probe && target->probe(target)) {

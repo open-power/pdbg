@@ -343,6 +343,8 @@ struct pdbg_target *pdbg_target_require_parent(const char *klass, struct pdbg_ta
  */
 struct pdbg_target *pdbg_get_peer_target(struct pdbg_target *target);
 
+struct pdbg_target *pdbg_get_pnode(struct pdbg_target *target);
+
 /**
  * @brief Overwrite the given property in device tree
  * @param[in] target pdbg_target to set the property on
