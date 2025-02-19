@@ -847,6 +847,10 @@ static int sbefifo_probe(struct pdbg_target *target)
 		proc = SBEFIFO_PROC_P10;
 		break;
 
+	case PDBG_PROC_P12:
+		proc = SBEFIFO_PROC_P10; //TODO:P12 update it to the appropriate value
+		break;
+
 	default:
 		PR_ERROR("SBEFIFO driver not supported\n");
 		return -1;

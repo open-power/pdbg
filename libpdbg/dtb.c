@@ -40,6 +40,7 @@
 #include "p9r-fsi.dt.h"
 #include "p9z-fsi.dt.h"
 #include "bmc-kernel.dt.h"
+#include "bmc-kernel-rainiest.dt.h"
 #include "bmc-kernel-rainier.dt.h"
 #include "bmc-kernel-everest.dt.h"
 #include "p8-host.dt.h"
@@ -48,6 +49,7 @@
 #include "p8-cronus.dt.h"
 #include "cronus.dt.h"
 #include "bmc-sbefifo.dt.h"
+#include "bmc-sbefifo-rainiest.dt.h"
 #include "bmc-sbefifo-rainier.dt.h"
 #include "bmc-sbefifo-everest.dt.h"
 #include "p8.dt.h"
@@ -344,6 +346,10 @@ static void bmc_target(struct pdbg_dtb *dtb)
 			}
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p10_dtb_o_start;
+		} else if (!strcmp(pdbg_backend_option, "p12")) {
+			pdbg_proc = PDBG_PROC_P12;
+			pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainiest target");
+					dtb->backend.fdt = &_binary_bmc_kernel_rainiest_dtb_o_start;
 		} else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use 'p8', 'p9' or 'p10'\n");
@@ -376,6 +382,16 @@ static void bmc_target(struct pdbg_dtb *dtb)
 			free(system_type);
 		}
 		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p10_dtb_o_start;
+		break;
+	case CHIP_ID_P12:
+		pdbg_log(PDBG_INFO, "Found a POWER10 OpenBMC based system\n");
+		pdbg_proc = PDBG_PROC_P12;
+		if (!dtb->backend.fdt) {
+				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainiest target");
+				dtb->backend.fdt = &_binary_bmc_kernel_rainiest_dtb_o_start;
+		}
+		if (!dtb->system.fdt) //TODO:P12 - This may not be needed.
 			dtb->system.fdt = &_binary_p10_dtb_o_start;
 		break;
 
@@ -437,7 +453,14 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 			}
 			if (!dtb->system.fdt)
 				dtb->system.fdt = &_binary_p10_dtb_o_start;
-		} else {
+		} else if (!strcmp(pdbg_backend_option, "p12")) {
+			pdbg_proc = PDBG_PROC_P12;
+			if (!dtb->backend.fdt)
+				dtb->backend.fdt = &_binary_bmc_sbefifo_rainiest_dtb_o_start;
+			if (!dtb->system.fdt)
+				dtb->system.fdt = &_binary_p10_dtb_o_start; //TODO:P12 Need to remove this
+		}
+		else {
 			pdbg_log(PDBG_ERROR, "Invalid system type %s\n", pdbg_backend_option);
 			pdbg_log(PDBG_ERROR, "Use 'p9' or 'p10'\n");
 		}
@@ -472,6 +495,14 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 		}
 		if (!dtb->system.fdt)
 			dtb->system.fdt = &_binary_p10_dtb_o_start;
+		break;
+	case CHIP_ID_P12:
+		pdbg_proc = PDBG_PROC_P12;
+		pdbg_log(PDBG_INFO, "Found a POWER12 OpenBMC based system\n");
+		if (!dtb->backend.fdt)
+			dtb->backend.fdt = &_binary_bmc_sbefifo_rainiest_dtb_o_start;
+		if (!dtb->system.fdt)
+			dtb->system.fdt = &_binary_p10_dtb_o_start; //TODO:P12
 		break;
 
 	case CHIP_ID_P9:
