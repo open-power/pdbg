@@ -198,8 +198,13 @@ libpdbg_la_SOURCES = \
 	libpdbg/p9_fapi_targets.c \
 	libpdbg/p9_scom_addr.h \
 	libpdbg/p10chip.c \
+	libpdbg/p12chip.c \
 	libpdbg/p10_fapi_targets.c \
 	libpdbg/p10_scom_addr.h \
+	libpdbg/p12_fapi_targets.c \
+	libpdbg/p12_scom_addr.h \
+	libpdbg/hubchip.c \
+	libpdbg/computechip.c \
 	libpdbg/sbefifo.c \
 	libpdbg/sbe_api.c \
 	libpdbg/sprs.h \
