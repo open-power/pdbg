@@ -1530,6 +1530,20 @@ bool pdbg_context_short(void);
  */
 void pdbg_release_dt_root();
 
+/**
+ * @brief Find a peer target of the given class
+ * @param[in] target the pdbg_target
+ * @return struct pdbg_target* of the peer class
+ */
+struct pdbg_target *pdbg_get_peer_target(struct pdbg_target *target);
+
+/**
+ * @brief Helper method to return the peer node of the target
+ * @param[in] target the pdbg_target
+ * @return struct pdbg_target* of the peer class
+ */
+struct pdbg_target *pdbg_get_pnode(struct pdbg_target *target);
+
 #ifdef __cplusplus
 }
 #endif

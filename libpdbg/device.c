@@ -657,6 +657,36 @@ static void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode)
 	vnode->vnode = node;
 }
 
+static void dt_link_peer(struct pdbg_target *node, struct pdbg_target *pnode)
+{
+	node->pnode = pnode;
+	pnode->pnode = node;
+}
+
+
+static void pdbg_targets_init_peer(struct pdbg_target *node, struct pdbg_target *root)
+{
+	struct pdbg_target *child = NULL;
+	
+	/* Skip virtual nodes */
+	if (target_is_virtual(node))
+		goto skip;
+
+	struct pdbg_target *pnode = NULL;
+	pnode = pdbg_get_peer_target(node);
+
+	if (!pnode)
+		goto skip;
+
+	dt_link_peer(node, pnode);
+
+skip:
+	list_for_each(&node->children, child, list) {
+		pdbg_targets_init_peer(child, root);
+	}
+}
+
+
 static void pdbg_targets_init_virtual(struct pdbg_target *node, struct pdbg_target *root)
 {
 	struct pdbg_target *vnode, *child = NULL;
@@ -802,6 +832,8 @@ bool pdbg_targets_init(void *fdt)
 	dt_expand(pdbg_dt_root, dtb->system.fdt);
 
 	pdbg_targets_init_virtual(pdbg_dt_root, pdbg_dt_root);
+
+	pdbg_targets_init_peer(pdbg_dt_root, pdbg_dt_root);
 
 	//Close any FDs which might be still opened
 	close(dtb->system.fd);

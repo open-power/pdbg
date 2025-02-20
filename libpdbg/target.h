@@ -62,6 +62,7 @@ struct pdbg_target {
 	struct list_node class_link;
 	void *priv;
 	struct pdbg_target *vnode;
+	struct pdbg_target *pnode;
 };
 
 struct pdbg_mfile {

@@ -7,6 +7,19 @@
 static pdbg_progress_tick_t progress_tick;
 static bool pdbg_short_context = false;
 
+#define MAX_PEER_TYPE_ENTRIES 3  
+
+typedef struct {
+    char key[120];
+    char value[120];
+} peer_map_struct;
+
+peer_map_struct peer_map[MAX_PEER_TYPE_ENTRIES] = {
+    {"tbusl", "tbusl"},
+    {"core", "l3cache"},
+    {"l3cache", "core"},
+};
+
 struct pdbg_target *get_parent(struct pdbg_target *target, bool system)
 {
 	struct pdbg_target *parent;
@@ -358,4 +371,73 @@ bool pdbg_context_short(void)
 bool pdbg_context_is_short(void)
 {
 	return pdbg_short_context;
+}
+
+char* extract_string_after_colon(char* input) 
+{
+    // Find the position of ':'
+    char* pos = strchr(input, ':');
+	// Return pointer to substring after ':'
+    if (pos != NULL && *(pos + 1) != '\0') {
+        return pos + 1; 
+    }
+	// Return empty string if ':' is not found or nothing follows it
+    return ""; 
+}
+
+
+// Function to get peer class name
+const char* get_peer_class_name(const char *key) {
+
+    for (int i = 0; i < MAX_PEER_TYPE_ENTRIES; i++) {
+        if (strcmp(peer_map[i].key, key) == 0) {
+            return peer_map[i].value;
+        }
+    }
+    return NULL;  // Key not found
+}
+
+struct pdbg_target *pdbg_get_pnode(struct pdbg_target *target)
+{
+	return target->pnode;
+}
+
+struct pdbg_target *pdbg_get_peer_target(struct pdbg_target *target)
+{
+	//Get the class type to find its appropriate peer
+	const char* peer_class_name = get_peer_class_name(target->class);
+
+	//As get attr is an expensive operation, check if the current class
+	//is expected to have a peer class
+	if(peer_class_name)
+	{
+		char tgtPeerPath[120];
+		if (!pdbg_target_get_attribute(target, "ATTR_PEER_PATH", 1, 120,
+					tgtPeerPath)) {
+						//unable to find the path
+						pdbg_log(PDBG_ERROR, "unable to find the attribute ATTR_PEER_PATH for %s\n", 
+							pdbg_target_path(target));
+		}
+		else
+		{
+			struct pdbg_target *traversed_target;
+			//The peer could only be of the same type, so look for all the targets of that type
+			pdbg_for_each_class_target(peer_class_name, traversed_target)
+			{
+				char tgtPhyPath[120];
+				if (pdbg_target_get_attribute(traversed_target, "ATTR_PHYS_DEV_PATH", 1, 120,
+							tgtPhyPath)) {
+					//unable to find the path
+					if( strcmp(extract_string_after_colon(tgtPhyPath), extract_string_after_colon(tgtPeerPath)) == 0)
+					{
+						return traversed_target;
+					}
+				}
+			}
+			
+		}
+		pdbg_log(PDBG_ERROR, "unable to find the peer target for %s\n", 
+			pdbg_target_path(target));
+	}
+	return NULL;
 }
