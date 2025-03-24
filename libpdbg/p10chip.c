@@ -184,7 +184,7 @@ static int p10_thread_sreset(struct thread *thread)
 
 static struct thread p10_thread = {
 	.target = {
-		.name = "POWER10 Thread",
+		.name = "POWER Thread",
 		.compatible = "ibm,power10-thread",
 		.class = "thread",
 		.probe = p10_thread_probe,
@@ -294,7 +294,7 @@ static uint64_t p10_core_translate(struct core *c, uint64_t addr)
 
 static struct core p10_core = {
 	.target = {
-		.name = "POWER10 Core",
+		.name = "POWER Core",
 		.compatible = "ibm,power10-core",
 		.class = "core",
 		.probe = p10_core_probe,
