@@ -1,50 +1,50 @@
 dnl
-dnl SBEFIFO([index], [path-index])
+dnl SCOM_TARGET([index], [path-index])
 dnl
-define(`SBEFIFO',
+define(`SCOM_TARGET',
 `
-	sbefifo@2400 { /* Bogus address */
-		reg = <0x0 0x2400 0x7>;
-		compatible = "ibm,kernel-sbefifo";
+	kernelpib@$1 {
+		#address-cells = <0x2>;
+		#size-cells = <0x1>;
+		reg = <0x0 0x$1 0x7>;
+		compatible = "ibm,kernel-pib";
 		index = <0x$1>;
-		device-path = "/dev/sbefifo$2";
-
-		sbefifo-pib {
-			#address-cells = <0x2>;
-			#size-cells = <0x1>;
-			compatible = "ibm,sbefifo-pib";
+		device-path = "/dev/scom$2";
+		backend = "kernel";
+	};
+		
+		sbefifo@2400 { /* Bogus address */
+			reg = <0x0 0x2400 0x7>;
+			compatible = "ibm,kernel-sbefifo";
 			index = <0x$1>;
-			system-path = "/proc$1/pib";
-			backend = "sbefifo";
-			
-			pib@$1 {
+			device-path = "/dev/sbefifo$2";
+
+			sbefifo-pib {
 				#address-cells = <0x2>;
 				#size-cells = <0x1>;
-				reg = <0x0 0x$1 0x7>;
-				compatible = "ibm,kernel-pib";
+				compatible = "ibm,sbefifo-pib";
 				index = <0x$1>;
-				device-path = "/dev/scom$2";
-				backend = "kernel";
+				system-path = "/proc$1/pib";
+				backend = "sbefifo";
+			};
+
+			sbefifo-mem {
+				compatible = "ibm,sbefifo-mem";
+				index = <0x$1>;
+				system-path = "/mem$1";
+			};
+
+			sbefifo-pba {
+				compatible = "ibm,sbefifo-mem-pba";
+				index = <0x$1>;
+				system-path = "/mempba$1";
+			};
+
+			sbefifo-chipop {
+				compatible = "ibm,sbefifo-chipop";
+				index = <0x$1>;
 			};
 		};
-
-		sbefifo-mem {
-			compatible = "ibm,sbefifo-mem";
-			index = <0x$1>;
-			system-path = "/mem$1";
-		};
-
-		sbefifo-pba {
-			compatible = "ibm,sbefifo-mem-pba";
-			index = <0x$1>;
-			system-path = "/mempba$1";
-		};
-
-		sbefifo-chipop {
-			compatible = "ibm,sbefifo-chipop";
-			index = <0x$1>;
-		};
-	};
 ')dnl
 
 dnl
@@ -62,7 +62,7 @@ define(`FSI_PRE',
 		status = "mustexist";
 		system-path = "/proc$2/fsi";
 
-		SBEFIFO($2, $3)
+		SCOM_TARGET($2, $3)
 ')dnl
 
 dnl
@@ -88,7 +88,7 @@ define(`HMFSI',
 		index = <0x$3>;
 		system-path = "/proc$3/fsi";
 
-		SBEFIFO($3, $4)
+		SCOM_TARGET($3, $4)
 	};
 ')dnl
 
@@ -197,7 +197,6 @@ define(`BMC_I2CBUS',
 	HMFSI(400000, 7, 7, 8)
 
 	
-
 	HMFSI_ODY(0, 0, 1, 11)
 	HMFSI_ODY(1, 0, 1, 10)
 	HMFSI_ODY(2, 0, 1, 12)

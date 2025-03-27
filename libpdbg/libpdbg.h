@@ -1539,7 +1539,7 @@ struct pdbg_target *pdbg_get_backend_target(struct pdbg_target* target, const ch
 /**
  * The proc target whose backend we need to switch
  */
-void pdbg_switch_node_backend(struct pdbg_target* target);
+struct pdbg_target* pdbg_switch_node_backend(struct pdbg_target* target, char* backend);
 
 void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode);
 
