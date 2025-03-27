@@ -10,7 +10,7 @@ define(`PIB',
 		compatible = "ibm,kernel-pib";
 		index = <0x$2>;
 		device-path = "/dev/scom$3";
-		system-path = "/proc$2/pib";
+		system-path = "/proc$2/pib/kernelpib";
 	};
 ')dnl
 
