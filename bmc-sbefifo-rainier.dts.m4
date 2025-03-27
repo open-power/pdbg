@@ -15,6 +15,17 @@ define(`SBEFIFO',
 			compatible = "ibm,sbefifo-pib";
 			index = <0x$1>;
 			system-path = "/proc$1/pib";
+			backend = "sbefifo";
+			
+			pib@$1 {
+				#address-cells = <0x2>;
+				#size-cells = <0x1>;
+				reg = <0x0 0x$1 0x7>;
+				compatible = "ibm,kernel-pib";
+				index = <0x$1>;
+				device-path = "/dev/scom$2";
+				backend = "kernel";
+			};
 		};
 
 		sbefifo-mem {
@@ -175,6 +186,7 @@ define(`BMC_I2CBUS',
 	BMC_I2CBUS(15)
 
 	FSI_PRE(0, 0, 1)
+	FSI_POST()
 
 	HMFSI(100000, 1, 1, 2)
 	HMFSI(180000, 2, 2, 3)
@@ -184,7 +196,7 @@ define(`BMC_I2CBUS',
 	HMFSI(380000, 6, 6, 7)
 	HMFSI(400000, 7, 7, 8)
 
-	FSI_POST()
+	
 
 	HMFSI_ODY(0, 0, 1, 11)
 	HMFSI_ODY(1, 0, 1, 10)

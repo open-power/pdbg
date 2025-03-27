@@ -359,3 +359,71 @@ bool pdbg_context_is_short(void)
 {
 	return pdbg_short_context;
 }
+
+struct pdbg_target *pdbg_get_unattached_backend_target(struct pdbg_target* target, const char* class_name)
+{
+    struct pdbg_target* backend_target = NULL;
+
+    /* We assume each processor chip contains one and only one pib */
+    pdbg_for_each_target(class_name, target, backend_target)
+    {
+		/* There is a vnode attached, so this should be the backend target*/
+		if(!backend_target->vnode)
+		{
+			break;
+		}
+    }
+	return backend_target;
+}
+
+struct pdbg_target *pdbg_get_backend_target(struct pdbg_target* target, const char* class_name)
+{
+    struct pdbg_target* backend_target = NULL;
+
+    /* We assume each processor chip contains one and only one pib */
+    pdbg_for_each_target(class_name, target, backend_target)
+    {
+		/* There is a vnode attached, so this should be the current backend target*/
+		if(backend_target->vnode)
+		{
+			break;
+		}
+    }
+
+    if (!backend_target)
+    {
+		/* If the pib target is not a child target, look for the parent pib target
+        But the translation does not happen here. So better to */
+		while(1)
+		{
+			backend_target = target_parent(class_name, target, false);
+
+			//TODO, check 
+
+			if (!backend_target)
+			{
+				pdbg_log(PDBG_ERROR, "unable to get %s target for %s\n",
+					class_name, pdbg_target_path(target));
+				return NULL;
+			}
+		}
+    }
+    return backend_target;
+}
+
+void pdbg_switch_node_backend(struct pdbg_target* target)
+{
+	struct pdbg_target* attached_pib_target = pdbg_get_backend_target(target,"pib");
+
+	struct pdbg_target* unattached_pib_target = pdbg_get_unattached_backend_target(target,"pib");
+	
+	struct pdbg_target* virtual_target = target_to_virtual(attached_pib_target, true);
+
+	if(virtual_target && unattached_pib_target)
+	{
+		dt_link_virtual(virtual_target, unattached_pib_target);
+		/*remove the virtual link as we have switched the backend*/
+		attached_pib_target->vnode = NULL;
+	}
+}
+
