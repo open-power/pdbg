@@ -1513,7 +1513,7 @@ DECLARE_HW_UNIT(p8_chtm);
 
 static struct htm p10_nhtm = {
 	.target = {
-		.name = "POWER10 Nest HTM",
+		.name = "POWER Nest HTM",
 		.compatible = "ibm,power10-nhtm",
 		.class = "nhtm",
 		.probe = nhtm_probe,
@@ -1528,7 +1528,7 @@ DECLARE_HW_UNIT(p10_nhtm);
 
 static struct htm p10_chtm = {
 	.target = {
-		.name = "POWER10 Core HTM",
+		.name = "POWER Core HTM",
 		.compatible = "ibm,power10-chtm",
 		.class = "chtm",
 		.probe = chtm_probe,
