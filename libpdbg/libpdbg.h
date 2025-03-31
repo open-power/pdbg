@@ -1529,6 +1529,20 @@ bool pdbg_context_short(void);
  */
 void pdbg_release_dt_root();
 
+/**
+ * @brief Helper method to return the pib or the fsi target of the target
+ * @param[in] target the pdbg_target for which we need to find the backend target
+ * @return struct pdbg_target* of the requested backend class
+ */
+struct pdbg_target *pdbg_get_backend_target(struct pdbg_target* target, const char* class_name);
+
+/**
+ * The proc target whose backend we need to switch
+ */
+struct pdbg_target* pdbg_switch_node_backend(struct pdbg_target* target, char* backend);
+
+void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode);
+
 #ifdef __cplusplus
 }
 #endif

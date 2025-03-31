@@ -231,7 +231,7 @@ DECLARE_HW_UNIT(kernel_fsi_ody);
 static int kernel_pib_getscom(struct pib *pib, uint64_t addr, uint64_t *value)
 {
 	int rc;
-
+printf("deepa calling kernel pib read\n");
 	rc = pread(pib->fd, value, 8, addr);
 	if (rc < 0) {
 		rc = errno;
