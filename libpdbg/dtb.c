@@ -98,7 +98,7 @@ static bool get_chipid(uint32_t *chip_id)
 	cfam_id_file = fopen(path, "r");
 	free(path);
 	if (!cfam_id_file) {
-		pdbg_log(PDBG_ERROR, "Unable to open CFAM ID file\n");
+		pdbg_log(PDBG_ERROR, "Unable to open CFAM ID file errno: %d\n",errno);
 		return false;
 	}
 
@@ -512,7 +512,7 @@ static void mmap_dtb(const char *file, bool readonly, struct pdbg_mfile *mfile)
 	else
 		fd = open(file, O_RDWR);
 	if (fd < 0) {
-		pdbg_log(PDBG_ERROR, "Unable to open dtb file '%s'\n", file);
+		pdbg_log(PDBG_ERROR, "Unable to open dtb file '%s' errno: %d\n", file, errno);
 		return;
 	}
 
