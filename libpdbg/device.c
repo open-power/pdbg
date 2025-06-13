@@ -793,8 +793,10 @@ bool pdbg_targets_init(void *fdt)
 
 	/* Root node needs to be valid when this function returns */
 	pdbg_dt_root = dt_new_node("", dtb->system.fdt, 0);
-	if (!pdbg_dt_root)
+	if (!pdbg_dt_root) {
+		pdbg_log(PDBG_ERROR, "Invalid Root node in the system device tree\n");
 		return false;
+	}
 
 	if (dtb->backend.fdt)
 		dt_expand(pdbg_dt_root, dtb->backend.fdt);
@@ -806,6 +808,8 @@ bool pdbg_targets_init(void *fdt)
 	//Close any FDs which might be still opened
 	close(dtb->system.fd);
 	close(dtb->backend.fd);
+
+	pdbg_log(PDBG_NOTICE, "pdbg target init complete\n");
 	
 	return true;
 }
