@@ -316,6 +316,7 @@ static struct sbefifo *pib_to_sbefifo(struct pdbg_target *pib)
 
 static int sbefifo_pib_read(struct pib *pib, uint64_t addr, uint64_t *val)
 {
+	printf("deepa calling sbefifo_pib_read\n");
 	struct sbefifo *sbefifo = pib_to_sbefifo(&pib->target);
 	struct sbefifo_context *sctx = sbefifo->get_sbefifo_context(sbefifo);
 

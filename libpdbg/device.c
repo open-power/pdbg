@@ -651,7 +651,7 @@ static struct pdbg_target *dt_new_virtual(struct pdbg_target *root, const char *
 	return vnode;
 }
 
-static void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode)
+void dt_link_virtual(struct pdbg_target *node, struct pdbg_target *vnode)
 {
 	node->vnode = vnode;
 	vnode->vnode = node;
