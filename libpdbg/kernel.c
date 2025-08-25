@@ -128,14 +128,14 @@ static void kernel_fsi_scan_devices(void)
 
 	fd = open(path, O_WRONLY | O_SYNC);
 	if (fd < 0) {
-		PR_ERROR("Unable to open %s\n", path);
+		PR_ERROR("Unable to open %s errno: %d\n", path, errno);
 		free(path);
 		return;
 	}
 
 	rc = write(fd, &one, sizeof(one));
 	if (rc < 0)
-		PR_ERROR("Unable to write to %s\n", path);
+		PR_ERROR("Unable to write to %s errno: %d\n", path, errno);
 
 	free(path);
 	close(fd);
@@ -186,7 +186,7 @@ int kernel_fsi_probe(struct pdbg_target *target)
 		}
 	}
 
-	PR_INFO("Unable to open %s\n", path);
+	PR_INFO("Unable to open %s, errno: %d \n", path, errno);
 	free(path);
 	return -1;
 }
@@ -264,7 +264,7 @@ static int kernel_pib_probe(struct pdbg_target *target)
 
 	pib->fd = open(scom_path, O_RDWR | O_SYNC);
 	if (pib->fd < 0) {
-		PR_INFO("Unable to open %s\n", scom_path);
+		PR_INFO("Unable to open %s errno: %d\n", scom_path, errno);
 		return -1;
 	}
 

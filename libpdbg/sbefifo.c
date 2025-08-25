@@ -854,7 +854,7 @@ static int sbefifo_probe(struct pdbg_target *target)
 
 	rc = sbefifo_connect(sbefifo_path, proc, &sf->sf_ctx);
 	if (rc) {
-		PR_ERROR("Unable to open sbefifo driver %s\n", sbefifo_path);
+		PR_ERROR("Unable to open sbefifo driver %s errno: %d\n", sbefifo_path, rc);
 		return rc;
 	}
 
