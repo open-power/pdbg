@@ -65,7 +65,8 @@ DT = fake.dts fake-backend.dts fake2.dts fake2-backend.dts \
      p9w-fsi.dts p9r-fsi.dts p9z-fsi.dts \
      bmc-kernel.dts bmc-kernel-rainier.dts bmc-kernel-everest.dts \
      bmc-sbefifo.dts bmc-sbefifo-rainier.dts bmc-sbefifo-everest.dts \
-     p8-host.dts p9-host.dts p10-host.dts p8.dts p9.dts p10.dts
+     bmc-sbefifo-balcones.dts bmc-kernel-balcones.dts \
+	 p8-host.dts p9-host.dts p10-host.dts p8.dts p9.dts p10.dts
 
 DT_sources = $(DT:.dts=.dtb.S)
 DT_headers = $(DT:.dts=.dt.h)
