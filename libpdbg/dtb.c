@@ -41,6 +41,7 @@
 #include "p9z-fsi.dt.h"
 #include "bmc-kernel.dt.h"
 #include "bmc-kernel-rainier.dt.h"
+#include "bmc-kernel-balcones.dt.h"
 #include "bmc-kernel-everest.dt.h"
 #include "p8-host.dt.h"
 #include "p9-host.dt.h"
@@ -49,6 +50,7 @@
 #include "cronus.dt.h"
 #include "bmc-sbefifo.dt.h"
 #include "bmc-sbefifo-rainier.dt.h"
+#include "bmc-sbefifo-balcones.dt.h"
 #include "bmc-sbefifo-everest.dt.h"
 #include "p8.dt.h"
 #include "p9.dt.h"
@@ -67,6 +69,7 @@ static const char* RAINIER = "rainier";
 static const char* EVEREST = "everest";
 static const char* FUJI = "fuji";
 static const char* BLUERIDGE = "blueridge";
+static const char* BALCONES = "balcones";
 
 static struct pdbg_dtb pdbg_dtb = {
 	.backend = {
@@ -336,6 +339,9 @@ static void bmc_target(struct pdbg_dtb *dtb)
 					contains_substring_ignoring_case(system_type, BLUERIDGE)) {
 					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
 					dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
+				} else if (contains_substring_ignoring_case(system_type, BALCONES)) {
+					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel balcones target");
+					dtb->backend.fdt = &_binary_bmc_kernel_balcones_dtb_o_start;
 				} else {
 					pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel target");
 					dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
@@ -369,6 +375,9 @@ static void bmc_target(struct pdbg_dtb *dtb)
 					contains_substring_ignoring_case(system_type, BLUERIDGE)) {
 				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel rainier target");
 				dtb->backend.fdt = &_binary_bmc_kernel_rainier_dtb_o_start;
+			} else if (contains_substring_ignoring_case(system_type, BALCONES)) {
+				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel balcones target");
+				dtb->backend.fdt = &_binary_bmc_kernel_balcones_dtb_o_start;
 			} else {
 				pdbg_log(PDBG_INFO, "bmc_target - loading bmc kernel target");
 				dtb->backend.fdt = &_binary_bmc_kernel_dtb_o_start;
@@ -429,6 +438,10 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 					pdbg_log(PDBG_INFO,
 						"sbefifo_target - loading bmc sbefifo rainier target");
 					dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
+				} else if (contains_substring_ignoring_case(system_type, BALCONES) ) {
+					pdbg_log(PDBG_INFO,
+						"sbefifo_target - loading bmc sbefifo balcones target");
+					dtb->backend.fdt = &_binary_bmc_sbefifo_balcones_dtb_o_start;
 				} else {
 					pdbg_log(PDBG_INFO, "sbefifo_target - loading bmc sbefifo target");
 					dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
@@ -464,6 +477,10 @@ static void sbefifo_target(struct pdbg_dtb *dtb)
 				pdbg_log(PDBG_INFO,
 					"sbefifo_target - loading bmc sbefifo rainier target");
 				dtb->backend.fdt = &_binary_bmc_sbefifo_rainier_dtb_o_start;
+			} else if (contains_substring_ignoring_case(system_type, BALCONES)) {
+				pdbg_log(PDBG_INFO,
+					"sbefifo_target - loading bmc sbefifo balcones target");
+				dtb->backend.fdt = &_binary_bmc_sbefifo_balcones_dtb_o_start;
 			} else {
 				pdbg_log(PDBG_INFO, "sbefifo_target - loading bmc sbefifo target");
 				dtb->backend.fdt = &_binary_bmc_sbefifo_dtb_o_start;
