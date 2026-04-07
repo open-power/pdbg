@@ -126,6 +126,27 @@ pdbg_LDADD = libpdbg.la libccan.a \
 
 pdbg_LDFLAGS = -Wl,--whole-archive,-lpdbg,--no-whole-archive
 
+noinst_PROGRAMS = validate_dtb
+
+validate_dtb_SOURCES = src/validate_dtb.c
+validate_dtb_CFLAGS = -Wall -Werror
+
+if BUILD_LIBFDT
+validate_dtb_CFLAGS += -I$(top_srcdir)/libfdt
+validate_dtb_LDADD = libfdt/libfdt.la
+validate_dtb_DEPENDENCIES = libfdt/libfdt.la
+else
+validate_dtb_LDADD = -lfdt
+endif
+
+install-exec-hook:
+	$(MKDIR_P) $(DESTDIR)$(bindir)
+	if test -f .libs/validate_dtb; then \
+		$(INSTALL_PROGRAM) .libs/validate_dtb $(DESTDIR)$(bindir)/validate_dtb; \
+	else \
+		$(INSTALL_PROGRAM) validate_dtb $(DESTDIR)$(bindir)/validate_dtb; \
+	fi
+
 lib_LTLIBRARIES = libpdbg.la
 pkgconfiglibdir = ${libdir}/pkgconfig
 pkgconfiglib_DATA = libpdbg/pdbg.pc

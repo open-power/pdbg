@@ -10,6 +10,7 @@ include_HEADERS = libfdt.h libfdt_env.h fdt.h
 libfdt_la_SOURCES = \
 	fdt_addresses.c \
 	fdt.c \
+	fdt_check.c \
 	fdt_empty_tree.c \
 	fdt.h \
 	fdt_overlay.c \
