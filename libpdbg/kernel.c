@@ -110,46 +110,13 @@ static int kernel_fsi_putcfam(struct fsi *fsi, uint32_t addr64, uint32_t data)
 	return 0;
 }
 
-static void kernel_fsi_scan_devices(void)
-{
-	const char one = '1';
-	const char *kernel_path = kernel_get_fsi_path();
-	char *path;
-	int rc, fd;
-
-	if (!kernel_path)
-		return;
-
-	rc = asprintf(&path, "%s/fsi0/rescan", kernel_path);
-	if (rc < 0) {
-		PR_ERROR("Unable to create fsi path\n");
-		return;
-	}
-
-	fd = open(path, O_WRONLY | O_SYNC);
-	if (fd < 0) {
-		PR_ERROR("Unable to open %s\n", path);
-		free(path);
-		return;
-	}
-
-	rc = write(fd, &one, sizeof(one));
-	if (rc < 0)
-		PR_ERROR("Unable to write to %s\n", path);
-
-	free(path);
-	close(fd);
-}
-
 int kernel_fsi_probe(struct pdbg_target *target)
 {
 	struct fsi *fsi = target_to_fsi(target);
-	int tries = 5;
 	int rc;
 	const char *kernel_path = kernel_get_fsi_path();
 	const char *fsi_path;
 	char *path;
-	static bool first_probe = true;
 
 	if (!kernel_path)
 		return -1;
@@ -163,27 +130,10 @@ int kernel_fsi_probe(struct pdbg_target *target)
 		return rc;
 	}
 
-	while (tries) {
-		fsi->fd = open(path, O_RDWR | O_SYNC);
-		if (fsi->fd >= 0) {
-			free(path);
-			first_probe = false;
-			return 0;
-		}
-		tries--;
-
-		/*
-		 * On fsi bus rescan, kernel re-creates all the slave device
-		 * entries.  It means any currently open devices will be
-		 * invalid and need to be re-opened.  So avoid scanning if
-		 * some devices are already probed.
-		 */
-		if (first_probe) {
-			kernel_fsi_scan_devices();
-			sleep(1);
-		} else {
-			break;
-		}
+	fsi->fd = open(path, O_RDWR | O_SYNC);
+	if (fsi->fd >= 0) {
+		free(path);
+		return 0;
 	}
 
 	PR_INFO("Unable to open %s\n", path);
