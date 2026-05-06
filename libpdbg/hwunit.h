@@ -82,7 +82,10 @@ struct chipop {
 	int (*mpipl_continue)(struct chipop *);
 	int (*mpipl_get_ti_info)(struct chipop *, uint8_t **, uint32_t *);
 	int (*dump)(struct chipop *, uint8_t, uint8_t, uint8_t, uint8_t **, uint32_t *);
+	int (*operation)(struct chipop*, uint8_t* msg, uint32_t msg_len,
+                     uint8_t** out, uint32_t* out_len);
 	int (*lpc_timeout)(struct chipop *, uint32_t *);
+	int (*set_fifo_timeout)(struct chipop*, uint32_t timeout_ms);
 };
 #define target_to_chipop(x) container_of(x, struct chipop, target)
 
@@ -90,6 +93,9 @@ struct chipop_ody {
 	struct pdbg_target target;
 	uint32_t (*ffdc_get)(struct chipop_ody*, struct pdbg_target*, const uint8_t **, uint32_t *);
 	int (*dump)(struct chipop_ody *, uint8_t, uint8_t, uint8_t, uint8_t **, uint32_t *);
+	int (*operation)(struct chipop_ody*, uint8_t* msg, uint32_t msg_len,
+                     uint8_t** out, uint32_t* out_len);
+	int (*set_fifo_timeout)(struct chipop_ody*, uint32_t timeout_ms);
 };
 #define target_to_chipop_ody(x) container_of(x, struct chipop_ody, target)
 

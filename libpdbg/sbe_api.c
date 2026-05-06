@@ -212,6 +212,54 @@ int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock,
 	return 0;
 }
 
+
+int sbe_operation(struct pdbg_target* target,
+                  uint8_t* msg, uint32_t msg_len,
+                  uint8_t** out, uint32_t* out_len)
+{
+	PR_ERROR("In sbe_operation");
+    if (!is_ody_ocmb_chip(target)) {
+        struct chipop* chipop = pib_to_chipop(target);
+        if (!chipop || !chipop->operation) {
+            PR_ERROR("operation() not implemented for the target\n");
+            return -1;
+        }
+		PR_ERROR("In sbe_operation: calling chipop->operation");
+        return chipop->operation(chipop, msg, msg_len, out, out_len);
+    } else {
+        struct chipop_ody* chipop;
+        struct pdbg_target* co_target = get_ody_chipop_target(target);
+        chipop = target_to_chipop_ody(co_target);
+        if (!chipop || !chipop->operation) {
+            PR_ERROR("operation() not implemented for the ODY target\n");
+            return -1;
+        }
+        return chipop->operation(chipop, msg, msg_len, out, out_len);
+    }
+}
+
+int sbe_set_chipop_timeout(struct pdbg_target* target, uint32_t timeout_ms)
+{
+    if (!is_ody_ocmb_chip(target)) {
+	
+        struct chipop* chipop = pib_to_chipop(target);
+        if (!chipop || !chipop->set_fifo_timeout) {
+            PR_ERROR("FIFO timeout not supported for the target\n");
+            return -1;
+        }
+        return chipop->set_fifo_timeout(chipop, timeout_ms);
+    } else {
+        struct chipop_ody* chipop;
+        struct pdbg_target* co_target = get_ody_chipop_target(target);
+        chipop = target_to_chipop_ody(co_target);
+        if (!chipop || !chipop->set_fifo_timeout) {
+            PR_ERROR("FIFO timeout not supported for the ODY target\n");
+            return -1;
+        }
+        return chipop->set_fifo_timeout((struct chipop_ody*)chipop, timeout_ms);
+    }
+}
+
 int sbe_ffdc_get(struct pdbg_target *target, uint32_t *status, uint8_t **ffdc,
 				uint32_t *ffdc_len)
 {

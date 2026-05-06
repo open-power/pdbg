@@ -92,6 +92,12 @@ int sbe_mpipl_get_ti_info(struct pdbg_target *target, uint8_t **data, uint32_t *
  */
 int sbe_dump(struct pdbg_target *target, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len);
 
+int sbe_operation(struct pdbg_target* target,
+                  uint8_t* msg, uint32_t msg_len,
+                  uint8_t** out, uint32_t* out_len);
+
+int sbe_set_chipop_timeout(struct pdbg_target* target, uint32_t timeout_ms);
+
 /**
  * @brief Get sbe state
  *

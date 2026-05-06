@@ -280,6 +280,34 @@ static int sbefifo_op_dump(struct chipop *chipop, uint8_t type, uint8_t clock, u
 
 	return sbefifo_get_dump(sctx, type, clock, fa_collect, data, data_len);
 }
+
+static int sbefifo_op_operation(struct chipop* chipop,
+                                uint8_t* msg, uint32_t msg_len,
+                                uint8_t** out, uint32_t* out_len)
+{
+	PR_ERROR("in sbefifo_op_operation\n");
+    struct sbefifo* sbefifo = target_to_sbefifo(chipop->target.parent);
+	if (!sbefifo)
+	{
+		PR_ERROR("sbefifo is NULL\n");
+	}
+	PR_ERROR("sbefifo is NOT NULL\n");
+    struct sbefifo_context* sctx = sbefifo->get_sbefifo_context(sbefifo);
+    if (!sctx)
+	{
+		PR_ERROR("in sbefifo_context is NULL\n");
+	}
+	PR_ERROR("in sbefifo_context is NOT NULL\n");
+    return sbefifo_operation(sctx, msg, msg_len, out, out_len);
+}
+
+static int sbefifo_op_set_fifo_timeout(struct chipop* chipop, uint32_t timeout_ms)
+{
+    struct sbefifo* sbefifo = target_to_sbefifo(chipop->target.parent);
+    struct sbefifo_context* ctx = sbefifo->get_sbefifo_context(sbefifo);
+    return sbefifo_set_timeout(ctx, timeout_ms);
+}
+
 static int sbefifo_op_ody_dump(struct chipop_ody *chipop, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len)
 {
 	struct sbefifo *sbefifo = target_to_sbefifo(chipop->target.parent);
@@ -904,7 +932,9 @@ static struct chipop sbefifo_chipop = {
 	.mpipl_continue = sbefifo_op_mpipl_continue,
 	.mpipl_get_ti_info = sbefifo_op_mpipl_get_ti_info,
 	.dump = sbefifo_op_dump,
+	.operation = sbefifo_op_operation,
 	.lpc_timeout = sbefifo_op_lpc_timeout,
+	.set_fifo_timeout = sbefifo_op_set_fifo_timeout,
 };
 DECLARE_HW_UNIT(sbefifo_chipop);
 

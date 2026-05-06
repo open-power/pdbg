@@ -203,4 +203,11 @@ int sbefifo_mpipl_get_ti_info(struct sbefifo_context *sctx, uint8_t **data, uint
 
 int sbefifo_get_dump(struct sbefifo_context *sctx, uint8_t type, uint8_t clock, uint8_t fa_collect, uint8_t **data, uint32_t *data_len);
 
+
+int sbefifo_operation(struct sbefifo_context *sctx,
+                      uint8_t *msg, uint32_t msg_len,
+                      uint8_t **out, uint32_t *out_len);
+
+int sbefifo_set_timeout(struct sbefifo_context *sctx, unsigned int timeout_ms);
+
 #endif /* __LIBSBEFIFO_H__ */

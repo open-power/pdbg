@@ -66,17 +66,18 @@ static int sbefifo_transport(struct sbefifo_context *sctx, uint8_t *msg, uint32_
 	buflen = msg_len;
 	rc = sbefifo_write(sctx, msg, buflen);
 	if (rc) {
-		LOG("write: cmd=%08x, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), rc);
+		fprintf(stderr,"write: cmd=%08x, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), rc);
 		return rc;
 	}
+    fprintf(stderr,"write: cmd=%08x, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), rc);
 
 	buflen = *out_len;
 	rc = sbefifo_read(sctx, out, &buflen);
 	if (rc) {
-		LOG("read: cmd=%08x, buflen=%zu, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), buflen, rc);
+		fprintf(stderr,"read: cmd=%08x, buflen=%zu, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), buflen, rc);
 		return rc;
 	}
-
+    fprintf(stderr,"read: cmd=%08x, buflen=%zu, rc=%d\n", be32toh(*(uint32_t *)(msg+4)), buflen, rc);
 	*out_len = buflen;
 	return 0;
 }
@@ -118,7 +119,7 @@ int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
 		return EPROTO;
 	}
 
-	LOG("reply: cmd=%08x, len=%u, status=%08x\n", cmd, buflen, status_word);
+	fprintf(stderr,"reply: cmd=%08x, len=%u, status=%08x\n", cmd, buflen, status_word);
 
 	if (status_word) {
 		sbefifo_ffdc_set(sctx, status_word, buf + offset, buflen - offset-4);
@@ -143,52 +144,47 @@ int sbefifo_parse_output(struct sbefifo_context *sctx, uint32_t cmd,
 }
 
 int sbefifo_operation(struct sbefifo_context *sctx,
-		      uint8_t *msg, uint32_t msg_len,
-		      uint8_t **out, uint32_t *out_len)
+                      uint8_t *msg, uint32_t msg_len,
+                      uint8_t **out, uint32_t *out_len)
 {
-	uint8_t *buf;
-	uint32_t buflen;
-	uint32_t cmd;
-	int rc;
+    assert(msg);
+    assert(msg_len > 0);
 
-	assert(msg);
-	assert(msg_len > 0);
+    if (!sctx || (!sctx->transport && sctx->fd == -1)) {
+        fprintf(stderr, "sbefifo_operation: transport or fd not valid. fd=%d\n", sctx ? sctx->fd : -1);
+        return ENOTCONN;
+    }
 
-	if (!sctx->transport && sctx->fd == -1)
-		return ENOTCONN;
+    // Allocate buffer with headroom for possible FFDC
+    uint32_t buflen = (*out_len + SBEFIFO_MAX_FFDC_SIZE + 3) & ~(uint32_t)3;
+    uint8_t *buf = malloc(buflen);
+    if (!buf) {
+        return ENOMEM;
+    }
 
-	/*
-	 * Allocate extra memory for FFDC (SBEFIFO_MAX_FFDC_SIZE = 0x8000)32kb
-	 * Use *out_len as a hint to expected reply length
-	 */
-	buflen = (*out_len + SBEFIFO_MAX_FFDC_SIZE + 3) & ~(uint32_t)3;
-	buf = malloc(buflen);
-	if (!buf)
-		return ENOMEM;
+    fprintf(stderr, "sbefifo_operation: fd=%d, sending cmd=0x%08x, msg_len=%u\n",
+            sctx->fd, be32toh(*(uint32_t *)(msg + 4)), msg_len);
 
-	cmd = be32toh(*(uint32_t *)(msg + 4));
+    int rc;
 
-	LOG("request: cmd=%08x, len=%u\n", cmd, msg_len);
+        rc = sbefifo_transport(sctx, msg, msg_len, buf, &buflen);
 
-	if (sctx->transport)
-		rc = sctx->transport(msg, msg_len, buf, &buflen, sctx->priv);
-	else
-		rc = sbefifo_transport(sctx, msg, msg_len, buf, &buflen);
 
-	if (rc) {
-		free(buf);
+    if (rc) {
+        free(buf);
 
-		if (rc == ETIMEDOUT) {
-			uint32_t status;
+        if (rc == ETIMEDOUT) {
+            uint32_t status = SBEFIFO_PRI_UNKNOWN_ERROR | SBEFIFO_SEC_HW_TIMEOUT;
+            sbefifo_ffdc_set(sctx, status, NULL, 0);
+        }
 
-			status = SBEFIFO_PRI_UNKNOWN_ERROR | SBEFIFO_SEC_HW_TIMEOUT;
-			sbefifo_ffdc_set(sctx, status, NULL, 0);
-		}
+        return rc;
+    }
 
-		return rc;
-	}
+    // Return raw buffer to caller
+    *out = buf;
+    *out_len = buflen;
 
-	rc = sbefifo_parse_output(sctx, cmd, buf, buflen, out, out_len);
-	free(buf);
-	return rc;
+    return 0;
 }
+
